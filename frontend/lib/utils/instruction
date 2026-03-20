@@ -1,0 +1,16 @@
+/*
+Reusable helper code
+
+Example:
+constants.dart
+colors.dart
+formatter.dart
+
+Example code:
+class AppColors {
+  static const primary = Color(0xFF6F4E37); // coffee color
+}
+
+
+Think: “tools/helpers”
+*/

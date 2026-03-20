@@ -1,0 +1,27 @@
+folder is used to store custom font files that your app can use 
+instead of the default Flutter fonts
+
+These are font files like:
+.ttf (TrueType Font) most common
+
+.otf (OpenType Font)
+
+
+
+How to use fonts in Flutter
+ Add fonts to pubspec.yaml
+flutter:
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Regular.ttf
+        - asset: assets/fonts/Roboto-Bold.ttf
+          weight: 700
+
+    - family: Playfair
+      fonts:
+        - asset: assets/fonts/PlayfairDisplay-Regular.ttf
+        - asset: assets/fonts/PlayfairDisplay-Bold.ttf
+          weight: 700
+
+(flutter pub get)

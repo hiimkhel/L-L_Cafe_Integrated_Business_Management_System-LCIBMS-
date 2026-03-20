@@ -1,0 +1,16 @@
+Defines your app’s data format.
+
+Example:
+product.dart
+
+
+Example code:
+
+class Product {
+  final String name;
+  final double price;
+
+  Product({required this.name, required this.price});
+}
+
+Think: “what data looks like”

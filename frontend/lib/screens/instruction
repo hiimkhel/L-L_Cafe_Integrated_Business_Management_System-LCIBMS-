@@ -1,0 +1,10 @@
+Each file here is a complete screen/page
+
+Example:
+home_screen.dart
+login_screen.dart
+menu_screen.dart
+admin_screen.dart
+
+
+Think: “whole page”
