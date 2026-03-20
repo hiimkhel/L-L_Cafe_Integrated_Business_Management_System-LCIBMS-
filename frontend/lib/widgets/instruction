@@ -1,8 +1,0 @@
-Small UI components you reuse across screens.
-
-Example:
-custom_button.dart
-menu_card.dart
-header.dart
-
-Think: “building blocks”
