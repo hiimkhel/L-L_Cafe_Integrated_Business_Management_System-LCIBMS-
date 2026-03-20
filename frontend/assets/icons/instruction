@@ -1,0 +1,25 @@
+this is where app icons is contained
+
+ex: icon.png || icon.svg
+
+
+
+SVG Icon (better quality)
+
+For SVG, you need the package:
+flutter_svg
+
+Add in pubspec.yaml:
+
+dependencies:
+  flutter_svg: ^2.0.0
+
+(flutter pub get)
+
+Then use:
+
+import 'package:flutter_svg/flutter_svg.dart';
+
+SvgPicture.asset('assets/icons/coffee.svg')
+
+
