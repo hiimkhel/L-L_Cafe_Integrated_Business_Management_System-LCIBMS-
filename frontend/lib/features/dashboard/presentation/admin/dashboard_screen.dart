@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'menu_management.dart';
+import 'order_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -18,6 +19,16 @@ class AdminDashboardScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const MenuManagementScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.shopping_bag),
+            title: const Text("Order Management"),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const OrderScreen()),
               );
             },
           ),
