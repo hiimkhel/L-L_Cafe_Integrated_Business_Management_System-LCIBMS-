@@ -14,6 +14,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   static const _tertiary = Color(0xFFa98258);
   static const _bg = Color(0xFFFFFFFF);
 
+
   //-------------------------Build----------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
@@ -25,7 +26,11 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [_buildTopBar()],
+              children: [
+                _buildTopBar(),
+                _buildFilterRow(),
+                Expanded(child: _buildThreePanels()),
+              ],
             ),
           ),
         ],
@@ -54,7 +59,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
         children: [
           Center(
             child: Container(
-              width: 48,
+              width: 48,  
               height: 48,
               decoration: BoxDecoration(
                 color: _tertiary,
@@ -62,7 +67,10 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.asset("assets/images/lnl.jpg", fit: BoxFit.cover),
+                child: Image.asset(
+                  "assets/images/lnl.jpg",
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
@@ -144,48 +152,129 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
           const SizedBox(width: 8),
           _topIcon(Icons.settings_rounded),
           const SizedBox(width: 10),
-          Container(width: 2.5, height: 30, color: _tertiary),
+          Container(
+            width: 2.5,
+            height: 30,
+            color: _tertiary,
+          ),
           const SizedBox(width: 10),
           CircleAvatar(
             radius: 18,
             backgroundColor: _tertiary,
             child: const Icon(Icons.person, color: Colors.white, size: 20),
           ),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                "L&L CAFE",
-                style: TextStyle(fontSize: 10, color: _secondary),
-              ),
-              Text(
-                "ADMIN",
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: _tertiary,
-                ),
-              ),
-              Container(height: 2, width: 35, color: Colors.black),
-            ],
+        const SizedBox(width: 10),
+        Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          Text(
+            "L&L CAFE",
+            style: TextStyle(fontSize: 10, color: _secondary),
           ),
-          const SizedBox(width: 12),
-          _topIcon(Icons.logout_rounded),
+          Text(
+            "ADMIN",
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _tertiary),
+          ),
+          Container(height: 2, width: 35, color: Colors.black),
+        ],
+        ),
+        const SizedBox(width: 12),
+        _topIcon(Icons.logout_rounded),
         ],
       ),
     );
   }
 
-  Widget _topIcon(IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        color: _primary,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _primary),
+    Widget _topIcon(IconData icon) {
+      return Container(
+        padding: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          color: _primary,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: _primary),
+        ),
+        child: Icon(icon, color: _tertiary, size: 25)
+      );
+    }
+
+  //-------------------------FilterRow-------------------------------------------------------------
+  Widget _buildFilterRow() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: _bg,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: _tertiary.withOpacity(1.0),
+                  offset: Offset(0, 4),
+                  blurRadius: 9,
+                  spreadRadius: 0
+                ),
+              ],
+            ),
+            child: Row(
+              children:[
+                Text("ALL ITEMS",
+                style: TextStyle(
+                  color: _tertiary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: .8
+                ),
+              ),
+              const SizedBox(width: 5),
+              Icon(Icons.keyboard_arrow_down, color: _tertiary, size: 16)
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 210,
+            height: 36,
+            child: Container(
+              decoration: BoxDecoration(
+                boxShadow: [
+                BoxShadow(
+                  color: _tertiary.withOpacity(1.0),
+                  offset: Offset(0, 4),
+                  blurRadius: 9,
+                  spreadRadius: 0
+                ),
+              ],
+                borderRadius: BorderRadius.circular(20),
+              ),
+            child: TextField(
+              style: TextStyle(fontSize: 15, color: _tertiary),
+              decoration: InputDecoration(
+                hintText: "SEARCH ITEM...",
+                hintStyle: TextStyle(color:_tertiary, fontSize:12, letterSpacing: .8, fontWeight: FontWeight.bold),
+              suffixIcon: Icon(Icons.search, color: _tertiary, size: 16), 
+              filled: true,
+              fillColor: _bg,
+              contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide(color: _bg)),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide(color: _tertiary, width: .9)
+              ),
+              ),
+              ),
+            ),
+          ),
+        ],
       ),
-      child: Icon(icon, color: _tertiary, size: 25),
+    );
+  }
+
+  //-------------------------ThreePanels-------------------------------------------------------------
+  Widget _buildThreePanels() {
+    return Row(
+
     );
   }
 }
