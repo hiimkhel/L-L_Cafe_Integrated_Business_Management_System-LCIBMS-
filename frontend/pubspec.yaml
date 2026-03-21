@@ -94,6 +94,7 @@ flutter:
     - family: Urbanist
       fonts:
         - asset: assets/fonts/Urbanist-Bold.ttf
+        - asset: assets/fonts/Urbanist-Regular.ttf
           weight: 700
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
