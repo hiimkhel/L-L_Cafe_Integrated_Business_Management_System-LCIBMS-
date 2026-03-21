@@ -14,112 +14,6 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   static const _tertiary = Color(0xFFa98258);
   static const _bg = Color(0xFFFFFFFF);
 
-  static const _sidebarBg = Color(0xFFE8D5B0);
-  static const _panelBg = Color(0xFFF0E4C4);
-  static const _cardBg = Color(0xFFF8F0DC);
-  static const _brown = Color(0xFF7A5C3A);
-  static const _darkBrown = Color(0xFF3D2B1A);
-  static const _green = Color(0xFF4A7C59);
-  static const _amber = Color(0xFFD4A843);
-  static const _red = Color(0xFFCC4444);
-  static const _border = Color(0xFFCCB88A);
-  static const _textMain = Color(0xFF3A2A1A);
-  static const _textSub = Color(0xFF9A8A72);
-  static const _selectedCat = Color(0xFFDDC89A);
-  /*
-
-  //-------------------------State----------------------------------------------------------------
-  String selectedCategory = "Foods";
-  String? selectedItemName = "Chicken Burger";
-  bool isAvailable = true;
-
-  final List<String> categories = [
-    "Foods",
-    "Party Tray", 
-    "Waffles", 
-    "Coffee", 
-    "Non-Coffee", 
-    "Frappe"
-  ];
-
-  final Map<String, List<Map<String, String>>> itemsByCategory = {
-    "Foods": [
-      {"name": "Chicken Burger",  "price": "₱199.00", "desc": "This is a description."},
-      {"name": "Cheese Burger",   "price": "₱199.00", "desc": "This is a description."},
-      {"name": "Hawaiian Burger", "price": "₱199.00", "desc": "This is a description."},
-    ],
-    "Party Tray": [
-      {"name": "Barkada Platter", "price": "₱599.00", "desc": "Good for 5–6 persons."},
-    ],
-    "Waffles": [
-      {"name": "Classic Waffle", "price": "₱149.00", "desc": "Crispy golden waffle."},
-      {"name": "Choco Waffle",   "price": "₱169.00", "desc": "With rich chocolate drizzle."},
-    ],
-    "Coffee": [
-      {"name": "Americano",   "price": "₱99.00",  "desc": "Bold and smooth espresso."},
-      {"name": "Cappuccino",  "price": "₱119.00", "desc": "Espresso with steamed milk."},
-    ],
-    "Non-Coffee": [
-      {"name": "Matcha Latte", "price": "₱129.00", "desc": "Premium Japanese matcha."},
-    ],
-    "Frappe": [
-      {"name": "Mocha Frappe",   "price": "₱139.00", "desc": "Chilled mocha bliss."},
-      {"name": "Caramel Frappe", "price": "₱139.00", "desc": "Sweet caramel swirls."},
-    ],
-  };
-
-  late TextEditingController _nameCtrl;
-  late TextEditingController _priceCtrl;
-  late TextEditingController _descCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    final item = _selectedItemData;
-    _nameCtrl = TextEditingController(text: item?["name"] ?? "");
-    _priceCtrl = TextEditingController(text: item?["price"] ?? "");
-    _descCtrl = TextEditingController(text: item?["desc"] ?? "");
-  }
-
-  @override
-  void dispose(){
-    _nameCtrl.dispose();
-    _priceCtrl.dispose();
-    _descCtrl.dispose();
-    super.dispose();
-  } 
-
-  List<Map<String, String>> get _currentItems => itemsByCategory[selectedCategory] ?? [];
-
-  Map<String, String>? get _selectedItemdata {
-    if (selectedItemName == null) return null;
-    try {
-      return _currentItems.firstWhere((i) => i["name"] == selectedItemName);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  void _onSelectItem(Map<String, String> item){
-    setState((){
-      selectedItemName = item["name"];
-      _nameCtrl.text = item["name"] ?? "";
-      _priceCtrl.text = item["price"] ?? "";
-      _descCtrl.text = item["desc"] ?? "";
-    });
-  }
-
-  void _onSelectCategory(String cat) {
-    setState((){
-      selectedCategory = cat;
-      selectedItemName = null;
-      _nameCtrl.clear();
-      _priceCtrl.clear();
-      _descCtrl.clear();
-    });
-  }
-
-*/
   //-------------------------Build----------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
@@ -131,11 +25,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildTopBar(),
-                //_buildFilterRow(),
-                //Expanded(child: _buildThreePanels()),
-              ],
+              children: [_buildTopBar()],
             ),
           ),
         ],
@@ -158,11 +48,25 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     return Container(
       width: 148,
       color: _primary,
-      padding: const EdgeInsets.only(top: 40),
+      padding: const EdgeInsets.only(top: 15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 75),
+          Center(
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: _tertiary,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset("assets/images/lnl.jpg", fit: BoxFit.cover),
+              ),
+            ),
+          ),
+          const SizedBox(height: 37),
           ...navItems.map(
             (e) => _navTile(
               e.$1,
@@ -218,7 +122,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
       decoration: BoxDecoration(
-        color: _secondary,
+        color: _primary,
         border: Border(bottom: BorderSide(color: _primary.withOpacity(.5))),
       ),
       child: Row(
@@ -226,18 +130,62 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
           Text(
             "MENU MANAGEMENT",
             style: TextStyle(
-              fontSize: 26,
+              fontFamily: 'Inter',
+              fontSize: 28,
               fontWeight: FontWeight.w900,
-              color: _darkBrown,
+              color: _tertiary,
               letterSpacing: 2,
             ),
           ),
+          const Spacer(),
+          _topIcon(Icons.dark_mode_outlined),
+          const SizedBox(width: 8),
+          _topIcon(Icons.notifications_rounded),
+          const SizedBox(width: 8),
+          _topIcon(Icons.settings_rounded),
+          const SizedBox(width: 10),
+          Container(width: 2.5, height: 30, color: _tertiary),
+          const SizedBox(width: 10),
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: _tertiary,
+            child: const Icon(Icons.person, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                "L&L CAFE",
+                style: TextStyle(fontSize: 10, color: _secondary),
+              ),
+              Text(
+                "ADMIN",
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: _tertiary,
+                ),
+              ),
+              Container(height: 2, width: 35, color: Colors.black),
+            ],
+          ),
+          const SizedBox(width: 12),
+          _topIcon(Icons.logout_rounded),
         ],
       ),
     );
   }
 
-  //-------------------------FilterRow-------------------------------------------------------------
-
-  //-------------------------ThreePanels-------------------------------------------------------------
+  Widget _topIcon(IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        color: _primary,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: _primary),
+      ),
+      child: Icon(icon, color: _tertiary, size: 25),
+    );
+  }
 }
