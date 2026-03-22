@@ -103,11 +103,11 @@ class LLCafeReceipt extends StatelessWidget {
 
   // ── Design tokens ────────────────────────────
   static const Color _brown   = AppColors.primary;
-  static const Color _dark    = Color(0xFF2D2A26);   
+  static const Color _dark    = AppColors.receiptDark;
   static const Color _green   = AppColors.secondary;
   static const Color _cream   = AppColors.background;
   static const Color _white   = AppColors.textLight;
-  static const Color _creamBg = Color(0x4DEFE2C9);  
+  static const Color _creamBg = AppColors.receiptBg; 
 
   String _peso(double v) => '₱${v.toStringAsFixed(2)}';
 
