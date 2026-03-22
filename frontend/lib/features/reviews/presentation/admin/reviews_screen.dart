@@ -1,35 +1,38 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/admin_sidebar.dart';
-import "../../../../config/theme/app_colors.dart";
-import 'menu_management.dart';
-import 'order_screen.dart';
+import '../../../../config/theme/app_colors.dart';
 
-class AdminDashboardScreen extends StatefulWidget {
+class ReviewsScreen extends StatefulWidget {
   final int activeIndex;
-  const AdminDashboardScreen({super.key, this.activeIndex = 0});
+  const ReviewsScreen({super.key, this.activeIndex = 5});
+
   @override
-  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+  State<ReviewsScreen> createState() => _ReviewsScreenState();
 }
 
-class _AdminDashboardScreenState extends State<AdminDashboardScreen>{
+class _ReviewsScreenState extends State<ReviewsScreen> {
   late int activeIndex;
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
     activeIndex = widget.activeIndex;
   }
 
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Row(
         children: [
-          Sidebar(activeIndex: activeIndex),
+          // Sidebar with index-based navigation
+          Sidebar(
+            activeIndex: activeIndex),
+
+          // Main content
           Expanded(
             child: Center(
               child: Text(
-                'This is the Dashboard Screen',
+                'This is the Reviews Screen',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -38,8 +41,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>{
               ),
             ),
           ),
-        ]
-      )
+        ],
+      ),
     );
   }
 }

@@ -1,47 +1,45 @@
 import 'package:flutter/material.dart';
 import "../../config/theme/app_colors.dart";
 
-class Sidebar extends StatefulWidget{
+class Sidebar extends StatefulWidget {
   final int activeIndex;
-  final Function(int)? onItemTap;
 
-    const Sidebar({
-      super.key,
-      this.activeIndex = 0,
-      this.onItemTap,
-    });
+  const Sidebar({super.key, this.activeIndex = 0});
 
-    @override
-    State<Sidebar> createState() => _SidebarState();
-
+  @override
+  State<Sidebar> createState() => _SidebarState();
 }
 
-class _SidebarState extends State<Sidebar>{
+class _SidebarState extends State<Sidebar> {
   late int selectedIndex;
+
+  // Map of nav labels and their respective routes
+  final List<Map<String, dynamic>> navItems = [
+    {"icon": Icons.dashboard_rounded, "label": "DASHBOARD", "route": "/dashboard"},
+    {"icon": Icons.dashboard_rounded, "label": "ORDERS", "route": "/orders"},
+    {"icon": Icons.dashboard_rounded, "label": "MENU\nMANAGEMENT", "route": "/menu_management"},
+    {"icon": Icons.dashboard_rounded, "label": "REPORTS", "route": "/reports"},
+    {"icon": Icons.dashboard_rounded, "label": "CUSTOMERS", "route": "/customers"},
+    {"icon": Icons.dashboard_rounded, "label": "REVIEWS", "route": "/reviews"},
+    {"icon": Icons.dashboard_rounded, "label": "CMS", "route": "/cms"},
+  ];
+
   @override
-  void initState(){
+  void initState() {
     super.initState();
     selectedIndex = widget.activeIndex;
   }
-  @override
-  Widget build(BuildContext context){
-    final navItems = [
-      (Icons.dashboard_rounded, "DASHBOARD"),
-      (Icons.dashboard_rounded, "ORDERS"),
-      (Icons.dashboard_rounded, "MENU\nMANAGEMENT"),
-      (Icons.dashboard_rounded, "REPORTS"),
-      (Icons.dashboard_rounded, "CUSTOMERS"),
-      (Icons.dashboard_rounded, "REVIEWS"),
-      (Icons.dashboard_rounded, "CMS"),
-    ];
 
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      width: 148,
-      color: AppColors.background, // from app_colors.dart
+      width: 150,
+      color: AppColors.background,
       padding: const EdgeInsets.only(top: 15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Logo
           Center(
             child: Container(
               width: 48,
@@ -61,16 +59,21 @@ class _SidebarState extends State<Sidebar>{
           ),
           const SizedBox(height: 37),
 
-          // Build nav tiles dynamically
+          // Nav Items
           ...List.generate(navItems.length, (index) {
-            final e = navItems[index];
+            final item = navItems[index];
             return _NavTile(
-              icon: e.$1,
-              label: e.$2,
+              icon: item["icon"],
+              label: item["label"],
               selected: selectedIndex == index,
               onTap: () {
                 setState(() => selectedIndex = index);
-                if (widget.onItemTap != null) widget.onItemTap!(index);
+
+                // Navigate using the route from the map
+                final route = item["route"];
+                if (route != null && route is String) {
+                  Navigator.pushReplacementNamed(context, route);
+                }
               },
             );
           }),
@@ -107,13 +110,10 @@ class _NavTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           child: Row(
             children: [
-              Container(
-                width: 14,
-                height: 14,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: selected ? AppColors.background : AppColors.tertiary,
-                ),
+              Icon(
+                icon,
+                size: 16,
+                color: selected ? Colors.white : AppColors.tertiary,
               ),
               const SizedBox(width: 8),
               Expanded(
