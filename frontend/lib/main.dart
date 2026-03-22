@@ -32,6 +32,19 @@ final List<User> fakeUsers = [
   User('rider@test.com', '1234', UserRole.rider),
 ];
 
+// Routes for Admin Screens
+final Map<String, Widget Function(BuildContext) > adminRoutes = {
+  '/dashboard': (_) => const MenuManagementScreen(activeIndex: 0),
+  '/orders': (_) => const MenuManagementScreen(activeIndex: 1),
+  '/menu_management': (_) => const MenuManagementScreen(activeIndex: 2),
+  '/reports': (_) => const MenuManagementScreen(activeIndex: 3),
+  '/customers': (_) => const MenuManagementScreen(activeIndex: 4),
+  '/reviews': (_) => const MenuManagementScreen(activeIndex: 5),
+  '/cms': (_) => const MenuManagementScreen(activeIndex: 6),
+   // Add other routes here
+};
+ 
+
 // Global current user (simple for starter)
 User? currentUser;
 
@@ -51,26 +64,44 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'L-L Cafe IBMS',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      debugShowCheckedModeBanner: false,
-      home: currentUser == null
-          ? LoginScreen(onLogin: _setUser)
-          : _getHomeScreen(currentUser!.role),
-    );
-  }
+    // If not logged in, show login screen
+    if (currentUser == null) {
+      return MaterialApp(
+        title: 'L-L Cafe IBMS',
+        theme: ThemeData(primarySwatch: Colors.blue),
+        debugShowCheckedModeBanner: false,
+        home: LoginScreen(onLogin: _setUser),
+      );
+    }
 
-  Widget _getHomeScreen(UserRole role) {
-    switch (role) {
+    // After login, show role-specific dashboard
+    switch (currentUser!.role) {
       case UserRole.customer:
-        return const CustomerHomeScreen();
-      case UserRole.admin:
-        return const AdminDashboardScreen();
-      case UserRole.pos:
-        return const PosDashboardScreen();
+        return MaterialApp(
+          title: 'Customer Home',
+          debugShowCheckedModeBanner: false,
+          home: const CustomerHomeScreen(),
+        );
       case UserRole.rider:
-        return const RiderHomeScreen();
+        return MaterialApp(
+          title: 'Rider Home',
+          debugShowCheckedModeBanner: false,
+          home: const RiderHomeScreen(),
+        );
+      case UserRole.pos:
+        return MaterialApp(
+          title: 'POS Dashboard',
+          debugShowCheckedModeBanner: false,
+          home: const PosDashboardScreen(),
+        );
+      case UserRole.admin:
+        return MaterialApp(
+          title: 'Admin Dashboard',
+          debugShowCheckedModeBanner: false,
+          initialRoute: '/dashboard',
+          routes: adminRoutes, // <-- our named routes for admin
+          home: const MenuManagementScreen(activeIndex: 0),
+        );
     }
   }
 }
