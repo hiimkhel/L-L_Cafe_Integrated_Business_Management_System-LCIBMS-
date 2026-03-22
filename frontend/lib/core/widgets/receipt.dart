@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:frontend/config/theme/app_colors.dart';
 // ─────────────────────────────────────────────
 // DATA MODELS
 // ─────────────────────────────────────────────
@@ -102,12 +102,12 @@ class LLCafeReceipt extends StatelessWidget {
   });
 
   // ── Design tokens ────────────────────────────
-  static const Color _brown   = Color(0xFFA98258);
-  static const Color _dark    = Color(0xFF2D2A26);
-  static const Color _green   = Color(0xFF758C6D);
-  static const Color _cream   = Color(0xFFEFE2C9);
-  static const Color _white   = Color(0xFFFFFFFF);
-  static const Color _creamBg = Color(0x4DEFE2C9);
+  static const Color _brown   = AppColors.primary;
+  static const Color _dark    = Color(0xFF2D2A26);   
+  static const Color _green   = AppColors.secondary;
+  static const Color _cream   = AppColors.background;
+  static const Color _white   = AppColors.textLight;
+  static const Color _creamBg = Color(0x4DEFE2C9);  
 
   String _peso(double v) => '₱${v.toStringAsFixed(2)}';
 
