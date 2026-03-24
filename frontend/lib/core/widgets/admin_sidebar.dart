@@ -15,23 +15,11 @@ class _SidebarState extends State<Sidebar> {
 
   // Map of nav labels and their respective routes
   final List<Map<String, dynamic>> navItems = [
-    {
-      "icon": Icons.dashboard_rounded,
-      "label": "DASHBOARD",
-      "route": "/dashboard",
-    },
+    {"icon": Icons.dashboard_rounded, "label": "DASHBOARD", "route": "/dashboard"},
     {"icon": Icons.dashboard_rounded, "label": "ORDERS", "route": "/orders"},
-    {
-      "icon": Icons.dashboard_rounded,
-      "label": "MENU\nMANAGEMENT",
-      "route": "/menu_management",
-    },
+    {"icon": Icons.dashboard_rounded, "label": "MENU\nMANAGEMENT", "route": "/menu_management"},
     {"icon": Icons.dashboard_rounded, "label": "REPORTS", "route": "/reports"},
-    {
-      "icon": Icons.dashboard_rounded,
-      "label": "CUSTOMERS",
-      "route": "/customers",
-    },
+    {"icon": Icons.dashboard_rounded, "label": "CUSTOMERS", "route": "/customers"},
     {"icon": Icons.dashboard_rounded, "label": "REVIEWS", "route": "/reviews"},
     {"icon": Icons.dashboard_rounded, "label": "CMS", "route": "/cms"},
   ];
@@ -62,7 +50,10 @@ class _SidebarState extends State<Sidebar> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.asset("assets/images/lnl.jpg", fit: BoxFit.cover),
+                child: Image.asset(
+                  "assets/images/lnl.jpg",
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           ),
