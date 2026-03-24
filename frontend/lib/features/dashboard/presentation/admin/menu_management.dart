@@ -10,7 +10,8 @@ class MenuManagementScreen extends StatefulWidget {
 }
 
 class _MenuManagementScreenState extends State<MenuManagementScreen> {
-  //-------------------------State----------------------------------------------------------------
+  //--------------------------------------------------State---------------------------------------------------------------------
+
   String selectedCategory = "Foods";
   String? selectedItemName = "Chicken Burger";
   bool isAvailable = true;
@@ -146,7 +147,8 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     });
   }
 
-  //-------------------------Build----------------------------------------------------------------
+  //-----------------------------------------------------------Build--------------------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -169,7 +171,8 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     );
   }
 
-  //-------------------------SideBar-------------------------------------------------------------
+  //---------------------------------------------------SideBar-------------------------------------------------------------------------
+
   Widget _buildSidebar() {
     final navItems = [
       (Icons.dashboard_rounded, "DASHBOARD"),
@@ -252,7 +255,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     );
   }
 
-  //-------------------------BuildTopBar-------------------------------------------------------------
+  //------------------------------------------------------BuildTopBar-----------------------------------------------------------------------
   Widget _buildTopBar() {
     return Container(
       width: double.infinity,
@@ -327,7 +330,8 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     );
   }
 
-  //-------------------------FilterRow-------------------------------------------------------------
+  //---------------------------------------------------FilterRow------------------------------------------------------------------------
+
   Widget _buildFilterRow() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
@@ -421,7 +425,8 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     );
   }
 
-  //-------------------------ThreePanels-------------------------------------------------------------
+  //-------------------------------------------ThreePanels-------------------------------------------------------------------------------
+
   Widget _buildThreePanels() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 5, 24, 24),
@@ -954,4 +959,19 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       ),
     );
   }
+
+  //-------------------------------SearchItemsFunction-------------------------------------------------------------------------------
+
+ /* final TextEditingController _searchCtrl = TextEditingController();
+  final FocusNode _searchFocus = FocusNode();
+  OverlayEntry? _overlayEntry;
+  List<Map<String, String>> _searchResults = [];
+
+  _searchFocus.addListener(() {
+    if (!_searchFocus.hasFocus) _removeOverlay();
+  });
+
+  void _onSearchChanged(String query) {
+
+  }*/
 }
