@@ -5,6 +5,7 @@ class AppColors {
   static const Color secondary = Color(0xFF758C6D);   // green
   static const Color background = Color(0xFFEFE2C9);  // cream
   static const Color tertiary = Color(0xFFa98258);
+  static const Color white  = Color (0xFFFFFFFF);
 
   // extras
   static const Color textDark = Color(0xFF2B2B2B);
