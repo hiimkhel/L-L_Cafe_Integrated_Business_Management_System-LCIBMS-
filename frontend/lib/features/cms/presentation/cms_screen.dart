@@ -383,10 +383,31 @@ class ContentPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("CONTENT PREVIEW"),
-        const SizedBox(height: 10),
+      children:[
+      Center(
+          child: IntrinsicWidth(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: Text(
+                  "CONTENT PREVIEW",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                    color: AppColors.textLight
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // Preview box
         Container(
           height: 200,
           decoration: BoxDecoration(
