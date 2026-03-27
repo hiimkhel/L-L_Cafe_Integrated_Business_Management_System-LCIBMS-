@@ -68,31 +68,86 @@ class CMSMainSection extends StatelessWidget {
 }
 
 
-class TopControls extends StatelessWidget {
+class TopControls extends StatefulWidget {
   const TopControls({super.key});
+
+  @override
+  State<TopControls> createState() => _TopControlsState();
+}
+
+class _TopControlsState extends State<TopControls> {
+  String selectedCard = "Select Card to Update"; // default value
+
+  final List<String> cardOptions = [
+    "Select Card to Update",
+    "Event Card",
+    "Feature Card",
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(
-          child: Container(
-            height: 45,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(25),
+        Container(
+          margin: const EdgeInsets.only(right: 10),
+          child: Icon(Icons.dashboard_customize, size: 28, color: AppColors.primary),
+        ),
+
+        SizedBox(
+          width: 320, // fixed width
+          child: DropdownButtonFormField<String>(
+            value: selectedCard,
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              filled: true,
+              fillColor: AppColors.textLight,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(25),
+                borderSide: BorderSide(color: AppColors.receiptBg, width: 2),
+              ),
             ),
-            child: const Align(
-              alignment: Alignment.centerLeft,
-              child: Text("Select Card to Update..."),
-            ),
+            icon: const Icon(Icons.arrow_drop_down),
+            style: TextStyle(color: AppColors.receiptDark), // text color
+            items: cardOptions.map((card) {
+              return DropdownMenuItem(
+                value: card,
+                child: Text(card),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                selectedCard = value!;
+              });
+            },
           ),
         ),
-        const SizedBox(width: 10),
-        ElevatedButton(onPressed: () {}, child: const Text("SAVE")),
-        const SizedBox(width: 10),
-        ElevatedButton(onPressed: () {}, child: const Text("PUBLISH")),
+
+        const Spacer(),
+
+        const SizedBox(width: 16),
+        ElevatedButton(
+          onPressed: () {},
+          style: ElevatedButton.styleFrom(
+            foregroundColor: AppColors.primary,
+            backgroundColor: AppColors.textLight,
+            side: BorderSide(
+              color: AppColors.primary,
+              width: 1,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          ),
+          child: const Text("SAVE"),
+        ),
+        const SizedBox(width: 16),
+        ElevatedButton(
+          onPressed: () {},
+          style: ElevatedButton.styleFrom(
+            foregroundColor: AppColors.textLight,
+            backgroundColor: AppColors.secondary,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          ),
+          child: const Text("PUBLISH"),
+        ),
       ],
     );
   }
@@ -106,13 +161,13 @@ class MainCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFDCC9A8),
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Column( // ✅ changed from Row → Column
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const [
-          TopControls(), // ✅ now inside main card
+          TopControls(), 
           SizedBox(height: 20),
 
           Row(
