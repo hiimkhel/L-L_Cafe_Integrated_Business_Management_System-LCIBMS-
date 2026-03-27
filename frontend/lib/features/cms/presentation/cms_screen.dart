@@ -189,21 +189,185 @@ class ContentInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Text("CONTENT INFORMATION"),
-        SizedBox(height: 10),
-        TextField(decoration: InputDecoration(hintText: "Title")),
-        SizedBox(height: 10),
-        TextField(
-          maxLines: 3,
-          decoration: InputDecoration(hintText: "Description"),
+      children: [
+        Center(
+          child: IntrinsicWidth(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: Text(
+                  "CONTENT INFORMATION",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                    color: AppColors.textLight
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
+        TitleRow(title: "Title"),
+        SizedBox(height: 16),
+        SubtitleRow(title: "Description"),
+        SizedBox(height: 16),
+        ImageUploadRow(),
       ],
     );
   }
 }
+// ------------------- REUSABLE ROW WIDGET -------------------
+class ContentRow extends StatelessWidget {
+  final IconData icon;
+  final Widget child;
+  final double rowHeight;
 
+  const ContentRow({
+    super.key,
+    required this.icon,
+    required this.child,
+    this.rowHeight = 60, // default row height
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: rowHeight,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Icon column
+          Icon(icon, size: 28, color: AppColors.primary),
+          const SizedBox(width: 10),
+
+          // Vertical divider
+          Container(
+            width: 1,
+            height: rowHeight,
+            color: AppColors.primary,
+          ),
+          const SizedBox(width: 10),
+
+          // Input / upload field column
+          Expanded(
+            child: SizedBox(
+              height: rowHeight,
+              child: child,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ------------------- TITLE ROW -------------------
+class TitleRow extends StatelessWidget {
+  final String title;
+  const TitleRow({super.key, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return ContentRow(
+      icon: Icons.title,
+      rowHeight: 60,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        alignment: Alignment.centerLeft,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.white,
+          border: Border.all(color: AppColors.primary, style: BorderStyle.solid, width: 1),
+        ),
+        child: TextField(
+          style: const TextStyle(fontSize: 18),
+          decoration: InputDecoration(
+            hintText: title,
+            border: InputBorder.none, // remove underline
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ------------------- SUBTITLE / DESCRIPTION ROW -------------------
+class SubtitleRow extends StatelessWidget {
+  final String title;
+  const SubtitleRow({super.key, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return ContentRow(
+      icon: Icons.subtitles,
+      rowHeight: 100, // taller for multi-line
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.white,
+          border: Border.all(color: AppColors.primary, style: BorderStyle.solid, width: 1),
+        ),
+        child: TextField(
+          maxLines: null,
+          expands: true, // fills container height
+          style: const TextStyle(fontSize: 14),
+          decoration: InputDecoration(
+            hintText: title,
+            border: InputBorder.none,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ------------------- IMAGE UPLOAD ROW -------------------
+class ImageUploadRow extends StatelessWidget {
+  const ImageUploadRow({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ContentRow(
+      icon: Icons.image,
+      rowHeight: 140,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: AppColors.textLight,
+          border: Border.all(color: AppColors.primary, style: BorderStyle.solid, width: 1),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.cloud_upload, size: 36, color: AppColors.primary),
+            const SizedBox(height: 8),
+            const Text(
+              "Choose a file or drag & drop it here",
+              style: TextStyle(color: AppColors.primary),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                backgroundColor: AppColors.textLight,
+                side: const BorderSide(color: AppColors.primary),
+              ),
+              child: const Text("Browse File"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class ContentPreview extends StatelessWidget {
   const ContentPreview({super.key});
