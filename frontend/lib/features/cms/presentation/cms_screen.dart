@@ -173,7 +173,15 @@ class MainCard extends StatelessWidget {
           Row(
             children: [
               Expanded(child: ContentInfo()),
-              SizedBox(width: 20),
+              // Divider
+              SizedBox(
+                height: 400, // match the height of the row (adjust if needed)
+                child: VerticalDivider(
+                  color: AppColors.primary, // divider color
+                  width: 60,          // space occupied by the divider
+                  thickness: 1.5,     // actual line thickness
+                ),
+              ),
               Expanded(child: ContentPreview()),
             ],
           ),
