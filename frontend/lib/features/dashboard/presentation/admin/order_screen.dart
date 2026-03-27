@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/admin_header.dart';
+import '../../../../core/widgets/admin_sidebar.dart';
+import "../../../../config/theme/app_colors.dart";
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
@@ -8,25 +11,34 @@ class OrderScreen extends StatefulWidget {
 }
 
 class _OrderScreenState extends State<OrderScreen> {
-  static const _primary = Color(0xFFEFE2C9);
-  static const _secondary = Color(0xFF758C6D);
-  static const _tertiary = Color(0xFFa98258);
-  static const _bg = Color(0xFFFFFFFF);
+  String _selectedDateFilter = 'TODAY';
+
+//Does not work for now: Only a UI Placeholder. Waiting for Database
+  final List<String> _dateFilters = ['TODAY', 'YESTERDAY', 'LAST 7 DAYS'];
+
+  final List<Map<String, dynamic>> _orders = [
+    {'datetime': '2026-02-07 13:20', 'id': 'LL-398', 'customer': 'RICO B.',   'itemCount': 3, 'entryType': 'WALK-IN', 'total': '₱420.00'},
+    {'datetime': '2026-02-07 12:45', 'id': 'LL-397', 'customer': 'LIZA M.',   'itemCount': 1, 'entryType': 'ONLINE',  'total': '₱185.50'},
+    {'datetime': '2026-02-07 11:30', 'id': 'LL-396', 'customer': 'WALK-IN',   'itemCount': 4, 'entryType': 'ONLINE',  'total': '₱650.00'},
+    {'datetime': '2026-02-06 17:15', 'id': 'LL-395', 'customer': 'ELENA S.',  'itemCount': 1, 'entryType': 'ONLINE',  'total': '₱120.00'},
+    {'datetime': '2026-02-06 16:40', 'id': 'LL-394', 'customer': 'MARCUS D.', 'itemCount': 5, 'entryType': 'WALK-IN', 'total': '₱890.00'},
+    {'datetime': '2026-02-06 15:22', 'id': 'LL-393', 'customer': 'ANA G.',    'itemCount': 2, 'entryType': 'WALK-IN', 'total': '₱310.00'},
+    {'datetime': '2026-02-06 14:10', 'id': 'LL-392', 'customer': 'WALK-IN',   'itemCount': 1, 'entryType': 'WALK-IN', 'total': '₱145.00'},
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: Colors.white,
       body: Row(
         children: [
-          _buildSidebar(),
+          Sidebar(activeIndex: 1),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildTopBar(),
-                _buildFilterRow(),
-                Expanded(child: _buildOrderPlaceholder()),
+                AdminHeader(title: "ORDERS"),
+                Expanded(child: _buildBody()),
               ],
             ),
           ),
@@ -35,47 +47,155 @@ class _OrderScreenState extends State<OrderScreen> {
     );
   }
 
-  Widget _buildSidebar() {
-    final navItems = [
-      (Icons.dashboard_rounded, "DASHBOARD"),
-      (Icons.shopping_bag, "ORDERS"),
-      (Icons.menu_book, "MENU\nMANAGEMENT"),
-      (Icons.bar_chart, "REPORTS"),
-      (Icons.people, "CUSTOMERS"),
-      (Icons.rate_review, "REVIEWS"),
-      (Icons.article, "CMS"),
-    ];
-
-    return Container(
-      width: 148,
-      color: _primary,
-      padding: const EdgeInsets.only(top: 15),
+  Widget _buildBody() {
+    return Padding(
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: _tertiary,
-                borderRadius: BorderRadius.circular(12),
+          _buildTopFilterRow(),
+          const SizedBox(height: 16),
+          Expanded(child: _buildOrderTable()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopFilterRow() {
+    return Row(
+      children: [
+        // Date toggle buttons
+        Row(
+          children: [
+            Text(
+              'FILTER:',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: AppColors.tertiary,
+                letterSpacing: 0.6,
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.asset(
-                  "assets/images/lnl.jpg",
-                  fit: BoxFit.cover,
+            ),
+            const SizedBox(width: 10),
+            ..._dateFilters.map((f) {
+              final isActive = _selectedDateFilter == f;
+              return GestureDetector(
+                onTap: () => setState(() => _selectedDateFilter = f),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: isActive ? AppColors.tertiary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isActive
+                          ? AppColors.tertiary
+                          : AppColors.tertiary.withOpacity(.4),
+                    ),
+                  ),
+                  child: Text(
+                    f,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                      color: isActive ? Colors.white : AppColors.tertiary,
+                    ),
+                  ),
                 ),
+              );
+            }),
+          ],
+        ),
+        const Spacer(),
+        // Date range display
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.tertiary.withOpacity(.3)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.calendar_today_outlined, size: 13, color: AppColors.tertiary),
+              const SizedBox(width: 6),
+              Text(
+                'FEB 01, 2026 - FEB 07, 2026',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.tertiary,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        // Filter icon
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.tertiary.withOpacity(.3)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(Icons.tune_rounded, size: 16, color: AppColors.tertiary),
+        ),
+        const SizedBox(width: 10),
+        // Search field
+        SizedBox(
+          width: 200,
+          height: 34,
+          child: TextField(
+            style: TextStyle(fontSize: 12, color: AppColors.tertiary),
+            decoration: InputDecoration(
+              hintText: 'SEARCH ORDER ID...',
+              hintStyle: TextStyle(
+                color: AppColors.tertiary.withOpacity(.5),
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+              suffixIcon: Icon(Icons.search, size: 16, color: AppColors.tertiary),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppColors.tertiary.withOpacity(.3)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: AppColors.tertiary, width: .9),
               ),
             ),
           ),
-          const SizedBox(height: 37),
-          ...navItems.map(
-            (e) => _navTile(
-              e.$1,
-              e.$2,
-              selected: e.$2.contains("ORDERS"),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOrderTable() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.tertiary.withOpacity(.08),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildTableHeader(),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _orders.length,
+              itemBuilder: (context, index) =>
+                  _buildOrderRow(_orders[index], index),
             ),
           ),
         ],
@@ -83,303 +203,171 @@ class _OrderScreenState extends State<OrderScreen> {
     );
   }
 
-  Widget _navTile(IconData icon, String label, {bool selected = false}) {
+  Widget _buildTableHeader() {
+    const headers = ['DATE / TIME', 'ORDER ID', 'SPECIMEN / CUSTOMER', 'ITEM COUNT', 'ENTRY TYPE', 'TOTAL VALUE', ''];
+    const flexes  = [2, 1, 2, 1, 1, 1, 2];
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
-        color: selected ? _secondary : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        child: Row(
-          children: [
-            Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: selected ? _bg : _tertiary,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: selected ? Colors.white : _tertiary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  height: 1.50,
-                ),
-              ),
-            ),
-          ],
+        color: AppColors.background.withOpacity(.6),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        border: Border(
+          bottom: BorderSide(color: AppColors.tertiary.withOpacity(.15)),
         ),
+      ),
+      child: Row(
+        children: List.generate(headers.length, (i) => Expanded(
+          flex: flexes[i],
+          child: Text(
+            headers[i],
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.6,
+              color: AppColors.tertiary.withOpacity(.8),
+            ),
+          ),
+        )),
       ),
     );
   }
 
-  Widget _buildTopBar() {
+  Widget _buildOrderRow(Map<String, dynamic> order, int index) {
+    final isWalkIn = order['entryType'] == 'WALK-IN';
+
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: _primary,
+        color: index.isEven ? Colors.white : AppColors.background.withOpacity(.3),
         border: Border(
-          bottom: BorderSide(
-            color: Color.fromRGBO(239, 226, 201, 0.5),
-          ),
+          bottom: BorderSide(color: AppColors.tertiary.withOpacity(.08)),
         ),
       ),
       child: Row(
         children: [
-          Text(
-            "ORDERS",
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 28,
-              fontWeight: FontWeight.w900,
-              color: _tertiary,
-              letterSpacing: 2,
+          // Date / Time
+          Expanded(
+            flex: 2,
+            child: Text(
+              order['datetime'],
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.tertiary.withOpacity(.8),
+              ),
             ),
           ),
-          const Spacer(),
-          _topIcon(Icons.dark_mode_outlined),
-          const SizedBox(width: 8),
-          _topIcon(Icons.notifications_rounded),
-          const SizedBox(width: 8),
-          _topIcon(Icons.settings_rounded),
-          const SizedBox(width: 10),
-          Container(width: 2.5, height: 30, color: _tertiary),
-          const SizedBox(width: 10),
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: _tertiary,
-            child: const Icon(Icons.person, color: Colors.white, size: 20),
-          ),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                "L&L CAFE",
-                style: TextStyle(fontSize: 10, color: _secondary),
+          // Order ID pill
+          Expanded(
+            flex: 1,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.tertiary.withOpacity(.2)),
               ),
-              Text(
-                "ADMIN",
+              child: Text(
+                order['id'],
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.tertiary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+          // Customer
+          Expanded(
+            flex: 2,
+            child: Text(
+              order['customer'],
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF4a3520),
+              ),
+            ),
+          ),
+          // Item count
+          Expanded(
+            flex: 1,
+            child: Text(
+              '${order['itemCount']} Units',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.tertiary.withOpacity(.8),
+              ),
+            ),
+          ),
+          // Entry type pill
+          Expanded(
+            flex: 1,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: isWalkIn
+                    ? AppColors.background
+                    : const Color(0xFFD4EDDA),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isWalkIn
+                      ? AppColors.tertiary.withOpacity(.25)
+                      : const Color(0xFF155724).withOpacity(.25),
+                ),
+              ),
+              child: Text(
+                order['entryType'],
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
-                  color: _tertiary,
+                  color: isWalkIn
+                      ? AppColors.tertiary
+                      : const Color(0xFF155724),
                 ),
+                textAlign: TextAlign.center,
               ),
-              Container(height: 2, width: 35, color: Colors.black),
-            ],
-          ),
-          const SizedBox(width: 12),
-          _topIcon(Icons.logout_rounded),
-        ],
-      ),
-    );
-  }
-
-  Widget _topIcon(IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        color: _primary,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _primary),
-      ),
-      child: Icon(icon, color: _tertiary, size: 25),
-    );
-  }
-
-  Widget _buildFilterRow() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: _bg,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: _tertiary,
-                  offset: const Offset(0, 4),
-                  blurRadius: 9,
-                  spreadRadius: 0,
-                ),
-              ],
             ),
-            child: Row(
-              children: [
-                Text(
-                  "ALL ORDERS",
+          ),
+          // Total
+          Expanded(
+            flex: 1,
+            child: Text(
+              order['total'],
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF4a3520),
+              ),
+            ),
+          ),
+          // View Receipt button
+          //Also doesnt work. Just a ui button
+          Expanded(
+            flex: 2,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton.icon(
+                onPressed: () {},
+                icon: Icon(Icons.receipt_long_outlined, size: 13, color: AppColors.tertiary),
+                label: Text(
+                  'VIEW RECEIPT',
                   style: TextStyle(
-                    color: _tertiary,
-                    fontSize: 12,
+                    fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: .8,
+                    color: AppColors.tertiary,
+                    letterSpacing: 0.4,
                   ),
                 ),
-                const SizedBox(width: 5),
-                Icon(Icons.keyboard_arrow_down, color: _tertiary, size: 16),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 220,
-            height: 36,
-            child: Container(
-              decoration: BoxDecoration(
-                boxShadow: [
-                  BoxShadow(
-                    color: _tertiary,
-                    offset: const Offset(0, 4),
-                    blurRadius: 9,
-                    spreadRadius: 0,
-                  ),
-                ],
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: TextField(
-                style: TextStyle(fontSize: 15, color: _tertiary),
-                decoration: InputDecoration(
-                  hintText: "SEARCH ORDER...",
-                  hintStyle: TextStyle(
-                    color: _tertiary,
-                    fontSize: 12,
-                    letterSpacing: .8,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  suffixIcon: Icon(Icons.search, color: _tertiary, size: 16),
-                  filled: true,
-                  fillColor: _bg,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 14,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide(color: _bg),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide(color: _tertiary, width: .9),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: AppColors.tertiary.withOpacity(.4)),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
-            ),
-          ),
-          const Spacer(),
-          ElevatedButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.add_circle_outline, size: 16),
-            label: const Text('NEW ORDER'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _tertiary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOrderPlaceholder() {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: _bg,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Color.fromRGBO(169, 130, 88, 0.15),
-              blurRadius: 14,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.shopping_cart_checkout,
-              size: 64,
-              color: Colors.black38,
-            ),
-            const SizedBox(height: 14),
-            Text(
-              'Order management is under development',
-              style: TextStyle(
-                fontSize: 18,
-                color: _tertiary,
-                fontWeight: FontWeight.w700,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Placeholder content to match dashboard/menu management style',
-              style: TextStyle(
-                fontSize: 14,
-                color: Color.fromRGBO(169, 130, 88, 0.9),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            Wrap(
-              spacing: 14,
-              runSpacing: 14,
-              children: List.generate(4, (index) {
-                final labels = ['Pending', 'Preparing', 'Ready', 'Completed'];
-                return _statusCard(labels[index], (index + 2) * 5);
-              }),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _statusCard(String title, int count) {
-    return Container(
-      width: 150,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: _primary,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Color.fromRGBO(117, 140, 109, 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              color: _tertiary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '$count',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              color: _tertiary,
             ),
           ),
         ],
