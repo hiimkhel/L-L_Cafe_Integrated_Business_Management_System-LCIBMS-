@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class OrderScreen extends StatefulWidget {
-  const OrderScreen({super.key});
+  final int activeIndex;
+  const OrderScreen({super.key, this.activeIndex = 1});
 
   @override
   State<OrderScreen> createState() => _OrderScreenState();
