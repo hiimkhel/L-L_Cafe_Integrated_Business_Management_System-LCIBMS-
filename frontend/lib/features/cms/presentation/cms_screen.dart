@@ -158,34 +158,38 @@ class MainCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          TopControls(), 
-          SizedBox(height: 20),
+    return Expanded( // 👈 ADD THIS
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            TopControls(),
+            SizedBox(height: 20),
 
-          Row(
-            children: [
-              Expanded(child: ContentInfo()),
-              // Divider
-              SizedBox(
-                height: 400, // match the height of the row (adjust if needed)
-                child: VerticalDivider(
-                  color: AppColors.primary, // divider color
-                  width: 60,          // space occupied by the divider
-                  thickness: 1.5,     // actual line thickness
-                ),
+            // THIS NOW HAS HEIGHT
+            Expanded(
+              child: Row(
+                children: [
+                  Expanded(child: ContentInfo()),
+
+                  // Divider
+                  VerticalDivider(
+                    color: AppColors.primary,
+                    width: 60,
+                    thickness: 1.5,
+                  ),
+
+                  Expanded(child: ContentPreview()),
+                ],
               ),
-              Expanded(child: ContentPreview()),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -383,8 +387,9 @@ class ContentPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      children:[
-      Center(
+      children: [
+        // Title
+        Center(
           child: IntrinsicWidth(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -393,28 +398,37 @@ class ContentPreview extends StatelessWidget {
                 color: AppColors.primary,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Center(
-                child: Text(
-                  "CONTENT PREVIEW",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                    color: AppColors.textLight
-                  ),
+              child: const Text(
+                "CONTENT PREVIEW",
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                  color: AppColors.textLight,
                 ),
               ),
             ),
           ),
         ),
 
-        // Preview box
-        Container(
-          height: 200,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: Colors.grey,
+        // THIS takes remaining height
+        Expanded(
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(32),
+
+            // Inner preview box
+            child: Center(
+              child: Container(
+                height: 260,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.grey,
+                ),
+                child: const Center(child: Text("Preview")),
+              ),
+            ),
           ),
-          child: const Center(child: Text("Preview")),
         ),
       ],
     );
