@@ -53,15 +53,20 @@ class CMSMainSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
       color: AppColors.textLight,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          MainCard(),
-          SizedBox(height: 20),
-          TableCard(),
-        ],
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: const MainCard(),
+            ),
+            const SizedBox(height: 20),
+            const TableCard(),
+          ],
+        ),
       ),
     );
   }
@@ -158,7 +163,7 @@ class MainCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded( // 👈 ADD THIS
+    return Expanded( 
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -441,24 +446,123 @@ class TableCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFDCC9A8),
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
-        children: const [
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title
+          const Text(
+            "CONTENT LIST",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Header
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("CARD"),
-              Text("HEADING"),
-              Text("STATUS"),
+            children: const [
+              Expanded(child: Text("CARD", style: TextStyle(fontWeight: FontWeight.bold))),
+              Expanded(child: Text("HEADING", style: TextStyle(fontWeight: FontWeight.bold))),
+              Expanded(child: Text("STATUS", style: TextStyle(fontWeight: FontWeight.bold))),
+              SizedBox(width: 80), // space for actions
             ],
           ),
-          SizedBox(height: 10),
-          Text("Table rows here..."),
+
+          const SizedBox(height: 10),
+          const Divider(),
+
+          // Rows
+          const TableRowItem(
+            card: "Event",
+            heading: "School Fair",
+            status: "Published",
+          ),
+          const TableRowItem(
+            card: "Feature",
+            heading: "New Program",
+            status: "Draft",
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class TableRowItem extends StatelessWidget {
+  final String card;
+  final String heading;
+  final String status;
+
+  const TableRowItem({
+    super.key,
+    required this.card,
+    required this.heading,
+    required this.status,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: Text(card)),
+            Expanded(child: Text(heading)),
+            Expanded(child: StatusBadge(status: status)),
+
+            // Actions
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.edit, size: 20),
+                  color: AppColors.primary,
+                  onPressed: () {},
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, size: 20),
+                  color: Colors.red,
+                  onPressed: () {},
+                ),
+              ],
+            ),
+          ],
+        ),
+        const Divider(),
+      ],
+    );
+  }
+}
+
+class StatusBadge extends StatelessWidget {
+  final String status;
+
+  const StatusBadge({super.key, required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final isPublished = status == "Published";
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: isPublished
+            ? Colors.green.withOpacity(0.1)
+            : Colors.orange.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(
+          color: isPublished ? Colors.green : Colors.orange,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
