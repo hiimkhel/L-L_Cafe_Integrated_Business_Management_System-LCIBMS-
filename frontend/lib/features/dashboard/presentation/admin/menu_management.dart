@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/core/widgets/admin_sidebar.dart';
+//import 'package:frontend/core/constants/menu_item.dart';
+import 'package:frontend/core/constants/menu_data.dart';
+//import 'package:frontend/core/constants/menu_controller.dart';
 
 class MenuManagementScreen extends StatefulWidget {
   final int activeIndex;
@@ -15,88 +18,13 @@ class MenuManagementScreen extends StatefulWidget {
 class _MenuManagementScreenState extends State<MenuManagementScreen> {
   //--------------------------------------------------State---------------------------------------------------------------------
 
-  String selectedCategory = "Foods";
-  String? selectedItemName = "Chicken Burger";
+  String selectedCategory = 'Foods';
+  String? selectedItemName = 'Chicken Burger';
   bool isAvailable = true;
 
-  final List<String> categories = [
-    "Foods",
-    "Party Tray",
-    "Waffles",
-    "Coffee",
-    "Non-Coffee",
-    "Frappe",
-  ];
-
-  final Map<String, List<Map<String, String>>> itemsByCategory = {
-    "Foods": [
-      {
-        "name": "Chicken Burger",
-        "price": "₱199.00",
-        "desc": "This is a description.",
-      },
-      {
-        "name": "Cheese Burger",
-        "price": "₱199.00",
-        "desc": "This is a description.",
-      },
-      {
-        "name": "Hawaiian Burger",
-        "price": "₱199.00",
-        "desc": "This is a description.",
-      },
-    ],
-    "Party Tray": [
-      {
-        "name": "Barkada Platter",
-        "price": "₱599.00",
-        "desc": "Good for 5–6 persons.",
-      },
-    ],
-    "Waffles": [
-      {
-        "name": "Classic Waffle",
-        "price": "₱149.00",
-        "desc": "Crispy golden waffle.",
-      },
-      {
-        "name": "Choco Waffle",
-        "price": "₱169.00",
-        "desc": "With rich chocolate drizzle.",
-      },
-    ],
-    "Coffee": [
-      {
-        "name": "Americano",
-        "price": "₱99.00",
-        "desc": "Bold and smooth espresso.",
-      },
-      {
-        "name": "Cappuccino",
-        "price": "₱119.00",
-        "desc": "Espresso with steamed milk.",
-      },
-    ],
-    "Non-Coffee": [
-      {
-        "name": "Matcha Latte",
-        "price": "₱129.00",
-        "desc": "Premium Japanese matcha.",
-      },
-    ],
-    "Frappe": [
-      {
-        "name": "Mocha Frappe",
-        "price": "₱139.00",
-        "desc": "Chilled mocha bliss.",
-      },
-      {
-        "name": "Caramel Frappe",
-        "price": "₱139.00",
-        "desc": "Sweet caramel swirls.",
-      },
-    ],
-  };
+  final List<String> categories = MenuData.categories;
+  final Map<String, List<Map<String, String>>> itemsByCategory =
+      MenuData.itemsByCategory;
 
   late TextEditingController _nameCtrl;
   late TextEditingController _priceCtrl;
@@ -106,9 +34,9 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   void initState() {
     super.initState();
     final item = _selectedItemData;
-    _nameCtrl = TextEditingController(text: item?["name"] ?? "");
-    _priceCtrl = TextEditingController(text: item?["price"] ?? "");
-    _descCtrl = TextEditingController(text: item?["desc"] ?? "");
+    _nameCtrl = TextEditingController(text: item?['name'] ?? '');
+    _priceCtrl = TextEditingController(text: item?['price'] ?? '');
+    _descCtrl = TextEditingController(text: item?['desc'] ?? '');
   }
 
   @override
@@ -125,7 +53,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   Map<String, String>? get _selectedItemData {
     if (selectedItemName == null) return null;
     try {
-      return _currentItems.firstWhere((i) => i["name"] == selectedItemName);
+      return _currentItems.firstWhere((i) => i['name'] == selectedItemName);
     } catch (_) {
       return null;
     }
@@ -133,10 +61,10 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
 
   void _onSelectItem(Map<String, String> item) {
     setState(() {
-      selectedItemName = item["name"];
-      _nameCtrl.text = item["name"] ?? "";
-      _priceCtrl.text = item["price"] ?? "";
-      _descCtrl.text = item["desc"] ?? "";
+      selectedItemName = item['name'];
+      _nameCtrl.text = item['name'] ?? '';
+      _priceCtrl.text = item['price'] ?? '';
+      _descCtrl.text = item['desc'] ?? '';
     });
   }
 
