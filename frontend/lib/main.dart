@@ -37,17 +37,16 @@ final List<User> fakeUsers = [
 ];
 
 // Routes for Admin Screens
-final Map<String, Widget Function(BuildContext) > adminRoutes = {
+final Map<String, Widget Function(BuildContext)> adminRoutes = {
   '/dashboard': (_) => const AdminDashboardScreen(activeIndex: 0),
   '/orders': (_) => const OrderScreen(activeIndex: 1),
-  '/menu_management': (_) => const CMSScreen(activeIndex: 2),
+  '/menu_management': (_) => const MenuManagementScreen(activeIndex: 2),
   '/reports': (_) => const ReportsScreen(activeIndex: 3),
   '/customers': (_) => const CustomersScreen(activeIndex: 4),
   '/reviews': (_) => const ReviewsScreen(activeIndex: 5),
   '/cms': (_) => const CMSScreen(activeIndex: 6),
-   // Add other routes here
+  // Add other routes here
 };
- 
 
 // Global current user (simple for starter)
 User? currentUser;
