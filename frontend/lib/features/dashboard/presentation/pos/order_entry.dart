@@ -524,7 +524,10 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                const Divider(height: 1, color: Color.fromARGB(255, 237, 236, 236)),
+                const Divider(
+                  height: 1,
+                  color: Color.fromARGB(255, 237, 236, 236),
+                ),
                 const SizedBox(height: 8),
 
                 Row(
@@ -743,4 +746,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
       ),
     );
   }
+
+  //for improvement.. add logic
 }
