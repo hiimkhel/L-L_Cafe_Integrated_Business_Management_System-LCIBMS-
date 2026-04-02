@@ -4,13 +4,22 @@ import '../../../../core/widgets/admin_sidebar.dart';
 import "../../../../config/theme/app_colors.dart";
 
 class OrderScreen extends StatefulWidget {
-  const OrderScreen({super.key});
+  final int activeIndex;
+  const OrderScreen({super.key, this.activeIndex = 1});
 
   @override
   State<OrderScreen> createState() => _OrderScreenState();
 }
 
+
 class _OrderScreenState extends State<OrderScreen> {
+  late int activeIndex;
+
+  @override
+  void initState(){
+    super.initState();
+    activeIndex = widget.activeIndex;
+    }
   String _selectedDateFilter = 'TODAY';
 
 //Does not work for now: Only a UI Placeholder. Waiting for Database

@@ -6,12 +6,11 @@ import 'features/dashboard/presentation/admin/dashboard_screen.dart';
 import 'features/dashboard/presentation/cashier/dashboard_screen.dart';
 import 'features/home/presentation/rider/home_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
-import 'features/dashboard/presentation/admin/menu_management.dart';
 import 'features/cms/presentation/cms_screen.dart';
 import 'features/customers/presentation/admin/customers_screen.dart';
 import 'features/reports/presentation/admin/reports_screen.dart';
 import 'features/reviews/presentation/admin/reviews_screen.dart';
-
+import 'features/dashboard/presentation/admin/order_screen.dart';
 
 void main() {
   runApp(const LCIBMSApp());
@@ -40,7 +39,7 @@ final List<User> fakeUsers = [
 // Routes for Admin Screens
 final Map<String, Widget Function(BuildContext) > adminRoutes = {
   '/dashboard': (_) => const AdminDashboardScreen(activeIndex: 0),
-  '/orders': (_) => const CMSScreen(activeIndex: 1),
+  '/orders': (_) => const OrderScreen(activeIndex: 1),
   '/menu_management': (_) => const CMSScreen(activeIndex: 2),
   '/reports': (_) => const ReportsScreen(activeIndex: 3),
   '/customers': (_) => const CustomersScreen(activeIndex: 4),
