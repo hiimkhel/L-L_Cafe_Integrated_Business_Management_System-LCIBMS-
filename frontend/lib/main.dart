@@ -11,6 +11,7 @@ import 'features/customers/presentation/admin/customers_screen.dart';
 import 'features/reports/presentation/admin/reports_screen.dart';
 import 'features/reviews/presentation/admin/reviews_screen.dart';
 import 'features/dashboard/presentation/admin/order_screen.dart';
+import 'features/dashboard/presentation/admin/menu_management.dart';
 
 void main() {
   runApp(const LCIBMSApp());
