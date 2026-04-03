@@ -10,7 +10,9 @@ import 'features/cms/presentation/cms_screen.dart';
 import 'features/customers/presentation/admin/customers_screen.dart';
 import 'features/reports/presentation/admin/reports_screen.dart';
 import 'features/reviews/presentation/admin/reviews_screen.dart';
+import 'features/dashboard/presentation/pos/order_entry.dart';
 import 'features/dashboard/presentation/admin/order_screen.dart';
+import 'features/dashboard/presentation/admin/menu_management.dart';
 
 void main() {
   runApp(const LCIBMSApp());
@@ -45,6 +47,12 @@ final Map<String, Widget Function(BuildContext)> adminRoutes = {
   '/customers': (_) => const CustomersScreen(activeIndex: 4),
   '/reviews': (_) => const ReviewsScreen(activeIndex: 5),
   '/cms': (_) => const CMSScreen(activeIndex: 6),
+  // Add other routes here
+};
+
+//---------------pos routes-----------------------
+final Map<String, Widget Function(BuildContext)> PosRoutes = {
+  '/pos/dashboard': (_) => const POSOrderScreen(),
   // Add other routes here
 };
 
@@ -95,7 +103,9 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
         return MaterialApp(
           title: 'POS Dashboard',
           debugShowCheckedModeBanner: false,
-          home: const PosDashboardScreen(),
+          initialRoute: '/pos/dashboard',
+          routes: PosRoutes, // <-- our named routes for POS
+          home: const POSOrderScreen(),
         );
       case UserRole.admin:
         return MaterialApp(

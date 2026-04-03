@@ -36,11 +36,7 @@ class AdminHeader extends StatelessWidget {
           const SizedBox(width: 8),
           _topIcon(Icons.settings_rounded),
           const SizedBox(width: 10),
-          Container(
-            width: 2.5,
-            height: 30,
-            color: AppColors.tertiary,
-          ),
+          Container(width: 2.5, height: 30, color: AppColors.tertiary),
           const SizedBox(width: 10),
           CircleAvatar(
             radius: 18,
