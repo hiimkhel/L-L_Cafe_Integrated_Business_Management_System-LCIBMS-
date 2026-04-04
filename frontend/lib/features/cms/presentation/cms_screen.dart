@@ -476,13 +476,28 @@
             ),
 
             const SizedBox(height: 10),
-            const Divider(),
+            const Divider( color: AppColors.textLight),
 
             // Rows
             const TableRowItem(
               card: "Event",
               heading: "School Fair",
               status: "Published",
+            ),
+            const TableRowItem(
+              card: "Feature",
+              heading: "New Program",
+              status: "Draft",
+            ),
+            const TableRowItem(
+              card: "Feature",
+              heading: "New Program",
+              status: "Draft",
+            ),
+            const TableRowItem(
+              card: "Feature",
+              heading: "New Program",
+              status: "Draft",
             ),
             const TableRowItem(
               card: "Feature",
@@ -535,7 +550,7 @@
               ),
             ],
           ),
-          const Divider(),
+          const Divider( color: AppColors.textLight),
         ],
       );
     }
