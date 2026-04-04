@@ -63,7 +63,7 @@ class AdminHeader extends StatelessWidget {
               Icons.person_rounded,
               color: AppColors.primary,
               size: 24,
-            ),
+            ),         
           ),
 
           const SizedBox(width: 8),
