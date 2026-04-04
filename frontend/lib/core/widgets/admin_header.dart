@@ -34,14 +34,36 @@ class AdminHeader extends StatelessWidget {
           const SizedBox(width: 8),
           _HeaderIconBtn(icon: Icons.notifications_rounded),
           const SizedBox(width: 8),
-          _topIcon(Icons.settings_rounded),
-          const SizedBox(width: 10),
-          Container(width: 2.5, height: 30, color: AppColors.tertiary),
-          const SizedBox(width: 10),
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.tertiary,
-            child: const Icon(Icons.person, color: Colors.white, size: 20),
+          _HeaderIconBtn(icon: Icons.settings_rounded),
+
+          const SizedBox(width: 12),
+
+          // ── Vertical divider ─────────────────────
+          Container(
+            width: 2,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          // ── Avatar ───────────────────────────────
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              border: Border.all(color: AppColors.primary, width: 1.5),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.person_rounded,
+              color: AppColors.primary,
+              size: 24,
+            ),         
           ),
 
           const SizedBox(width: 8),
