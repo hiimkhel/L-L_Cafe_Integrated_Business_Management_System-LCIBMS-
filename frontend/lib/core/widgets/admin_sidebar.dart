@@ -1,9 +1,37 @@
 import 'package:flutter/material.dart';
-import "../../config/theme/app_colors.dart";
+import '../../config/theme/app_colors.dart';
+
+// ─────────────────────────────────────────────
+// NAV ITEM MODEL
+// ─────────────────────────────────────────────
+
+class _NavItemData {
+  final IconData icon;
+  final String label;
+  final String route;
+  const _NavItemData({
+    required this.icon,
+    required this.label,
+    required this.route,
+  });
+}
+
+const List<_NavItemData> _navItems = [
+  _NavItemData(icon: Icons.dashboard_rounded,    label: 'DASHBOARD',        route: '/dashboard'),
+  _NavItemData(icon: Icons.receipt_long_rounded, label: 'ORDERS',           route: '/orders'),
+  _NavItemData(icon: Icons.menu_book_rounded,    label: 'MENU MANAGEMENT',  route: '/menu_management'),
+  _NavItemData(icon: Icons.bar_chart_rounded,    label: 'REPORTS',          route: '/reports'),
+  _NavItemData(icon: Icons.people_alt_rounded,   label: 'CUSTOMERS',        route: '/customers'),
+  _NavItemData(icon: Icons.star_rounded,         label: 'REVIEWS',          route: '/reviews'),
+  _NavItemData(icon: Icons.tune_rounded,         label: 'CMS',              route: '/cms'),
+];
+
+// ─────────────────────────────────────────────
+// SIDEBAR WIDGET
+// ─────────────────────────────────────────────
 
 class Sidebar extends StatefulWidget {
   final int activeIndex;
-
   const Sidebar({super.key, this.activeIndex = 0});
 
   @override
@@ -11,124 +39,149 @@ class Sidebar extends StatefulWidget {
 }
 
 class _SidebarState extends State<Sidebar> {
-  late int selectedIndex;
-
-  // Map of nav labels and their respective routes
-  final List<Map<String, dynamic>> navItems = [
-    {"icon": Icons.dashboard_rounded, "label": "DASHBOARD", "route": "/dashboard"},
-    {"icon": Icons.dashboard_rounded, "label": "ORDERS", "route": "/orders"},
-    {"icon": Icons.dashboard_rounded, "label": "MENU\nMANAGEMENT", "route": "/menu_management"},
-    {"icon": Icons.dashboard_rounded, "label": "REPORTS", "route": "/reports"},
-    {"icon": Icons.dashboard_rounded, "label": "CUSTOMERS", "route": "/customers"},
-    {"icon": Icons.dashboard_rounded, "label": "REVIEWS", "route": "/reviews"},
-    {"icon": Icons.dashboard_rounded, "label": "CMS", "route": "/cms"},
-  ];
+  late int _selected;
 
   @override
   void initState() {
     super.initState();
-    selectedIndex = widget.activeIndex;
+    _selected = widget.activeIndex;
+  }
+
+  void _onTap(int index) {
+    if (_selected == index) return;
+    setState(() => _selected = index);
+    Navigator.pushReplacementNamed(context, _navItems[index].route);
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 150,
+      width: 180,
+      height: double.infinity,
       color: AppColors.background,
-      padding: const EdgeInsets.only(top: 15),
+      padding: const EdgeInsets.only(top: 24, bottom: 24),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Logo
-          Center(
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppColors.tertiary,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.asset(
-                  "assets/images/lnl.jpg",
-                  fit: BoxFit.cover,
+          // ── Logo ─────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.asset(
+                'assets/images/lnl.jpg',
+                width: 68,
+                height: 68,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 68,
+                  height: 68,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(Icons.storefront_rounded,
+                      color: Colors.white, size: 32),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 37),
 
-          // Nav Items
-          ...List.generate(navItems.length, (index) {
-            final item = navItems[index];
-            return _NavTile(
-              icon: item["icon"],
-              label: item["label"],
-              selected: selectedIndex == index,
-              onTap: () {
-                setState(() => selectedIndex = index);
+          const SizedBox(height: 32),
 
-                // Navigate using the route from the map
-                final route = item["route"];
-                if (route != null && route is String) {
-                  Navigator.pushReplacementNamed(context, route);
-                }
-              },
-            );
-          }),
+          // ── Nav items ────────────────────────
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              itemCount: _navItems.length,
+              itemBuilder: (_, i) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: _NavTile(
+                  data: _navItems[i],
+                  selected: _selected == i,
+                  onTap: () => _onTap(i),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
+// ─────────────────────────────────────────────
+// NAV TILE
+// ─────────────────────────────────────────────
+
 class _NavTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
+  final _NavItemData data;
   final bool selected;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
 
   const _NavTile({
-    required this.icon,
-    required this.label,
+    required this.data,
     required this.selected,
-    this.onTap,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
         decoration: BoxDecoration(
           color: selected ? AppColors.secondary : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: AppColors.secondary.withOpacity(0.28),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  )
+                ]
+              : null,
         ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                size: 16,
-                color: selected ? Colors.white : AppColors.tertiary,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // ── Icon badge ──────────────────────
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: selected
+                    ? Colors.white
+                    : AppColors.primary.withOpacity(0.13),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: selected ? Colors.white : AppColors.tertiary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    height: 1.5,
-                  ),
+              child: Icon(
+                data.icon,
+                size: 15,
+                color: selected ? AppColors.secondary : AppColors.primary,
+              ),
+            ),
+
+            const SizedBox(width: 10),
+
+            // ── Label ───────────────────────────
+            Expanded(
+              child: Text(
+                data.label,
+                style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                  height: 1.3,
+                  color: selected ? Colors.white : AppColors.tertiary,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
