@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/config/theme/app_text_styles.dart';
-import 'status_chip.dart';
-import 'action_button.dart';
 
-class OrderRow extends StatelessWidget {
+class OrderRow2 extends StatelessWidget {
   final String id;
   final String customer;
   final List<String> items;
-  final String status;
   final String time;
 
-  const OrderRow({
+  const OrderRow2({
     super.key,
     required this.id,
     required this.customer,
     required this.items,
-    required this.status,
     required this.time,
   });
 
@@ -40,15 +36,8 @@ class OrderRow extends StatelessWidget {
             ),
           Expanded(flex: 3, child: Text(customer, style: AppTextStyles.body)),
           Expanded(flex: 4, child: _items()),
-          Expanded(
-            flex: 3, 
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child:StatusChip(status: status)
-              ),
-            ),
           Expanded(flex: 3, child: _time()),
-          Expanded(flex: 3, child: _actions()),
+          
         ],
       ),
     );
@@ -82,12 +71,5 @@ class OrderRow extends StatelessWidget {
         Text(time, style: AppTextStyles.body),
       ],
     );
-  }
-
-  Widget _actions() {
-    if (status == "ready") {
-      return const ActionButton(label: "HAND OVER", isPrimary: true);
-    }
-    return const ActionButton(label: "MARK AS READY");
   }
 }

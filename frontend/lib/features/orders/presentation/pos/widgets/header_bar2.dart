@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/config/theme/app_text_styles.dart';
-import 'package:frontend/features/orders/presentation/pos/screens/order_history_screen.dart ';
+import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 
-class HeaderBar extends StatelessWidget {
+class HeaderBar2 extends StatelessWidget {
   final String title;
 
-  const HeaderBar({
+  const HeaderBar2({
     super.key,
     required this.title,
   });
@@ -40,7 +40,7 @@ class HeaderBar extends StatelessWidget {
 
           const Spacer(),
 
-          _historyButton(context),
+          _queueButton(context),
 
          
           /// COUNTER
@@ -54,8 +54,6 @@ class HeaderBar extends StatelessWidget {
           ),
 
           const SizedBox(width: 16),
-
-          /// 🔥 HISTORY BUTTON (ADDED HERE)
           
         ],
       ),
@@ -73,14 +71,14 @@ class HeaderBar extends StatelessWidget {
     );
   }
 
-Widget _historyButton(BuildContext context) {
+Widget _queueButton(BuildContext context) {
   return InkWell(
     borderRadius: BorderRadius.circular(50),
     onTap: () {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => const OrderHistoryScreen(),
+          builder: (context) => const OrderQueueScreen(),
         ),
       );
     },
@@ -90,7 +88,7 @@ Widget _historyButton(BuildContext context) {
         shape: BoxShape.circle,
         color: AppColors.card,
       ),
-      child: const Icon(Icons.history, color: AppColors.textDark),
+      child: const Icon(Icons.queue, color: AppColors.textDark),
     ),
   );
 }
