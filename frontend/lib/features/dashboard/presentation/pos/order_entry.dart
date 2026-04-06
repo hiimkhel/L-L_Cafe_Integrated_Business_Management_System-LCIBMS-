@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/constants/menu_data.dart';
+import 'package:frontend/features/checkout/admin/presentation/checkout_screen.dart';
 
 class POSOrderScreen extends StatefulWidget {
   const POSOrderScreen({super.key});
@@ -573,37 +574,48 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: AppColors.secondary,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.receiptDark,
-                          offset: Offset(3, 4),
-                          blurRadius: 5,
+                  child: GestureDetector(
+                    onTap: () {
+                       // Navigate to the next screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CheckoutConfirmationScreen(), // Replace with your screen
                         ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          CupertinoIcons.checkmark_shield,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'FINALIZE ORDER',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
+                      );
+                    },
+                      child: Container(
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: AppColors.secondary,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.receiptDark,
+                            offset: Offset(3, 4),
+                            blurRadius: 5,
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            CupertinoIcons.checkmark_shield,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'FINALIZE ORDER',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
                   ),
                 ),
               ],
