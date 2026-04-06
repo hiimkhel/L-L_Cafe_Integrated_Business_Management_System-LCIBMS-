@@ -6,12 +6,13 @@ import 'features/dashboard/presentation/admin/dashboard_screen.dart';
 import 'features/dashboard/presentation/cashier/dashboard_screen.dart';
 import 'features/home/presentation/rider/home_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
-import 'features/dashboard/presentation/admin/menu_management.dart';
 import 'features/cms/presentation/cms_screen.dart';
 import 'features/customers/presentation/admin/customers_screen.dart';
 import 'features/reports/presentation/admin/reports_screen.dart';
 import 'features/reviews/presentation/admin/reviews_screen.dart';
-
+import 'features/dashboard/presentation/pos/order_entry.dart';
+import 'features/dashboard/presentation/admin/order_screen.dart';
+import 'features/dashboard/presentation/admin/menu_management.dart';
 
 void main() {
   runApp(const LCIBMSApp());
@@ -38,17 +39,22 @@ final List<User> fakeUsers = [
 ];
 
 // Routes for Admin Screens
-final Map<String, Widget Function(BuildContext) > adminRoutes = {
+final Map<String, Widget Function(BuildContext)> adminRoutes = {
   '/dashboard': (_) => const AdminDashboardScreen(activeIndex: 0),
-  '/orders': (_) => const CMSScreen(activeIndex: 1),
-  '/menu_management': (_) => const CMSScreen(activeIndex: 2),
+  '/orders': (_) => const OrderScreen(activeIndex: 1),
+  '/menu_management': (_) => const MenuManagementScreen(activeIndex: 2),
   '/reports': (_) => const ReportsScreen(activeIndex: 3),
   '/customers': (_) => const CustomersScreen(activeIndex: 4),
   '/reviews': (_) => const ReviewsScreen(activeIndex: 5),
   '/cms': (_) => const CMSScreen(activeIndex: 6),
-   // Add other routes here
+  // Add other routes here
 };
- 
+
+//---------------pos routes-----------------------
+final Map<String, Widget Function(BuildContext)> PosRoutes = {
+  '/pos/dashboard': (_) => const POSOrderScreen(),
+  // Add other routes here
+};
 
 // Global current user (simple for starter)
 User? currentUser;
@@ -97,7 +103,9 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
         return MaterialApp(
           title: 'POS Dashboard',
           debugShowCheckedModeBanner: false,
-          home: const PosDashboardScreen(),
+          initialRoute: '/pos/dashboard',
+          routes: PosRoutes, // <-- our named routes for POS
+          home: const POSOrderScreen(),
         );
       case UserRole.admin:
         return MaterialApp(

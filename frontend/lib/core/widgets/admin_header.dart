@@ -10,78 +10,133 @@ class AdminHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        border: Border(
-          bottom: BorderSide(color: AppColors.primary.withOpacity(.5)),
-        ),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      color: AppColors.background,
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // ── Page title ───────────────────────────
           Text(
             title,
             style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 28,
+              fontFamily: 'Urbanist',
+              fontSize: 42,
               fontWeight: FontWeight.w900,
-              color: AppColors.tertiary,
+              color: AppColors.secondary,
               letterSpacing: 2,
             ),
           ),
+
           const Spacer(),
-          _topIcon(Icons.dark_mode_outlined),
+
+          // ── Icon actions ─────────────────────────
+          _HeaderIconBtn(icon: Icons.dark_mode_outlined),
           const SizedBox(width: 8),
-          _topIcon(Icons.notifications_rounded),
+          _HeaderIconBtn(icon: Icons.notifications_rounded),
           const SizedBox(width: 8),
-          _topIcon(Icons.settings_rounded),
-          const SizedBox(width: 10),
+          _HeaderIconBtn(icon: Icons.settings_rounded),
+
+          const SizedBox(width: 12),
+
+          // ── Vertical divider ─────────────────────
           Container(
-            width: 2.5,
-            height: 30,
-            color: AppColors.tertiary,
+            width: 2,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-          const SizedBox(width: 10),
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.tertiary,
-            child: const Icon(Icons.person, color: Colors.white, size: 20),
+
+          const SizedBox(width: 12),
+
+          // ── Avatar ───────────────────────────────
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              border: Border.all(color: AppColors.primary, width: 1.5),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.person_rounded,
+              color: AppColors.primary,
+              size: 24,
+            ),         
           ),
-          const SizedBox(width: 10),
+
+          const SizedBox(width: 8),
+
+          // ── Name + role ──────────────────────────
           Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "L&L CAFE",
-                style: TextStyle(fontSize: 10, color: AppColors.secondary),
-              ),
-              Text(
-                "ADMIN",
+                'L&L CAFE',
                 style: TextStyle(
+                  fontFamily: 'Urbanist',
                   fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.tertiary,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.secondary,
+                  letterSpacing: 0.5,
                 ),
               ),
-              Container(height: 2, width: 35, color: Colors.black),
+              Text(
+                'ADMIN',
+                style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              Container(
+                height: 1.5,
+                width: 36,
+                color: AppColors.primary.withOpacity(0.4),
+              ),
             ],
           ),
-          const SizedBox(width: 12),
-          _topIcon(Icons.logout_rounded),
+
+          const SizedBox(width: 10),
+
+          // ── Logout ───────────────────────────────
+          _HeaderIconBtn(icon: Icons.logout_rounded),
         ],
       ),
     );
   }
+}
 
-  Widget _topIcon(IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(5),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.primary),
+// ─────────────────────────────────────────────
+// REUSABLE ICON BUTTON
+// ─────────────────────────────────────────────
+
+class _HeaderIconBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  const _HeaderIconBtn({required this.icon, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(7),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: AppColors.primary.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        child: Icon(icon, color: AppColors.primary, size: 20),
       ),
-      child: Icon(icon, color: AppColors.tertiary, size: 25),
     );
   }
 }
