@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
+import 'package:frontend/config/theme/app_text_styles.dart';
 
 class PaymentEntry extends StatefulWidget {
   final double total;
@@ -36,9 +37,19 @@ class _PaymentEntryState extends State<PaymentEntry> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "PAYMENT ENTRY",
-              style: TextStyle(fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                Icon(
+                  Icons.wallet_membership, // Payment icon
+                  color: AppColors.secondary, // optional, match your theme
+                  
+                ),
+                SizedBox(width: 8),
+                Text(
+                  "PAYMENT ENTRY",
+                  style: AppTextStyles.title
+                ),
+              ],
             ),
             const SizedBox(height: 15),
 

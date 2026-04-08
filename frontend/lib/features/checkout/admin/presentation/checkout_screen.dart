@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import '../widgets/order_summary.dart';
 import '../widgets/payment_entry.dart';
+import 'package:frontend/config/theme/app_text_styles.dart';
 
 class CheckoutConfirmationScreen extends StatefulWidget {
   const CheckoutConfirmationScreen({super.key});
@@ -17,6 +18,17 @@ class CheckoutConfirmationScreen extends StatefulWidget {
     final List<Map<String, dynamic>> orderItems = [
       {"name": "Chicken Burger", "qty": 1, "price": 180.00},
       {"name": "S'more", "qty": 1, "price": 165.00},
+      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
+      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
+      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
+      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
+      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
+      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
+      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
+      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
+      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
+      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
+      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
       {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
     ];
 
@@ -57,9 +69,15 @@ class CheckoutConfirmationScreen extends StatefulWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         width: double.infinity,
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: AppColors.primary, width: 1),
+          ),
+        ),
         child: Row(children: [
           Container(
             decoration: BoxDecoration(
+              
               color: AppColors.white,
               shape: BoxShape.circle,
               boxShadow: [
@@ -76,31 +94,27 @@ class CheckoutConfirmationScreen extends StatefulWidget {
               },
               icon: const Icon(
                 Icons.arrow_back,
-                color: AppColors.tertiary,
+                color: AppColors.primary,
+                size: 32
               ),
 
             ),
           ),
 
-          const SizedBox(width: 10),
+          const SizedBox(width: 15),
 
           Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
+          children: [
             Text(
               "CHECKOUT CONFIRMATION",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.secondary,
-              ),
+              style: AppTextStyles.title.copyWith(color: AppColors.secondary)
             ),
             Text(
               "FINAL PHASE OF TRANSACTION",
-              style: TextStyle(
-                fontSize: 12,
+              style: AppTextStyles.body.copyWith(
                 color: AppColors.tertiary,
-              ),
+              )
             ),
           ],
         ),

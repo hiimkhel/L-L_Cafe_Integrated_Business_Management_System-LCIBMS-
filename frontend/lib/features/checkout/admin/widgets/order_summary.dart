@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/config/theme/app_text_styles.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 
 class OrderSummary extends StatelessWidget {
@@ -18,32 +19,32 @@ class OrderSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // HEADER OUTSIDE CARD
+          
           Row(
             children: [
+              const SizedBox(width: 20),
               Container(
-                width: 36,
-                height: 36,
+                width: 60,
+                height: 60,
                 decoration: BoxDecoration(
-                  color: Colors.green[100],
-                  borderRadius: BorderRadius.circular(10),
+                  color: AppColors.secondary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
                   Icons.receipt_long,
-                  size: 20,
-                  color: Colors.green,
+                  size: 30,
+                  color: AppColors.secondary,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 20),
               const Text(
                 "ORDER SUMMARY",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTextStyles.title,
               ),
             ],
           ),
@@ -52,10 +53,10 @@ class OrderSummary extends StatelessWidget {
           // CARD
           Expanded(
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(vertical: 42.00, horizontal: 36.00),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(40),
               ),
               child: Column(
                 children: [
@@ -67,28 +68,32 @@ class OrderSummary extends StatelessWidget {
                         final item = orderItems[index];
 
                         return Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.all(10),
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(10),
+                            border: Border(
+                              bottom: BorderSide(
+                                color: AppColors.receiptBg,
+                                width: 1.5
+                              )
+                            ),
                           ),
                           child: Row(
                             children: [
                               Container(
-                                width: 30,
-                                height: 30,
+                                width: 50,
+                                height: 50,
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(8),
+                                  color: AppColors.background,
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: Text("${index + 1}"),
+                                child: Text("${index + 1}", style: AppTextStyles.subtitle.copyWith(color: AppColors.primary)),
                               ),
-                              const SizedBox(width: 10),
-                              Expanded(child: Text(item["name"])),
+                              const SizedBox(width: 20),
+                              Expanded(child: Text(item["name"], style: AppTextStyles.subtitle.copyWith(fontWeight: FontWeight.w600))),
                               Text(
-                                "₱${item["price"].toStringAsFixed(2)}",
+                                "₱${item["price"].toStringAsFixed(2)}", style: AppTextStyles.subtitle.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w600)
                               ),
                             ],
                           ),
@@ -97,27 +102,36 @@ class OrderSummary extends StatelessWidget {
                     ),
                   ),
 
-                  const Divider(),
+                  const SizedBox(height: 16),
+                  Divider(color: AppColors.receiptBg, thickness: 1.5),
+                  const SizedBox(height: 16),
 
                   _priceRow("Subtotal", subtotal),
+                  const SizedBox(height: 8),
                   _priceRow("Tax (12%)", tax),
                   const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "GRAND TOTAL",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(color: AppColors.receiptBg, width: 1.5),
                       ),
-                      Text(
-                        "₱${total.toStringAsFixed(2)}",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "GRAND TOTAL",
+                          style: AppTextStyles.title.copyWith(fontWeight: FontWeight.w900),
                         ),
-                      ),
-                    ],
-                  ),
+                        Text(
+                          "₱${total.toStringAsFixed(2)}",
+                          style: AppTextStyles.title.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w900)
+                        ),
+                      ],
+                    ),
+                  )
                 ],
               ),
             ),
@@ -132,8 +146,8 @@ class OrderSummary extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label),
-        Text("₱${value.toStringAsFixed(2)}"),
+        Text(label, style: AppTextStyles.subtitle.copyWith(color: AppColors.tertiary)),
+        Text("₱${value.toStringAsFixed(2)}", style: AppTextStyles.subtitle.copyWith(color: AppColors.tertiary)),
       ],
     );
   }
