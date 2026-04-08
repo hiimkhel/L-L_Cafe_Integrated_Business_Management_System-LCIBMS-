@@ -14,4 +14,7 @@ class AppColors {
   // receipt-specific
   static const Color receiptDark = Color(0xFF2D2A26); // darker than textDark
   static const Color receiptBg = Color(0x4DEFE2C9); // cream at 30% opacity
+
+  // Alert/Warning Color
+  static const Color alertColor = Color(0xFFFB2C36);
 }
