@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/constants/menu_data.dart';
 import 'package:frontend/features/checkout/admin/presentation/checkout_screen.dart';
+import 'package:frontend/features/dashboard/presentation/pos/online_orders_screen.dart';
 
 class POSOrderScreen extends StatefulWidget {
   const POSOrderScreen({super.key});
@@ -100,15 +101,23 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
             onTap: () {},
           ),
           const SizedBox(width: 11),
-          _headerBtns(
-            icon: Icon(
-              Icons.laptop_mac_outlined,
-              color: AppColors.primary,
-              size: 13,
-            ),
-            label: 'ONLINE ORDERS',
-            onTap: () {},
-          ),
+_headerBtns(
+  icon: Icon(
+    Icons.laptop_mac_outlined,
+    color: AppColors.primary,
+    size: 13,
+  ),
+  label: 'ONLINE ORDERS',
+  onTap: () {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const OnlineOrdersScreen(),
+    );
+  },
+),
+
+
           const SizedBox(width: 19),
           Container(width: 1.5, height: 32, color: AppColors.tertiary),
           const SizedBox(width: 19),
