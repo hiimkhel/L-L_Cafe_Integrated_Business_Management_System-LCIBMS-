@@ -58,7 +58,8 @@ class CheckoutConfirmationScreen extends StatefulWidget {
               Expanded(flex: 6, child: PaymentEntry(
                 total: total,
                 change: change,
-                onCashChanged: (value) => setState(() => cashGiven = value)
+                onCashChanged: (value) => setState(() => cashGiven = value),
+                orderItems: orderItems
               )),
             ],),)
         ],)
