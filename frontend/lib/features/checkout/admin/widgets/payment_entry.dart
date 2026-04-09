@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/config/theme/app_text_styles.dart';
+import 'package:frontend/core/widgets/receipt.dart';
 
 class PaymentEntry extends StatefulWidget {
   final double total;
   final double change;
   final Function(double) onCashChanged;
 
+  final List<Map<String, dynamic>> orderItems;
+
   const PaymentEntry({
     super.key,
     required this.total,
     required this.change,
     required this.onCashChanged,
+    required this.orderItems,
   });
 
   @override
@@ -19,10 +23,24 @@ class PaymentEntry extends StatefulWidget {
 }
 
 class _PaymentEntryState extends State<PaymentEntry> {
+  
   double cashGiven = 0;
   int selectedMethod = 0; // 0 = Cash, 1 = Card, 2 = E-Wallet
 
   double get change => cashGiven - widget.total;
+
+  PaymentMethod _getPaymentMethod() {
+    switch (selectedMethod) {
+      case 0:
+        return PaymentMethod.cash;
+      case 1:
+        return PaymentMethod.card;
+      case 2:
+        return PaymentMethod.gcash; // or maya if you want
+      default:
+        return PaymentMethod.cash;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -263,26 +281,50 @@ class _PaymentEntryState extends State<PaymentEntry> {
                               height: 50,
                               width: double.infinity,
                               decoration: BoxDecoration(
-                                color: AppColors.secondary,
-                                boxShadow: [
+                                color: AppColors.secondary.withOpacity(0.1),
+                                border: change > 0 ? null : Border.all(
+                                  color: AppColors.secondary,
+                                  width: 1.5,
+                                ),
+                                // UI dynamic change
+                                boxShadow: change >= 0 ? [
                                   BoxShadow(
                                     color: AppColors.receiptDark,
                                     offset: Offset(3, 4),
                                   ),
-                                ],
+                                ] : [],
                               ),
                               child: SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
-                                  onPressed: change < 0 ? null : () {},
+                                  onPressed: change < 0 ? null : () {
+                                      final receiptData = ReceiptData(
+                                      orderNumber: DateTime.now().millisecondsSinceEpoch.toString(),
+                                      clientName: "WALK-IN CUSTOMER",
+                                      dateTime: DateTime.now(),
+                                      orderType: OrderType.walkIn,
+                                      paymentMethod: _getPaymentMethod(),
+                                      items: widget.orderItems.map((item) {
+                                        return OrderItem(
+                                          name: item["name"],
+                                          quantity: item["qty"],
+                                          unitPrice: item["price"]
+                                        );
+                                      }).toList(),
+                                    );
+
+                                    _showReceipt(context, receiptData);
+                                  },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppColors.secondary,
-                                    elevation: 0, 
+                                    elevation: 4,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(0), 
                                     ),
                                   ),
-                                  child: const Text("CONFIRM PAYMENT", style: TextStyle(color: AppColors.white)),
+                                  child: Text("CONFIRM PAYMENT", style: TextStyle(
+                                      color: change > 0 ? AppColors.white : AppColors.secondary,
+                                      fontWeight: FontWeight.bold,)),
                                 ),
                               ),
                           ),
@@ -332,4 +374,24 @@ class _PaymentEntryState extends State<PaymentEntry> {
       ),
     );
   }
+
+  void _showReceipt(BuildContext context, ReceiptData data) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: LLCafeReceipt(
+            data: data,
+            onPrint: () {
+              Navigator.pop(context);
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  
 }
