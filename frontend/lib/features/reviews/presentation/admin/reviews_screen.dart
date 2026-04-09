@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/widgets/admin_sidebar.dart';
 import 'package:frontend/core/widgets/admin_header.dart';
+import 'package:frontend/config/theme/app_colors.dart';
 
 class ReviewsScreen extends StatefulWidget {
   final int activeIndex;
@@ -146,9 +147,9 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Avatar
+          // 🔹 Avatar
           CircleAvatar(
             radius: 28,
             backgroundImage: review["avatarUrl"] != null
@@ -158,42 +159,60 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                 ? const Icon(Icons.person, size: 28)
                 : null,
           ),
+
           const SizedBox(width: 16),
 
-          // Info + Content
+          // 🔹 Customer Info (LEFT COLUMN)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                review["customerId"],
+                style: const TextStyle(
+                  color: AppColors.primary,
+                    fontWeight: FontWeight.w100, fontSize: 14),
+              ),
+              Text(
+                review["customerName"],
+                style: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                review["submittedAt"],
+                style: TextStyle(
+                    fontSize: 12, 
+                    color: AppColors.primary.withOpacity(0.4)
+                    ),
+              ),
+            ],
+          ),
+
+          const SizedBox(width: 32),
+
+          // Review Content (CENTER - EXPANDED)
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "${review["customerId"]} ${review["customerName"]}",
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  review["submittedAt"],
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  review["reviewContent"],
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
-                ),
-              ],
+            child: Text(
+              review["reviewContent"],
+              style: TextStyle(
+                  fontSize: 12, color: AppColors.primary.withOpacity(0.8),
+                  fontWeight: FontWeight.w100,
+                  ),
             ),
           ),
 
-          const SizedBox(width: 16),
+          const SizedBox(width: 24),
 
-          // Rating + Publish
+          // 🔹 Rating + Publish (RIGHT)
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 (review["rating"] as double).toStringAsFixed(1),
                 style: const TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 14),
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w800, fontSize: 14),
               ),
               Row(
                 children: List.generate(
@@ -220,9 +239,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                   review["isPublished"] ? "PUBLISHED" : "PUBLISH",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: review["isPublished"]
-                        ? Colors.grey
-                        : Colors.black87,
+                    color:AppColors.primary,
                     fontSize: 12,
                   ),
                 ),
@@ -230,7 +247,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
             ],
           ),
         ],
-      )
+      ),
     );
   }
   Widget _buildDropdownButton(
