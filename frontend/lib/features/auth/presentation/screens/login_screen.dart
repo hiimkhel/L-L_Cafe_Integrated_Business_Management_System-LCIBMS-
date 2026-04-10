@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../main.dart';
+import 'package:frontend/core/models/user.dart';
 
 class LoginScreen extends StatefulWidget {
   final Function(User) onLogin;
@@ -25,6 +26,8 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       widget.onLogin(user);
+
+      Navigator.pop(context);
     } catch (e) {
       setState(() {
         error = 'Invalid email or password';
