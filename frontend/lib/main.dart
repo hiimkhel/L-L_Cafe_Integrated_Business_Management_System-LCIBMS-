@@ -5,6 +5,7 @@ import 'features/home/presentation/customer/home_screen.dart';
 import 'features/dashboard/presentation/admin/dashboard_screen.dart';
 import 'features/dashboard/presentation/cashier/dashboard_screen.dart';
 import 'features/home/presentation/rider/home_screen.dart';
+import 'features/home/presentation/customer/home_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/cms/presentation/cms_screen.dart';
 import 'features/customers/presentation/admin/customers_screen.dart';
@@ -13,21 +14,10 @@ import 'features/reviews/presentation/admin/reviews_screen.dart';
 import 'features/dashboard/presentation/pos/order_entry.dart';
 import 'features/dashboard/presentation/admin/order_screen.dart';
 import 'features/dashboard/presentation/admin/menu_management.dart';
-
+import 'features/home/presentation/customer/landing_screen.dart';
+import 'core/models/user.dart';
 void main() {
   runApp(const LCIBMSApp());
-}
-
-// User Roles
-enum UserRole { customer, admin, pos, rider }
-
-// Hardcoded User model
-class User {
-  final String email;
-  final String password;
-  final UserRole role;
-
-  User(this.email, this.password, this.role);
 }
 
 // Hardcoded users
@@ -81,7 +71,7 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
         title: 'L-L Cafe IBMS',
         theme: ThemeData(primarySwatch: Colors.blue),
         debugShowCheckedModeBanner: false,
-        home: LoginScreen(onLogin: _setUser),
+        home: LandingScreen(onLogin: _setUser),
       );
     }
 
