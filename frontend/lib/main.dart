@@ -4,6 +4,7 @@ import 'features/home/presentation/customer/home_screen.dart';
 import 'features/dashboard/presentation/admin/dashboard_screen.dart';
 import 'features/home/presentation/rider/home_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
+import 'features/dashboard/presentation/rider/dashboard_screen.dart';
 import 'features/dashboard/presentation/pos/order_entry.dart';
 import 'features/home/presentation/customer/landing_screen.dart';
 import 'core/models/user.dart';
@@ -68,7 +69,7 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
         return CustomerHomeScreen();
 
       case UserRole.rider:
-        return RiderHomeScreen();
+        return DeliveryDashboardScreen();
 
       case UserRole.pos:
         return POSOrderScreen();
