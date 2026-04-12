@@ -100,7 +100,14 @@ class _DeliveryDashboardScreenState
 
             const SizedBox(height: 12),
 
-            // 🔹 ORDER LIST
+            Divider(
+              color: AppColors.primary,
+              thickness: 1,
+              height: 20,
+            ),
+
+
+            // ORDER LIST
             Expanded(
               child: ListView.builder(
                 itemCount: orders.length,
@@ -253,94 +260,181 @@ class _DeliveryDashboardScreenState
     );
   }
 
-  // 🔹 ORDER CARD
-  Widget _orderCard(Map<String, dynamic> order) {
-    Color statusColor;
+  //  ORDER CARD
+ Widget _orderCard(Map<String, dynamic> order) {
+  Color statusColor;
 
-    switch (order["status"]) {
-      case "PREPARING":
-        statusColor = AppColors.preparingColor;
-        break;
-      case "OUT FOR DELIVERY":
-        statusColor = AppColors.deliveringColor;
-        break;
-      case "DELIVERED":
-        statusColor = AppColors.deliveredColor;
-        break;
-      default:
-        statusColor = Colors.grey;
-    }
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // TOP ROW
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(order["id"],
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  order["status"],
-                  style: const TextStyle(
-                      color: Colors.white, fontSize: 10),
-                ),
-              )
-            ],
-          ),
-
-          const SizedBox(height: 8),
-
-          Text(order["name"],
-              style:
-                  const TextStyle(fontWeight: FontWeight.w600)),
-
-          const SizedBox(height: 4),
-
-          Text(order["address"],
-              style: const TextStyle(fontSize: 11)),
-
-          const SizedBox(height: 8),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(order["time"]),
-              Text(order["items"]),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.arrow_forward,
-                    color: Colors.white, size: 16),
-              )
-            ],
-          )
-        ],
-      ),
-    );
+  switch (order["status"]) {
+    case "PREPARING":
+      statusColor = AppColors.preparingColor;
+      break;
+    case "OUT FOR DELIVERY":
+      statusColor = AppColors.deliveringColor;
+      break;
+    case "DELIVERED":
+      statusColor = AppColors.deliveredColor;
+      break;
+    default:
+      statusColor = Colors.grey;
   }
+
+  return Container(
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: const [
+        BoxShadow(
+          color: Colors.black12,
+          blurRadius: 6,
+          offset: Offset(0, 3),
+        )
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+
+        // 🔹 TOP ROW (ORDER ID + STATUS)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.receipt_long,
+                    size: 16, color: AppColors.secondary),
+                const SizedBox(width: 6),
+                Text(
+                  order["id"],
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.secondary,
+                  ),
+                ),
+              ],
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: statusColor,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                order["status"],
+                style: const TextStyle(
+                    color: Colors.white, fontSize: 10),
+              ),
+            )
+          ],
+        ),
+
+        const SizedBox(height: 10),
+
+        // 🔹 CUSTOMER
+        Row(
+          children: [
+            Icon(Icons.person,
+                size: 16, color: AppColors.secondary),
+            const SizedBox(width: 6),
+            Text(
+              order["name"],
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.receiptDark,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 6),
+
+        // 🔹 ADDRESS
+        Row(
+          children: [
+            Icon(Icons.location_on,
+                size: 16, color: AppColors.tertiary),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                order["address"],
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppColors.tertiary,
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 10),
+
+        // DIVIDER 
+        Divider(
+          color: AppColors.primary.withOpacity(0.2),
+          thickness: 1,
+        ),
+
+        const SizedBox(height: 8),
+
+        // FINAL ROW 
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+
+            // LEFT GROUP
+            Row(
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.access_time,
+                        size: 14, color: AppColors.secondary),
+                    const SizedBox(width: 4),
+                    Text(
+                      order["time"],
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.secondary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 12),
+                Row(
+                  children: [
+                    Icon(Icons.inventory_2,
+                        size: 14, color: AppColors.secondary),
+                    const SizedBox(width: 4),
+                    Text(
+                      order["items"],
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.secondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            // RIGHT BUTTON
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.arrow_forward,
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
 }
