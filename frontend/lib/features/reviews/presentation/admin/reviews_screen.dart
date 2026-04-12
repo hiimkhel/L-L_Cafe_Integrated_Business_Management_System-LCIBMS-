@@ -76,7 +76,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
           Row(
             children: ["ALL REVIEWS", "POSTED", "ARCHIVED"]
                 .map((segment) => Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
+                      padding: const EdgeInsets.all(8),
                       child: GestureDetector(
                         onTap: () {
                           setState(() {
@@ -88,19 +88,29 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                               horizontal: 20, vertical: 8),
                           decoration: BoxDecoration(
                             color: activeSegment == segment
-                                ? Colors.green[300]
-                                : Colors.grey[200],
+                                ? AppColors.secondary
+                                : AppColors.background,
                             borderRadius: BorderRadius.circular(20),
+                            boxShadow: activeSegment == segment
+                              ? [
+                                  BoxShadow(
+                                    color: AppColors.primary.withOpacity(0.85),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : [],
                           ),
                           child: Text(
                             segment,
                             style: TextStyle(
                               color: activeSegment == segment
-                                  ? Colors.white
-                                  : Colors.black54,
+                                  ? AppColors.background
+                                  : AppColors.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          
                         ),
                       ),
                     ))
@@ -265,12 +275,23 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.black26),
+        border: Border.all(color: AppColors.primary),
         borderRadius: BorderRadius.circular(8),
       ),
       child: DropdownButton<String>(
         value: current,
         underline: const SizedBox(),
+        icon: Icon(
+          Icons.keyboard_arrow_down_rounded,
+          color: AppColors.primary,
+        ),
+
+        style: TextStyle(
+          color: AppColors.primary,
+          fontSize: 14,
+        ),
+        
+        dropdownColor: Colors.white,
         items: options
             .map((opt) => DropdownMenuItem(
                   value: opt,
