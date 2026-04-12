@@ -17,4 +17,11 @@ class AppColors {
 
   // Alert/Warning Color
   static const Color alertColor = Color(0xFFFB2C36);
+
+
+  // Delivery Order Status Badges
+  static const Color preparingColor = Color(0xFFFFBF00);
+  static const Color deliveringColor = Color(0xFFF155DFC);
+  static const Color deliveredColor = Color(0xFFF00A63E);
+
 }

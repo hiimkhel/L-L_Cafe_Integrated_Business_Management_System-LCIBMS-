@@ -71,33 +71,32 @@ class _DeliveryDashboardScreenState
             const SizedBox(height: 16),
 
             // 🔹 SEARCH
-            TextField(
-              decoration: InputDecoration(
-                hintText: "Search orders...",
-                filled: true,
-                fillColor: Colors.white,
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
+            _buildTopSearchRow(),
 
             const SizedBox(height: 12),
 
             // 🔹 FILTER BUTTONS
-            Row(
+            Column(
               children: [
-                _filterBtn("ALL"),
-                _filterBtn("PREPARING"),
-                _filterBtn("OUT FOR DELIVERY"),
+                Row(
+                  children: [
+                    Expanded(child: _filterBtn("ALL")),
+                    const SizedBox(width: 6),
+                    Expanded(child: _filterBtn("PREPARING")),
+                    const SizedBox(width: 6),
+                    Expanded(child: _filterBtn("OUT FOR DELIVERY")),
+                  ],
+                ),
+
+                const SizedBox(height: 8),
+
+                // FULL WIDTH BUTTON
+                SizedBox(
+                  width: double.infinity,
+                  child: _filterBtn("DELIVERED"),
+                ),
               ],
             ),
-
-            const SizedBox(height: 8),
-
-            _filterBtn("DELIVERED", fullWidth: true),
 
             const SizedBox(height: 12),
 
@@ -125,7 +124,7 @@ class _DeliveryDashboardScreenState
 
   Widget _buildHeader(){
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
         width: double.infinity,
         decoration: BoxDecoration(
           border: Border(
@@ -190,33 +189,63 @@ class _DeliveryDashboardScreenState
       );
     }
 
-  // 🔹 FILTER BUTTON
-  Widget _filterBtn(String label, {bool fullWidth = false}) {
+   Widget _buildTopSearchRow() {
+    return SizedBox(
+      width: double.infinity,
+      height: 38,
+      child: TextField(
+        style: TextStyle(fontSize: 12, color: AppColors.tertiary),
+        decoration: InputDecoration(
+          hintText: 'SEARCH CUSTOMER...',
+          hintStyle: TextStyle(
+            color: AppColors.tertiary.withOpacity(.5),
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
+          suffixIcon: Icon(Icons.search,
+              size: 16, color: AppColors.tertiary),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide:
+                BorderSide(color: AppColors.tertiary.withOpacity(.3)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide:
+                BorderSide(color: AppColors.tertiary, width: .9),
+          ),
+        ),
+      ),
+    );
+  }
+  // FILTER BUTTON
+  Widget _filterBtn(String label) {
     final isSelected = selectedFilter == label;
 
-    return Expanded(
-      flex: fullWidth ? 1 : 0,
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            selectedFilter = label;
-          });
-        },
-        child: Container(
-          margin: const EdgeInsets.only(right: 6, bottom: 6),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary : Colors.white,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.black54,
-              ),
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedFilter = label;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.secondary : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: isSelected ? Colors.white : AppColors.primary,
             ),
           ),
         ),
@@ -230,13 +259,13 @@ class _DeliveryDashboardScreenState
 
     switch (order["status"]) {
       case "PREPARING":
-        statusColor = Colors.orange;
+        statusColor = AppColors.preparingColor;
         break;
       case "OUT FOR DELIVERY":
-        statusColor = Colors.blue;
+        statusColor = AppColors.deliveringColor;
         break;
       case "DELIVERED":
-        statusColor = Colors.green;
+        statusColor = AppColors.deliveredColor;
         break;
       default:
         statusColor = Colors.grey;
