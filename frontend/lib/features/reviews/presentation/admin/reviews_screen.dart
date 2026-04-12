@@ -14,8 +14,7 @@ class ReviewsScreen extends StatefulWidget {
 class _ReviewsScreenState extends State<ReviewsScreen> {
   late int activeIndex;
   String activeSegment = "ALL REVIEWS";
-  String sortBy = "RATINGS";
-  String filterBy = "NEWEST";
+  String sortBy = "Newest";
 
   // Dummy data
   final reviews = List.generate(6, (index) => {
@@ -77,7 +76,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
           Row(
             children: ["ALL REVIEWS", "POSTED", "ARCHIVED"]
                 .map((segment) => Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
+                      padding: const EdgeInsets.all(8),
                       child: GestureDetector(
                         onTap: () {
                           setState(() {
@@ -89,19 +88,29 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                               horizontal: 20, vertical: 8),
                           decoration: BoxDecoration(
                             color: activeSegment == segment
-                                ? Colors.green[300]
-                                : Colors.grey[200],
+                                ? AppColors.secondary
+                                : AppColors.background,
                             borderRadius: BorderRadius.circular(20),
+                            boxShadow: activeSegment == segment
+                              ? [
+                                  BoxShadow(
+                                    color: AppColors.primary.withOpacity(0.85),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : [],
                           ),
                           child: Text(
                             segment,
                             style: TextStyle(
                               color: activeSegment == segment
-                                  ? Colors.white
-                                  : Colors.black54,
+                                  ? AppColors.background
+                                  : AppColors.primary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          
                         ),
                       ),
                     ))
@@ -111,12 +120,9 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
           // Right: Dropdowns
           Row(
             children: [
-              _buildDropdownButton(sortBy, ["RATINGS", "NEWEST"], (val) {
-                setState(() => sortBy = val!);
-              }),
               const SizedBox(width: 12),
-              _buildDropdownButton(filterBy, ["NEWEST", "OLDEST"], (val) {
-                setState(() => filterBy = val!);
+              _buildDropdownButton(sortBy, ["Newest", "Oldest"], (val) {
+                setState(() => sortBy = val!);
               }),
             ],
           )
@@ -126,12 +132,26 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
   }
 
   Widget _ReviewsList() {
+
+    List reviewsData = List.from(
+      reviews
+    );
+
+    if (sortBy == "NEWEST") {
+      reviewsData.sort((a, b) =>
+          (b["submittedAt"] as String)
+              .compareTo(a["submittedAt"] as String));
+    } else if (sortBy == "OLDEST") {
+      reviewsData.sort((a, b) =>
+          (a["submittedAt"] as String)
+              .compareTo(b["submittedAt"] as String));
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical : 4, horizontal: 24),
       child: ListView.builder(
-        itemCount: reviews.length,
+        itemCount: reviewsData.length,
         itemBuilder: (context, index) {
-          final review = reviews[index];
+          final review = reviewsData[index];
           return _ReviewCard(review);
         },
       ),
@@ -255,12 +275,23 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.black26),
+        border: Border.all(color: AppColors.primary),
         borderRadius: BorderRadius.circular(8),
       ),
       child: DropdownButton<String>(
         value: current,
         underline: const SizedBox(),
+        icon: Icon(
+          Icons.keyboard_arrow_down_rounded,
+          color: AppColors.primary,
+        ),
+
+        style: TextStyle(
+          color: AppColors.primary,
+          fontSize: 14,
+        ),
+        
+        dropdownColor: Colors.white,
         items: options
             .map((opt) => DropdownMenuItem(
                   value: opt,
