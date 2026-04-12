@@ -14,8 +14,7 @@ class ReviewsScreen extends StatefulWidget {
 class _ReviewsScreenState extends State<ReviewsScreen> {
   late int activeIndex;
   String activeSegment = "ALL REVIEWS";
-  String sortBy = "RATINGS";
-  String filterBy = "NEWEST";
+  String sortBy = "Newest";
 
   // Dummy data
   final reviews = List.generate(6, (index) => {
@@ -111,12 +110,9 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
           // Right: Dropdowns
           Row(
             children: [
-              _buildDropdownButton(sortBy, ["RATINGS", "NEWEST"], (val) {
-                setState(() => sortBy = val!);
-              }),
               const SizedBox(width: 12),
-              _buildDropdownButton(filterBy, ["NEWEST", "OLDEST"], (val) {
-                setState(() => filterBy = val!);
+              _buildDropdownButton(sortBy, ["Newest", "Oldest"], (val) {
+                setState(() => sortBy = val!);
               }),
             ],
           )
@@ -126,12 +122,26 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
   }
 
   Widget _ReviewsList() {
+
+    List reviewsData = List.from(
+      reviews
+    );
+
+    if (sortBy == "NEWEST") {
+      reviewsData.sort((a, b) =>
+          (b["submittedAt"] as String)
+              .compareTo(a["submittedAt"] as String));
+    } else if (sortBy == "OLDEST") {
+      reviewsData.sort((a, b) =>
+          (a["submittedAt"] as String)
+              .compareTo(b["submittedAt"] as String));
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical : 4, horizontal: 24),
       child: ListView.builder(
-        itemCount: reviews.length,
+        itemCount: reviewsData.length,
         itemBuilder: (context, index) {
-          final review = reviews[index];
+          final review = reviewsData[index];
           return _ReviewCard(review);
         },
       ),
