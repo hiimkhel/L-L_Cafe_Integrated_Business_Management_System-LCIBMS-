@@ -9,7 +9,8 @@ import 'package:frontend/core/constants/menu_data.dart';
 
 class MenuManagementScreen extends StatefulWidget {
   final int activeIndex;
-  const MenuManagementScreen({super.key, this.activeIndex = 2});
+  final VoidCallback onLogout;
+  const MenuManagementScreen({super.key, this.activeIndex = 2, required this.onLogout});
 
   @override
   State<MenuManagementScreen> createState() => _MenuManagementScreenState();
@@ -86,12 +87,12 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       backgroundColor: AppColors.white,
       body: Row(
         children: [
-          Sidebar(activeIndex: widget.activeIndex),
+          Sidebar(activeIndex: widget.activeIndex,  onLogout: widget.onLogout),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const AdminHeader(title: "MENU MANAGEMENT"),
+                AdminHeader(title: "MENU MANAGEMENT",  onLogout: widget.onLogout),
                 _buildFilterRow(),
                 Expanded(child: _buildThreePanels()),
               ],

@@ -3,8 +3,13 @@ import '../../config/theme/app_colors.dart';
 
 class AdminHeader extends StatelessWidget {
   final String title;
+  final VoidCallback onLogout;
 
-  const AdminHeader({super.key, required this.title});
+  const AdminHeader({
+    super.key,
+    required this.title,
+    required this.onLogout,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,18 +23,18 @@ class AdminHeader extends StatelessWidget {
           // ── Page title ───────────────────────────
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
+              color: AppColors.secondary,
               fontFamily: 'Urbanist',
               fontSize: 42,
               fontWeight: FontWeight.w900,
-              color: AppColors.secondary,
               letterSpacing: 2,
             ),
           ),
 
           const Spacer(),
 
-          // ── Icon actions ─────────────────────────
+          // ── Action icons ─────────────────────────
           _HeaderIconBtn(icon: Icons.dark_mode_outlined),
           const SizedBox(width: 8),
           _HeaderIconBtn(icon: Icons.notifications_rounded),
@@ -38,7 +43,7 @@ class AdminHeader extends StatelessWidget {
 
           const SizedBox(width: 12),
 
-          // ── Vertical divider ─────────────────────
+          // ── Divider ──────────────────────────────
           Container(
             width: 2,
             height: 40,
@@ -63,10 +68,10 @@ class AdminHeader extends StatelessWidget {
               Icons.person_rounded,
               color: AppColors.primary,
               size: 24,
-            ),         
+            ),
           ),
 
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
 
           // ── Name + role ──────────────────────────
           Column(
@@ -101,10 +106,13 @@ class AdminHeader extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
 
           // ── Logout ───────────────────────────────
-          _HeaderIconBtn(icon: Icons.logout_rounded),
+          _HeaderIconBtn(
+            icon: Icons.logout_rounded,
+            onTap: onLogout,
+          ),
         ],
       ),
     );
@@ -119,7 +127,10 @@ class _HeaderIconBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
 
-  const _HeaderIconBtn({required this.icon, this.onTap});
+  const _HeaderIconBtn({
+    required this.icon,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +146,11 @@ class _HeaderIconBtn extends StatelessWidget {
             width: 1,
           ),
         ),
-        child: Icon(icon, color: AppColors.primary, size: 20),
+        child: Icon(
+          icon,
+          color: AppColors.primary,
+          size: 20,
+        ),
       ),
     );
   }

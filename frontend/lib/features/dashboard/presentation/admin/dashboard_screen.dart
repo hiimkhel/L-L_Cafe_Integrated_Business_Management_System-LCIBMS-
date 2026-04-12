@@ -113,7 +113,8 @@ const double  _sidebarWidth  = 180;
 
 class AdminDashboardScreen extends StatefulWidget {
   final int activeIndex;
-  const AdminDashboardScreen({super.key, this.activeIndex = 0});
+  final VoidCallback onLogout;
+  const AdminDashboardScreen({super.key, this.activeIndex = 0, required this.onLogout});
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
@@ -129,102 +130,91 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final double totalH  = constraints.maxHeight;
-          final double totalW  = constraints.maxWidth;
-          final double bodyW   = (totalW - _sidebarWidth).clamp(300.0, 9999.0);
-          final double padH    = 16.0;
-          final double padW    = 20.0;
-          final double innerW  = bodyW - (padW * 2);
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: AppColors.background,
+    body: Row(
+  children: [
+    // SIDEBAR (fixed)
+    SizedBox(
+      width: _sidebarWidth,
+      child: Sidebar(
+        activeIndex: activeIndex,
+        onLogout: widget.onLogout,
+      ),
+    ),
 
-          // Left column width (Target + Menus) ≈ 32% of inner
-          final double leftW  = (innerW * 0.32).clamp(200.0, 290.0);
-          // Right column width (Summary cards + Revenue + Orders)
-          final double rightW = innerW - leftW - 12;
+    // MAIN CONTENT (flexible)
+    Expanded(
+  child: Column(
+    children: [
+      AdminHeader(
+        title: 'DASHBOARD',
+        onLogout: widget.onLogout,
+      ),
 
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Sidebar ───────────────────────────
-              Sidebar(activeIndex: activeIndex),
+      Expanded(
+        child: Container(
+          width: double.infinity,
+          color: AppColors.white,
 
-              // ── Main area ─────────────────────────
-              SizedBox(
-                width: bodyW,
-                height: totalH,
-                child: ColoredBox(
-                  color: Colors.white,
-                  child: Column(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 8,
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Universal header
-                      const AdminHeader(title: 'DASHBOARD'),
-
-                      // Scrollable content
-                      Expanded(
-                        child: SingleChildScrollView(
-                          padding: EdgeInsets.all(padH),
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: padW - padH),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // ── LEFT COLUMN ─────────────────────
-                                SizedBox(
-                                  width: leftW,
-                                  child: Column(
-                                    children: [
-                                      // Target income card
-                                      _TargetIncomeCard(
-                                        amount: _targetAmount,
-                                        progress: _targetProgress,
-                                        maxLabel: _targetMax,
-                                      ),
-                                      const SizedBox(height: 12),
-                                      // Menus card
-                                      _MenusCard(items: _menuItems),
-                                    ],
-                                  ),
-                                ),
-
-                                const SizedBox(width: 12),
-
-                                // ── RIGHT COLUMN ────────────────────
-                                SizedBox(
-                                  width: rightW,
-                                  child: Column(
-                                    children: [
-                                      // Summary cards row
-                                      _SummaryRow(
-                                        cards: _summaryCards,
-                                        width: rightW,
-                                      ),
-                                      const SizedBox(height: 12),
-                                      // Revenue map
-                                      _RevenueMapCard(bars: _revenueBars),
-                                      const SizedBox(height: 12),
-                                      // Orders
-                                      _OrdersCard(orders: _orders),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                      // LEFT COLUMN
+                      Flexible(
+                        flex: 3,
+                        child: Column(
+                          children: [
+                            _TargetIncomeCard(
+                              amount: _targetAmount,
+                              progress: _targetProgress,
+                              maxLabel: _targetMax,
                             ),
-                          ),
+                            const SizedBox(height: 12),
+                            _MenusCard(items: _menuItems),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      // RIGHT COLUMN
+                      Flexible(
+                        flex: 7,
+                        child: Column(
+                          children: [
+                            _SummaryRow(cards: _summaryCards),
+                            const SizedBox(height: 12),
+                            _RevenueMapCard(bars: _revenueBars),
+                            const SizedBox(height: 12),
+                            _OrdersCard(orders: _orders),
+                          ],
                         ),
                       ),
                     ],
-                  ),
-                ),
+                  );
+                },
               ),
-            ],
-          );
-        },
+            ),
+          ),
+        ),
       ),
-    );
+    ],
+  ),
+),
+  ],
+),
+  );
   }
 }
 
@@ -234,25 +224,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
 class _SummaryRow extends StatelessWidget {
   final List<SummaryCardData> cards;
-  final double width;
-  const _SummaryRow({required this.cards, required this.width});
+  const _SummaryRow({required this.cards});
 
   @override
   Widget build(BuildContext context) {
-    final cardW = (width - 16) / 3;
     return Row(
-      children: cards.asMap().entries.map((e) {
-        return Row(
-          children: [
-            SizedBox(width: cardW, child: _SummaryCard(data: e.value)),
-            if (e.key < cards.length - 1) const SizedBox(width: 8),
-          ],
+      children: cards.map((c) {
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: _SummaryCard(data: c),
+          ),
         );
-      }).toList(),
+      }).toList()
+        ..asMap().forEach((i, w) {
+          if (i == cards.length - 1) {
+            // remove last spacing visually handled
+          }
+        }),
     );
   }
 }
-
 // ─────────────────────────────────────────────
 // SUMMARY CARD
 // ─────────────────────────────────────────────
