@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/admin_sidebar.dart';
 import '../../../../config/theme/app_colors.dart';
+import "package:frontend/core/widgets/admin_header.dart";
 
 class ReportsScreen extends StatefulWidget {
   final int activeIndex;
-  const ReportsScreen({super.key, this.activeIndex = 3});
+  final VoidCallback onLogout;
+  const ReportsScreen({super.key, this.activeIndex = 3, required this.onLogout});
 
   @override
   State<ReportsScreen> createState() => _ReportsScreenState();
@@ -26,7 +28,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         children: [
           // Sidebar with index-based navigation
           Sidebar(
-            activeIndex: activeIndex),
+            activeIndex: activeIndex,  onLogout: widget.onLogout),
 
           // Main content
           Expanded(

@@ -5,7 +5,8 @@ import 'package:frontend/config/theme/app_colors.dart';
 
 class CustomersScreen extends StatefulWidget {
   final int activeIndex;
-  const CustomersScreen({super.key, this.activeIndex = 5});
+  final VoidCallback onLogout;
+  const CustomersScreen({super.key, this.activeIndex = 5, required this.onLogout});
 
   @override
   State<CustomersScreen> createState() => _CustomersScreenState();
@@ -51,12 +52,12 @@ class _CustomersScreenState extends State<CustomersScreen> {
       backgroundColor: Colors.white,
       body: Row(
         children: [
-          Sidebar(activeIndex: activeIndex),
+          Sidebar(activeIndex: activeIndex, onLogout: widget.onLogout),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AdminHeader(title: "CUSTOMERS"),
+                AdminHeader(title: "CUSTOMERS",  onLogout: widget.onLogout),
                 Expanded(child: _buildBody()),
               ],
             ),

@@ -5,7 +5,8 @@
 
   class CMSScreen extends StatefulWidget {
     final int activeIndex;
-    const CMSScreen({super.key, this.activeIndex = 6});
+    final VoidCallback onLogout; 
+    const CMSScreen({super.key, this.activeIndex = 6, required this.onLogout});
 
     @override
     State<CMSScreen> createState() => _CMSScreenState();
@@ -26,13 +27,13 @@
         body: Row(
           children: [
             // Sidebar
-            Sidebar(activeIndex: activeIndex),
+            Sidebar(activeIndex: activeIndex,  onLogout: widget.onLogout),
 
             // Main content area
             Expanded(
               child: Column(
                 children: [
-                  const AdminHeader(title: "CMS"),
+                  AdminHeader(title: "CMS",  onLogout: widget.onLogout),
 
                   const Expanded(
                     child: CMSMainSection(),

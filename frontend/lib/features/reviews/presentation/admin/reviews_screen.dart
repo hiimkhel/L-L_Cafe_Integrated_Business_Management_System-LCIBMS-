@@ -5,7 +5,8 @@ import 'package:frontend/config/theme/app_colors.dart';
 
 class ReviewsScreen extends StatefulWidget {
   final int activeIndex;
-  const ReviewsScreen({super.key, this.activeIndex = 5});
+  final VoidCallback onLogout;
+  const ReviewsScreen({super.key, this.activeIndex = 5, required this.onLogout});
 
   @override
   State<ReviewsScreen> createState() => _ReviewsScreenState();
@@ -40,7 +41,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
       backgroundColor: Colors.white,
       body: Row(
           children: [
-            Sidebar(activeIndex: activeIndex),
+            Sidebar(activeIndex: activeIndex, onLogout: widget.onLogout),
 
             Expanded(child: _MainSection()),
           ],
@@ -53,7 +54,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AdminHeader(title: "REVIEWS"), // optional if you want header
+        AdminHeader(title: "REVIEWS", onLogout: widget.onLogout), // optional if you want header
 
         const SizedBox(height: 16),
 
