@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import '../../../../main.dart';
 import 'package:frontend/core/models/user.dart';
 
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart' as fb;
+
+
 class LoginScreen extends StatefulWidget {
   final Function(User) onLogin;
 
@@ -16,24 +21,60 @@ class _LoginScreenState extends State<LoginScreen> {
   final passwordController = TextEditingController();
   String error = '';
 
-  void _login() {
-    final email = emailController.text.trim();
-    final password = passwordController.text.trim();
+  void _login() async {
+  final email = emailController.text.trim();
+  final password = passwordController.text.trim();
 
-    try {
-      final user = fakeUsers.firstWhere(
-        (u) => u.email == email && u.password == password,
+  setState(() => error = '');
+
+  try {
+    // Firebase login
+    final credential = await fb.FirebaseAuth.instance
+        .signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    final uid = credential.user?.uid;
+
+    if (uid == null) {
+      setState(() {
+        error = 'Failed to get user ID from Firebase';
+      });
+      return;
+    }
+
+    // Send UID to backend
+    final response = await http.post(
+      Uri.parse('http://localhost:3006/api/auth/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'firebase_uid': uid,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      final user = User(
+        data['email'] ?? email,
+        '',
+        stringToRole(data['role']),
       );
 
       widget.onLogin(user);
-
       Navigator.pop(context);
-    } catch (e) {
+    } else {
       setState(() {
-        error = 'Invalid email or password';
+        error = data['message'] ?? 'Login failed';
       });
     }
+  } catch (e) {
+    setState(() {
+      error = 'Invalid credentials or server error';
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {
