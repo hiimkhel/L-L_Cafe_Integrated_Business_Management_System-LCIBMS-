@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "195883727696",
+    "project_id": "lcibms-project",
+    "storage_bucket": "lcibms-project.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:195883727696:android:ea63b386d10cc530fd8a55",
+        "android_client_info": {
+          "package_name": "com.example.frontend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-BbRLx-hRcmqPDs1p0mpHLhfVuBarxi0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
