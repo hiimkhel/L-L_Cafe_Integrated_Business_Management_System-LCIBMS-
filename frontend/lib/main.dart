@@ -7,19 +7,17 @@ import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/dashboard/presentation/rider/dashboard_screen.dart';
 import 'features/dashboard/presentation/pos/order_entry.dart';
 import 'features/home/presentation/customer/landing_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'core/models/user.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const LCIBMSApp());
 }
-
-// Hardcoded users
-final List<User> fakeUsers = [
-  User('customer@test.com', '1234', UserRole.customer),
-  User('admin@test.com', '1234', UserRole.admin),
-  User('pos@test.com', '1234', UserRole.pos),
-  User('rider@test.com', '1234', UserRole.rider),
-];
 
 class LCIBMSApp extends StatefulWidget {
   const LCIBMSApp({super.key});
@@ -33,13 +31,7 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
 
   void login(User user) {
       setState(() {
-      currentUser = null;
-    });
-
-    Future.delayed(const Duration(milliseconds: 10), () {
-      setState(() {
-        currentUser = user;
-      });
+      currentUser = user;
     });
   }
 
@@ -71,7 +63,7 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
       case UserRole.rider:
         return DeliveryDashboardScreen();
 
-      case UserRole.pos:
+      case UserRole.cashier:
         return POSOrderScreen();
 
       case UserRole.admin:
