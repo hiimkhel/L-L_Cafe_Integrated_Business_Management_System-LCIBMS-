@@ -79,7 +79,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         cartCount:   2,
         notifCount:  1,
         onLogout:    () => _logout(context),
-        onCart:      () => Navigator.pushReplacementNamed(context, '/orders'),
+        onCart: () => Navigator.pushNamed(context, '/cart'),
         onNotif:     () {},
         onProfile:   () {},
       ),

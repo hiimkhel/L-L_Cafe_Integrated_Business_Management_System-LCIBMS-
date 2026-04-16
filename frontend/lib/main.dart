@@ -8,6 +8,7 @@ import 'features/dashboard/presentation/rider/dashboard_screen.dart';
 import 'features/dashboard/presentation/pos/order_entry.dart';
 import 'features/home/presentation/customer/landing_screen.dart';
 import 'core/models/user.dart';
+import 'features/customers/presentation/admin/cart_screen.dart';
 
 void main() {
   runApp(const LCIBMSApp());
@@ -32,7 +33,7 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
   User? currentUser;
 
   void login(User user) {
-      setState(() {
+    setState(() {
       currentUser = null;
     });
 
@@ -54,6 +55,15 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: _buildScreen(),
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case '/cart':
+            return MaterialPageRoute(builder: (_) => const CartScreen());
+          // add more routes here as needed
+          default:
+            return null;
+        }
+      },
     );
   }
 
@@ -76,8 +86,10 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
 
       case UserRole.admin:
         return AdminDashboardScreen(
-          key: ValueKey(currentUser!.email), 
-          activeIndex: 0, onLogout: logout);
+          key: ValueKey(currentUser!.email),
+          activeIndex: 0,
+          onLogout: logout,
+        );
     }
   }
 }
