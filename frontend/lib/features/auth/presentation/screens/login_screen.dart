@@ -5,6 +5,7 @@ import 'package:frontend/core/models/user.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart' as fb;
+import 'package:frontend/services/auth_service.dart';
 
 
 class LoginScreen extends StatefulWidget {
@@ -27,51 +28,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   setState(() => error = '');
 
-  try {
-    // Firebase login
-    final credential = await fb.FirebaseAuth.instance
-        .signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+  try{
+    final user = await AuthService.login(email, password);
 
-    final uid = credential.user?.uid;
-
-    if (uid == null) {
-      setState(() {
-        error = 'Failed to get user ID from Firebase';
-      });
-      return;
-    }
-
-    // Send UID to backend
-    final response = await http.post(
-      Uri.parse('http://localhost:3006/api/auth/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'firebase_uid': uid,
-      }),
-    );
-
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode == 200) {
-      final user = User(
-        data['email'] ?? email,
-        '',
-        stringToRole(data['role']),
-      );
-
-      widget.onLogin(user);
-      Navigator.pop(context);
-    } else {
-      setState(() {
-        error = data['message'] ?? 'Login failed';
-      });
-    }
-  } catch (e) {
-    setState(() {
-      error = 'Invalid credentials or server error';
+    widget.onLogin(user);
+    Navigator.pop(context);
+  }catch(err){
+    setState((){
+      error = err.toString().replaceAll('Exception: ', '');
     });
   }
 }
