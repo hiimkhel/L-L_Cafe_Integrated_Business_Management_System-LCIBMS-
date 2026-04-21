@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/constants/menu_data.dart';
+import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 
 class POSOrderScreen extends StatefulWidget {
   const POSOrderScreen({super.key});
@@ -86,7 +87,14 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
           _headerBtns(
             icon: Icon(Icons.queue, color: AppColors.primary, size: 13),
             label: 'ORDER QUEUE',
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OrderQueueScreen(),
+                ),
+              );
+            },
           ),
           const SizedBox(width: 11),
           _headerBtns(
