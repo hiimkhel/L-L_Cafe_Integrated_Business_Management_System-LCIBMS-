@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/config/theme/app_text_styles.dart';
 import 'package:frontend/features/orders/presentation/pos/screens/order_history_screen.dart ';
+import 'package:frontend/features/dashboard/presentation/pos/order_entry.dart';
 
 class HeaderBar extends StatelessWidget {
   final String title;
@@ -22,7 +23,7 @@ class HeaderBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _backButton(),
+          _backButton(context),
           const SizedBox(width: 16),
 
           /// TITLE SECTION
@@ -62,16 +63,28 @@ class HeaderBar extends StatelessWidget {
     );
   }
 
-  Widget _backButton() {
-    return Container(
+Widget _backButton(BuildContext context) {
+  return InkWell(
+    borderRadius: BorderRadius.circular(50),
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const POSOrderScreen(),
+        ),
+      );
+    },
+    child: Container(
       padding: const EdgeInsets.all(10),
       decoration: const BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.card,
       ),
-      child: const Icon(Icons.arrow_back, color: AppColors.textDark),
-    );
-  }
+    
+  child: const Icon(Icons.arrow_back, color: AppColors.textDark),
+    ),
+  );
+}
 
 Widget _historyButton(BuildContext context) {
   return InkWell(
