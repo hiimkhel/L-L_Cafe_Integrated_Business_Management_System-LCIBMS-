@@ -101,22 +101,21 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
             onTap: () {},
           ),
           const SizedBox(width: 11),
-_headerBtns(
-  icon: Icon(
-    Icons.laptop_mac_outlined,
-    color: AppColors.primary,
-    size: 13,
-  ),
-  label: 'ONLINE ORDERS',
-  onTap: () {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const OnlineOrdersScreen(),
-    );
-  },
-),
-
+          _headerBtns(
+            icon: Icon(
+              Icons.laptop_mac_outlined,
+              color: AppColors.primary,
+              size: 13,
+            ),
+            label: 'ONLINE ORDERS',
+            onTap: () {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => const OnlineOrdersScreen(),
+              );
+            },
+          ),
 
           const SizedBox(width: 19),
           Container(width: 1.5, height: 32, color: AppColors.tertiary),
@@ -585,15 +584,17 @@ _headerBtns(
                 Expanded(
                   child: GestureDetector(
                     onTap: () {
-                       // Navigate to the next screen
+                      // Navigate to the next screen
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => CheckoutConfirmationScreen(), // Replace with your screen
+                          builder:
+                              (context) =>
+                                  CheckoutConfirmationScreen(), // Replace with your screen
                         ),
                       );
                     },
-                      child: Container(
+                    child: Container(
                       height: 50,
                       decoration: BoxDecoration(
                         color: AppColors.secondary,
@@ -624,7 +625,7 @@ _headerBtns(
                           ),
                         ],
                       ),
-                    )
+                    ),
                   ),
                 ),
               ],

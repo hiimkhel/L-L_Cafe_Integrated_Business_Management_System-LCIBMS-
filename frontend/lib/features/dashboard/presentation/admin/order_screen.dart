@@ -288,6 +288,7 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
             ),
           ),
+          const SizedBox(width: 20),
           // Customer
           Expanded(
             flex: 2,
@@ -340,6 +341,7 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
             ),
           ),
+          const SizedBox(width: 20),
           // Total
           Expanded(
             flex: 1,

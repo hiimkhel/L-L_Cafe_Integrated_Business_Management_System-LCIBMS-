@@ -11,12 +11,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/models/user.dart';
 import 'features/customers/presentation/admin/cart_screen.dart';
+import 'features/checkout/customer/presentation/cart_checkout_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const LCIBMSApp());
 }
 
