@@ -36,4 +36,39 @@ class AuthService{
 
   }
 
+  static Future<User> register(String fullName, String email, String password) async {
+    // Firebase register
+    final credential = await fb.FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
+
+    final uid = credential.user?.uid;
+
+     if (uid == null) {
+      throw Exception('Failed to get Firebase UID');
+    }
+
+    // Backend register
+    final response = await http.post(
+      Uri.parse('$baseUrl/register'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'firebase_uid': uid,
+        'full_name': fullName,
+        'email': email,
+      }),
+    );
+    
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode != 201) {
+      throw Exception(data['message'] ?? 'Register failed');
+    }
+
+     return User(
+      email,
+      '',
+      stringToRole(data['role']),
+    );
+
+  }
+
 }

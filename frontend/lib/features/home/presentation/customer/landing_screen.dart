@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
+import 'package:frontend/features/auth/presentation/screens/register_screen.dart';
+import 'package:frontend/features/home/presentation/customer/landing_screen.dart';
 import 'package:frontend/core/models/user.dart';
 
 class LandingScreen extends StatelessWidget {
   final Function(User) onLogin;
+  final Function(User) onRegister;
 
-  const LandingScreen({super.key, required this.onLogin});
+  const LandingScreen({super.key, required this.onLogin, required this.onRegister});
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +41,7 @@ class LandingScreen extends StatelessWidget {
 
             ElevatedButton(
               onPressed: () {
-                // TODO: Register Screen
+                Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterScreen(onRegister: onRegister)));
               },
               child: const Text('Register'),
             ),
