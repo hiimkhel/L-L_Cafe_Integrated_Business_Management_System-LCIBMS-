@@ -17,12 +17,14 @@ class MenuItem {
 
   factory MenuItem.fromJson(Map<String, dynamic> json) {
     return MenuItem(
-      id: json['id'],
-      name: json['name'],
-      category: json['category'],
-      imageUrl: json['image_url'],
-      description: json['description'],
-      price: (json['price'] as num).toDouble(),
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+      category: json['category'] ?? 'Uncategorized',
+      imageUrl: json['image_url'] ?? '',
+      description: json['description'] ?? '',
+      price: (json['price'] == null)
+          ? 0.0
+          : double.tryParse(json['price'].toString()) ?? 0.0,
     );
   }
 }

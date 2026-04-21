@@ -4,16 +4,46 @@ import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/constants/menu_data.dart';
 import 'package:frontend/features/checkout/admin/presentation/checkout_screen.dart';
 import 'package:frontend/features/dashboard/presentation/pos/online_orders_screen.dart';
+import 'package:frontend/core/models/menu_item.dart';
+import 'package:frontend/services/menu_service.dart';
 
 class POSOrderScreen extends StatefulWidget {
-  const POSOrderScreen({super.key});
 
+
+  POSOrderScreen({super.key});
+
+ 
   @override
   State<POSOrderScreen> createState() => _POSOrderScreenState();
 }
 
 class _POSOrderScreenState extends State<POSOrderScreen> {
-  String _selectedCategory = MenuData.categories.first;
+  List<MenuItem> menuItems = [];
+  bool isLoading = true;
+  String _selectedCategory = 'All';
+
+  @override
+  void initState(){
+    super.initState();
+    loadMenu();
+  }
+
+ Future<void> loadMenu() async {
+    try {
+      final items = await MenuService.fetchMenu();
+
+      setState(() {
+        menuItems = items;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      print("Error loading menu: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -268,15 +298,15 @@ _headerBtns(
 
   //----------------------------------------Item Buttons-----------------------------------------------------------
   Widget _itemButtons() {
-    final items =
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final filteredItems =
         _selectedCategory == 'All'
-            ? MenuData.itemsByCategory.entries
-                .expand(
-                  (e) => e.value.map((item) => {'category': e.key, ...item}),
-                )
-                .toList()
-            : (MenuData.itemsByCategory[_selectedCategory] ?? [])
-                .map((item) => {'category': _selectedCategory, ...item})
+            ? menuItems
+            : menuItems
+                .where((item) => item.category == _selectedCategory)
                 .toList();
 
     return GridView.builder(
@@ -287,15 +317,15 @@ _headerBtns(
         mainAxisSpacing: 20,
         childAspectRatio: 1.1,
       ),
-      itemCount: items.length,
+      itemCount: filteredItems.length,
       itemBuilder: (context, index) {
-        final item = items[index];
+        final item = filteredItems[index];
         return _itemCard(item);
       },
     );
   }
 
-  Widget _itemCard(Map<String, String> item) {
+  Widget _itemCard(MenuItem item) {
     return Container(
       padding: const EdgeInsets.all(19),
       decoration: BoxDecoration(
@@ -306,7 +336,6 @@ _headerBtns(
             color: AppColors.receiptDark.withOpacity(0.08),
             offset: Offset(0, 2),
             blurRadius: 8,
-            spreadRadius: 0,
           ),
         ],
       ),
@@ -314,40 +343,41 @@ _headerBtns(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            (item['category'] ?? '').toUpperCase(),
+            item.category.toUpperCase(),
             style: TextStyle(
               fontSize: 9,
               color: AppColors.primary,
               fontWeight: FontWeight.w600,
-              letterSpacing: .8,
             ),
           ),
           const SizedBox(height: 4),
+
           Text(
-            item['name'] ?? '',
+            item.name,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
               color: AppColors.receiptDark,
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
+
           const Spacer(),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                item['price'] ?? '',
+                "₱${item.price}",
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: AppColors.secondary,
                 ),
               ),
+
               GestureDetector(
                 onTap: () {
-                  //add to order logic here
+                  print("Add to cart: ${item.name}");
                 },
                 child: Container(
                   width: 34,
@@ -356,11 +386,7 @@ _headerBtns(
                     color: AppColors.background,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
-                    Icons.add,
-                    size: 20,
-                    color: AppColors.primary,
-                  ),
+                  child: const Icon(Icons.add, size: 20),
                 ),
               ),
             ],
