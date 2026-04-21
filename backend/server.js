@@ -36,6 +36,8 @@ app.use('/api/admin', (req,res) => {
     // [!] Temporary: Change this to adminRoutes.js
     console.log("This are admin module routes");
 })
+
+app.use('/api/menu', require("./routes/menuRoutes.js"));
 app.listen(PORT, () => {
     console.log(`Server is running on ${PORT}`);
 });
