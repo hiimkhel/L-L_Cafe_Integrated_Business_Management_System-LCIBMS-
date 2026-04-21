@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/constants/menu_data.dart';
+import 'package:frontend/features/checkout/admin/presentation/checkout_screen.dart';
+import 'package:frontend/features/dashboard/presentation/pos/online_orders_screen.dart';
 import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 
 class POSOrderScreen extends StatefulWidget {
@@ -114,8 +116,15 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
               size: 13,
             ),
             label: 'ONLINE ORDERS',
-            onTap: () {},
+            onTap: () {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => const OnlineOrdersScreen(),
+              );
+            },
           ),
+
           const SizedBox(width: 19),
           Container(width: 1.5, height: 32, color: AppColors.tertiary),
           const SizedBox(width: 19),
@@ -581,36 +590,49 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: AppColors.secondary,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.receiptDark,
-                          offset: Offset(3, 4),
-                          blurRadius: 5,
+                  child: GestureDetector(
+                    onTap: () {
+                      // Navigate to the next screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) =>
+                                  CheckoutConfirmationScreen(), // Replace with your screen
                         ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          CupertinoIcons.checkmark_shield,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'FINALIZE ORDER',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
+                      );
+                    },
+                    child: Container(
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: AppColors.secondary,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.receiptDark,
+                            offset: Offset(3, 4),
+                            blurRadius: 5,
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            CupertinoIcons.checkmark_shield,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'FINALIZE ORDER',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

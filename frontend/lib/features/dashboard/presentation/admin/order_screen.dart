@@ -5,7 +5,8 @@ import "../../../../config/theme/app_colors.dart";
 
 class OrderScreen extends StatefulWidget {
   final int activeIndex;
-  const OrderScreen({super.key, this.activeIndex = 1});
+  final VoidCallback onLogout;
+  const OrderScreen({super.key, this.activeIndex = 1, required this.onLogout});
 
   @override
   State<OrderScreen> createState() => _OrderScreenState();
@@ -41,12 +42,12 @@ class _OrderScreenState extends State<OrderScreen> {
       backgroundColor: Colors.white,
       body: Row(
         children: [
-          Sidebar(activeIndex: 1),
+          Sidebar(activeIndex: 1,  onLogout: widget.onLogout),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AdminHeader(title: "ORDERS"),
+                AdminHeader(title: "ORDERS",  onLogout: widget.onLogout),
                 Expanded(child: _buildBody()),
               ],
             ),
@@ -287,6 +288,7 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
             ),
           ),
+          const SizedBox(width: 20),
           // Customer
           Expanded(
             flex: 2,
@@ -339,6 +341,7 @@ class _OrderScreenState extends State<OrderScreen> {
               ),
             ),
           ),
+          const SizedBox(width: 20),
           // Total
           Expanded(
             flex: 1,

@@ -15,5 +15,15 @@ class AppColors {
   // receipt-specific
   static const Color receiptDark = Color(0xFF2D2A26);  // darker than textDark
   static const Color receiptBg   = Color(0x4DEFE2C9);  // cream at 30% opacity
+
+  // Alert/Warning Color
+  static const Color alertColor = Color(0xFFFB2C36);
+
+
+  // Delivery Order Status Badges
+  static const Color preparingColor = Color(0xFFFFBF00);
+  static const Color deliveringColor = Color(0xFFF155DFC);
+  static const Color deliveredColor = Color(0xFFF00A63E);
+
    static const Color border = Color(0xFFA98258);
 }

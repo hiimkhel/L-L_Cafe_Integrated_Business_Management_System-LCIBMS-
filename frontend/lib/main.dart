@@ -1,63 +1,23 @@
 import 'package:flutter/material.dart';
 
-// Placeholder screens
 import 'features/home/presentation/customer/home_screen.dart';
 import 'features/dashboard/presentation/admin/dashboard_screen.dart';
-import 'features/dashboard/presentation/cashier/dashboard_screen.dart';
 import 'features/home/presentation/rider/home_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
-import 'features/cms/presentation/cms_screen.dart';
-import 'features/customers/presentation/admin/customers_screen.dart';
-import 'features/reviews/presentation/admin/reviews_screen.dart';
+import 'features/dashboard/presentation/rider/dashboard_screen.dart';
 import 'features/dashboard/presentation/pos/order_entry.dart';
-import 'features/dashboard/presentation/admin/order_screen.dart';
-import 'features/dashboard/presentation/admin/menu_management.dart';
-import 'features/reports/presentation/admin/sales_report_screen.dart';
+import 'features/home/presentation/customer/landing_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'core/models/user.dart';
+import 'features/customers/presentation/admin/cart_screen.dart';
+import 'features/checkout/customer/presentation/cart_checkout_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const LCIBMSApp());
 }
-
-// User Roles
-enum UserRole { customer, admin, pos, rider }
-
-// Hardcoded User model
-class User {
-  final String email;
-  final String password;
-  final UserRole role;
-
-  User(this.email, this.password, this.role);
-}
-
-// Hardcoded users
-final List<User> fakeUsers = [
-  User('customer@test.com', '1234', UserRole.customer),
-  User('admin@test.com', '1234', UserRole.admin),
-  User('pos@test.com', '1234', UserRole.pos),
-  User('rider@test.com', '1234', UserRole.rider),
-];
-
-// Routes for Admin Screens
-final Map<String, Widget Function(BuildContext)> adminRoutes = {
-  '/dashboard': (_) => const AdminDashboardScreen(activeIndex: 0),
-  '/orders': (_) => const OrderScreen(activeIndex: 1),
-  '/menu_management': (_) => const MenuManagementScreen(activeIndex: 2),
-  '/reports': (_) => const SalesReportScreen(),
-  '/customers': (_) => const CustomersScreen(activeIndex: 4),
-  '/reviews': (_) => const ReviewsScreen(activeIndex: 5),
-  '/cms': (_) => const CMSScreen(activeIndex: 6),
-  // Add other routes here
-};
-
-//---------------pos routes-----------------------
-final Map<String, Widget Function(BuildContext)> PosRoutes = {
-  '/pos/dashboard': (_) => const POSOrderScreen(),
-  // Add other routes here
-};
-
-// Global current user (simple for starter)
-User? currentUser;
 
 class LCIBMSApp extends StatefulWidget {
   const LCIBMSApp({super.key});
@@ -67,53 +27,59 @@ class LCIBMSApp extends StatefulWidget {
 }
 
 class _LCIBMSAppState extends State<LCIBMSApp> {
-  void _setUser(User user) {
-    setState(() {
+  User? currentUser;
+
+  void setUser(User user) {
+      setState(() {
       currentUser = user;
+    });
+  }
+
+  void logout() {
+    setState(() {
+      currentUser = null;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // If not logged in, show login screen
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: _buildScreen(),
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case '/cart':
+            return MaterialPageRoute(builder: (_) => const CartScreen());
+          // add more routes here as needed
+          default:
+            return null;
+        }
+      },
+    );
+  }
+
+  Widget _buildScreen() {
+    // NOT LOGGED IN
     if (currentUser == null) {
-      return MaterialApp(
-        title: 'L-L Cafe IBMS',
-        theme: ThemeData(primarySwatch: Colors.blue),
-        debugShowCheckedModeBanner: false,
-        home: LoginScreen(onLogin: _setUser),
-      );
+      return LandingScreen(onLogin: setUser, onRegister: setUser);
     }
 
-    // After login, show role-specific dashboard
+    // LOGGED IN (ROLE ROUTING)
     switch (currentUser!.role) {
       case UserRole.customer:
-        return MaterialApp(
-          title: 'Customer Home',
-          debugShowCheckedModeBanner: false,
-          home: const CustomerHomeScreen(),
-        );
+        return CustomerHomeScreen();
+
       case UserRole.rider:
-        return MaterialApp(
-          title: 'Rider Home',
-          debugShowCheckedModeBanner: false,
-          home: const RiderHomeScreen(),
-        );
-      case UserRole.pos:
-        return MaterialApp(
-          title: 'POS Dashboard',
-          debugShowCheckedModeBanner: false,
-          initialRoute: '/pos/dashboard',
-          routes: PosRoutes, // <-- our named routes for POS
-          home: const POSOrderScreen(),
-        );
+        return DeliveryDashboardScreen();
+
+      case UserRole.cashier:
+        return POSOrderScreen();
+
       case UserRole.admin:
-        return MaterialApp(
-          title: 'Admin Dashboard',
-          debugShowCheckedModeBanner: false,
-          initialRoute: '/dashboard',
-          routes: adminRoutes, // <-- our named routes for admin
-          home: const AdminDashboardScreen(activeIndex: 0),
+        return AdminDashboardScreen(
+          key: ValueKey(currentUser!.email),
+          activeIndex: 0,
+          onLogout: logout,
         );
     }
   }

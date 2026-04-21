@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../../main.dart';
+import 'package:frontend/core/models/user.dart';
+
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart' as fb;
+import 'package:frontend/services/auth_service.dart';
+
 
 class LoginScreen extends StatefulWidget {
   final Function(User) onLogin;
@@ -15,22 +22,23 @@ class _LoginScreenState extends State<LoginScreen> {
   final passwordController = TextEditingController();
   String error = '';
 
-  void _login() {
-    final email = emailController.text.trim();
-    final password = passwordController.text.trim();
+  void _login() async {
+  final email = emailController.text.trim();
+  final password = passwordController.text.trim();
 
-    try {
-      final user = fakeUsers.firstWhere(
-        (u) => u.email == email && u.password == password,
-      );
+  setState(() => error = '');
 
-      widget.onLogin(user);
-    } catch (e) {
-      setState(() {
-        error = 'Invalid email or password';
-      });
-    }
+  try{
+    final user = await AuthService.login(email, password);
+
+    widget.onLogin(user);
+    Navigator.pop(context);
+  }catch(err){
+    setState((){
+      error = err.toString().replaceAll('Exception: ', '');
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {
