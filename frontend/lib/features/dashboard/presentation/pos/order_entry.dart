@@ -589,7 +589,7 @@ _headerBtns(
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => CheckoutConfirmationScreen(), // Replace with your screen
+                          builder: (context) => CheckoutConfirmationScreen(), 
                         ),
                       );
                     },
