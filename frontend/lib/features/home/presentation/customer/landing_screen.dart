@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
+import 'package:frontend/features/auth/presentation/screens/register_screen.dart';
+import 'package:frontend/features/home/presentation/customer/landing_screen.dart';
 import 'package:frontend/core/models/user.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
@@ -73,7 +75,9 @@ const _heroImageAssets = <String?>[
 
 class LandingScreen extends StatelessWidget {
   final Function(User) onLogin;
-  const LandingScreen({super.key, required this.onLogin});
+  final Function(User) onRegister;
+
+  const LandingScreen({super.key, required this.onLogin, required this.onRegister});
 
   @override
   Widget build(BuildContext context) {
@@ -849,20 +853,11 @@ class _MenuTile extends StatelessWidget {
   final double width;
   const _MenuTile({required this.item, required this.width});
 
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: width, height: width * 0.88,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: AppColors.primary.withOpacity(0.05)),
-              boxShadow: const [BoxShadow(color: Color(0x14000000), blurRadius: 10, offset: Offset(0, 5))],
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterScreen(onRegister: onRegister)));
+              },
+              child: const Text('Register'),
             ),
             child: item.imageAsset != null
                 ? ClipRRect(borderRadius: BorderRadius.circular(22), child: Image.asset(item.imageAsset!, fit: BoxFit.cover))

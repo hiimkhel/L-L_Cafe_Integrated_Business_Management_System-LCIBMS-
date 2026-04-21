@@ -30,7 +30,7 @@ class LCIBMSApp extends StatefulWidget {
 class _LCIBMSAppState extends State<LCIBMSApp> {
   User? currentUser;
 
-  void login(User user) {
+  void setUser(User user) {
       setState(() {
       currentUser = user;
     });
@@ -62,7 +62,7 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
   Widget _buildScreen() {
     // NOT LOGGED IN
     if (currentUser == null) {
-      return LandingScreen(onLogin: login);
+      return LandingScreen(onLogin: setUser, onRegister: setUser);
     }
 
     // LOGGED IN (ROLE ROUTING)
