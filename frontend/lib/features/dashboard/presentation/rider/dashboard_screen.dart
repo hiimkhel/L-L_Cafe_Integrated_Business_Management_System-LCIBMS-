@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../config/theme/app_colors.dart';
 import "package:frontend/config/theme/app_text_styles.dart";
+import 'package:frontend/features/dashboard/presentation/rider/delivery_details.dart';
 
 class DeliveryDashboardScreen extends StatefulWidget {
   const DeliveryDashboardScreen({super.key});
@@ -10,8 +11,7 @@ class DeliveryDashboardScreen extends StatefulWidget {
       _DeliveryDashboardScreenState();
 }
 
-class _DeliveryDashboardScreenState
-    extends State<DeliveryDashboardScreen> {
+class _DeliveryDashboardScreenState extends State<DeliveryDashboardScreen> {
   String selectedFilter = "ALL";
 
   final List<Map<String, dynamic>> orders = [
@@ -21,7 +21,12 @@ class _DeliveryDashboardScreenState
       "address": "123 Mabini St, Makati City",
       "time": "10:30 AM",
       "items": "3 ITEMS",
-      "status": "PREPARING"
+      "status": "PREPARING",
+      "phone": "09983926720",
+      "order": [
+        {"name": "Coffee Caramel", "price": 120.0},
+        {"name": "Harry Caramel", "price": 220.0},
+      ],
     },
     {
       "id": "LL-146",
@@ -29,7 +34,12 @@ class _DeliveryDashboardScreenState
       "address": "456 Rizal Ave, Pasig City",
       "time": "10:45 AM",
       "items": "5 ITEMS",
-      "status": "OUT FOR DELIVERY"
+      "status": "OUT FOR DELIVERY",
+      "phone": "099375629285",
+      "order": [
+        {"name": "Rowlings Caramel", "price": 150.0},
+        {"name": "Chocolate Caramel", "price": 260.0},
+      ],
     },
     {
       "id": "LL-147",
@@ -37,7 +47,12 @@ class _DeliveryDashboardScreenState
       "address": "789 Bonifacio St, QC",
       "time": "11:00 AM",
       "items": "2 ITEMS",
-      "status": "PREPARING"
+      "status": "PREPARING",
+      "phone": "09628497293",
+      "order": [
+        {"name": "Window Caramel", "price": 220.0},
+        {"name": "Quirell Caramel", "price": 120.0},
+      ],
     },
     {
       "id": "LL-148",
@@ -45,7 +60,12 @@ class _DeliveryDashboardScreenState
       "address": "321 Luna St, Mandaluyong",
       "time": "11:15 AM",
       "items": "4 ITEMS",
-      "status": "OUT FOR DELIVERY"
+      "status": "OUT FOR DELIVERY",
+      "phone": "09756383927",
+      "order": [
+        {"name": "Hagrid Caramel", "price": 320.0},
+        {"name": "King Caramel", "price": 270.0},
+      ],
     },
     {
       "id": "LL-144",
@@ -53,7 +73,12 @@ class _DeliveryDashboardScreenState
       "address": "654 Del Pilar St, Taguig",
       "time": "10:15 AM",
       "items": "4 ITEMS",
-      "status": "DELIVERED"
+      "status": "DELIVERED",
+      "phone": "09836354839",
+      "order": [
+        {"name": "Warts Caramel", "price": 190.0},
+        {"name": "West Caramel", "price": 330.0},
+      ],
     },
   ];
 
@@ -100,12 +125,7 @@ class _DeliveryDashboardScreenState
 
             const SizedBox(height: 12),
 
-            Divider(
-              color: AppColors.primary,
-              thickness: 1,
-              height: 20,
-            ),
-
+            Divider(color: AppColors.primary, thickness: 1, height: 20),
 
             // ORDER LIST
             Expanded(
@@ -129,51 +149,52 @@ class _DeliveryDashboardScreenState
     );
   }
 
-  Widget _buildHeader(){
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
-        width: double.infinity,
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: AppColors.primary, width: 1),
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.primary, width: 1)),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 15),
+
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "DELIVERY PANEL",
+                style: AppTextStyles.title.copyWith(color: AppColors.secondary),
+              ),
+              Text(
+                "DELIVERY ORDER MANAGEMENT",
+                style: AppTextStyles.body.copyWith(color: AppColors.tertiary),
+              ),
+            ],
           ),
-        ),
-        child: Row(children: [
-          
-            const SizedBox(width: 15),
 
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "DELIVERY PANEL",
-                  style: AppTextStyles.title.copyWith(color: AppColors.secondary),
-                ),
-                Text(
-                  "DELIVERY ORDER MANAGEMENT",
-                  style: AppTextStyles.body.copyWith(
-                    color: AppColors.tertiary,
-                  )
-                ),
-              ],
-            ),
+          const Spacer(),
 
-            const Spacer(),
-
-            Row(children: [
-              Column(children: [
-                Text("ACTIVE", 
-                  style: AppTextStyles.title.copyWith(
-                    fontSize: 10,
-                    color: AppColors.tertiary,
-                )),
-                Text("4", 
-                  style: AppTextStyles.title.copyWith(
-                    color: AppColors.secondary,
-                  )
-                )
-              ],
-            ),
+          Row(
+            children: [
+              Column(
+                children: [
+                  Text(
+                    "ACTIVE",
+                    style: AppTextStyles.title.copyWith(
+                      fontSize: 10,
+                      color: AppColors.tertiary,
+                    ),
+                  ),
+                  Text(
+                    "4",
+                    style: AppTextStyles.title.copyWith(
+                      color: AppColors.secondary,
+                    ),
+                  ),
+                ],
+              ),
 
               const SizedBox(width: 10),
 
@@ -186,17 +207,17 @@ class _DeliveryDashboardScreenState
                 child: Icon(
                   Icons.local_shipping_rounded,
                   color: AppColors.secondary,
-                  size: 30
-                )
-              )
+                  size: 30,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-            ],)
-        ],)
-        
-      );
-    }
-
-   Widget _buildTopSearchRow() {
+  Widget _buildTopSearchRow() {
     return SizedBox(
       width: double.infinity,
       height: 38,
@@ -209,26 +230,26 @@ class _DeliveryDashboardScreenState
             fontSize: 11,
             fontWeight: FontWeight.bold,
           ),
-          suffixIcon: Icon(Icons.search,
-              size: 16, color: AppColors.tertiary),
+          suffixIcon: Icon(Icons.search, size: 16, color: AppColors.tertiary),
           filled: true,
           fillColor: Colors.white,
-          contentPadding:
-              const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 8,
+            horizontal: 14,
+          ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide:
-                BorderSide(color: AppColors.tertiary.withOpacity(.3)),
+            borderSide: BorderSide(color: AppColors.tertiary.withOpacity(.3)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide:
-                BorderSide(color: AppColors.tertiary, width: .9),
+            borderSide: BorderSide(color: AppColors.tertiary, width: .9),
           ),
         ),
       ),
     );
   }
+
   // FILTER BUTTON
   Widget _filterBtn(String label) {
     final isSelected = selectedFilter == label;
@@ -261,180 +282,194 @@ class _DeliveryDashboardScreenState
   }
 
   //  ORDER CARD
- Widget _orderCard(Map<String, dynamic> order) {
-  Color statusColor;
+  Widget _orderCard(Map<String, dynamic> order) {
+    Color statusColor;
 
-  switch (order["status"]) {
-    case "PREPARING":
-      statusColor = AppColors.preparingColor;
-      break;
-    case "OUT FOR DELIVERY":
-      statusColor = AppColors.deliveringColor;
-      break;
-    case "DELIVERED":
-      statusColor = AppColors.deliveredColor;
-      break;
-    default:
-      statusColor = Colors.grey;
-  }
+    switch (order["status"]) {
+      case "PREPARING":
+        statusColor = AppColors.preparingColor;
+        break;
+      case "OUT FOR DELIVERY":
+        statusColor = AppColors.deliveringColor;
+        break;
+      case "DELIVERED":
+        statusColor = AppColors.deliveredColor;
+        break;
+      default:
+        statusColor = Colors.grey;
+    }
 
-  return Container(
-    margin: const EdgeInsets.only(bottom: 12),
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: const [
-        BoxShadow(
-          color: Colors.black12,
-          blurRadius: 6,
-          offset: Offset(0, 3),
-        )
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-
-        // 🔹 TOP ROW (ORDER ID + STATUS)
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.receipt_long,
-                    size: 16, color: AppColors.secondary),
-                const SizedBox(width: 6),
-                Text(
-                  order["id"],
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 🔹 TOP ROW (ORDER ID + STATUS)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.receipt_long,
+                    size: 16,
                     color: AppColors.secondary,
                   ),
+                  const SizedBox(width: 6),
+                  Text(
+                    order["id"],
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.secondary,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
                 ),
-              ],
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: statusColor,
-                borderRadius: BorderRadius.circular(20),
+                decoration: BoxDecoration(
+                  color: statusColor,
+                  borderRadius: BorderRadius.circular(11),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.receiptDark.withOpacity(.5),
+                      offset: Offset(0, 2),
+                      blurRadius: 4,
+                      spreadRadius: 0,
+                    ),
+                  ],
+                ),
+                child: Text(
+                  order["status"],
+                  style: const TextStyle(color: Colors.white, fontSize: 10),
+                ),
               ),
-              child: Text(
-                order["status"],
-                style: const TextStyle(
-                    color: Colors.white, fontSize: 10),
-              ),
-            )
-          ],
-        ),
+            ],
+          ),
 
-        const SizedBox(height: 10),
+          const SizedBox(height: 10),
 
-        // 🔹 CUSTOMER
-        Row(
-          children: [
-            Icon(Icons.person,
-                size: 16, color: AppColors.secondary),
-            const SizedBox(width: 6),
-            Text(
-              order["name"],
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: AppColors.receiptDark,
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 6),
-
-        // 🔹 ADDRESS
-        Row(
-          children: [
-            Icon(Icons.location_on,
-                size: 16, color: AppColors.tertiary),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                order["address"],
+          // 🔹 CUSTOMER
+          Row(
+            children: [
+              Icon(Icons.person, size: 16, color: AppColors.secondary),
+              const SizedBox(width: 6),
+              Text(
+                order["name"],
                 style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.tertiary,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.receiptDark,
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
 
-        const SizedBox(height: 10),
+          const SizedBox(height: 6),
 
-        // DIVIDER 
-        Divider(
-          color: AppColors.primary.withOpacity(0.2),
-          thickness: 1,
-        ),
+          // 🔹 ADDRESS
+          Row(
+            children: [
+              Icon(Icons.location_on, size: 16, color: AppColors.tertiary),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  order["address"],
+                  style: TextStyle(fontSize: 11, color: AppColors.tertiary),
+                ),
+              ),
+            ],
+          ),
 
-        const SizedBox(height: 8),
+          const SizedBox(height: 10),
 
-        // FINAL ROW 
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
+          // DIVIDER
+          Divider(color: AppColors.primary.withOpacity(0.2), thickness: 1),
 
-            // LEFT GROUP
-            Row(
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.access_time,
-                        size: 14, color: AppColors.secondary),
-                    const SizedBox(width: 4),
-                    Text(
-                      order["time"],
-                      style: TextStyle(
-                        fontSize: 11,
+          const SizedBox(height: 8),
+
+          // FINAL ROW
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // LEFT GROUP
+              Row(
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.access_time,
+                        size: 14,
                         color: AppColors.secondary,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 12),
-                Row(
-                  children: [
-                    Icon(Icons.inventory_2,
-                        size: 14, color: AppColors.secondary),
-                    const SizedBox(width: 4),
-                    Text(
-                      order["items"],
-                      style: TextStyle(
-                        fontSize: 11,
+                      const SizedBox(width: 4),
+                      Text(
+                        order["time"],
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.secondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 12),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.inventory_2,
+                        size: 14,
                         color: AppColors.secondary,
                       ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                      const SizedBox(width: 4),
+                      Text(
+                        order["items"],
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.secondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
 
-            // RIGHT BUTTON
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(8),
+              // RIGHT BUTTON
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DeliveryDetailsScreen(order: order),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_forward,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                ),
               ),
-              child: const Icon(
-                Icons.arrow_forward,
-                color: Colors.white,
-                size: 16,
-              ),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
