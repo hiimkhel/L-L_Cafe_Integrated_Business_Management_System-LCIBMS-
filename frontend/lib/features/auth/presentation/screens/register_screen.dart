@@ -17,39 +17,71 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
-  String error = '';
+  final AuthService _authService = AuthService();
 
+  String error = '';
+  bool isLoading = false;
+
+  /// 📝 Email Register
   void _register() async {
     final name = nameController.text.trim();
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
     final confirm = confirmPasswordController.text.trim();
 
-    setState(() => error = '');
+    setState(() {
+      error = '';
+      isLoading = true;
+    });
 
     if (name.isEmpty || email.isEmpty || password.isEmpty) {
-      setState(() => error = 'All fields are required');
+      setState(() {
+        error = 'All fields are required';
+        isLoading = false;
+      });
       return;
     }
 
     if (password != confirm) {
-      setState(() => error = 'Passwords do not match');
+      setState(() {
+        error = 'Passwords do not match';
+        isLoading = false;
+      });
       return;
     }
 
     try {
-
-      final user = await AuthService.register(name, email, password);
+      final user = await _authService.register(name, email, password);
 
       widget.onRegister(user);
-
-      // Go back to landing (or auto-login flow)
       Navigator.pop(context);
-
     } catch (e) {
       setState(() {
         error = e.toString().replaceAll('Exception: ', '');
       });
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  /// 🔵 Google Register (same as login)
+  void _googleRegister() async {
+    setState(() {
+      error = '';
+      isLoading = true;
+    });
+
+    try {
+      final user = await _authService.signInWithGoogle();
+
+      widget.onRegister(user);
+      Navigator.pop(context);
+    } catch (e) {
+      setState(() {
+        error = e.toString().replaceAll('Exception: ', '');
+      });
+    } finally {
+      setState(() => isLoading = false);
     }
   }
 
@@ -62,39 +94,71 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            /// 👤 Name
             TextField(
               controller: nameController,
               decoration: const InputDecoration(labelText: 'Full Name'),
             ),
+
             const SizedBox(height: 8),
 
+            /// 📧 Email
             TextField(
               controller: emailController,
               decoration: const InputDecoration(labelText: 'Email'),
             ),
+
             const SizedBox(height: 8),
 
+            /// 🔒 Password
             TextField(
               controller: passwordController,
               obscureText: true,
               decoration: const InputDecoration(labelText: 'Password'),
             ),
+
             const SizedBox(height: 8),
 
+            /// 🔒 Confirm Password
             TextField(
               controller: confirmPasswordController,
               obscureText: true,
               decoration: const InputDecoration(labelText: 'Confirm Password'),
             ),
+
             const SizedBox(height: 16),
 
+            /// 📝 Register Button
             ElevatedButton(
-              onPressed: _register,
-              child: const Text('Register'),
+              onPressed: isLoading ? null : _register,
+              child: isLoading
+                  ? const CircularProgressIndicator()
+                  : const Text('Register'),
             ),
 
-            const SizedBox(height: 8),
-            Text(error, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 16),
+
+            /// Divider
+            const Text('OR'),
+
+            const SizedBox(height: 16),
+
+            /// 🔵 Google Register
+            OutlinedButton.icon(
+              onPressed: isLoading ? null : _googleRegister,
+              icon: const Icon(Icons.login),
+              label: const Text('Continue with Google'),
+            ),
+
+            const SizedBox(height: 16),
+
+            /// ❌ Error
+            if (error.isNotEmpty)
+              Text(
+                error,
+                style: const TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
           ],
         ),
       ),

@@ -1,31 +1,38 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart' as fb;
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 import '../core/models/user.dart';
 
-class AuthService{
+class AuthService {
   static const String baseUrl = "http://localhost:3006/api/auth";
 
-  static Future<User> login(String email, String password) async {
-    final credential = await fb.FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
-    
-    final uid = credential.user?.uid;
+  final fb.FirebaseAuth _auth = fb.FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
 
-    if(uid == null){
-      throw Exception("Failed to get Firebase UID");
+  Future<User> _authenticateWithBackend(String endpoint) async {
+    final fb.User? firebaseUser = _auth.currentUser;
+
+    if (firebaseUser == null) {
+      throw Exception("No authenticated Firebase user");
     }
 
-    // Backend Logic
+    final idToken = await firebaseUser.getIdToken();
+    
     final response = await http.post(
-      Uri.parse('$baseUrl/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'firebase_uid': uid}),
+      Uri.parse('$baseUrl/$endpoint'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $idToken',
+      },
     );
 
     final data = jsonDecode(response.body);
 
-    if (response.statusCode != 200){
-      throw Exception(data['message'] ?? 'Login failed');
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(data['message'] ?? 'Authentication failed');
     }
 
     return User(
@@ -33,42 +40,56 @@ class AuthService{
       '',
       stringToRole(data['role']),
     );
-
   }
 
-  static Future<User> register(String fullName, String email, String password) async {
-    // Firebase register
-    final credential = await fb.FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
-
-    final uid = credential.user?.uid;
-
-     if (uid == null) {
-      throw Exception('Failed to get Firebase UID');
-    }
-
-    // Backend register
-    final response = await http.post(
-      Uri.parse('$baseUrl/register'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'firebase_uid': uid,
-        'full_name': fullName,
-        'email': email,
-      }),
-    );
-    
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode != 201) {
-      throw Exception(data['message'] ?? 'Register failed');
-    }
-
-     return User(
-      email,
-      '',
-      stringToRole(data['role']),
+  ///  Email Login
+  Future<User> login(String email, String password) async {
+    await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
     );
 
+    return _authenticateWithBackend("");
   }
 
+  ///  Email Register
+  Future<User> register(String fullName, String email, String password) async {
+    final credential = await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    await credential.user?.updateDisplayName(fullName);
+
+    return _authenticateWithBackend("");
+  }
+
+  ///  Google Sign-In
+ Future<User> signInWithGoogle() async {
+    try {
+      final googleProvider = fb.GoogleAuthProvider();
+
+      final userCredential =
+          await fb.FirebaseAuth.instance.signInWithPopup(googleProvider);
+
+      final user = userCredential.user;
+
+      if (user == null) {
+        throw Exception("Google sign-in failed");
+      }
+
+      return await _authenticateWithBackend("");
+      
+    } catch (e) {
+      throw Exception("Google Sign-In Error: $e");
+    }
+  }
+
+
+
+  ///  Logout
+  Future<void> logout() async {
+    await _auth.signOut();
+    await _googleSignIn.signOut();
+  }
 }

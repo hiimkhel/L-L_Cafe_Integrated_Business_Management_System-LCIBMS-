@@ -1,12 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../main.dart';
 import 'package:frontend/core/models/user.dart';
-
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:frontend/services/auth_service.dart';
-
 
 class LoginScreen extends StatefulWidget {
   final Function(User) onLogin;
@@ -20,25 +14,56 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+
+  final AuthService _authService = AuthService();
+
   String error = '';
+  bool isLoading = false;
 
+  /// 📧 Email Login
   void _login() async {
-  final email = emailController.text.trim();
-  final password = passwordController.text.trim();
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
 
-  setState(() => error = '');
-
-  try{
-    final user = await AuthService.login(email, password);
-
-    widget.onLogin(user);
-    Navigator.pop(context);
-  }catch(err){
-    setState((){
-      error = err.toString().replaceAll('Exception: ', '');
+    setState(() {
+      error = '';
+      isLoading = true;
     });
+
+    try {
+      final user = await _authService.login(email, password);
+
+      widget.onLogin(user);
+      Navigator.pop(context);
+    } catch (err) {
+      setState(() {
+        error = err.toString().replaceAll('Exception: ', '');
+      });
+    } finally {
+      setState(() => isLoading = false);
+    }
   }
-}
+
+  /// 🔵 Google Login
+  void _googleLogin() async {
+    setState(() {
+      error = '';
+      isLoading = true;
+    });
+
+    try {
+      final user = await _authService.signInWithGoogle();
+
+      widget.onLogin(user);
+      Navigator.pop(context);
+    } catch (err) {
+      setState(() {
+        error = err.toString().replaceAll('Exception: ', '');
+      });
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,23 +74,50 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+
             TextField(
               controller: emailController,
               decoration: const InputDecoration(labelText: 'Email'),
             ),
+
             const SizedBox(height: 8),
+
             TextField(
               controller: passwordController,
               obscureText: true,
               decoration: const InputDecoration(labelText: 'Password'),
             ),
+
             const SizedBox(height: 16),
+
             ElevatedButton(
-              onPressed: _login,
-              child: const Text('Login'),
+              onPressed: isLoading ? null : _login,
+              child: isLoading
+                  ? const CircularProgressIndicator()
+                  : const Text('Login'),
             ),
-            const SizedBox(height: 8),
-            Text(error, style: const TextStyle(color: Colors.red)),
+
+            const SizedBox(height: 16),
+          
+            /// Divider
+            const Text('OR'),
+
+            const SizedBox(height: 16),
+
+            OutlinedButton.icon(
+              onPressed: isLoading ? null : _googleLogin,
+              icon: const Icon(Icons.login),
+              label: const Text('Continue with Google'),
+            ),
+
+            const SizedBox(height: 16),
+
+            if (error.isNotEmpty)
+              Text(
+                error,
+                style: const TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
           ],
         ),
       ),

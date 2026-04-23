@@ -12,10 +12,12 @@ import 'firebase_options.dart';
 import 'core/models/user.dart';
 import 'features/customers/presentation/admin/cart_screen.dart';
 import 'features/checkout/customer/presentation/cart_checkout_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await dotenv.load(fileName: ".env");
   runApp(const LCIBMSApp());
 }
 
