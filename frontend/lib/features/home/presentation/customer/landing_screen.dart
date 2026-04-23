@@ -84,9 +84,13 @@ class LandingScreen extends StatelessWidget {
     void goLogin() => Navigator.push(context,
         MaterialPageRoute(builder: (_) => LoginScreen(onLogin: onLogin)));
 
+    void goRegister() => Navigator.push(context,
+        MaterialPageRoute(builder: (_) => RegisterScreen(onRegister: onRegister)));
+
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: GuestNavbar(activeRoute: '/home', onLogin: goLogin, onJoinNow: goLogin),
+      appBar: GuestNavbar(activeRoute: '/home', onLogin: goLogin, onJoinNow: goRegister),
       body: Stack(
         children: [
           // ── Full-page animated bamboo stripe background ──────────────────
@@ -1110,7 +1114,9 @@ class _Newsletter extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             GestureDetector(
-              onTap: () {},
+              onTap: () {
+                
+              },
               child: Container(
                 height: 52,
                 padding: const EdgeInsets.symmetric(horizontal: 24),
