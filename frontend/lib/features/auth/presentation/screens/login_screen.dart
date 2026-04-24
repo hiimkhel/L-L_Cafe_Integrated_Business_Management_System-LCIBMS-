@@ -65,6 +65,26 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _facebookLogin() async {
+    setState(() {
+      error = '';
+      isLoading = true;
+    });
+
+    try {
+      final user = await _authService.signInWithFacebook();
+
+      widget.onLogin(user);
+      Navigator.pop(context);
+    } catch (err) {
+      setState(() {
+        error = err.toString().replaceAll('Exception: ', '');
+      });
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -110,6 +130,17 @@ class _LoginScreenState extends State<LoginScreen> {
               label: const Text('Continue with Google'),
             ),
 
+            
+            const SizedBox(height: 12),
+
+            OutlinedButton.icon(
+              onPressed: isLoading ? null : _facebookLogin,
+              icon: const Icon(Icons.facebook, color: Colors.blue),
+              label: const Text('Continue with Facebook'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.blue,
+              ),
+            ),
             const SizedBox(height: 16),
 
             if (error.isNotEmpty)
@@ -124,3 +155,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
