@@ -22,7 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String error = '';
   bool isLoading = false;
 
-  /// 📝 Email Register
+  /// Email Register
   void _register() async {
     final name = nameController.text.trim();
     final email = emailController.text.trim();
@@ -64,7 +64,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  /// 🔵 Google Register (same as login)
+  /// Google Register (same as login)
   void _googleRegister() async {
     setState(() {
       error = '';
@@ -73,6 +73,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       final user = await _authService.signInWithGoogle();
+
+      widget.onRegister(user);
+      Navigator.pop(context);
+    } catch (e) {
+      setState(() {
+        error = e.toString().replaceAll('Exception: ', '');
+      });
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  void _facebookRegister() async {
+    setState(() {
+      error = '';
+      isLoading = true;
+    });
+
+    try {
+      final user = await _authService.signInWithFacebook();
 
       widget.onRegister(user);
       Navigator.pop(context);
@@ -94,7 +114,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            /// 👤 Name
+            /// Name
             TextField(
               controller: nameController,
               decoration: const InputDecoration(labelText: 'Full Name'),
@@ -102,7 +122,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
             const SizedBox(height: 8),
 
-            /// 📧 Email
+            ///  Email
             TextField(
               controller: emailController,
               decoration: const InputDecoration(labelText: 'Email'),
@@ -110,7 +130,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
             const SizedBox(height: 8),
 
-            /// 🔒 Password
+            /// Password
             TextField(
               controller: passwordController,
               obscureText: true,
@@ -119,7 +139,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
             const SizedBox(height: 8),
 
-            /// 🔒 Confirm Password
+            ///  Confirm Password
             TextField(
               controller: confirmPasswordController,
               obscureText: true,
@@ -128,7 +148,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
             const SizedBox(height: 16),
 
-            /// 📝 Register Button
+            ///  Register Button
             ElevatedButton(
               onPressed: isLoading ? null : _register,
               child: isLoading
@@ -143,7 +163,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
             const SizedBox(height: 16),
 
-            /// 🔵 Google Register
+            ///  Google Register
             OutlinedButton.icon(
               onPressed: isLoading ? null : _googleRegister,
               icon: const Icon(Icons.login),
@@ -152,7 +172,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
             const SizedBox(height: 16),
 
-            /// ❌ Error
+            const SizedBox(height: 12),
+
+            OutlinedButton.icon(
+              onPressed: isLoading ? null : _facebookRegister,
+              icon: const Icon(Icons.facebook, color: Colors.blue),
+              label: const Text('Continue with Facebook'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.blue,
+              ),
+            ),
+
+            ///  Error
             if (error.isNotEmpty)
               Text(
                 error,

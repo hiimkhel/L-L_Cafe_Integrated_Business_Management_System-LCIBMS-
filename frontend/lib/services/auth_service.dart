@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
 import '../core/models/user.dart';
 
@@ -86,6 +87,35 @@ class AuthService {
   }
 
 
+  Future<User> signInWithFacebook() async {
+    try {
+      final LoginResult result = await FacebookAuth.instance.login();
+
+      if (result.status != LoginStatus.success) {
+        throw Exception("Facebook login failed");
+      }
+
+      final accessToken = result.accessToken!;
+
+      final credential = fb.FacebookAuthProvider.credential(
+        accessToken.tokenString,
+      );
+
+      final userCredential =
+          await fb.FirebaseAuth.instance.signInWithCredential(credential);
+
+      final user = userCredential.user;
+
+      if (user == null) {
+        throw Exception("Firebase Facebook auth failed");
+      }
+
+      return await _authenticateWithBackend("");
+
+    } catch (e) {
+      throw Exception("Facebook Sign-In Error: $e");
+    }
+  }
 
   ///  Logout
   Future<void> logout() async {
