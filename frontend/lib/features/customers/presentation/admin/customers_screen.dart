@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/core/widgets/admin_sidebar.dart';
 import 'package:frontend/config/theme/app_colors.dart';
+import 'package:frontend/services/admin_service.dart';
 
 class CustomersScreen extends StatefulWidget {
   final int activeIndex;
@@ -19,32 +20,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
   void initState() {
     super.initState();
     activeIndex = widget.activeIndex;
+    _loadCustomers();
   }
 
-  // Dummy customers data
-  final List<Map<String, dynamic>> _customers = [
-    {
-      'joinDate': '2026-02-07 13:20',
-      'customerId': '#C-398',
-      'customerName': 'RICO B.',
-      'address': 'Makati City',
-      'totalSpent': '₱420.00',
-    },
-    {
-      'joinDate': '2026-02-07 12:45',
-      'customerId': '#C-397',
-      'customerName': 'LIZA M.',
-      'address': 'Cebu City',
-      'totalSpent': '₱185.50',
-    },
-    {
-      'joinDate': '2026-02-06 17:15',
-      'customerId': '#C-396',
-      'customerName': 'ELENA S.',
-      'address': 'Iloilo City',
-      'totalSpent': '₱120.00',
-    },
-  ];
+  List<dynamic> _customers = [];
+  bool _isLoading = true;
 
   @override
   Widget build(BuildContext context) {
@@ -134,13 +114,15 @@ class _CustomersScreenState extends State<CustomersScreen> {
         children: [
           _buildTableHeader(),
           Expanded(
-            child: ListView.builder(
-              itemCount: _customers.length,
-              itemBuilder: (context, index) =>
-                  _buildCustomerRow(_customers[index], index),
-            ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.builder(
+                    itemCount: _customers.length,
+                    itemBuilder: (context, index) =>
+                        _buildCustomerRow(_customers[index], index),
+                  ),
           ),
-        ],
+                  ],
       ),
     );
   }
@@ -190,18 +172,19 @@ class _CustomersScreenState extends State<CustomersScreen> {
   }
 
   // ROW
-  Widget _buildCustomerRow(
-      Map<String, dynamic> customer, int index) {
+  Widget _buildCustomerRow(Map<String, dynamic> customer, int index) {
+    final createdAt = customer['created_at'] ?? "";
+    final joinDate =
+        createdAt.toString().length >= 10 ? createdAt.substring(0, 10) : "N/A";
+
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         color: index.isEven
             ? Colors.white
             : AppColors.background.withOpacity(.3),
         border: Border(
-          bottom:
-              BorderSide(color: AppColors.tertiary.withOpacity(.08)),
+          bottom: BorderSide(color: AppColors.tertiary.withOpacity(.08)),
         ),
       ),
       child: Row(
@@ -210,7 +193,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
           Expanded(
             flex: 2,
             child: Text(
-              customer['joinDate'],
+              joinDate,
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.tertiary.withOpacity(.8),
@@ -222,7 +205,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
           Expanded(
             flex: 1,
             child: Text(
-              customer['customerId'],
+              "#${customer['id'] ?? 0}",
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -231,11 +214,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
             ),
           ),
 
-          // CUSTOMER NAME
+          // NAME
           Expanded(
             flex: 2,
             child: Text(
-              customer['customerName'],
+              customer['full_name'] ?? "Unknown",
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
@@ -244,11 +227,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
             ),
           ),
 
-          // ADDRESS
+          // EMAIL
           Expanded(
             flex: 2,
             child: Text(
-              customer['address'],
+              customer['email'] ?? "No Email",
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.tertiary.withOpacity(.8),
@@ -256,11 +239,11 @@ class _CustomersScreenState extends State<CustomersScreen> {
             ),
           ),
 
-          // TOTAL SPENT
+          // PROVIDER (better than role here)
           Expanded(
             flex: 1,
             child: Text(
-              customer['totalSpent'],
+              customer['provider'] ?? "-",
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
@@ -275,30 +258,30 @@ class _CustomersScreenState extends State<CustomersScreen> {
             child: Align(
               alignment: Alignment.centerRight,
               child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(
-                      color: AppColors.tertiary.withOpacity(.4)),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: Text(
-                  'DETAILS',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.tertiary,
-                    letterSpacing: 0.4,
-                  ),
-                ),
+                onPressed: () {
+                  print(customer); // debug for now
+                },
+                child: const Text("DETAILS"),
               ),
             ),
           ),
         ],
       ),
     );
+  }
+  Future<void> _loadCustomers() async {
+    try {
+      final data = await AdminService.fetchAllCustomers();
+
+      print("FROM API: $data"); // 🔍 debug
+
+      setState(() {
+        _customers = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print("Error loading customers: $e");
+      setState(() => _isLoading = false);
+    }
   }
 }
