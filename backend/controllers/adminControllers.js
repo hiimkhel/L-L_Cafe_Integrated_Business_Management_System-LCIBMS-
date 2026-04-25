@@ -115,6 +115,32 @@ const addMenuCategory = async (req, res) => {
     }
 }
 
+const getItemById = async (req, res) => {
+    try{
+        // Retrieve id value from request parameter
+        const {id} = req.params;
+
+        // Query into db
+        const [rows] = await db.query("SELECT * FROM menu_items WHERE id = ?", [id]);
+
+        // Check if it exist
+        if (rows.length === 0) {
+            return res.status(404).json({
+                message: "Menu item not found",
+            });
+        }
+
+        // Response JSON
+        return res.status(200).json(rows[0]);
+    }catch(err){
+        console.error("Get menu item by id error:", err);
+        return res.status(500).json({
+        message: "Server error",
+        });
+    }
+}
+
+
 const addMenuItem = async (req, res) => {
     try{
         // Deconstruct body values
@@ -199,5 +225,6 @@ module.exports = { fetchAllCustomer,
     fetchMenuCategories,
     addMenuCategory,
     addMenuItem,
-    deleteMenuItem
+    deleteMenuItem,
+    getItemById
  };
