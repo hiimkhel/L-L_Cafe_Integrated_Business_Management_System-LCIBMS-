@@ -48,7 +48,7 @@ final List<NotificationItem> _mockNotifications = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NOTIFICATION POPUP COMPONENT (Refined & Responsive)
+// NOTIFICATION POPUP COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
 class NotificationPanel extends StatelessWidget {
@@ -60,7 +60,6 @@ class NotificationPanel extends StatelessWidget {
     return isMobile ? _buildMobileSheet(context) : _buildDesktopPanel(context);
   }
 
-  // DESKTOP VERSION: Cleaner, smaller right-side panel
   Widget _buildDesktopPanel(BuildContext context) {
     return Material(
       color: Colors.transparent,
@@ -92,7 +91,6 @@ class NotificationPanel extends StatelessWidget {
     );
   }
 
-  // MOBILE VERSION: Responsive Bottom Sheet
   Widget _buildMobileSheet(BuildContext context) {
     return SafeArea(
       bottom: false,
@@ -174,6 +172,7 @@ class NotificationPanel extends StatelessWidget {
           ),
           if (!isMobile)
             GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: () => Navigator.pop(context),
               child: Container(
                 width: 40, height: 40,
@@ -197,7 +196,6 @@ class NotificationPanel extends StatelessWidget {
       itemCount: _mockNotifications.length,
       itemBuilder: (context, index) {
         final item = _mockNotifications[index];
-        
         return Container(
           margin: const EdgeInsets.fromLTRB(24, 0, 24, 16),
           padding: const EdgeInsets.all(20),
@@ -330,7 +328,6 @@ class GuestNavbar extends StatefulWidget implements PreferredSizeWidget {
 class _GuestNavbarState extends State<GuestNavbar> {
   bool _menuOpen = false;
 
-  // Removed ABOUT link
   static const _links = [
     _NI('HOME',    '/home'),
     _NI('MENU',    '/menu'),
@@ -364,19 +361,28 @@ class _GuestNavbarState extends State<GuestNavbar> {
               child: _NavLink(
                 label: l.label,
                 active: widget.activeRoute == l.route,
-                onTap: () => Navigator.pushReplacementNamed(context, l.route),
+                onTap: () {
+                  if (widget.activeRoute != l.route) {
+                    Navigator.pushReplacementNamed(context, l.route);
+                  }
+                },
               ),
             )).toList()),
           ),
         ),
         GestureDetector(
+          behavior: HitTestBehavior.opaque, // Guarantee tap registration
           onTap: widget.onLogin,
-          child: Text('LOGIN',
-              style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                  fontSize: 12, letterSpacing: 2.0, color: AppColors.primary)),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text('LOGIN',
+                style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                    fontSize: 12, letterSpacing: 2.0, color: AppColors.primary)),
+          ),
         ),
-        const SizedBox(width: 20),
+        const SizedBox(width: 12),
         GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: widget.onJoinNow,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 11),
@@ -408,13 +414,18 @@ class _GuestNavbarState extends State<GuestNavbar> {
             _LogoImg(),
             const Spacer(),
             GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: widget.onLogin,
-              child: Text('LOGIN',
-                  style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                      fontSize: 11, letterSpacing: 2, color: AppColors.primary)),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text('LOGIN',
+                    style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                        fontSize: 11, letterSpacing: 2, color: AppColors.primary)),
+              ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 2),
             GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: widget.onJoinNow,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
@@ -429,6 +440,7 @@ class _GuestNavbarState extends State<GuestNavbar> {
             ),
             const SizedBox(width: 10),
             GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: () => setState(() => _menuOpen = !_menuOpen),
               child: Container(
                 width: 40, height: 40,
@@ -459,9 +471,12 @@ class _GuestNavbarState extends State<GuestNavbar> {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
                         onTap: () {
                           setState(() => _menuOpen = false);
-                          Navigator.pushReplacementNamed(context, e.route);
+                          if (widget.activeRoute != e.route) {
+                            Navigator.pushReplacementNamed(context, e.route);
+                          }
                         },
                         child: Container(
                           width: double.infinity,
@@ -584,7 +599,6 @@ class _DesktopCustomerNav extends StatelessWidget {
   final int cartCount, notifCount;
   final VoidCallback? onCart, onNotif, onProfile, onLogout;
 
-  // Removed ABOUT link
   static const _links = [
     _NI('HOME',   '/home'),
     _NI('MENU',   '/menu'),
@@ -618,27 +632,43 @@ class _DesktopCustomerNav extends StatelessWidget {
               child: _NavLink(
                 label: l.label,
                 active: activeRoute == l.route,
-                onTap: () => Navigator.pushReplacementNamed(context, l.route),
+                onTap: () {
+                  if (activeRoute != l.route) {
+                    Navigator.pushReplacementNamed(context, l.route);
+                  }
+                },
               ),
             )).toList()),
           ),
         ),
         
-        // Exact 4 items ordered: Bell, Cart, Profile, Logout
         _IconCircleBtn(icon: Icons.notifications_none_rounded, badge: notifCount, onTap: onNotif),
         const SizedBox(width: 16),
         
-        _IconCircleBtn(icon: Icons.shopping_cart_outlined, badge: cartCount, onTap: onCart),
+        _IconCircleBtn(
+          icon: Icons.shopping_cart_outlined, 
+          badge: cartCount, 
+          onTap: () {
+            if (onCart != null) onCart!();
+            // Fallback autonomous routing
+            if (activeRoute != '/orders') Navigator.pushNamed(context, '/orders');
+          }
+        ),
         const SizedBox(width: 16),
         
-        _IconCircleBtn(icon: Icons.person_outline_rounded, onTap: onProfile),
+        _IconCircleBtn(
+          icon: Icons.person_outline_rounded, 
+          onTap: () {
+            if (onProfile != null) onProfile!();
+            if (activeRoute != '/profile') Navigator.pushNamed(context, '/profile');
+          }
+        ),
         const SizedBox(width: 16),
         
         _IconCircleBtn(
           icon: Icons.logout_rounded, 
           onTap: () {
             if (onLogout != null) onLogout!();
-            // Forces the app to return to the landing page ('/')
             Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
           }
         ),
@@ -670,10 +700,15 @@ class _MobileCustomerNav extends StatelessWidget {
           activeRoute: activeRoute,
           userName: userName ?? 'JANE DOE',
           userClientId: userClientId ?? 'CLIENT #LL-00124',
-          onLogout: onLogout, // Passed original function so SideDrawer can handle it securely
+          onLogout: () {
+            if (onLogout != null) onLogout!();
+            Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+          },
           onNav: (route) {
-            Navigator.pop(context);
-            Navigator.pushReplacementNamed(context, route);
+            Navigator.pop(context); // Close Drawer
+            if (activeRoute != route) {
+              Navigator.pushNamed(context, route);
+            }
           },
         ),
       ),
@@ -701,11 +736,18 @@ class _MobileCustomerNav extends StatelessWidget {
         _IconCircleBtn(icon: Icons.notifications_none_rounded, badge: notifCount, onTap: onNotif),
         const SizedBox(width: 6),
         
-        // Mobile cart icon is also updated to the shopping_cart icon
-        _IconCircleBtn(icon: Icons.shopping_cart_outlined, badge: cartCount, onTap: onCart),
+        _IconCircleBtn(
+          icon: Icons.shopping_cart_outlined, 
+          badge: cartCount, 
+          onTap: () {
+            if (onCart != null) onCart!();
+            if (activeRoute != '/orders') Navigator.pushNamed(context, '/orders');
+          }
+        ),
         const SizedBox(width: 10),
         
         GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: () => _openSideDrawer(context), 
           child: Container(
             width: 38, height: 38,
@@ -723,7 +765,6 @@ class _SideDrawer extends StatelessWidget {
   final VoidCallback? onLogout;
   final void Function(String) onNav;
 
-  // Removed ABOUT link
   static const _links = [
     _NID('HOME',    '/home',    Icons.grid_view_rounded),
     _NID('MENU',    '/menu',    Icons.receipt_long_rounded),
@@ -770,6 +811,7 @@ class _SideDrawer extends StatelessWidget {
                 child: Column(children: _links.map((l) => Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
                       onTap: () => onNav(l.route),
                       child: Row(children: [
                         Icon(l.icon, color: AppColors.primary, size: 22),
@@ -783,9 +825,9 @@ class _SideDrawer extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(24),
               child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () {
                   if (onLogout != null) onLogout!();
-                  // Safely roots back to landing page
                   Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
                 },
                 child: Container(
@@ -845,16 +887,20 @@ class _NavLink extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque, // Expands hit box dynamically
       onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(label, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: active ? AppColors.secondary : AppColors.primary)),
-          if (active) ...[
-            const SizedBox(height: 3),
-            Container(height: 3, width: 24, decoration: BoxDecoration(color: AppColors.secondary, borderRadius: BorderRadius.circular(100))),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0), // Massive invisible hit area
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: active ? AppColors.secondary : AppColors.primary)),
+            if (active) ...[
+              const SizedBox(height: 3),
+              Container(height: 3, width: 24, decoration: BoxDecoration(color: AppColors.secondary, borderRadius: BorderRadius.circular(100))),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -870,6 +916,7 @@ class _IconCircleBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque, // Ensures the entire box is clickable
       onTap: onTap,
       child: Stack(clipBehavior: Clip.none, children: [
         Container(

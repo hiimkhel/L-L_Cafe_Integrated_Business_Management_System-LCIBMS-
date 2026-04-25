@@ -221,7 +221,7 @@ class CustomerFooter extends StatelessWidget {
                 ]),
                 const Spacer(),
                 Wrap(spacing: 36, children: [
-                  'Privacy Policy', 'Terms of Service', 'Architectural Support'
+                  'Privacy Policy', 'Terms of Service', 'Support'
                 ].map((l) => Text(l.toUpperCase(),
                     style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
                         fontSize: 10, letterSpacing: 3, color: AppColors.primary)))
