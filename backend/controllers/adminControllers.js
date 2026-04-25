@@ -220,11 +220,62 @@ const deleteMenuItem = async (req, res) => {
     }
 }
 
+const updateMenuItem = async (req, res) => {
+    try{
+        const { id } = req.params;
+
+        // Deconstruct all the menu-item details value
+        const {
+            name,
+            price,
+            description,
+            is_available
+        } = req.body
+
+        // Validate values
+        if (!name || price == null) {
+            return res.status(400).json({
+                message: "Name and price are required",
+            });
+        }
+
+        // Check if item exists
+        const [ existing ] = await db.query(
+            "SELECT * FROM menu_items WHERE id = ?", [id]
+        );
+
+        if (existing.length === 0) {
+            return res.status(404).json({
+                message: "Menu item not found",
+            });
+        }
+
+        // Update logic
+        await db.query(
+           `UPDATE menu_items 
+            SET name = ?, price = ?, description = ?, is_available = ?
+            WHERE id = ?`,
+            [name, price, description, is_available ? 1 : 0, id]
+        );
+
+        // Return JSON
+        return res.status(200).json({
+            message: "Menu item updated successfully",
+        });
+
+    }catch(err){
+        console.error("Update menu item error:", err);
+        return res.status(500).json({
+            message: "Server error",
+        });
+    }
+}
 module.exports = { fetchAllCustomer, 
     fetchMenuItems,
     fetchMenuCategories,
     addMenuCategory,
     addMenuItem,
     deleteMenuItem,
-    getItemById
+    getItemById,
+    updateMenuItem
  };
