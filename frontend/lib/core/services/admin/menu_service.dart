@@ -65,4 +65,22 @@ class MenuService {
       throw Exception(res.body);
     }
   }
+
+  static Future<void> deleteItem(int id) async{
+    final res = await http.delete(Uri.parse('$baseUrl/menu-items/$id'),
+      headers: {
+        "Content-Type": "application/json",
+        if (token != null) "Authorization": "Bearer $token",
+      },
+    );
+
+     // Error handling
+    if (res.statusCode != 200 && res.statusCode != 204){
+      throw Exception(res.body.isNotEmpty
+        ? res.body
+        : "Failed to delete item");
+    }
+
+  }
+  
 }
