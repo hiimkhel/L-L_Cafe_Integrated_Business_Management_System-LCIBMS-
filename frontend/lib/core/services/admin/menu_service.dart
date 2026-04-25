@@ -99,4 +99,17 @@ class MenuService {
       throw Exception("Failed to load item");
     }
   }
+
+  // Call Backend API for updating menu item
+  static Future<void> updateMenuItem(int id, Map<String, dynamic> data) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/menu-items/$id'),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(data),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to update item");
+    }
+  }
 }

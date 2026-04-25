@@ -65,11 +65,12 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     
       setState(() {
         selectedItem = freshItem;
-        selectedItemName = item['name'];
+        selectedItemName = freshItem['name'];
 
-        _nameCtrl.text = item['name'] ?? '';
-        _priceCtrl.text = item['price'].toString();
-        _descCtrl.text = item['description'] ?? '';
+        _nameCtrl.text = freshItem['name'] ?? '';
+        _priceCtrl.text = freshItem['price'].toString();
+        _descCtrl.text = freshItem['description'] ?? '';
+        isAvailable = freshItem['is_available'] == 1;
       });
     }catch(err){
       print("Failed to fetch item: $err");
@@ -84,6 +85,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       selectedCategoryId = category['id'];
       selectedItem = null; // 
       selectedItemName = null;
+      
     });
 
     _loadItems(category['id']); // FETCH ITEMS BY CATEGORY
@@ -527,7 +529,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                             'Available',
                             style: TextStyle(
                               fontSize: 14,
-                              color: AppColors.secondary,
+                              color: AppColors.primary,
                               fontWeight: FontWeight.normal,
                             ),
                           ),
@@ -637,7 +639,31 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                 Row(
                   children: [
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () async {
+                        if (selectedItem == null) return;
+
+                        try {
+                          await MenuService.updateMenuItem(
+                            selectedItem['id'],
+                            {
+                              "name": _nameCtrl.text,
+                              "price": double.parse(_priceCtrl.text),
+                              "description": _descCtrl.text,
+                              "is_available": isAvailable ? 1 : 0,
+                            },
+                          );
+
+                          // Refresh list
+                          _loadItems(selectedCategoryId!);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Item updated successfully")),
+                          );
+
+                        } catch (e) {
+                          print("Update error: $e");
+                        }
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
