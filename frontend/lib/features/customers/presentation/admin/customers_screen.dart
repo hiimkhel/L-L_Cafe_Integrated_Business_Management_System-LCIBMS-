@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/core/widgets/admin_sidebar.dart';
 import 'package:frontend/config/theme/app_colors.dart';
-import 'package:frontend/services/admin/customers_service.dart';
+import 'package:frontend/core/services/admin/customers_service.dart';
 
 class CustomersScreen extends StatefulWidget {
   final int activeIndex;
