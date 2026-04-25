@@ -19,7 +19,7 @@ class MenuService {
   static Future<List<dynamic>> fetchMenuItems(int categoryId) async {
     final res = await http.get(
       Uri.parse('$baseUrl/menu-items?category_id=$categoryId'),
-    );
+    );  
 
     if (res.statusCode == 200) {
       return jsonDecode(res.body);

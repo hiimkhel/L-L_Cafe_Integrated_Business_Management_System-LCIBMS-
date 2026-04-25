@@ -34,11 +34,12 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   @override
   void initState() {
     super.initState();
-    _loadItems(3);
 
-  _nameCtrl = TextEditingController();
-  _priceCtrl = TextEditingController();
-  _descCtrl = TextEditingController();
+    _nameCtrl = TextEditingController();
+    _priceCtrl = TextEditingController();
+    _descCtrl = TextEditingController();
+
+    _loadCategories();
   }
 
   @override
@@ -61,14 +62,27 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     });
   }
 
-  void _onSelectCategory(String cat) {
+  void _onSelectCategory(dynamic category) {
     setState(() {
-      selectedCategory = cat;
+      selectedCategoryId = category['id'];
       selectedItemName = null;
-      _nameCtrl.clear();
-      _priceCtrl.clear();
-      _descCtrl.clear();
     });
+
+    _loadItems(category['id']); // FETCH ITEMS BY CATEGORY
+  }
+
+  Future<void> _loadCategories() async {
+    final data = await MenuService.fetchCategories();
+
+    setState(() {
+      categories = data;
+
+      if (categories.isNotEmpty) {
+        selectedCategoryId = categories[0]['id'];
+      }
+    });
+
+    _loadItems(selectedCategoryId!);
   }
 
   Future<void> _loadItems(int categoryId) async {
@@ -289,8 +303,9 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     );
   }
 
-  Widget _buildCategoryTitle(String cat) {
-    final selected = selectedCategory == cat;
+  Widget _buildCategoryTitle(dynamic cat) {
+    final selected = selectedCategoryId == cat['id'];
+
     return GestureDetector(
       onTap: () => _onSelectCategory(cat),
       child: Container(
@@ -299,19 +314,11 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
         decoration: BoxDecoration(
           color: selected ? AppColors.background : Colors.white,
           borderRadius: BorderRadius.circular(9),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.4),
-              offset: Offset(0, 4),
-              blurRadius: 4,
-            ),
-          ],
         ),
         child: Text(
-          cat,
+          cat['name'],
           style: TextStyle(
             color: AppColors.primary,
-            fontWeight: FontWeight.normal,
             fontSize: 13,
           ),
         ),
