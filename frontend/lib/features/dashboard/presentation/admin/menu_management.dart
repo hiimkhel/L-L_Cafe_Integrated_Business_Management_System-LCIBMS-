@@ -19,7 +19,10 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   //--------------------------------------------------State---------------------------------------------------------------------
   String selectedCategory = 'Foods';
   String? selectedItemName = 'Chicken Burger';
+
+  // State for UI loading
   bool isAvailable = true;
+  bool isLoadingItem = false;
 
   // Handle current item selected on the right panel
   dynamic selectedItem;
@@ -55,15 +58,25 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
 
 
 
-  void _onSelectItem(dynamic item) {
-    setState(() {
-      selectedItem = item;
-      selectedItemName = item['name'];
+  void _onSelectItem(dynamic item) async {
+    setState(() => isLoadingItem = true);
+    try{
+      final freshItem = await MenuService.fetchMenuItemById(item['id']);
+    
+      setState(() {
+        selectedItem = freshItem;
+        selectedItemName = item['name'];
 
-      _nameCtrl.text = item['name'] ?? '';
-      _priceCtrl.text = item['price'].toString();
-      _descCtrl.text = item['description'] ?? '';
-    });
+        _nameCtrl.text = item['name'] ?? '';
+        _priceCtrl.text = item['price'].toString();
+        _descCtrl.text = item['description'] ?? '';
+      });
+    }catch(err){
+      print("Failed to fetch item: $err");
+    }finally{
+      setState(() => isLoadingItem = false);
+    }
+    
   }
 
   void _onSelectCategory(dynamic category) {
