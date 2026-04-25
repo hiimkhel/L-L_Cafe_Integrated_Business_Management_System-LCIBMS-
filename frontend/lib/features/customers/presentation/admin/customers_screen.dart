@@ -241,7 +241,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
               flex: 1,
               child: Text(
                 "#${customer['id'] ?? '-'}",
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.tertiary),
               ),
             ),
 
@@ -250,20 +250,23 @@ class _CustomersScreenState extends State<CustomersScreen> {
               flex: 2,
               child: Text(
                 customer['full_name'] ?? "Unknown",
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.tertiary),
               ),
             ),
 
             // EMAIL
             Expanded(
               flex: 2,
-              child: Text(customer['email'] ?? "No Email"),
+              child: Text(customer['email'] ?? "No Email",
+                style: const TextStyle(color: AppColors.tertiary)
+              )
             ),
 
             // ADDRESS
             Expanded(
               flex: 3,
-              child: Text(address),
+              child: Text(address, 
+              style: TextStyle(color: AppColors.tertiary)),
             ),
 
             // TOTAL SPENT
@@ -271,7 +274,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
               flex: 1,
               child: Text(
                 totalSpent,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.tertiary),
               ),
             ),
           ],
