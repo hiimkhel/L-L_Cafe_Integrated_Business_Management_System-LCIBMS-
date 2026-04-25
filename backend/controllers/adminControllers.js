@@ -80,7 +80,18 @@ const fetchMenuItems = async (req, res) => {
         res.status(500).json({error: err.message});
     }
 }
-module.exports = { fetchAllCustomer,
-    fetchMenuItems,
 
+const fetchMenuCategories = async (req, res) => {
+    try{
+        const [ rows ] = await db.query(`SELECT id, name FROM menu_categories ORDER BY id ASC`);
+
+        res.status(200).json(rows);
+    }catch(err){    
+        res.status(500).json({error: err.message});
+    }
+}
+
+module.exports = { fetchAllCustomer, 
+    fetchMenuItems,
+    fetchMenuCategories
  };
