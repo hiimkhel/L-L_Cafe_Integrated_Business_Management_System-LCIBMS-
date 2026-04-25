@@ -5,6 +5,7 @@
 */
 const db = require("../config/dbConnection.js");
 
+// [1] Customers API
 const fetchAllCustomer = async (req, res) => {
      try {
         const { search = "" } = req.query;
@@ -50,4 +51,36 @@ const fetchAllCustomer = async (req, res) => {
     }
 };
 
-module.exports = { fetchAllCustomer };
+
+// [2] Menu APIs
+// Fetch all items by category
+const fetchMenuItems = async (req, res) => {
+    try{
+        // Get category id from request search query
+        const { category_id } = req.query
+
+        let query = `
+            SELECT * from menu_items
+        `;
+
+        let params = [];
+
+        if(category_id){
+            query += `WHERE category_id = ? `;
+            params.push(category_id);
+        }
+
+        query += `ORDER BY name ASC`;
+
+        const [rows] = await db.query(query, params);
+
+        res.json(rows);
+
+    }catch(err){
+        res.status(500).json({error: err.message});
+    }
+}
+module.exports = { fetchAllCustomer,
+    fetchMenuItems,
+
+ };
