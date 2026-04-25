@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/core/widgets/admin_sidebar.dart';
-//import 'package:frontend/core/constants/menu_item.dart';
-import 'package:frontend/core/constants/menu_data.dart';
 //import 'package:frontend/core/constants/menu_controller.dart';
+import 'package:frontend/core/services/admin/menu_service.dart';
 
 class MenuManagementScreen extends StatefulWidget {
   final int activeIndex;
@@ -18,14 +17,15 @@ class MenuManagementScreen extends StatefulWidget {
 
 class _MenuManagementScreenState extends State<MenuManagementScreen> {
   //--------------------------------------------------State---------------------------------------------------------------------
-
   String selectedCategory = 'Foods';
   String? selectedItemName = 'Chicken Burger';
   bool isAvailable = true;
 
-  final List<String> categories = MenuData.categories;
-  final Map<String, List<Map<String, String>>> itemsByCategory =
-      MenuData.itemsByCategory;
+  // Handle the incoming data from the API
+  List<dynamic> categories = [];
+  List<dynamic> items = [];
+  int? selectedCategoryId;
+
 
   late TextEditingController _nameCtrl;
   late TextEditingController _priceCtrl;
@@ -34,10 +34,11 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   @override
   void initState() {
     super.initState();
-    final item = _selectedItemData;
-    _nameCtrl = TextEditingController(text: item?['name'] ?? '');
-    _priceCtrl = TextEditingController(text: item?['price'] ?? '');
-    _descCtrl = TextEditingController(text: item?['desc'] ?? '');
+    _loadItems(3);
+
+  _nameCtrl = TextEditingController();
+  _priceCtrl = TextEditingController();
+  _descCtrl = TextEditingController();
   }
 
   @override
@@ -48,24 +49,15 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     super.dispose();
   }
 
-  List<Map<String, String>> get _currentItems =>
-      itemsByCategory[selectedCategory] ?? [];
 
-  Map<String, String>? get _selectedItemData {
-    if (selectedItemName == null) return null;
-    try {
-      return _currentItems.firstWhere((i) => i['name'] == selectedItemName);
-    } catch (_) {
-      return null;
-    }
-  }
 
-  void _onSelectItem(Map<String, String> item) {
+  void _onSelectItem(dynamic item) {
     setState(() {
       selectedItemName = item['name'];
+
       _nameCtrl.text = item['name'] ?? '';
-      _priceCtrl.text = item['price'] ?? '';
-      _descCtrl.text = item['desc'] ?? '';
+      _priceCtrl.text = item['price'].toString();
+      _descCtrl.text = item['description'] ?? '';
     });
   }
 
@@ -79,6 +71,13 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     });
   }
 
+  Future<void> _loadItems(int categoryId) async {
+    final data = await MenuService.fetchMenuItems(categoryId);
+
+    setState(() {
+      items = data;
+    });
+  }
   //-----------------------------------------------------------Build--------------------------------------------------------------------
 
   @override
@@ -283,7 +282,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-            children: categories.map(_buildCategoryTitle).toList(),
+            children: categories.map((cat) => _buildCategoryTitle(cat)).toList(),
           ),
         ),
       ],
@@ -368,64 +367,34 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-            children: _currentItems.map(_buildItemTile).toList(),
+            children: items.map((item) => _buildItemTile(item)).toList()
           ),
         ),
       ],
     );
   }
 
-  Widget _buildItemTile(Map<String, String> item) {
+  Widget _buildItemTile(dynamic item) {
     final selected = selectedItemName == item['name'];
+
     return GestureDetector(
       onTap: () => _onSelectItem(item),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: selected ? AppColors.background : Colors.white,
           borderRadius: BorderRadius.circular(9),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.4),
-              offset: Offset(0, 4),
-              blurRadius: 4,
-            ),
-          ],
         ),
         child: Row(
           children: [
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item['name'] ?? '',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    item['desc'] ?? '',
-                    style: TextStyle(color: AppColors.tertiary, fontSize: 10),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+              child: Text(
+                item['name'],
+                style: TextStyle(color: AppColors.primary),
               ),
             ),
-            const SizedBox(width: 8),
-            Text(
-              item['price'] ?? '',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
+            Text("₱${item['price']}"),
           ],
         ),
       ),
@@ -433,7 +402,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   }
 
   Widget _buildDetailsPanel() {
-    if (selectedItemName == null || _selectedItemData == null) {
+    if (selectedItemName == null) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
