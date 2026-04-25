@@ -82,5 +82,21 @@ class MenuService {
     }
 
   }
-  
+
+  // Fetch specific menu item by id 
+  static Future<dynamic> fetchMenuItemById(int id) async {
+    final res = await http.get(
+      Uri.parse('$baseUrl/menu-items/$id'),
+      headers: {
+        "Content-Type": "application/json",
+        if (token != null) "Authorization": "Bearer $token",
+      },
+    );
+
+    if (res.statusCode == 200) {
+      return jsonDecode(res.body);
+    } else {
+      throw Exception("Failed to load item");
+    }
+  }
 }
