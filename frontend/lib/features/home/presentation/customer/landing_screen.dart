@@ -84,9 +84,13 @@ class LandingScreen extends StatelessWidget {
     void goLogin() => Navigator.push(context,
         MaterialPageRoute(builder: (_) => LoginScreen(onLogin: onLogin)));
 
+    void goRegister() => Navigator.push(context,
+        MaterialPageRoute(builder: (_) => RegisterScreen(onRegister: onRegister)));
+
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: GuestNavbar(activeRoute: '/home', onLogin: goLogin, onJoinNow: goLogin),
+      appBar: GuestNavbar(activeRoute: '/home', onLogin: goLogin, onJoinNow: goRegister),
       body: Stack(
         children: [
           // ── Full-page animated bamboo stripe background ──────────────────
@@ -853,15 +857,25 @@ class _MenuTile extends StatelessWidget {
   final double width;
   const _MenuTile({required this.item, required this.width});
 
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterScreen(onRegister: onRegister)));
-              },
-              child: const Text('Register'),
-            ),
+        
+            @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          AspectRatio(
+            aspectRatio: 1,
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(22),
+              ),
             child: item.imageAsset != null
                 ? ClipRRect(borderRadius: BorderRadius.circular(22), child: Image.asset(item.imageAsset!, fit: BoxFit.cover))
                 : Center(child: Icon(Icons.add_photo_alternate_outlined, color: AppColors.primary.withOpacity(0.22), size: 28)),
+            ),
           ),
           const SizedBox(height: 10),
           Text(item.badge, style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontSize: 8, letterSpacing: 3.5, color: AppColors.primary.withOpacity(0.55))),
@@ -1100,7 +1114,9 @@ class _Newsletter extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             GestureDetector(
-              onTap: () {},
+              onTap: () {
+                
+              },
               child: Container(
                 height: 52,
                 padding: const EdgeInsets.symmetric(horizontal: 24),
