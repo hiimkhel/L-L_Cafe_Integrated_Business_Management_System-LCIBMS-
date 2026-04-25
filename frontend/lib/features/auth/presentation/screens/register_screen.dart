@@ -2,50 +2,70 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/models/user.dart';
 import 'package:frontend/services/auth_service.dart';
 
-class LoginScreen extends StatefulWidget {
-  final Function(User) onLogin;
+class RegisterScreen extends StatefulWidget {
+  final Function(User) onRegister;
 
-  const LoginScreen({super.key, required this.onLogin});
+  const RegisterScreen({super.key, required this.onRegister});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
+  final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
   final AuthService _authService = AuthService();
 
   String error = '';
   bool isLoading = false;
 
-  /// 📧 Email Login
-  void _login() async {
+  /// Email Register
+  void _register() async {
+    final name = nameController.text.trim();
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
+    final confirm = confirmPasswordController.text.trim();
 
     setState(() {
       error = '';
       isLoading = true;
     });
 
-    try {
-      final user = await _authService.login(email, password);
-
-      widget.onLogin(user);
-      Navigator.pop(context);
-    } catch (err) {
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
       setState(() {
-        error = err.toString().replaceAll('Exception: ', '');
+        error = 'All fields are required';
+        isLoading = false;
+      });
+      return;
+    }
+
+    if (password != confirm) {
+      setState(() {
+        error = 'Passwords do not match';
+        isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final user = await _authService.register(name, email, password);
+
+      widget.onRegister(user);
+      Navigator.pop(context);
+    } catch (e) {
+      setState(() {
+        error = e.toString().replaceAll('Exception: ', '');
       });
     } finally {
       setState(() => isLoading = false);
     }
   }
 
-  /// 🔵 Google Login
-  void _googleLogin() async {
+  /// Google Register (same as login)
+  void _googleRegister() async {
     setState(() {
       error = '';
       isLoading = true;
@@ -54,18 +74,18 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final user = await _authService.signInWithGoogle();
 
-      widget.onLogin(user);
+      widget.onRegister(user);
       Navigator.pop(context);
-    } catch (err) {
+    } catch (e) {
       setState(() {
-        error = err.toString().replaceAll('Exception: ', '');
+        error = e.toString().replaceAll('Exception: ', '');
       });
     } finally {
       setState(() => isLoading = false);
     }
   }
 
-  void _facebookLogin() async {
+  void _facebookRegister() async {
     setState(() {
       error = '';
       isLoading = true;
@@ -74,11 +94,11 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final user = await _authService.signInWithFacebook();
 
-      widget.onLogin(user);
+      widget.onRegister(user);
       Navigator.pop(context);
-    } catch (err) {
+    } catch (e) {
       setState(() {
-        error = err.toString().replaceAll('Exception: ', '');
+        error = e.toString().replaceAll('Exception: ', '');
       });
     } finally {
       setState(() => isLoading = false);
@@ -88,13 +108,21 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
+      appBar: AppBar(title: const Text('Register')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            /// Name
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Full Name'),
+            ),
 
+            const SizedBox(height: 8),
+
+            ///  Email
             TextField(
               controller: emailController,
               decoration: const InputDecoration(labelText: 'Email'),
@@ -102,47 +130,60 @@ class _LoginScreenState extends State<LoginScreen> {
 
             const SizedBox(height: 8),
 
+            /// Password
             TextField(
               controller: passwordController,
               obscureText: true,
               decoration: const InputDecoration(labelText: 'Password'),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
 
-            ElevatedButton(
-              onPressed: isLoading ? null : _login,
-              child: isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text('Login'),
+            ///  Confirm Password
+            TextField(
+              controller: confirmPasswordController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Confirm Password'),
             ),
 
             const SizedBox(height: 16),
-          
+
+            ///  Register Button
+            ElevatedButton(
+              onPressed: isLoading ? null : _register,
+              child: isLoading
+                  ? const CircularProgressIndicator()
+                  : const Text('Register'),
+            ),
+
+            const SizedBox(height: 16),
+
             /// Divider
             const Text('OR'),
 
             const SizedBox(height: 16),
 
+            ///  Google Register
             OutlinedButton.icon(
-              onPressed: isLoading ? null : _googleLogin,
+              onPressed: isLoading ? null : _googleRegister,
               icon: const Icon(Icons.login),
               label: const Text('Continue with Google'),
             ),
 
-            
+            const SizedBox(height: 16),
+
             const SizedBox(height: 12),
 
             OutlinedButton.icon(
-              onPressed: isLoading ? null : _facebookLogin,
+              onPressed: isLoading ? null : _facebookRegister,
               icon: const Icon(Icons.facebook, color: Colors.blue),
               label: const Text('Continue with Facebook'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.blue,
               ),
             ),
-            const SizedBox(height: 16),
 
+            ///  Error
             if (error.isNotEmpty)
               Text(
                 error,
@@ -155,4 +196,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
