@@ -290,7 +290,9 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
           child: SizedBox(
             height: 32,
             width: 165,
-            child: _greenBtn('+ Add Category', _showAddCategoryDialog),
+            child: _greenBtn('+ Add Category', (){
+              _showAddDialog(type: "category");
+            }),
           ),
         ),
         Expanded(
@@ -368,7 +370,9 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
           padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
           child: Align(
             alignment: Alignment.centerRight,
-            child: _greenBtn('+  Add Item', () {}),
+            child: _greenBtn('+  Add Item', () {
+              _showAddDialog(type: "item");
+            }),
           ),
         ),
         Expanded(
@@ -711,8 +715,14 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       ),
     );
   }
-  void _showAddCategoryDialog() {
-    final TextEditingController _categoryCtrl = TextEditingController();
+
+  // Dynamic Add dialog for adding category/item
+  void _showAddDialog({required String type}) {
+    final TextEditingController nameCtrl = TextEditingController();
+    final TextEditingController priceCtrl = TextEditingController();
+    final TextEditingController descCtrl = TextEditingController();
+
+    final isItem = type == "item";
 
     showDialog(
       context: context,
@@ -722,7 +732,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Container(
-            width: 350,
+            width: 380,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: AppColors.white,
@@ -733,7 +743,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Add Category",
+                  isItem ? "Add Item" : "Add Category",
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -742,16 +752,46 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                 ),
                 const SizedBox(height: 15),
 
-                // INPUT
+                // NAME
                 TextField(
-                  controller: _categoryCtrl,
+                  controller: nameCtrl,
                   decoration: InputDecoration(
-                    hintText: "Category name",
+                    hintText: isItem ? "Item name" : "Category name",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                 ),
+
+                if (isItem) ...[
+                  const SizedBox(height: 12),
+
+                  // PRICE
+                  TextField(
+                    controller: priceCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: "Price",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // DESCRIPTION
+                  TextField(
+                    controller: descCtrl,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      hintText: "Description",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
 
                 const SizedBox(height: 20),
 
@@ -766,17 +806,26 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                     const SizedBox(width: 10),
                     ElevatedButton(
                       onPressed: () async {
-                        final name = _categoryCtrl.text.trim();
+                        final name = nameCtrl.text.trim();
 
                         if (name.isEmpty) return;
 
                         try {
-                          await MenuService.addCategory(name);
+                          if (isItem) {
+                            await MenuService.addItem({
+                              "name": name,
+                              "price": double.parse(priceCtrl.text),
+                              "description": descCtrl.text,
+                              "category_id": selectedCategoryId,
+                            });
+
+                            _loadItems(selectedCategoryId!);
+                          } else {
+                            await MenuService.addCategory(name);
+                            _loadCategories();
+                          }
 
                           Navigator.pop(context);
-
-                          // refresh categories
-                          _loadCategories();
                         } catch (e) {
                           print(e);
                         }
