@@ -371,7 +371,7 @@ class _GuestNavbarState extends State<GuestNavbar> {
           ),
         ),
         GestureDetector(
-          behavior: HitTestBehavior.opaque, // Guarantee tap registration
+          behavior: HitTestBehavior.opaque,
           onTap: widget.onLogin,
           child: Padding(
             padding: const EdgeInsets.all(8.0),
@@ -650,7 +650,6 @@ class _DesktopCustomerNav extends StatelessWidget {
           badge: cartCount, 
           onTap: () {
             if (onCart != null) onCart!();
-            // Fallback autonomous routing
             if (activeRoute != '/orders') Navigator.pushNamed(context, '/orders');
           }
         ),
@@ -665,6 +664,7 @@ class _DesktopCustomerNav extends StatelessWidget {
         ),
         const SizedBox(width: 16),
         
+        // LOGOUT ROUTING FOR DESKTOP
         _IconCircleBtn(
           icon: Icons.logout_rounded, 
           onTap: () {
@@ -702,6 +702,7 @@ class _MobileCustomerNav extends StatelessWidget {
           userClientId: userClientId ?? 'CLIENT #LL-00124',
           onLogout: () {
             if (onLogout != null) onLogout!();
+            // LOGOUT ROUTING FOR MOBILE
             Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
           },
           onNav: (route) {
@@ -828,6 +829,7 @@ class _SideDrawer extends StatelessWidget {
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
                   if (onLogout != null) onLogout!();
+                  // LOGOUT ROUTING FOR SIDE DRAWER BUTTON
                   Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
                 },
                 child: Container(
@@ -887,10 +889,10 @@ class _NavLink extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      behavior: HitTestBehavior.opaque, // Expands hit box dynamically
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0), // Massive invisible hit area
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -916,7 +918,7 @@ class _IconCircleBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      behavior: HitTestBehavior.opaque, // Ensures the entire box is clickable
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Stack(clipBehavior: Clip.none, children: [
         Container(

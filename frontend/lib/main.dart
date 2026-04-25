@@ -10,7 +10,10 @@ import 'features/home/presentation/customer/landing_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/models/user.dart';
+
+// ✅ TURNED BACK ON: We uncommented your Cart Screen import!
 import 'features/customers/presentation/admin/cart_screen.dart';
+
 import 'features/checkout/customer/presentation/cart_checkout_screen.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -29,13 +32,10 @@ void main() async {
   // Firebase Facebook OAuth Initilization
   await FacebookAuth.instance.webAndDesktopInitialize(
     appId: dotenv.env['FACEBOOK_APP_ID']!, 
-    cookie: false, 
-    xfbml: true, 
-    version: "v18.0"
+    cookie: true,
+    xfbml: true,
+    version: "v13.0",
   );
- 
-
-  // Main App initalization
   runApp(const LCIBMSApp());
 }
 
@@ -50,14 +50,14 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
   User? currentUser;
 
   void setUser(User user) {
-      setState(() {
+    setState(() {
       currentUser = user;
     });
   }
 
   void logout() {
     setState(() {
-      currentUser = null;
+      currentUser = null; 
     });
   }
 
@@ -67,26 +67,22 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
       debugShowCheckedModeBanner: false,
       home: _buildScreen(),
       onGenerateRoute: (settings) {
-        // THIS IS THE FIX: The Navbar looks for these specific names.
         switch (settings.name) {
           case '/':
-            // Handles the logout routing back to the landing page
             return MaterialPageRoute(builder: (_) => _buildScreen());
             
           case '/home':
-            return MaterialPageRoute(builder: (_) => CustomerHomeScreen());
+            return MaterialPageRoute(builder: (_) => CustomerHomeScreen(onLogout: logout)); 
             
           case '/cart':
           case '/orders':
-            // Route both /cart and /orders to your CartScreen
+            // ✅ TURNED BACK ON: Restored the actual CartScreen widget!
             return MaterialPageRoute(builder: (_) => const CartScreen());
             
           case '/profile':
-            // ✅ FIX APPLIED: Uncommented the real ProfileScreen and removed the placeholder
-            return MaterialPageRoute(builder: (_) => const ProfileScreen());
+            return MaterialPageRoute(builder: (_) => ProfileScreen(onLogout: logout));
 
           case '/menu':
-            // Temporary placeholder for your menu screen
             return MaterialPageRoute(builder: (_) => const Scaffold(body: Center(child: Text('Menu Screen goes here'))));
             
           default:
@@ -97,7 +93,7 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
   }
 
   Widget _buildScreen() {
-    // NOT LOGGED IN
+    // NOT LOGGED IN -> Show Landing Screen
     if (currentUser == null) {
       return LandingScreen(onLogin: setUser, onRegister: setUser);
     }
@@ -105,7 +101,7 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
     // LOGGED IN (ROLE ROUTING)
     switch (currentUser!.role) {
       case UserRole.customer:
-        return CustomerHomeScreen();
+        return CustomerHomeScreen(onLogout: logout);
 
       case UserRole.rider:
         return DeliveryDashboardScreen();
