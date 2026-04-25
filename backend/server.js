@@ -32,10 +32,7 @@ app.use('/api/rider', (req,res) => {
     // [!] Temporary: Change this to riderRoutes.js
     console.log("This are rider's module routes");
 })
-app.use('/api/admin', (req,res) => {
-    // [!] Temporary: Change this to adminRoutes.js
-    console.log("This are admin module routes");
-})
+app.use('/api/admin', require("./routes/adminRoutes.js"));
 
 app.use('/api/menu', require("./routes/menuRoutes.js"));
 app.listen(PORT, () => {
