@@ -5,7 +5,7 @@ import 'package:frontend/core/constants/menu_data.dart';
 import 'package:frontend/features/checkout/admin/presentation/checkout_screen.dart';
 import 'package:frontend/features/dashboard/presentation/pos/online_orders_screen.dart';
 import 'package:frontend/core/models/menu_item.dart';
-import 'package:frontend/services/menu_service.dart';
+import 'package:frontend/core/services/menu_service.dart';
 
 class POSOrderScreen extends StatefulWidget {
 

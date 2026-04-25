@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../core/models/menu_item.dart';
+import 'package:frontend/core/models/menu_item.dart';
 
 class MenuService {
   static const String baseUrl = "http://localhost:3006/api/menu";
