@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { fetchAllCustomer, fetchMenuItems, fetchMenuCategories,
-    addMenuCategory, addMenuItem
+    addMenuCategory, addMenuItem, deleteMenuItem
  } = require("../controllers/adminControllers.js");
 
 router.get("/customers", fetchAllCustomer);
@@ -13,7 +13,7 @@ router.post("/menu-items", addMenuItem);
 // Individual Menu Item
 // router.get("/menu-items/:id");
 // router.put("/menu-items/:id");
-router.delete("/menu-items:id");
+router.delete("/menu-items/:id", deleteMenuItem);
 
 
 // // Menu Items Categories

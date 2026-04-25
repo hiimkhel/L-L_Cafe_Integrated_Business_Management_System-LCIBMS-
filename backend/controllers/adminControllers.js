@@ -160,12 +160,44 @@ const addMenuItem = async (req, res) => {
 }
 
 const deleteMenuItem = async (req, res) => {
-    
+    try{
+        // Fetch id to delete from request parameter
+        const { id } = req.params;
+
+        const [item] = await db.query(
+            "SELECT id FROM menu_items WHERE id = ?",
+            [id]
+        );
+
+        // Check existence of id given
+        if (item.length === 0) {
+            return res.status(404).json({
+                message: "Menu item not found",
+            });
+        }
+
+        // If no errors, proceed to delete
+        await db.query(
+            "DELETE FROM menu_items WHERE id = ?",
+            [id]
+        );
+
+        // Return JSON response
+        return res.status(200).json({
+            message: "Menu item deleted successfully",
+        });
+    }catch(err){
+        console.error("Delete Menu Item Error:", error);
+        return res.status(500).json({
+        message: "Server error",
+        });
+    }
 }
 
 module.exports = { fetchAllCustomer, 
     fetchMenuItems,
     fetchMenuCategories,
     addMenuCategory,
-    addMenuItem
+    addMenuItem,
+    deleteMenuItem
  };
