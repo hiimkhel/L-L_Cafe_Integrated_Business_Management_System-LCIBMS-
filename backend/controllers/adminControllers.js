@@ -113,11 +113,59 @@ const addMenuCategory = async (req, res) => {
     }catch(err){
         res.status(500).json({message: err.message})
     }
+}
+
+const addMenuItem = async (req, res) => {
+    try{
+        // Deconstruct body values
+        const { name, price, description, category_id } = req.body;
+
+        // Validate values
+        if (!name || !price || !category_id) {
+            return res.status(400).json({
+                message: "Name, price, and category_id are required",
+            });
+        }
+
+        // Check category
+        const [category] = await db.query(
+            "SELECT id FROM menu_categories WHERE id = ?",
+            [category_id]
+        );
+
+        if (category.length === 0) {
+            return res.status(404).json({
+                message: "Category not found",
+            });
+        }
+
+        // Insert data into db
+        const [result] = await db.query(
+            `INSERT INTO menu_items (name, price, description, category_id, is_available)
+            VALUES (?, ?, ?, ?, 1)`,
+            [name, price, description || null, category_id]
+        );
+
+        // JSON Response
+        return res.status(201).json({
+            message: "Menu item created successfully",
+            item_id: result.insertId,
+        });
+    }catch(err){
+        console.error("Add Menu Item Error:", error);
+        return res.status(500).json({
+        message: "Server error",
+        });
+    }
+}
+
+const deleteMenuItem = async (req, res) => {
     
 }
 
 module.exports = { fetchAllCustomer, 
     fetchMenuItems,
     fetchMenuCategories,
-    addMenuCategory
+    addMenuCategory,
+    addMenuItem
  };

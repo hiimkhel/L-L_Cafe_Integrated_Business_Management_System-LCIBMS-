@@ -12,6 +12,7 @@ class MenuService {
     if (res.statusCode == 200) {
       return jsonDecode(res.body);
     } else {
+      // Error handling
       throw Exception("Failed to load categories");
     }
   }
@@ -25,10 +26,12 @@ class MenuService {
     if (res.statusCode == 200) {
       return jsonDecode(res.body);
     } else {
+      // Error handling
       throw Exception("Failed to load menu items");
     }
   }
 
+  // Handle sending API for adding category
   static Future<void> addCategory(String name) async {
     final res = await http.post(
       Uri.parse('$baseUrl/menu/category'),
@@ -39,7 +42,26 @@ class MenuService {
       body: jsonEncode({"name": name}),
     );
 
+    // Error handling
     if (res.statusCode != 201) {
+      throw Exception(res.body);
+    }
+  }
+
+  // Handle sending API for adding item
+  static Future<void> addItem(Map<String, dynamic> data) async{
+    final res = await http.post(
+      Uri.parse('$baseUrl/menu-items'),
+      headers: {
+        "Content-Type": "application/json",
+        if (token != null) "Authorization": "Bearer $token",
+      },
+      body: jsonEncode(data),
+    );  
+
+
+    // Error handling
+    if (res.statusCode != 201){
       throw Exception(res.body);
     }
   }
