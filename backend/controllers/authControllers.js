@@ -4,6 +4,8 @@
  * @module controllers/authController
 */
 const db = require("../config/dbConnection.js");
+const { findUserByFirebaseUID, createUser } = require("../models/userServices.js");
+const admin = require("../config/firebase.js");
 
 
 const register = async (req, res) => {

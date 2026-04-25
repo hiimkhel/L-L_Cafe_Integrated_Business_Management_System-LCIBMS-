@@ -6,10 +6,7 @@
 
 const express = require('express');
 const router = express.Router();
-const db = require('../config/dbConnection.js');
-const admin = require("../config/firebase.js");
 const { login, register, authSync } = require("../controllers/authControllers");
-const { findUserByFirebaseUID, createUser } = require("../models/userServices.js");
 
 
 router.post('/login', login);
