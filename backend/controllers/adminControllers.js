@@ -91,7 +91,33 @@ const fetchMenuCategories = async (req, res) => {
     }
 }
 
+const addMenuCategory = async (req, res) => {
+    try{
+        const { name } = req.body;
+
+        // Validate field
+        if(!name){
+            return res.status(400).json({message: "Category name is required!"});
+        }
+
+        // Query into our database
+        const [result] = await db.query(`
+            INSERT INTO menu_categories (name) VALUES (?)
+            `, [name]
+        );
+
+        res.status(201).json({
+            id: result.insertId,
+            name
+        })
+    }catch(err){
+        res.status(500).json({message: err.message})
+    }
+    
+}
+
 module.exports = { fetchAllCustomer, 
     fetchMenuItems,
-    fetchMenuCategories
+    fetchMenuCategories,
+    addMenuCategory
  };

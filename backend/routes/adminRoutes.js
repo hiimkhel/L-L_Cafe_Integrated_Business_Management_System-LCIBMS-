@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const { fetchAllCustomer, fetchMenuItems, fetchMenuCategories } = require("../controllers/adminControllers.js");
+const { fetchAllCustomer, fetchMenuItems, fetchMenuCategories,
+    addMenuCategory
+ } = require("../controllers/adminControllers.js");
 
 router.get("/customers", fetchAllCustomer);
 
@@ -14,7 +16,7 @@ router.get("/menu-items", fetchMenuItems);
 
 // // Menu Items Categories
 router.get("/menu/category", fetchMenuCategories );
-// router.post("menu/categories");
+router.post("/menu/category", addMenuCategory);
 
 
 module.exports = router;

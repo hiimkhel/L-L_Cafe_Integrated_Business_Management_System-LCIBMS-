@@ -290,7 +290,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
           child: SizedBox(
             height: 32,
             width: 165,
-            child: _greenBtn('+ Add Category', () {}),
+            child: _greenBtn('+ Add Category', _showAddCategoryDialog),
           ),
         ),
         Expanded(
@@ -709,6 +709,90 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
           ),
         ),
       ),
+    );
+  }
+  void _showAddCategoryDialog() {
+    final TextEditingController _categoryCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Container(
+            width: 350,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Add Category",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 15),
+
+                // INPUT
+                TextField(
+                  controller: _categoryCtrl,
+                  decoration: InputDecoration(
+                    hintText: "Category name",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // BUTTONS
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("Cancel"),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: () async {
+                        final name = _categoryCtrl.text.trim();
+
+                        if (name.isEmpty) return;
+
+                        try {
+                          await MenuService.addCategory(name);
+
+                          Navigator.pop(context);
+
+                          // refresh categories
+                          _loadCategories();
+                        } catch (e) {
+                          print(e);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                      ),
+                      child: const Text("Save"),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
