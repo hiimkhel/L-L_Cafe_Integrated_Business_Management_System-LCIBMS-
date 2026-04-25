@@ -66,7 +66,7 @@ class MenuService {
     }
   }
 
-  static Future<void> deleteItem(int id) async{
+  static Future<void> deleteMenuItem(int id) async{
     final res = await http.delete(Uri.parse('$baseUrl/menu-items/$id'),
       headers: {
         "Content-Type": "application/json",

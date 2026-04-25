@@ -21,6 +21,9 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   String? selectedItemName = 'Chicken Burger';
   bool isAvailable = true;
 
+  // Handle current item selected on the right panel
+  dynamic selectedItem;
+
   // Handle the incoming data from the API
   List<dynamic> categories = [];
   List<dynamic> items = [];
@@ -54,6 +57,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
 
   void _onSelectItem(dynamic item) {
     setState(() {
+      selectedItem = item;
       selectedItemName = item['name'];
 
       _nameCtrl.text = item['name'] ?? '';
@@ -65,6 +69,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   void _onSelectCategory(dynamic category) {
     setState(() {
       selectedCategoryId = category['id'];
+      selectedItem = null; // 
       selectedItemName = null;
     });
 
@@ -92,6 +97,25 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       items = data;
     });
   }
+
+  Future<void> _deleteItem(int id) async {
+  try {
+    
+    await MenuService.deleteMenuItem(id);
+
+    setState(() {
+      items.removeWhere((item) => item['id'] == id);
+
+      if (selectedItemName != null &&
+          items.any((i) => i['id'] == id)) {
+        selectedItemName = null;
+      }
+    });
+
+  } catch (e) {
+    print("Delete error: $e");
+  }
+}
   //-----------------------------------------------------------Build--------------------------------------------------------------------
 
   @override
@@ -318,7 +342,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
           borderRadius: BorderRadius.circular(9),
         ),
         child: Text(
-          cat['name'],
+          (cat?['name'] ?? 'Unknown'),
           style: TextStyle(
             color: AppColors.primary,
             fontSize: 13,
@@ -623,7 +647,11 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                         if (selectedItem == null) return;
+
+                        _confirmDeleteItem(selectedItem);
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red.withOpacity(0.2),
                         foregroundColor: Colors.red,
@@ -840,6 +868,34 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
               ],
             ),
           ),
+        );
+      },
+    );
+  }
+
+  void _confirmDeleteItem(dynamic item) {
+    // Error handling
+    if (item == null) return;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Delete Item"),
+          content: Text("Are you sure you want to delete ${item['name']}?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () async {
+                Navigator.pop(context);
+                await _deleteItem(item['id']);
+              },
+              child: const Text("Delete Permanently"),
+            ),
+          ],
         );
       },
     );
