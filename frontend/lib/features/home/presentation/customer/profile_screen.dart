@@ -11,7 +11,7 @@ const Color _bgBeige   = Color(0xFFEFE2C9);
 const Color _bgDark    = Color(0xFF2D2A26);
 const Color _primary   = Color(0xFF758C6D); // Green
 const Color _secondary = Color(0xFFA98258); // Gold
-const Color _crimson   = Color(0xFF9B2335); // Terminate / Logout button
+const Color _crimson   = Color(0xFF9B2335); // Delete button
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DATA MODELS
@@ -55,7 +55,6 @@ class DeliveryAddress {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class ProfileScreen extends StatefulWidget {
-  // ✅ THE CATCHER: This allows the screen to receive the logout function from main.dart
   final VoidCallback? onLogout; 
   
   const ProfileScreen({super.key, this.onLogout});
@@ -128,6 +127,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // DELETE ACCOUNT DIALOG LOGIC
+  // ─────────────────────────────────────────────────────────────────────────
+  void _showDeleteAccountDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: const [
+              Icon(Icons.warning_amber_rounded, color: _crimson, size: 24),
+              SizedBox(width: 8),
+              Text('DELETE ACCOUNT', style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontSize: 18, color: _bgDark)),
+            ],
+          ),
+          content: const Text(
+            'Are you sure you want to permanently delete your account?\n\nThere\'s no going back ☹️',
+            style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w700, fontSize: 14, height: 1.5, color: _bgDark),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('CANCEL', style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, color: _secondary)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Close the dialog
+                Navigator.pop(ctx);
+                
+                // Clear the state and redirect to landing screen
+                if (widget.onLogout != null) widget.onLogout!();
+                Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _crimson,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text('DELETE PERMANENTLY', style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showAddAddressDialog() {
     final labelController = TextEditingController();
     final addressController = TextEditingController();
@@ -181,6 +228,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  void _showEditAddressDialog(int index) {
+    final addr = _deliveryAddresses[index];
+    final labelController = TextEditingController(text: addr.label);
+    final addressController = TextEditingController(text: addr.address);
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('UPDATE DELIVERY SITE', style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontSize: 18, color: _bgDark)),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildEditableField('LABEL (e.g. HOME, OFFICE)', labelController, Icons.label_outline),
+                const SizedBox(height: 16),
+                _buildEditableField('COMPLETE ADDRESS', addressController, Icons.location_on_outlined),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('CANCEL', style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, color: _secondary)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  setState(() {
+                    _deliveryAddresses[index] = DeliveryAddress(
+                      label: labelController.text.toUpperCase(),
+                      address: addressController.text.toUpperCase(),
+                    );
+                  });
+                  Navigator.pop(ctx);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text('UPDATE SITE', style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -192,7 +293,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         userName: _currentUser.fullName,
         userClientId: 'CLIENT #${_currentUser.id}',
         onLogout: () {
-          // Trigger the logout function
           if (widget.onLogout != null) widget.onLogout!();
           Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
         },
@@ -260,7 +360,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 40),
                     _buildSectionHeader(Icons.location_on_outlined, 'SAVED DELIVERY SITES'),
                     const SizedBox(height: 20),
-                    _buildDeliveryAddressesList(),
+                    _buildDeliveryAddressesDesktop(),
                     const SizedBox(height: 40),
                     _buildSectionHeader(Icons.shield_outlined, 'ADDITIONAL SETTINGS'),
                     const SizedBox(height: 20),
@@ -289,7 +389,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 32),
         _buildSectionHeader(Icons.location_on_outlined, 'SAVED DELIVERY SITES'),
         const SizedBox(height: 16),
-        _buildDeliveryAddressesList(),
+        _buildDeliveryAddressesMobile(),
         const SizedBox(height: 32),
         _buildSectionHeader(Icons.shield_outlined, 'ADDITIONAL SETTINGS'),
         const SizedBox(height: 16),
@@ -355,20 +455,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 24),
 
+          // ✅ UPDATED: Delete Account Button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {
-                // Trigger the logout function passed from main.dart
-                if (widget.onLogout != null) {
-                  widget.onLogout!();
-                }
-                Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
-              },
-              icon: const Icon(Icons.logout_rounded, size: 16, color: Colors.white),
-              label: Text(
-                isMobile ? 'LOG OUT' : 'TERMINATE SESSION',
-                style: const TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 2.0, color: Colors.white),
+              onPressed: _showDeleteAccountDialog, // Triggers the modal!
+              icon: const Icon(Icons.delete_forever_rounded, size: 16, color: Colors.white),
+              label: const Text(
+                'DELETE ACCOUNT',
+                style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 2.0, color: Colors.white),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _crimson,
@@ -537,7 +632,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildDeliveryAddressesList() {
+  Widget _buildDeliveryAddressesDesktop() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            for (int i = 0; i < _deliveryAddresses.length; i++) ...[
+              if (i > 0) const SizedBox(width: 16),
+              Expanded(child: _buildAddressCard(_deliveryAddresses[i], index: i)),
+            ],
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildAddNewAddressButton(),
+      ],
+    );
+  }
+
+  Widget _buildDeliveryAddressesMobile() {
     return Column(
       children: [
         for (int i = 0; i < _deliveryAddresses.length; i++) ...[
@@ -566,6 +678,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(width: 12),
+          GestureDetector(
+            onTap: () => _showEditAddressDialog(index),
+            child: Container(width: 32, height: 32, decoration: BoxDecoration(color: _primary.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.edit_outlined, size: 16, color: _primary)),
+          ),
+          const SizedBox(width: 8),
           GestureDetector(
             onTap: () { setState(() { _deliveryAddresses.removeAt(index); }); },
             child: Container(width: 32, height: 32, decoration: BoxDecoration(color: _crimson.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.delete_outline_rounded, size: 16, color: _crimson)),
