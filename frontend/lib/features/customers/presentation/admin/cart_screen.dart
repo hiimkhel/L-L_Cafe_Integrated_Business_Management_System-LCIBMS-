@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
+import 'package:frontend/core/constants/cart_item.dart';
+import 'package:frontend/features/checkout/customer/presentation/cart_checkout_screen.dart';
 
 const double _kMobile = 768;
 const double _kDesktopMaxWidth = 1280;
@@ -186,23 +188,6 @@ class _BambooPainter extends CustomPainter {
   }
 }
 
-//--------------------------itemData-----------------------------------
-class _CartItem {
-  final String name;
-  final String category;
-  final double price;
-  final double originalPrice;
-  int quantity;
-
-  _CartItem({
-    required this.name,
-    required this.category,
-    required this.price,
-    required this.originalPrice,
-    this.quantity = 1,
-  });
-}
-
 //--------------------------CartScreen-----------------------------------
 
 class CartScreen extends StatefulWidget {
@@ -218,7 +203,7 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   void dispose() {
-    _scrollController.dispose(); // ← ADD THIS
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -398,20 +383,20 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   //-----------------------------cartItemData-----------------------------------
-  final List<_CartItem> _items = [
-    _CartItem(
+  final List<CartItem> _items = [
+    CartItem(
       name: 'Caramel Biscoff',
       category: 'Waffles',
       price: 120.0,
       originalPrice: 130.0,
     ),
-    _CartItem(
+    CartItem(
       name: 'Hot Honey Sandwich',
       category: 'Foods',
       price: 115.0,
       originalPrice: 110.0,
     ),
-    _CartItem(
+    CartItem(
       name: 'Chicken Sandwich',
       category: 'Foods',
       price: 95.0,
@@ -616,7 +601,7 @@ class _CartScreenState extends State<CartScreen> {
       0,
       (sum, item) => sum + (item.price * item.quantity),
     );
-    final double orderTotal = subtotal + deliveryFee;
+    final double orderTotal = subtotal;
 
     return Container(
       padding: const EdgeInsets.all(25),
@@ -744,31 +729,6 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-
-            Row(
-              children: [
-                Text(
-                  'DELIVERY FEE',
-                  style: TextStyle(
-                    color: AppColors.white.withOpacity(0.55),
-                    fontSize: 10,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-
-                const Spacer(), //-----------------------------------------------------------------
-
-                Text(
-                  '₱${deliveryFee.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    color: AppColors.white.withOpacity(0.55),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
             const SizedBox(height: 16),
 
             Row(
@@ -801,7 +761,16 @@ class _CartScreenState extends State<CartScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => Navigator.pushNamed(context, '/checkout'),
+                onPressed:
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => CartCheckoutScreen(
+                              items: List<CartItem>.from(_items),
+                            ),
+                      ),
+                    ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.secondary,
                   foregroundColor: Colors.white,
