@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/core/widgets/admin_sidebar.dart';
 import 'package:frontend/config/theme/app_colors.dart';
+import 'package:frontend/services/admin/customers_service.dart';
 
 class CustomersScreen extends StatefulWidget {
   final int activeIndex;
@@ -15,36 +17,48 @@ class CustomersScreen extends StatefulWidget {
 class _CustomersScreenState extends State<CustomersScreen> {
   late int activeIndex;
 
+  
+  List<dynamic> _customers = [];
+  bool _isLoading = true;
+  Timer? _debounce;
+
   @override
   void initState() {
     super.initState();
     activeIndex = widget.activeIndex;
+    _loadCustomers();
   }
 
-  // Dummy customers data
-  final List<Map<String, dynamic>> _customers = [
-    {
-      'joinDate': '2026-02-07 13:20',
-      'customerId': '#C-398',
-      'customerName': 'RICO B.',
-      'address': 'Makati City',
-      'totalSpent': '₱420.00',
-    },
-    {
-      'joinDate': '2026-02-07 12:45',
-      'customerId': '#C-397',
-      'customerName': 'LIZA M.',
-      'address': 'Cebu City',
-      'totalSpent': '₱185.50',
-    },
-    {
-      'joinDate': '2026-02-06 17:15',
-      'customerId': '#C-396',
-      'customerName': 'ELENA S.',
-      'address': 'Iloilo City',
-      'totalSpent': '₱120.00',
-    },
-  ];
+
+
+    Future<void> _loadCustomers({String search = ""}) async {
+    setState(() => _isLoading = true);
+
+    try {
+      final data = await CustomersService.getCustomers(search: search);
+
+      setState(() {
+        _customers = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print("Error loading customers: $e");
+
+      setState(() {
+        _customers = [];
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _onSearchChanged(String value) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      _loadCustomers(search: value);
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -151,22 +165,20 @@ class _CustomersScreenState extends State<CustomersScreen> {
       'JOIN DATE',
       'CUSTOMER ID',
       'CUSTOMER NAME',
+      'EMAIL',
       'ADDRESS',
-      'TOTAL SPENT',
-      ''
+      'TOTAL SPENT'
     ];
 
-    const flexes = [2, 1, 2, 2, 1, 2];
+    const flexes = [1, 1, 2, 2, 3, 1];
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.background.withOpacity(.6),
-        borderRadius:
-            const BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         border: Border(
-          bottom:
-              BorderSide(color: AppColors.tertiary.withOpacity(.15)),
+          bottom: BorderSide(color: AppColors.tertiary.withOpacity(.15)),
         ),
       ),
       child: Row(
@@ -190,115 +202,80 @@ class _CustomersScreenState extends State<CustomersScreen> {
   }
 
   // ROW
-  Widget _buildCustomerRow(
-      Map<String, dynamic> customer, int index) {
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: index.isEven
-            ? Colors.white
-            : AppColors.background.withOpacity(.3),
-        border: Border(
-          bottom:
-              BorderSide(color: AppColors.tertiary.withOpacity(.08)),
+    Widget _buildCustomerRow(Map<String, dynamic> customer, int index) {
+      final createdAt = customer['created_at'];
+      final date = (createdAt != null && createdAt.toString().length >= 10)
+          ? createdAt.toString().substring(0, 10)
+          : "N/A";
+
+      final address = customer['address'] ?? "No Address";
+
+      // TEMPORARY: until we connect orders table
+      final totalSpent = customer['total_spent'] != null
+          ? "₱${customer['total_spent']}"
+          : "₱0.00";
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        decoration: BoxDecoration(
+          color: index.isEven
+              ? Colors.white
+              : AppColors.background.withOpacity(.3),
+          border: Border(
+            bottom: BorderSide(color: Colors.grey.withOpacity(0.15)),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          // JOIN DATE
-          Expanded(
-            flex: 2,
-            child: Text(
-              customer['joinDate'],
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.tertiary.withOpacity(.8),
+        child: Row(
+          children: [
+            // JOIN DATE
+            Expanded(
+              flex: 1,
+              child: Text(
+                date,
+                style: TextStyle(color: AppColors.tertiary.withOpacity(.8)),
               ),
             ),
-          ),
 
-          // CUSTOMER ID
-          Expanded(
-            flex: 1,
-            child: Text(
-              customer['customerId'],
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF4a3520),
+            // ID
+            Expanded(
+              flex: 1,
+              child: Text(
+                "#${customer['id'] ?? '-'}",
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
-          ),
 
-          // CUSTOMER NAME
-          Expanded(
-            flex: 2,
-            child: Text(
-              customer['customerName'],
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF4a3520),
+            // NAME
+            Expanded(
+              flex: 2,
+              child: Text(
+                customer['full_name'] ?? "Unknown",
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
-          ),
 
-          // ADDRESS
-          Expanded(
-            flex: 2,
-            child: Text(
-              customer['address'],
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.tertiary.withOpacity(.8),
-              ),
+            // EMAIL
+            Expanded(
+              flex: 2,
+              child: Text(customer['email'] ?? "No Email"),
             ),
-          ),
 
-          // TOTAL SPENT
-          Expanded(
-            flex: 1,
-            child: Text(
-              customer['totalSpent'],
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF4a3520),
-              ),
+            // ADDRESS
+            Expanded(
+              flex: 3,
+              child: Text(address),
             ),
-          ),
 
-          // DETAILS BUTTON
-          Expanded(
-            flex: 2,
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(
-                      color: AppColors.tertiary.withOpacity(.4)),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: Text(
-                  'DETAILS',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.tertiary,
-                    letterSpacing: 0.4,
-                  ),
-                ),
+            // TOTAL SPENT
+            Expanded(
+              flex: 1,
+              child: Text(
+                totalSpent,
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+      );
+    }
 }
