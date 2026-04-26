@@ -7,6 +7,7 @@ import 'package:frontend/features/dashboard/presentation/pos/online_orders_scree
 import 'package:frontend/core/models/menu_item.dart';
 import 'package:frontend/core/services/menu_service.dart';
 import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
+import 'package:frontend/core/models/menu_category.dart';
 
 class POSOrderScreen extends StatefulWidget {
 
@@ -20,8 +21,13 @@ class POSOrderScreen extends StatefulWidget {
 
 class _POSOrderScreenState extends State<POSOrderScreen> {
   List<MenuItem> menuItems = [];
+  List<MenuCategory> categories = [];
+
+  List<Map<String, dynamic>> orderItems = [];
+
   bool isLoading = true;
   String _selectedCategory = 'All';
+  String _searchQuery = '';
 
   @override
   void initState(){
@@ -29,20 +35,31 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     loadMenu();
   }
 
- Future<void> loadMenu() async {
+  Future<void> loadMenu() async {
     try {
-      final items = await MenuService.fetchMenu();
+      final results = await Future.wait([
+        MenuService.fetchMenu(),
+        MenuService.fetchCategories(),
+      ]);
+
+      final items = results[0] as List<MenuItem>;
+      final cats = results[1] as List<MenuCategory>;
 
       setState(() {
         menuItems = items;
+        categories = cats;
         isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
       print("Error loading menu: $e");
     }
+  }
+  String getCategoryName(int id) {
+    return categories.firstWhere(
+      (c) => c.id == id,
+      orElse: () => MenuCategory(id: 0, name: "Unknown"),
+    ).name;
   }
 
   @override
@@ -267,35 +284,24 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
 
   //----------------------------------------Categories Row-----------------------------------------------------------
   Widget _categoriesRow() {
-    final categories = ['All', ...MenuData.categories];
-
     return SizedBox(
       height: 40,
-      child: ListView.separated(
+      child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 28),
-        itemCount: categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 25),
-        itemBuilder: (context, index) {
-          final category = categories[index];
-          final isSelected = category == _selectedCategory;
+        itemCount: categories.length + 1,
+        itemBuilder: (_, i) {
+          final isAll = i == 0;
+          final label = isAll ? "All" : categories[i - 1].name;
+
+          final selected = label == _selectedCategory;
 
           return GestureDetector(
-            onTap: () => setState(() => _selectedCategory = category),
+            onTap: () => setState(() => _selectedCategory = label),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : AppColors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                category,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: isSelected ? AppColors.white : AppColors.primary,
-                ),
-              ),
+              margin: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              color: selected ? AppColors.primary : Colors.white,
+              child: Center(child: Text(label)),
             ),
           );
         },
@@ -309,12 +315,15 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final filteredItems =
-        _selectedCategory == 'All'
-            ? menuItems
-            : menuItems
-                .where((item) => item.category == _selectedCategory)
-                .toList();
+    final filteredItems = _selectedCategory == 'All'
+    ? menuItems
+    : menuItems.where((item) {
+        final catName = categories
+            .firstWhere((c) => c.id == item.categoryId)
+            .name;
+
+        return catName == _selectedCategory;
+      }).toList();
 
     return GridView.builder(
       padding: const EdgeInsets.all(24),
@@ -350,7 +359,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            item.category.toUpperCase(),
+            getCategoryName(item.categoryId).toUpperCase(),
             style: TextStyle(
               fontSize: 9,
               color: AppColors.primary,
