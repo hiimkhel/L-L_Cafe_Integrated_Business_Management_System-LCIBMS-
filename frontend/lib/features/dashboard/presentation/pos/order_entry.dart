@@ -649,7 +649,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'VAT (12%)',
+                      'VAT',
                       style: TextStyle(
                         fontSize: 11,
                         color: AppColors.primary,
