@@ -5,8 +5,11 @@ import '../widgets/payment_entry.dart';
 import 'package:frontend/config/theme/app_text_styles.dart';
 
 class CheckoutConfirmationScreen extends StatefulWidget {
-  const CheckoutConfirmationScreen({super.key});
+  const CheckoutConfirmationScreen({super.key, required this.orderType, required this.orderItems});
 
+  // Expected data from order_entry.dart screen
+  final List<Map<String, dynamic>> orderItems;
+  final String orderType;
 
   @override
   State<CheckoutConfirmationScreen> createState() => _CheckoutConfirmationScreenState();
@@ -14,55 +17,48 @@ class CheckoutConfirmationScreen extends StatefulWidget {
 }
   class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>{
 
-    // TEMPORARY VALUES
-    final List<Map<String, dynamic>> orderItems = [
-      {"name": "Chicken Burger", "qty": 1, "price": 180.00},
-      {"name": "S'more", "qty": 1, "price": 165.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-    ];
-
+  
     double cashGiven = 0;
 
-    double get subtotal =>
-        orderItems.fold(0, (sum, item) => sum + item["price"]);
+    double get subtotal => widget.orderItems.fold(
+      0,
+      (sum, item) => sum + (item["price"] * item["qty"]),
+    );
 
-    double get tax => subtotal * 0.12;
+    double get tax => 20.0;
 
     double get total => subtotal + tax;
 
     double get change => cashGiven - total;
-     @override
+
+    bool get isPaymentValid => cashGiven >= total;
+
+
+    @override
     Widget build(BuildContext context) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        body: Column(children: [
-            _buildHeader(),
-            Expanded(child: Row(children: [
-              Expanded(flex: 4, child: OrderSummary(
-                orderItems: orderItems,
-                subtotal: subtotal,
-                tax: tax,
-                total: total
-              )),
-              Expanded(flex: 6, child: PaymentEntry(
-                total: total,
-                change: change,
-                onCashChanged: (value) => setState(() => cashGiven = value),
-                orderItems: orderItems
-              )),
-            ],),)
-        ],)
+          body: Column(children: [
+              _buildHeader(),
+              Expanded(child: Row(children: [
+                Expanded(flex: 4, child: OrderSummary(
+                  orderItems: widget.orderItems,
+                  subtotal: subtotal,
+                  tax: tax,
+                  total: total,
+                  orderType: widget.orderType
+                )),
+                Expanded(flex: 6, child: PaymentEntry(
+                  total: total,
+                  change: change,
+                  onCashChanged: (value) => setState(() => cashGiven = value),
+                  orderItems: widget.orderItems,
+                  // isValid: isPaymentValid,
+                )
+              ),
+              ],),)
+          ],
+        )
       );
     }
 

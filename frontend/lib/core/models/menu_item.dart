@@ -1,30 +1,31 @@
 class MenuItem {
   final int id;
+  final int categoryId;
   final String name;
-  final String category;
-  final String imageUrl;
   final String description;
+  final String imageUrl;
   final double price;
+  final bool isAvailable;
 
   MenuItem({
     required this.id,
+    required this.categoryId,
     required this.name,
-    required this.category,
-    required this.imageUrl,
     required this.description,
+    required this.imageUrl,
     required this.price,
+    required this.isAvailable,
   });
 
   factory MenuItem.fromJson(Map<String, dynamic> json) {
     return MenuItem(
-      id: json['id'] ?? 0,
-      name: json['name'] ?? '',
-      category: json['category'] ?? 'Uncategorized',
-      imageUrl: json['image_url'] ?? '',
+      id: json['id'],
+      categoryId: json['category_id'],
+      name: json['name'],
       description: json['description'] ?? '',
-      price: (json['price'] == null)
-          ? 0.0
-          : double.tryParse(json['price'].toString()) ?? 0.0,
+      imageUrl: json['image_url'] ?? '',
+      price: double.parse(json['price'].toString()),
+      isAvailable: json['is_available'] == 1,
     );
   }
 }

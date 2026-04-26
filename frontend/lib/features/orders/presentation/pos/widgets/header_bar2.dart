@@ -68,7 +68,7 @@ Widget _backButton(BuildContext context) {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => const POSOrderScreen(),
+          builder: (context) => POSOrderScreen(),
         ),
       );
     },
