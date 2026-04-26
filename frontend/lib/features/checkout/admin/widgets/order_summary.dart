@@ -104,26 +104,49 @@ class OrderSummary extends StatelessWidget {
                             border: Border(
                               bottom: BorderSide(
                                 color: AppColors.receiptBg,
-                                width: 1.5
-                              )
+                                width: 1.5,
+                              ),
                             ),
                           ),
                           child: Row(
                             children: [
+                              // Quantity
                               Container(
-                                width: 50,
-                                height: 50,
+                                width: 40,
+                                height: 40,
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(
                                   color: AppColors.background,
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: Text("${index + 1}", style: AppTextStyles.subtitle.copyWith(color: AppColors.primary)),
+                                child: Text(
+                                  "${item["qty"]}x",
+                                  style: AppTextStyles.subtitle.copyWith(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
-                              const SizedBox(width: 20),
-                              Expanded(child: Text(item["name"], style: AppTextStyles.subtitle.copyWith(fontWeight: FontWeight.w600))),
+
+                              const SizedBox(width: 16),
+
+                              // Name (takes remaining space)
+                              Expanded(
+                                child: Text(
+                                  item["name"],
+                                  style: AppTextStyles.subtitle.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+
+                              // Total price
                               Text(
-                                "₱${item["price"].toStringAsFixed(2)}", style: AppTextStyles.subtitle.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w600)
+                                "₱${(item["price"] * item["qty"]).toStringAsFixed(2)}",
+                                style: AppTextStyles.subtitle.copyWith(
+                                  color: AppColors.secondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ],
                           ),
@@ -138,7 +161,7 @@ class OrderSummary extends StatelessWidget {
 
                   _priceRow("Subtotal", subtotal),
                   const SizedBox(height: 8),
-                  _priceRow("Tax (12%)", tax),
+                  _priceRow("Tax (20%)", tax),
                   const SizedBox(height: 8),
 
                   Container(

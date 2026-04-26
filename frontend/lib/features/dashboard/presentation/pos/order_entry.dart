@@ -750,7 +750,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => CheckoutConfirmationScreen(), 
+                          builder: (context) => CheckoutConfirmationScreen( orderItems: orderItems, orderType: _orderType), 
                         ),
                       );
                     },
