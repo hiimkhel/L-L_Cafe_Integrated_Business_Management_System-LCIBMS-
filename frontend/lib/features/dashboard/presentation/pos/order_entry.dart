@@ -765,7 +765,16 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                   color: AppColors.receiptDark,
                 ),
               ),
-              Icon(Icons.close, size: 18, color: AppColors.primary),
+              IconButton(
+                icon: Icon(Icons.close, size: 18, color: AppColors.primary),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: () {
+                  setState(() {
+                    orderItems.removeAt(index);
+                  });
+                },
+              ),
             ],
           ),
           const SizedBox(height: 30),
