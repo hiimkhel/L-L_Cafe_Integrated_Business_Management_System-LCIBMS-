@@ -265,6 +265,12 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
           const SizedBox(width: 7),
           Expanded(
             child: TextField(
+              // Search  logic
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.toLowerCase();
+                });
+              },
               decoration: InputDecoration(
                 hintText: 'SEARCH ORDERS',
                 hintStyle: TextStyle(
@@ -343,15 +349,19 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final filteredItems = _selectedCategory == 'All'
-    ? menuItems
-    : menuItems.where((item) {
-        final catName = categories
-            .firstWhere((c) => c.id == item.categoryId)
-            .name;
+      final filteredItems = menuItems.where((item) {
+      final matchesCategory = _selectedCategory == 'All'
+          ? true
+          : categories
+              .firstWhere((c) => c.id == item.categoryId)
+              .name == _selectedCategory;
 
-        return catName == _selectedCategory;
-      }).toList();
+      final matchesSearch = item.name
+          .toLowerCase()
+          .contains(_searchQuery);
+
+      return matchesCategory && matchesSearch;
+    }).toList();
 
     return GridView.builder(
       padding: const EdgeInsets.all(24),
