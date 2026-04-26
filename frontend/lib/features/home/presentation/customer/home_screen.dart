@@ -38,7 +38,10 @@ const _featuredBeverages = <HomeMenuItem>[
 // ─────────────────────────────────────────────────────────────────────────────
 
 class CustomerHomeScreen extends StatefulWidget {
-  const CustomerHomeScreen({super.key});
+  // ✅ ADDED: Catcher for the logout function from main.dart
+  final VoidCallback? onLogout;
+  
+  const CustomerHomeScreen({super.key, this.onLogout});
 
   @override
   State<CustomerHomeScreen> createState() => _CustomerHomeScreenState();
@@ -67,7 +70,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   void _logout(BuildContext ctx) {
-    Navigator.of(ctx).pushNamedAndRemoveUntil('/login', (route) => false);
+    // ✅ FIXED: Wipe the user state, then route to the correct '/' path!
+    if (widget.onLogout != null) {
+      widget.onLogout!();
+    }
+    Navigator.of(ctx).pushNamedAndRemoveUntil('/', (route) => false);
   }
 
   @override
@@ -79,7 +86,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         cartCount:   2,
         notifCount:  1,
         onLogout:    () => _logout(context),
-        onCart: () => Navigator.pushNamed(context, '/cart'),
+        onCart:      () => Navigator.pushNamed(context, '/cart'),
         onNotif:     () {},
         onProfile:   () {},
       ),
@@ -95,16 +102,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                   constraints: const BoxConstraints(maxWidth: _kDesktopMaxWidth),
                   child: Column(
                     children: [
-                      // ─── HERO SECTION ───
                       const _MainHero(),
-                      
-                      // ─── PROMOS ───
                       const _PromoSection(),
-                      
-                      // ─── FEATURED BEVERAGES ───
                       const _FeaturedBeveragesSection(),
-                      
-                      // ─── REVIEW SUBMISSION ───
                       _ReviewFormSection(
                         stars:    _stars,
                         ctrl:     _ctrl,
@@ -226,7 +226,6 @@ class _BambooPainter extends CustomPainter {
   final bool isMobile;
   
   _BambooPainter({required this.animationValue, required this.isMobile});
-
   static const _bamboos = [
     [0.040, 13.0,  0.12, 1.53], [0.095, 7.0,   0.10, -1.84],
     [0.133, 14.0,  0.13, 1.45], [0.190, 9.0,   0.10, -0.72],
@@ -239,7 +238,7 @@ class _BambooPainter extends CustomPainter {
     [0.783, 18.8,  0.12, 1.81], [0.839, 8.9,   0.10, 0.66],
     [0.890, 5.2,   0.08, -1.98], [0.936, 16.6,  0.11, -1.89],
   ];
-
+  
   void _drawLeaf(Canvas canvas, Offset offset, double angle, double length, double width, Paint paint) {
     canvas.save();
     canvas.translate(offset.dx, offset.dy);
@@ -281,7 +280,6 @@ class _BambooPainter extends CustomPainter {
       canvas.drawRect(Rect.fromLTWH(-w / 2, -h / 2 - 20, w, h + 40), paint);
       int segments = (h / (w * 10 + 60)).ceil().clamp(3, 10);
       double segmentHeight = (h + 40) / segments;
-
       for (int i = 1; i < segments; i++) {
         double jointY = (-h / 2 - 20) + (i * segmentHeight);
         canvas.drawRect(Rect.fromLTWH(-w / 2 - 1.5, jointY - 1, w + 3, 2.5), paint);
@@ -289,9 +287,7 @@ class _BambooPainter extends CustomPainter {
           bool isLeft = (index + i) % 2 == 0;
           double leafLength = w * 2.5 + 20.0;
           double leafWidth = leafLength * 0.25;
-
           double angle = isLeft ? math.pi * 0.8 : math.pi * 0.2;
-
           _drawLeaf(canvas, Offset(isLeft ? -w / 2 : w / 2, jointY), angle, leafLength, leafWidth, paint);
           if (i % 2 == 0) {
              double secondaryAngle = isLeft ? math.pi * 1.1 : -math.pi * 0.1;
@@ -310,7 +306,8 @@ class _BambooPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _BambooPainter oldDelegate) {
-    return oldDelegate.animationValue != animationValue || oldDelegate.isMobile != isMobile;
+    return oldDelegate.animationValue != animationValue ||
+           oldDelegate.isMobile != isMobile;
   }
 }
 
@@ -320,7 +317,6 @@ class _BambooPainter extends CustomPainter {
 
 class _MainHero extends StatelessWidget {
   const _MainHero();
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
@@ -357,7 +353,6 @@ class _MainHero extends StatelessWidget {
             ),
             SizedBox(height: isMobile ? 24 : 40),
             
-            // Accurately matched neo-brutalist solid drop shadow button
             GestureDetector(
               onTap: () {},
               child: Container(
@@ -368,7 +363,7 @@ class _MainHero extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: _primary, 
                   border: Border.all(color: _bgDark, width: 1.5),
-                  borderRadius: BorderRadius.circular(2), // Slight or no rounding for brutalism
+                  borderRadius: BorderRadius.circular(2),
                   boxShadow: const [
                     BoxShadow(color: _bgDark, blurRadius: 0, offset: Offset(4, 4))
                   ],
@@ -398,7 +393,6 @@ class _MainHero extends StatelessWidget {
 
 class _PromoSection extends StatelessWidget {
   const _PromoSection();
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (_, c) {
@@ -431,7 +425,6 @@ class _PromoSection extends StatelessWidget {
 class _Promo1 extends StatelessWidget {
   final bool isMobile;
   const _Promo1({required this.isMobile});
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -449,7 +442,7 @@ class _Promo1 extends StatelessWidget {
                   fontSize: isMobile ? 18 : 24, letterSpacing: -0.5, color: Colors.white)),
           SizedBox(height: isMobile ? 12 : 24),
           Text('GET 20% OFF ON ALL ESPRESSO-BASED DRINKS EVERY MORNING. LIMITED TIME ARCHITECTURAL PROMOTION.', 
-               style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w700, fontSize: isMobile ? 10 : 14, height: 1.6, letterSpacing: 1.0,
+              style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w700, fontSize: isMobile ? 10 : 14, height: 1.6, letterSpacing: 1.0,
                   color: Colors.white.withOpacity(0.9))),
           SizedBox(height: isMobile ? 24 : 32),
           Container(
@@ -470,7 +463,6 @@ class _Promo1 extends StatelessWidget {
 class _Promo2 extends StatelessWidget {
   final bool isMobile;
   const _Promo2({required this.isMobile});
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -514,7 +506,6 @@ class _Promo2 extends StatelessWidget {
 
 class _FeaturedBeveragesSection extends StatelessWidget {
   const _FeaturedBeveragesSection();
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (_, c) {
@@ -528,7 +519,6 @@ class _FeaturedBeveragesSection extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.only(bottom: 16),
-              // Optional bottom border omitted for a cleaner match to the wireframe
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -568,11 +558,9 @@ class _FeaturedBeveragesSection extends StatelessWidget {
   }
 }
 
-// Highly accurate to the provided mobile wireframe
 class _MenuListRow extends StatelessWidget {
   final HomeMenuItem item;
   const _MenuListRow({required this.item});
-
   @override
   Widget build(BuildContext context) {
     return Row(children: [
@@ -612,7 +600,7 @@ class _MenuListRow extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: Colors.transparent, 
-          border: Border.all(color: _secondary.withOpacity(0.3), width: 1.5), // Hollow border matching wireframe
+          border: Border.all(color: _secondary.withOpacity(0.3), width: 1.5), 
           borderRadius: BorderRadius.circular(12),
         ),
         child: const Icon(Icons.shopping_cart_outlined, color: _secondary, size: 20),
@@ -625,7 +613,6 @@ class _MenuGridCard extends StatelessWidget {
   final HomeMenuItem item;
   final double width;
   const _MenuGridCard({required this.item, required this.width});
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -686,7 +673,6 @@ class _ReviewFormSection extends StatelessWidget {
     required this.sent, required this.msg,
     required this.onStars, required this.onSubmit,
   });
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (_, c) {
