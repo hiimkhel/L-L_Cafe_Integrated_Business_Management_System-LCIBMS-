@@ -5,7 +5,7 @@ import '../../config/theme/app_colors.dart';
 import 'package:frontend/features/dashboard/presentation/admin/dashboard_screen.dart';
 import 'package:frontend/features/dashboard/presentation/admin/order_screen.dart';
 import 'package:frontend/features/dashboard/presentation/admin/menu_management.dart';
-import 'package:frontend/features/reports/presentation/admin/reports_screen.dart';
+import 'package:frontend/features/reports/presentation/admin/sales_report_screen.dart';
 import 'package:frontend/features/customers/presentation/admin/customers_screen.dart';
 import 'package:frontend/features/reviews/presentation/admin/reviews_screen.dart';
 import 'package:frontend/features/cms/presentation/cms_screen.dart';
@@ -61,7 +61,7 @@ class _SidebarState extends State<Sidebar> {
         screen = MenuManagementScreen(activeIndex: 2, onLogout: widget.onLogout);
         break;
       case 3:
-        screen = ReportsScreen(activeIndex: 3, onLogout: widget.onLogout);
+        screen = SalesReportScreen(activeIndex: 3, onLogout: widget.onLogout);
         break;
       case 4:
         screen = CustomersScreen(activeIndex: 4, onLogout: widget.onLogout);

@@ -1,12 +1,42 @@
 const pool = require('../config/dbConnection');
 
-const seedMenuItems = async () => {
+const seedMenu = async () => {
   try {
-    console.log('Seeding menu items...');
+    console.log('Starting menu seeding...');
 
-    // Optional: clear existing data (use carefully in dev only)
+    // 1. Clear existing data (DEV ONLY)
     await pool.query('DELETE FROM menu_items');
+    await pool.query('DELETE FROM menu_categories');
 
+    console.log('Old data cleared');
+
+    // 2. Seed Categories
+    const categories = [
+      'Foods',
+      'Party Tray',
+      'Waffles',
+      'Coffee',
+      'Non-Coffee',
+      'Frappe'
+    ];
+
+    const categoryInsertQuery = `INSERT INTO menu_categories (name) VALUES (?)`;
+
+    for (const name of categories) {
+      await pool.query(categoryInsertQuery, [name]);
+    }
+
+    console.log('Categories seeded');
+
+    // 3. Fetch category IDs
+    const [rows] = await pool.query('SELECT * FROM menu_categories');
+
+    const categoryMap = {};
+    rows.forEach(cat => {
+      categoryMap[cat.name] = cat.id;
+    });
+
+    // 4. Seed Menu Items
     const items = [
       ['Chicken Burger', 'Foods', 'This is a description.', 199.00, 'temp.png'],
       ['Cheese Burger', 'Foods', 'This is a description.', 199.00, 'temp.png'],
@@ -26,22 +56,39 @@ const seedMenuItems = async () => {
       ['Caramel Frappe', 'Frappe', 'Sweet caramel swirls.', 139.00, 'temp.png'],
     ];
 
-    const query = `
-      INSERT INTO menu_items (name, category, description, price, imageUrl)
+    const itemInsertQuery = `
+      INSERT INTO menu_items (name, category_id, description, price, image_url)
       VALUES (?, ?, ?, ?, ?)
     `;
 
     for (const item of items) {
-      await pool.query(query, item);
+      const [name, categoryName, description, price, imageUrl] = item;
+
+      const categoryId = categoryMap[categoryName];
+
+      if (!categoryId) {
+        console.warn(`Category not found: ${categoryName}`);
+        continue;
+      }
+
+      await pool.query(itemInsertQuery, [
+        name,
+        categoryId,
+        description,
+        price,
+        imageUrl
+      ]);
     }
 
-    console.log('✅ Menu items seeded successfully!');
+    console.log('Menu items seeded successfully!');
+    console.log('Seeding completed!');
+
     process.exit(0);
 
   } catch (error) {
-    console.error('❌ Seeding failed:', error.message);
+    console.error('Seeding failed:', error.message);
     process.exit(1);
   }
 };
 
-seedMenuItems();
+seedMenu();

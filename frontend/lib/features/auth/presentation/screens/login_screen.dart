@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/models/user.dart';
-import 'package:frontend/services/auth_service.dart';
+import 'package:frontend/core/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   final Function(User) onLogin;
