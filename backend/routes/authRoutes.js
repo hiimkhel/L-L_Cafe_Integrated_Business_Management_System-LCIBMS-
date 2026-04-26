@@ -6,11 +6,11 @@
 
 const express = require('express');
 const router = express.Router();
-const { login, register, authSync } = require("../controllers/authControllers");
+const db = require('../config/dbConnection.js');
+const { login, register } = require("../controllers/authControllers");
 
 
 router.post('/login', login);
 router.post('/register', register);
-router.post("/", authSync);
 
 module.exports = router;
