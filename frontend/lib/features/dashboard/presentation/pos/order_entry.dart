@@ -6,6 +6,7 @@ import 'package:frontend/features/checkout/admin/presentation/checkout_screen.da
 import 'package:frontend/features/dashboard/presentation/pos/online_orders_screen.dart';
 import 'package:frontend/core/models/menu_item.dart';
 import 'package:frontend/core/services/menu_service.dart';
+import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 
 class POSOrderScreen extends StatefulWidget {
 
@@ -118,7 +119,14 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
           _headerBtns(
             icon: Icon(Icons.queue, color: AppColors.primary, size: 13),
             label: 'ORDER QUEUE',
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OrderQueueScreen(),
+                ),
+              );
+            },
           ),
           const SizedBox(width: 11),
           _headerBtns(
