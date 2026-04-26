@@ -7,6 +7,7 @@ class OrderSummary extends StatelessWidget {
   final double subtotal;
   final double tax;
   final double total;
+  final String orderType;
 
   const OrderSummary({
     super.key,
@@ -14,6 +15,7 @@ class OrderSummary extends StatelessWidget {
     required this.subtotal,
     required this.tax,
     required this.total,
+    required this.orderType
   });
 
   @override
@@ -60,6 +62,34 @@ class OrderSummary extends StatelessWidget {
               ),
               child: Column(
                 children: [
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          orderType == 'DINE IN'
+                              ? Icons.restaurant
+                              : Icons.shopping_bag,
+                          size: 16,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          orderType,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   // Scrollable Items
                   Expanded(
                     child: ListView.builder(
