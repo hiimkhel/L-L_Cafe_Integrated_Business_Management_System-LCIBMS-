@@ -315,7 +315,7 @@ class _ContactScreenState extends State<ContactScreen> {
                 children: [
                   Expanded(child: _buildField('NAME', _nameCtrl, 'Full Name...')),
                   const SizedBox(width: 16),
-                  Expanded(child: _buildField('SIGNAL ADDRESS', _emailCtrl, 'email@domain.com', isEmail: true)),
+                  Expanded(child: _buildField('EMAIL ADDRESS', _emailCtrl, 'email@domain.com', isEmail: true)),
                 ],
               )
             else ...[

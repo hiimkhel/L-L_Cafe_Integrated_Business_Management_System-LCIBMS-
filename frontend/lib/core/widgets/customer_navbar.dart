@@ -348,7 +348,7 @@ class _GuestNavbarState extends State<GuestNavbar> {
   bool _menuOpen = false;
 
   static const _links = [
-    _NI('HOME',    '/home'),
+    _NI('HOME',    '/'),
     _NI('ABOUT',   '/about'),
     _NI('CONTACT', '/contact'),
   ];
@@ -415,9 +415,10 @@ class _GuestNavbarState extends State<GuestNavbar> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 11),
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: AppColors.secondary,
+              borderRadius: BorderRadius.circular(8),
               boxShadow: const [
-                BoxShadow(color: Color(0xFF2D2A26), offset: Offset(4, 4))
+                BoxShadow(color: Color(0xFF2D2A26), offset: Offset(3, 3))
               ],
             ),
             child: const Text('JOIN NOW',
@@ -518,7 +519,7 @@ class _GuestNavbarState extends State<GuestNavbar> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ..._links.map((e) {
-                    final isFirst = e.label == 'HOME';
+                    final isActive = widget.activeRoute == e.route;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: GestureDetector(
@@ -534,7 +535,7 @@ class _GuestNavbarState extends State<GuestNavbar> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 28, vertical: 22),
                           decoration: BoxDecoration(
-                            color: isFirst
+                            color: isActive
                                 ? AppColors.secondary
                                 : const Color(0xFFEFE2C9),
                             borderRadius: BorderRadius.circular(22),
@@ -545,7 +546,7 @@ class _GuestNavbarState extends State<GuestNavbar> {
                                   fontWeight: FontWeight.w900,
                                   fontSize: 20,
                                   letterSpacing: 1.5,
-                                  color: isFirst
+                                  color: isActive
                                       ? Colors.white
                                       : AppColors.primary)),
                         ),

@@ -16,8 +16,6 @@ import 'features/customers/presentation/admin/cart_screen.dart';
 import 'features/dashboard/presentation/admin/dashboard_screen.dart';
 import 'features/dashboard/presentation/rider/dashboard_screen.dart';
 import 'features/dashboard/presentation/pos/order_entry.dart';
-
-// Shared cart state
 import 'core/constants/cart_provider.dart';
 
 void main() async {
