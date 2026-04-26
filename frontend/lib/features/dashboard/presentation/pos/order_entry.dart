@@ -285,26 +285,54 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   //----------------------------------------Categories Row-----------------------------------------------------------
   Widget _categoriesRow() {
     return SizedBox(
-      height: 40,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: categories.length + 1,
-        itemBuilder: (_, i) {
-          final isAll = i == 0;
-          final label = isAll ? "All" : categories[i - 1].name;
+      height: 48,
+      child: ScrollConfiguration(
+        behavior: const _NoGlowScrollBehavior(),
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 28),
+          physics: const BouncingScrollPhysics(),
+          itemCount: categories.length + 1,
+          separatorBuilder: (_, __) => const SizedBox(width: 14),
+          itemBuilder: (context, i) {
+            final isAll = i == 0;
 
-          final selected = label == _selectedCategory;
+            final label = isAll ? "All" : categories[i - 1].name;
+            final isSelected = label == _selectedCategory;
 
-          return GestureDetector(
-            onTap: () => setState(() => _selectedCategory = label),
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              color: selected ? AppColors.primary : Colors.white,
-              child: Center(child: Text(label)),
-            ),
-          );
-        },
+            return GestureDetector(
+              onTap: () => setState(() => _selectedCategory = label),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primary : AppColors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    if (isSelected)
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected
+                          ? AppColors.white
+                          : AppColors.primary,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -809,6 +837,15 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
       ),
     );
   }
+}
 
-  //for improvement.. add logic
+// Helper Function for overflowing categories
+class _NoGlowScrollBehavior extends ScrollBehavior {
+  const _NoGlowScrollBehavior();
+
+  @override
+  Widget buildOverscrollIndicator(
+      BuildContext context, Widget child, ScrollableDetails details) {
+    return child;
+  }
 }
