@@ -30,6 +30,8 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   String _selectedCategory = 'All';
   String _searchQuery = '';
 
+  String _orderType = 'DINE IN';
+
   @override
   void initState(){
     super.initState();
@@ -587,18 +589,28 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                       child: _orderTypeBtn(
                         icon: Icons.restaurant,
                         label: 'DINE IN',
-                        isSelected: true,
+                        isSelected: _orderType == 'DINE IN',
                         isFirst: true,
                         isLast: false,
+                        onTap: () {
+                          setState(() {
+                            _orderType = 'DINE IN';
+                          });
+                        },
                       ),
                     ),
                     Expanded(
                       child: _orderTypeBtn(
                         icon: Icons.shopping_cart,
                         label: 'TAKE OUT',
-                        isSelected: false,
+                        isSelected: _orderType == 'TAKE OUT',
                         isFirst: false,
                         isLast: true,
+                        onTap: () {
+                          setState(() {
+                            _orderType = 'TAKE OUT';
+                          });
+                        },
                       ),
                     ),
                   ],
@@ -904,38 +916,42 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     required bool isSelected,
     required bool isFirst,
     required bool isLast,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color:
-            isSelected
-                ? AppColors.secondary
-                : AppColors.background.withOpacity(0.4),
-        borderRadius: BorderRadius.horizontal(
-          left: isFirst ? Radius.circular(10) : Radius.zero,
-          right: isLast ? Radius.circular(10) : Radius.zero,
+    return GestureDetector(
+      onTap: onTap,
+        child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color:
+              isSelected
+                  ? AppColors.secondary
+                  : AppColors.background.withOpacity(0.4),
+          borderRadius: BorderRadius.horizontal(
+            left: isFirst ? Radius.circular(10) : Radius.zero,
+            right: isLast ? Radius.circular(10) : Radius.zero,
+          ),
         ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: isSelected ? AppColors.white : AppColors.primary,
-            size: 14,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
               color: isSelected ? AppColors.white : AppColors.primary,
+              size: 14,
             ),
-          ),
-        ],
-      ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? AppColors.white : AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+      )
     );
   }
 }
