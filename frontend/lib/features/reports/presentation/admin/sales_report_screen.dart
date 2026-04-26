@@ -9,8 +9,9 @@ import 'package:frontend/features/reports/presentation/widget/business_performan
 
 class SalesReportScreen extends StatefulWidget {
   final VoidCallback onLogout;
+  final int activeIndex;
 
-  const SalesReportScreen({super.key, required this.onLogout});
+  const SalesReportScreen({super.key, required this.activeIndex, required this.onLogout});
 
   @override
   State<SalesReportScreen> createState() => _SalesReportScreenState();
