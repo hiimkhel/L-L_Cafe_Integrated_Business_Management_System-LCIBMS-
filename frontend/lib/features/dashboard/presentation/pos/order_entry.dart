@@ -536,6 +536,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                 final item = orderItems[index];
 
                 return _orderItem(
+                  index:index,
                   name: item['name'],
                   price: "₱${item['price']}",
                   qty: item['qty'],
@@ -740,6 +741,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     required String name,
     required String price,
     required int qty,
+    required int index
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -786,7 +788,15 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                 ),
                 child: Row(
                   children: [
-                    _qtyBtn(Icons.remove, () {}),
+                    _qtyBtn(Icons.remove, () {
+                      setState(() {
+                        if (orderItems[index]['qty'] > 1) {
+                          orderItems[index]['qty']--;
+                        } else {
+                          orderItems.removeAt(index);
+                        }
+                      });
+                    }),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
@@ -798,7 +808,11 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                         ),
                       ),
                     ),
-                    _qtyBtn(Icons.add, () {}),
+                    _qtyBtn(Icons.add, () {
+                        setState(() {
+                        orderItems[index]['qty']++;
+                      });
+                    }),
                   ],
                 ),
               ),
