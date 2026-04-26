@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 import 'firebase_options.dart';
 import 'core/models/user.dart';
+
+// Screens
 import 'features/home/presentation/customer/landing_screen.dart';
 import 'features/home/presentation/customer/home_screen.dart';
 import 'features/customers/presentation/admin/menu_screen.dart';
+import 'features/home/presentation/customer/contact_screen.dart';
 import 'features/home/presentation/customer/profile_screen.dart';
 import 'features/customers/presentation/admin/cart_screen.dart';
 import 'features/dashboard/presentation/admin/dashboard_screen.dart';
@@ -71,6 +75,14 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
             // /orders → placeholder for the separate Orders History screen
             case '/orders':
               return _fade(const CartScreen()); // TODO: replace with OrdersScreen()
+            case '/contact':
+              return _fade(Builder(
+                builder: (ctx) => ContactScreen(
+                  onLogin: () => Navigator.pushReplacementNamed(ctx, '/'),
+                  onJoinNow: () => Navigator.pushReplacementNamed(ctx, '/'),
+                ),
+              ));
+
             case '/profile':
               return _fade(ProfileScreen(onLogout: logout));
             default:

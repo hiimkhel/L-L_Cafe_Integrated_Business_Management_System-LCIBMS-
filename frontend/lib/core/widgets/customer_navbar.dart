@@ -348,9 +348,9 @@ class _GuestNavbarState extends State<GuestNavbar> {
   bool _menuOpen = false;
 
   static const _links = [
-    _NI('HOME', '/home'),
-    _NI('MENU', '/menu'),
-    _NI('ORDERS', '/orders'),
+    _NI('HOME',    '/home'),
+    _NI('ABOUT',   '/about'),
+    _NI('CONTACT', '/contact'),
   ];
 
   @override
