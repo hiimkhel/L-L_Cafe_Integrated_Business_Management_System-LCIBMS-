@@ -23,6 +23,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   List<MenuItem> menuItems = [];
   List<MenuCategory> categories = [];
 
+  // Cart State Handler
   List<Map<String, dynamic>> orderItems = [];
 
   bool isLoading = true;
@@ -431,7 +432,20 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
 
               GestureDetector(
                 onTap: () {
-                  print("Add to cart: ${item.name}");
+                  setState(() {
+                    final index = orderItems.indexWhere((e) => e['id'] == item.id);
+
+                    if (index >= 0) {
+                      orderItems[index]['qty'] += 1;
+                    } else {
+                      orderItems.add({
+                        'id': item.id,
+                        'name': item.name,
+                        'price': double.parse(item.price.toString()),
+                        'qty': 1,
+                      });
+                    }
+                  });
                 },
                 child: Container(
                   width: 34,
@@ -515,11 +529,18 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
           //-------------------------------------------------------------------------------------------------------------
           //--------------------------------------------temporary order list---------------------------------------------
           Expanded(
-            child: ListView(
+            child: ListView.builder(
               padding: const EdgeInsets.all(16),
-              children: [
-                _orderItem(name: 'Burger Meal', price: '₱199.00', qty: 2),
-              ],
+              itemCount: orderItems.length,
+              itemBuilder: (context, index) {
+                final item = orderItems[index];
+
+                return _orderItem(
+                  name: item['name'],
+                  price: "₱${item['price']}",
+                  qty: item['qty'],
+                );
+              },
             ),
           ),
           const Divider(height: 1, color: Color.fromARGB(255, 237, 236, 236)),
