@@ -63,6 +63,25 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     ).name;
   }
 
+  // Handle calculation of subtotal price from cart items
+  double getSubtotal() {
+    double subtotal = 0;
+    for (var item in orderItems) {
+      subtotal += item['price'] * item['qty'];
+    }
+    return subtotal;
+  }
+
+  // Fixed tax for VAT
+  double getTax() {
+    return 20.0;
+  }
+
+  double getTotal() {
+    return getSubtotal() + getTax();
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -370,7 +389,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
         crossAxisCount: 4,
         crossAxisSpacing: 20,
         mainAxisSpacing: 20,
-        childAspectRatio: 1.1,
+        childAspectRatio: 1.1,  
       ),
       itemCount: filteredItems.length,
       itemBuilder: (context, index) {
@@ -605,20 +624,20 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                       ),
                     ),
                     Text(
-                      '₱165.00',
+                      '₱${getSubtotal().toStringAsFixed(2)}',
                       style: TextStyle(
                         fontSize: 11,
                         color: AppColors.primary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ],
+                                      ],
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'ENGINEERING TAX (12%)',
+                      'VAT (12%)',
                       style: TextStyle(
                         fontSize: 11,
                         color: AppColors.primary,
@@ -626,7 +645,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                       ),
                     ),
                     Text(
-                      '₱19.80',
+                      '₱${getTax().toStringAsFixed(2)}',
                       style: TextStyle(
                         fontSize: 11,
                         color: AppColors.primary,
@@ -654,7 +673,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                       ),
                     ),
                     Text(
-                      '₱184.80',
+                      '₱${getTotal().toStringAsFixed(2)}',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
