@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/config/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/receipt.dart';
+import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 
 class PaymentEntry extends StatefulWidget {
   final double total;
   final double change;
   final Function(double) onCashChanged;
+  final VoidCallback onSubmit;
 
   final List<Map<String, dynamic>> orderItems;
 
@@ -16,6 +18,7 @@ class PaymentEntry extends StatefulWidget {
     required this.change,
     required this.onCashChanged,
     required this.orderItems,
+    required this.onSubmit,
   });
 
   @override
@@ -297,24 +300,7 @@ class _PaymentEntryState extends State<PaymentEntry> {
                               child: SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
-                                  onPressed: change < 0 ? null : () {
-                                      final receiptData = ReceiptData(
-                                      orderNumber: DateTime.now().millisecondsSinceEpoch.toString(),
-                                      clientName: "WALK-IN CUSTOMER",
-                                      dateTime: DateTime.now(),
-                                      orderType: OrderType.walkIn,
-                                      paymentMethod: _getPaymentMethod(),
-                                      items: widget.orderItems.map((item) {
-                                        return OrderItem(
-                                          name: item["name"],
-                                          quantity: item["qty"],
-                                          unitPrice: item["price"]
-                                        );
-                                      }).toList(),
-                                    );
-
-                                    _showReceipt(context, receiptData);
-                                  },
+                                  onPressed: change < 0 ? null : widget.onSubmit,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppColors.secondary,
                                     elevation: 4,
@@ -386,6 +372,15 @@ class _PaymentEntryState extends State<PaymentEntry> {
             data: data,
             onPrint: () {
               Navigator.pop(context);
+
+
+                Navigator.pushAndRemoveUntil(
+              context,
+                MaterialPageRoute(
+                  builder: (context) => OrderQueueScreen(),
+                ),
+                (route) => false, 
+              );
             },
           ),
         );
