@@ -23,4 +23,38 @@ class OrderService {
       return false;
     }
   }
+
+  // POS Access API Endpoints
+  Future<List<dynamic>> getOrdersByStatus(String status) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/pos/orders?status=$status'),
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception("Failed to load orders");
+      }
+    } catch (e) {
+      print("Service Error: $e");
+      return [];
+    }
+  }
+
+  Future<bool> updateOrderStatus(int id, String status) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/pos/orders/$id/status'),
+        headers: {"Content-Type": "application/json"},
+        body: json.encode({"status": status}),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Update Error: $e");
+      return false;
+    }
+  }
+  
 }
