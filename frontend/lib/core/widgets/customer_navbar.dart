@@ -345,13 +345,44 @@ class GuestNavbar extends StatefulWidget implements PreferredSizeWidget {
 }
 
 class _GuestNavbarState extends State<GuestNavbar> {
-  bool _menuOpen = false;
+  OverlayEntry? _overlayEntry;
 
   static const _links = [
-    _NI('HOME', '/home'),
-    _NI('MENU', '/menu'),
-    _NI('ORDERS', '/orders'),
+    _NI('HOME',    '/'),
+    _NI('ABOUT',   '/about'),
+    _NI('CONTACT', '/contact'),
   ];
+
+  @override
+  void dispose() {
+    _closeMenu();
+    super.dispose();
+  }
+
+  void _openMenu(BuildContext context) {
+    _closeMenu();
+    _overlayEntry = OverlayEntry(
+      builder: (_) => _GuestMobileMenu(
+        activeRoute: widget.activeRoute,
+        links: _links,
+        onClose: _closeMenu,
+        onNavigate: (route) {
+          _closeMenu();
+          Navigator.pushReplacementNamed(context, route);
+        },
+      ),
+    );
+    Overlay.of(context).insert(_overlayEntry!);
+    setState(() {});
+  }
+
+  void _closeMenu() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    if (mounted) setState(() {});
+  }
+
+  bool get _menuOpen => _overlayEntry != null;
 
   @override
   Widget build(BuildContext context) {
@@ -415,9 +446,10 @@ class _GuestNavbarState extends State<GuestNavbar> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 11),
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: AppColors.secondary,
+              borderRadius: BorderRadius.circular(8),
               boxShadow: const [
-                BoxShadow(color: Color(0xFF2D2A26), offset: Offset(4, 4))
+                BoxShadow(color: Color(0xFF2D2A26), offset: Offset(3, 3))
               ],
             ),
             child: const Text('JOIN NOW',
@@ -434,129 +466,68 @@ class _GuestNavbarState extends State<GuestNavbar> {
   }
 
   Widget _buildMobile(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          height: 72,
-          decoration: BoxDecoration(
-            color: const Color(0xF2EFE2C9),
-            border: Border(
-                bottom:
-                    BorderSide(color: AppColors.primary.withOpacity(0.1))),
+    return Container(
+      height: 72,
+      decoration: BoxDecoration(
+        color: const Color(0xF2EFE2C9),
+        border: Border(
+            bottom: BorderSide(color: AppColors.primary.withOpacity(0.1))),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(children: [
+        _LogoImg(),
+        const Spacer(),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onLogin,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text('LOGIN',
+                style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11,
+                    letterSpacing: 2,
+                    color: AppColors.primary)),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(children: [
-            _LogoImg(),
-            const Spacer(),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: widget.onLogin,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text('LOGIN',
-                    style: TextStyle(
-                        fontFamily: 'Urbanist',
-                        fontWeight: FontWeight.w900,
-                        fontSize: 11,
-                        letterSpacing: 2,
-                        color: AppColors.primary)),
-              ),
-            ),
-            const SizedBox(width: 2),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: widget.onJoinNow,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-                decoration: BoxDecoration(
-                  color: AppColors.secondary,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Text('JOIN NOW',
-                    style: TextStyle(
-                        fontFamily: 'Urbanist',
-                        fontWeight: FontWeight.w900,
-                        fontSize: 10,
-                        color: Colors.white)),
-              ),
-            ),
-            const SizedBox(width: 10),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => setState(() => _menuOpen = !_menuOpen),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: const [
-                    BoxShadow(color: Color(0x1A000000), blurRadius: 4)
-                  ],
-                ),
-                child: Icon(
-                    _menuOpen ? Icons.close : Icons.menu_rounded,
-                    color: AppColors.primary,
-                    size: 20),
-              ),
-            ),
-          ]),
         ),
-        if (_menuOpen)
-          Positioned(
-            top: 72,
-            left: 0,
-            right: 0,
-            child: Container(
-              constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height - 72),
-              color: AppColors.background,
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ..._links.map((e) {
-                    final isFirst = e.label == 'HOME';
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          setState(() => _menuOpen = false);
-                          if (widget.activeRoute != e.route) {
-                            Navigator.pushReplacementNamed(context, e.route);
-                          }
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 28, vertical: 22),
-                          decoration: BoxDecoration(
-                            color: isFirst
-                                ? AppColors.secondary
-                                : const Color(0xFFEFE2C9),
-                            borderRadius: BorderRadius.circular(22),
-                          ),
-                          child: Text(e.label,
-                              style: TextStyle(
-                                  fontFamily: 'Urbanist',
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 20,
-                                  letterSpacing: 1.5,
-                                  color: isFirst
-                                      ? Colors.white
-                                      : AppColors.primary)),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ],
-              ),
+        const SizedBox(width: 6),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onJoinNow,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+            decoration: BoxDecoration(
+              color: AppColors.secondary,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Text('JOIN NOW',
+                style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 10,
+                    color: Colors.white)),
+          ),
+        ),
+        const SizedBox(width: 10),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _menuOpen ? _closeMenu() : _openMenu(context),
+          child: Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: const [BoxShadow(color: Color(0x1A000000), blurRadius: 4)],
+            ),
+            child: Icon(
+              _menuOpen ? Icons.close_rounded : Icons.menu_rounded,
+              color: AppColors.primary,
+              size: 20,
             ),
           ),
-      ],
+        ),
+      ]),
     );
   }
 }
@@ -1023,6 +994,173 @@ class _SideDrawer extends StatelessWidget {
                     ],
                   ),
                 ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GUEST MOBILE MENU OVERLAY
+// Full-screen overlay that slides down from the navbar
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _GuestMobileMenu extends StatelessWidget {
+  final String activeRoute;
+  final List<_NI> links;
+  final VoidCallback onClose;
+  final void Function(String) onNavigate;
+
+  const _GuestMobileMenu({
+    required this.activeRoute,
+    required this.links,
+    required this.onClose,
+    required this.onNavigate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final screenH = MediaQuery.of(context).size.height;
+    return Material(
+      color: Colors.transparent,
+      child: SizedBox(
+        width: double.infinity,
+        height: screenH,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            // ── Navbar row (replaces the actual navbar visually) ──────────
+            Container(
+              height: 72,
+              color: const Color(0xF2EFE2C9),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  // Logo
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset(
+                      'assets/images/lnl.jpg',
+                      width: 44, height: 44, fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 44, height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Center(
+                          child: Text('L&L',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 10)),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  // LOGIN
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text('LOGIN',
+                        style: TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 11,
+                            letterSpacing: 2,
+                            color: AppColors.primary)),
+                  ),
+                  const SizedBox(width: 6),
+                  // JOIN NOW
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text('JOIN NOW',
+                        style: TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 10,
+                            color: Colors.white)),
+                  ),
+                  const SizedBox(width: 10),
+                  // X close button — white circle
+                  GestureDetector(
+                    onTap: onClose,
+                    child: Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: const [
+                          BoxShadow(color: Color(0x1A000000), blurRadius: 4)
+                        ],
+                      ),
+                      child: const Icon(Icons.close_rounded,
+                          color: Color(0xFF2D2A26), size: 20),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Menu items — natural height, no full-screen stretch ──────
+            Container(
+              color: AppColors.background,
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: links.map((e) {
+                  final isActive = activeRoute == e.route ||
+                      (e.route == '/' && activeRoute == '/home') ||
+                      (e.route == '/' && activeRoute == '/');
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: GestureDetector(
+                      onTap: () => onNavigate(e.route),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 28, vertical: 22),
+                        decoration: BoxDecoration(
+                          // Active → same color as JOIN NOW (secondary/gold)
+                          // Inactive → soft beige pill
+                          color: isActive
+                              ? AppColors.secondary
+                              : const Color(0xFFE8D9BF),
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        child: Text(
+                          e.label,
+                          style: TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 20,
+                            letterSpacing: 1.5,
+                            color: isActive
+                                ? Colors.white
+                                : AppColors.secondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            // Tap the rest of the screen to dismiss
+            Expanded(
+              child: GestureDetector(
+                onTap: onClose,
+                child: Container(color: Colors.transparent),
               ),
             ),
           ],
