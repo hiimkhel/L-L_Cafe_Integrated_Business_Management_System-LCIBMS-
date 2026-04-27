@@ -24,10 +24,12 @@ app.use('/api/customer', (req,res) => {
     // [!] Temporary: Change this to customerRoutes.js
     console.log("This are customer module routes");
 })
-app.use('/api/pos', (req,res) => {
-    // [!] Temporary: Change this to posRoutes.js
-    console.log("This are pos module routes");
-})
+app.use('/api/pos',(req,res) => {
+    // [!] Temporary: Change this to riderRoutes.js
+    console.log("This are rider's module routes");
+});
+
+app.use('/api/orders', require("./routes/orderRoutes.js"));
 app.use('/api/rider', (req,res) => {
     // [!] Temporary: Change this to riderRoutes.js
     console.log("This are rider's module routes");
