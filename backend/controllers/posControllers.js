@@ -44,4 +44,23 @@ const getOrdersByStatus = async (req, res) => {
     }
 };
 
-module.exports = {getOrdersByStatus}
+const updateOrderStatus = async (req, res) => {
+  const {id} = req.params;
+  const { status } = req.body;
+
+    try {
+      
+      // Error handling
+      if (!status){
+        req.status(400).json({message: 'Status field is missing!'});
+      }
+
+      await db.query("UPDATE orders SET status = ? WHERE id = ?", [status, id]);
+
+      res.status(200).json({ message: "Order status updated" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+}
+
+module.exports = {getOrdersByStatus, updateOrderStatus}
