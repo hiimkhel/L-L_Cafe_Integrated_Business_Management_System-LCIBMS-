@@ -26,10 +26,7 @@ app.use('/api/customer', (req,res) => {
 app.use('/api/pos', require("./routes/posRoutes.js"));
 
 app.use('/api/orders', require("./routes/orderRoutes.js"));
-app.use('/api/rider', (req,res) => {
-    // [!] Temporary: Change this to riderRoutes.js
-    console.log("This are rider's module routes");
-})
+app.use('/api/rider', require("./routes/riderRoutes.js"));
 app.use('/api/admin', require("./routes/adminRoutes.js"));
 
 app.use('/api/menu', require("./routes/menuRoutes.js"));
