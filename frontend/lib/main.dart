@@ -11,11 +11,14 @@ import 'features/home/presentation/customer/landing_screen.dart';
 import 'features/home/presentation/customer/home_screen.dart';
 import 'features/customers/presentation/admin/menu_screen.dart';
 import 'features/home/presentation/customer/contact_screen.dart';
+import 'features/home/presentation/customer/about_screen.dart';
 import 'features/home/presentation/customer/profile_screen.dart';
 import 'features/customers/presentation/admin/cart_screen.dart';
 import 'features/dashboard/presentation/admin/dashboard_screen.dart';
 import 'features/dashboard/presentation/rider/dashboard_screen.dart';
 import 'features/dashboard/presentation/pos/order_entry.dart';
+
+// Shared cart state
 import 'core/constants/cart_provider.dart';
 
 void main() async {
@@ -73,6 +76,14 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
             // /orders → placeholder for the separate Orders History screen
             case '/orders':
               return _fade(const CartScreen()); // TODO: replace with OrdersScreen()
+            case '/about':
+              return _fade(Builder(
+                builder: (ctx) => AboutScreen(
+                  onLogin: () => Navigator.pushReplacementNamed(ctx, '/'),
+                  onJoinNow: () => Navigator.pushReplacementNamed(ctx, '/'),
+                ),
+              ));
+
             case '/contact':
               return _fade(Builder(
                 builder: (ctx) => ContactScreen(
