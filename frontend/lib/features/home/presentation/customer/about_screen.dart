@@ -128,7 +128,7 @@ class _DesktopLayout extends StatelessWidget {
                         text: 'HUMBLE BEGINNINGS',
                         style: TextStyle(
                           fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                          fontSize: 28, letterSpacing: -0.5, color: _secondary,
+                          fontSize: 28, letterSpacing: -0.5, color: _primary,
                         ),
                       ),
                       TextSpan(
