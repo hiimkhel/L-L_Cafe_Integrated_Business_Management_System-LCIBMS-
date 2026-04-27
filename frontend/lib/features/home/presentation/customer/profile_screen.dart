@@ -344,8 +344,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 48),
 
-        IntrinsicHeight(
-          child: Row(
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(width: 280, child: _buildProfileCard(isMobile: false)),
@@ -370,7 +369,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-        ),
       ],
     );
   }
