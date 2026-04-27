@@ -632,14 +632,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildDeliveryAddressesDesktop() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            for (int i = 0; i < _deliveryAddresses.length; i++) ...[
-              if (i > 0) const SizedBox(width: 16),
-              Expanded(child: _buildAddressCard(_deliveryAddresses[i], index: i)),
-            ],
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final double itemWidth = (constraints.maxWidth - 16) / 2;
+
+            return Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: _deliveryAddresses.asMap().entries.map((entry) {
+                final index = entry.key;
+                final address = entry.value;
+
+                return SizedBox(
+                  width: itemWidth, // ✅ forces max 2 columns
+                  child: _buildAddressCard(address, index: index),
+                );
+              }).toList(),
+            );
+          },
         ),
         const SizedBox(height: 16),
         _buildAddNewAddressButton(),
