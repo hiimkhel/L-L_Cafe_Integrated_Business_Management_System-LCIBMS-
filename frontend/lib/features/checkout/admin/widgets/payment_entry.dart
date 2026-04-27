@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/config/theme/app_text_styles.dart';
 import 'package:frontend/core/widgets/receipt.dart';
+import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 
 class PaymentEntry extends StatefulWidget {
   final double total;
@@ -386,6 +387,15 @@ class _PaymentEntryState extends State<PaymentEntry> {
             data: data,
             onPrint: () {
               Navigator.pop(context);
+
+
+                Navigator.pushAndRemoveUntil(
+              context,
+                MaterialPageRoute(
+                  builder: (context) => OrderQueueScreen(),
+                ),
+                (route) => false, 
+              );
             },
           ),
         );
