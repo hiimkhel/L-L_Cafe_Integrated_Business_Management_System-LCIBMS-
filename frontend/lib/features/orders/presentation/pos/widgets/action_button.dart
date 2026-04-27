@@ -5,11 +5,13 @@ import 'package:frontend/config/theme/app_text_styles.dart';
 class ActionButton extends StatelessWidget {
   final String label;
   final bool isPrimary;
+  final VoidCallback onPressed;
 
   const ActionButton({
     super.key,
     required this.label,
     this.isPrimary = false,
+    required this.onPressed
   });
 
   @override
@@ -25,7 +27,7 @@ class ActionButton extends StatelessWidget {
             ? null
             : const BorderSide(color: AppColors.primary),
       ),
-      onPressed: () {},
+      onPressed: onPressed,
       child: Text(label, style: AppTextStyles.button),
     );
   }

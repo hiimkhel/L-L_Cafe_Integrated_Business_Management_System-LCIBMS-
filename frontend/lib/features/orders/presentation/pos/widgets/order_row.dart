@@ -10,6 +10,7 @@ class OrderRow extends StatelessWidget {
   final List<String> items;
   final String status;
   final String time;
+  final VoidCallback onActionPressed;
 
   const OrderRow({
     super.key,
@@ -18,6 +19,7 @@ class OrderRow extends StatelessWidget {
     required this.items,
     required this.status,
     required this.time,
+    required this.onActionPressed
   });
 
   @override
@@ -86,8 +88,12 @@ class OrderRow extends StatelessWidget {
 
   Widget _actions() {
     if (status == "ready") {
-      return const ActionButton(label: "HAND OVER", isPrimary: true);
+      return ActionButton(label: "HAND OVER", isPrimary: true, onPressed: () {
+        // You can handle "Completed" status here later
+        print("Handing over...");
+      },
+    );
     }
-    return const ActionButton(label: "MARK AS READY");
+    return ActionButton(label: "MARK AS READY", onPressed: onActionPressed,);
   }
 }

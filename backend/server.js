@@ -11,7 +11,6 @@ dotenv.config();
 
 const app = express();
 app.use(cors());
-app.use(express.json());
 
 const PORT = process.env.SERVER_PORT || 3006;
 
@@ -24,10 +23,7 @@ app.use('/api/customer', (req,res) => {
     // [!] Temporary: Change this to customerRoutes.js
     console.log("This are customer module routes");
 })
-app.use('/api/pos',(req,res) => {
-    // [!] Temporary: Change this to riderRoutes.js
-    console.log("This are rider's module routes");
-});
+app.use('/api/pos', require("./routes/posRoutes.js"));
 
 app.use('/api/orders', require("./routes/orderRoutes.js"));
 app.use('/api/rider', (req,res) => {
