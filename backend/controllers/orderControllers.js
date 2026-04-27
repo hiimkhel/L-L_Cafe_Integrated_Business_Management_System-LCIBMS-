@@ -23,13 +23,16 @@ const createOrder = async (req, res) => {
     // 1. Create order number
     const orderNumber = Date.now().toString();
 
+    // Handle status dependent on source of order (pos / online )
+    const initialStatus = source.toLowerCase() === 'pos' ? 'preparing' : 'pending';
+
     // 2. Insert order
     const [orderResult] = await conn.query(
       `INSERT INTO orders 
       (order_number, source, user_id, customer_name, customer_phone,
        order_type, status, subtotal, delivery_fee, total,
        payment_status, payment_method)
-      VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         orderNumber,
         source,
@@ -37,6 +40,7 @@ const createOrder = async (req, res) => {
         customer_name,
         customer_phone,
         order_type,
+        initialStatus,
         subtotal,
         delivery_fee,
         total,
