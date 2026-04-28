@@ -136,7 +136,7 @@ Widget _buildFilterButtons() {
     }
 
     // 2. Format the time (created_at)
-    DateTime createdAt = DateTime.parse(order["created_at"]);
+    DateTime createdAt = DateTime.tryParse(order["created_at"]?.toString() ?? "") ?? DateTime.now();
     String timeString = "${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}";
 
     return Container(
@@ -227,7 +227,7 @@ Widget _buildFilterButtons() {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => DeliveryDetailsScreen(order: order),
+                      builder: (context) => DeliveryDetailsScreen(order: order, orderId: order["id"]),
                     ),
                   );
                 },

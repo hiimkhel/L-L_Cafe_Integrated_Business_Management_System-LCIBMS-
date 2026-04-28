@@ -1,420 +1,144 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
-import 'package:frontend/features/dashboard/presentation/rider/dashboard_screen.dart';
+import 'package:frontend/core/services/rider/order_service.dart';
 
 class DeliveryDetailsScreen extends StatefulWidget {
+  final int orderId;
   final Map<String, dynamic> order;
 
-  const DeliveryDetailsScreen({super.key, required this.order});
+  const DeliveryDetailsScreen({super.key, required this.order,required this.orderId});
 
   @override
   State<DeliveryDetailsScreen> createState() => _DeliveryDetailsScreenState();
 }
 
 class _DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
-  //---------------------------------delivery status color-----------------------------------------------
-  bool isStepActive(String step) {
-    final status = widget.order["status"];
+  final OrderService _orderService = OrderService();
+  late Future<Map<String, dynamic>> _orderFuture;
 
-    const steps = ["PREPARING", "READY", "OUT FOR DELIVERY", "DELIVERED"];
-
-    final currentIndex = steps.indexOf(status);
-    final stepIndex = steps.indexOf(step);
-
-    return stepIndex <= currentIndex;
+  @override
+  void initState() {
+    super.initState();
+    _refreshData();
   }
 
-  Color getColor(String step) {
-    return isStepActive(step)
-        ? AppColors
-            .secondary // ACTIVE (green)
-        : AppColors.primary.withOpacity(0.5); // INACTIVE
+  void _refreshData() {
+    setState(() {
+      _orderFuture = _orderService.fetchOrderDetails(widget.orderId);
+    });
   }
 
-  Color getIconColor(String step) {
-    return isStepActive(step)
-        ? AppColors.white // ACTIVE (green)
-        : AppColors.primary.withOpacity(0.5); // INACTIVE
-  }
+  void _handleStatusUpdate(String currentStatus) async {
+    String nextStatus = '';
+    if (currentStatus == 'PREPARING') nextStatus = 'ready';
+    else if (currentStatus == 'READY') nextStatus = 'out_for_delivery';
+    else if (currentStatus == 'OUT_FOR_DELIVERY') nextStatus = 'delivered';
 
-  Color getBoxColor(String step) {
-    return isStepActive(step)
-        ? AppColors.secondary // ACTIVE (green)
-        : AppColors.white; // INACTIVE
-  }
+    if (nextStatus.isEmpty) return;
 
-  Icon getStatusIcon(String step) {
-    return isStepActive(step) 
-    ? Icon(Icons.check_circle_outline, color: AppColors.secondary)
-    : Icon(Icons.check_circle_outline, color: Colors.transparent);
+    bool success = await _orderService.updateOrderStatus(widget.orderId, nextStatus);
+    
+    if (success) {
+      _refreshData();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Status updated to ${nextStatus.replaceAll('_', ' ').toUpperCase()}")),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(13),
-        child: Column(
-          children: [
-            _deliveryHeader(),
-            Divider(thickness: 1, color: AppColors.primary),
-            const SizedBox(height: 10),
-            _customer(),
-            const SizedBox(height: 7),
-            _customerDetails(),
-            const SizedBox(height: 15),
-            _order(),
-            const SizedBox(height: 7),
-            _orderDetails(),
-            const SizedBox(height: 15),
-            _progress(),
-            const SizedBox(height: 7),
-            _progressDetails(),
-            const SizedBox(height: 15),
-            _markReady(),
-            const SizedBox(height: 15),
-            _contactCustomer(),
-            const SizedBox(height: 15),
-            _reportIssue(),
-          ],
-        ),
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _orderFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          } else if (!snapshot.hasData) {
+            return const Center(child: Text("No order found"));
+          }
+
+          final order = snapshot.data!;
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(13),
+            child: Column(
+              children: [
+                _deliveryHeader(order),
+                Divider(thickness: 1, color: AppColors.primary),
+                const SizedBox(height: 10),
+                _customer(),
+                const SizedBox(height: 7),
+                _customerDetails(order),
+                const SizedBox(height: 15),
+                _order(),
+                const SizedBox(height: 7),
+                _orderDetails(order),
+                const SizedBox(height: 15),
+                _progress(),
+                const SizedBox(height: 15),
+                _markReady(order['status']),
+                const SizedBox(height: 15),
+                _contactCustomer(),
+                const SizedBox(height: 15),
+                _reportIssue(),
+                const SizedBox(height: 20),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _deliveryHeader() {
+  Widget _deliveryHeader(Map<String, dynamic> order) {
     Color statusColor;
+    String status = order['status'];
 
-    switch (widget.order["status"]) {
-      case "PREPARING":
-        statusColor = AppColors.preparingColor;
-        break;
-      case "OUT FOR DELIVERY":
-        statusColor = AppColors.deliveringColor;
-        break;
-      case "DELIVERED":
-        statusColor = AppColors.deliveredColor;
-        break;
-      default:
-        statusColor = Colors.grey;
-    }
+    if (status == "PREPARING") statusColor = AppColors.preparingColor;
+    else if (status == "OUT_FOR_DELIVERY") statusColor = AppColors.deliveringColor;
+    else if (status == "READY") statusColor = Colors.green;
+    else if (status == "DELIVERED") statusColor = AppColors.deliveredColor;
+    else statusColor = Colors.grey;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(13, 20, 15, 20),
       child: Row(
         children: [
           GestureDetector(
-            onTap: () {
-              Navigator.pop(context);
-            },
+            onTap: () => Navigator.pop(context),
             child: Container(
-              padding: EdgeInsets.all(7),
+              padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
                 color: AppColors.white,
                 borderRadius: BorderRadius.circular(50),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.receiptDark.withOpacity(.5),
-                    offset: Offset(0, 4),
-                    blurRadius: 3,
-                    spreadRadius: 0,
-                  ),
-                ],
+                boxShadow: [BoxShadow(color: AppColors.receiptDark.withOpacity(.5), offset: const Offset(0, 4), blurRadius: 3)],
               ),
               child: Icon(Icons.arrow_back, color: AppColors.primary, size: 19),
             ),
           ),
           const SizedBox(width: 18),
           Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'DETAILS',
-                style: TextStyle(
-                  color: AppColors.secondary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 21,
-                ),
-              ),
-              Text(
-                'ORDER ${widget.order["id"]}',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: 1.7,
-                ),
-              ),
+              Text('DETAILS', style: TextStyle(color: AppColors.secondary, fontWeight: FontWeight.bold, fontSize: 21)),
+              Text('ORDER ${order["id"]}', style: TextStyle(color: AppColors.primary, fontSize: 10, letterSpacing: 1.7)),
             ],
           ),
           const Spacer(),
-
-          SizedBox(
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-              decoration: BoxDecoration(
-                color: statusColor,
-                borderRadius: BorderRadius.circular(11),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.receiptDark.withOpacity(.5),
-                    offset: Offset(0, 2),
-                    blurRadius: 4,
-                    spreadRadius: 0,
-                  ),
-                ],
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.circle,
-                    size: 15,
-                    color: AppColors.white.withOpacity(0.4),
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    '${widget.order["status"]}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _customer() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
-      child: Row(
-        children: [
-          SizedBox(
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.secondary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.person_2_outlined,
-                color: AppColors.secondary,
-                size: 30,
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
-
-          Text(
-            'CUSTOMER',
-            style: TextStyle(
-              fontSize: 21,
-              fontWeight: FontWeight.bold,
-              color: AppColors.receiptDark,
-              letterSpacing: 1.7,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _customerDetails() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(30, 25, 30, 25),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.receiptDark.withOpacity(.5),
-            offset: Offset(1, 2),
-            blurRadius: 4,
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.secondary.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.person_2_outlined,
-                  color: AppColors.secondary,
-                  size: 34,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'NAME',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 1),
-
-                  Text(
-                    '${widget.order['name']}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.receiptDark,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.call_outlined,
-                  color: AppColors.primary,
-                  size: 34,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'PHONE',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 1),
-
-                  Text(
-                    '+${widget.order['phone'] ?? 'N/A'}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.receiptDark,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.receiptBg.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.place_outlined,
-                  color: AppColors.primary.withOpacity(0.8),
-                  size: 34,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'ADDRESS',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 1),
-
-                  Text(
-                    '+${widget.order['address'] ?? 'N/A'}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.receiptDark,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
             decoration: BoxDecoration(
-              color: AppColors.secondary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppColors.secondary.withOpacity(0.6),
-                width: 1,
-              ),
+              color: statusColor,
+              borderRadius: BorderRadius.circular(11),
             ),
-            child: Column(
+            child: Row(
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      color: AppColors.secondary,
-                      size: 23,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'NOTES',
-                      style: TextStyle(
-                        color: AppColors.secondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 3),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Customer notes wdwud wjdhwud',
-                      style: TextStyle(
-                        color: AppColors.receiptDark,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+                Icon(Icons.circle, size: 12, color: AppColors.white.withOpacity(0.4)),
+                const SizedBox(width: 5),
+                Text(status, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
@@ -423,540 +147,150 @@ class _DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
     );
   }
 
-  Widget _order() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
-      child: Row(
+  Widget _customerDetails(Map<String, dynamic> order) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: _cardDecoration(),
+      child: Column(
         children: [
-          SizedBox(
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.inventory_2_outlined,
-                color: AppColors.primary,
-                size: 30,
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
-
-          Text(
-            'ORDER',
-            style: TextStyle(
-              fontSize: 21,
-              fontWeight: FontWeight.bold,
-              color: AppColors.receiptDark,
-              letterSpacing: 1.7,
-            ),
-          ),
+          _infoTile(Icons.person_2_outlined, 'NAME', order['name'], AppColors.secondary),
+          const SizedBox(height: 15),
+          _infoTile(Icons.call_outlined, 'PHONE', '+${order['phone'] ?? 'N/A'}', AppColors.primary),
+          const SizedBox(height: 15),
+          _infoTile(Icons.place_outlined, 'ADDRESS', order['address'] ?? 'No Address', AppColors.receiptDark),
+          const SizedBox(height: 18),
+          _notesBox(order['notes'] ?? 'No special instructions'),
         ],
       ),
     );
   }
 
-  Widget _orderDetails() {
-    final List items = widget.order['order'] ?? [];
+  Widget _orderDetails(Map<String, dynamic> order) {
+    final List items = order['order'] ?? [];
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(30, 25, 30, 25),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.receiptDark.withOpacity(.5),
-            offset: Offset(1, 2),
-            blurRadius: 4,
-            spreadRadius: 0,
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.all(20),
+      decoration: _cardDecoration(),
       child: Column(
         children: [
           Row(
             children: [
-              Icon(
-                Icons.access_time_outlined,
-                color: AppColors.secondary,
-                size: 26,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                '${widget.order['time']}',
-                style: TextStyle(
-                  color: AppColors.secondary,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.4,
-                  fontSize: 16,
-                ),
-              ),
+              Icon(Icons.access_time_outlined, color: AppColors.secondary, size: 22),
+              const SizedBox(width: 10),
+              Text(order['time'] ?? 'Just now', style: TextStyle(color: AppColors.secondary, fontWeight: FontWeight.bold)),
             ],
           ),
-          const SizedBox(height: 7),
-          Divider(thickness: 1, color: AppColors.primary.withOpacity(0.3)),
-          const SizedBox(height: 7),
+          const Divider(),
+          ...items.asMap().entries.map((entry) {
+            final item = entry.value;
 
-          ...List.generate(items.length, (index) {
-            final item = items[index] as Map<String, dynamic>;
-            return Row(
-              children: [
-                Container(
-                  margin: const EdgeInsets.fromLTRB(0, 0, 0, 8),
-                  height: 40,
-                  width: 40,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '${index + 1}',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                ),
+            double price = double.tryParse(item['price']?.toString() ?? "0") ?? 0.0;
 
-                const SizedBox(width: 14),
-
-                Text(
-                  item['name'],
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                const Spacer(),
-
-                Text(
-                  '₱${item['price'].toStringAsFixed(2)}',
-                  style: TextStyle(
-                    color: AppColors.secondary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-              ],
-            );
-          }),
-
-          const SizedBox(height: 7),
-          Divider(thickness: 1, color: AppColors.primary.withOpacity(0.3)),
-          const SizedBox(height: 7),
-
-          Builder(
-            builder: (_) {
-              final deliveryFee = 50.00;
-
-              final double subtotal = items.fold(
-                0.0,
-                (sum, item) => sum + (item as Map<String, dynamic>)['price'],
-              );
-
-              final orderTotal = subtotal + deliveryFee;
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Row(
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        'SUBTOTAL',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                      const Spacer(),
-
-                      Text(
-                        '₱${subtotal.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  Row(
-                    children: [
-                      Text(
-                        'DELIVERY FEE',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                      const Spacer(),
-
-                      Text(
-                        '₱${deliveryFee.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 7),
-                  Divider(
-                    thickness: 1,
-                    color: AppColors.primary.withOpacity(0.3),
-                  ),
-                  const SizedBox(height: 7),
-
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        'TOTAL',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
-                      ),
-                      const Spacer(),
-
-                      Text(
-                        '${orderTotal.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
-                      ),
-                    ],
-                  ),
+                  CircleAvatar(radius: 14, backgroundColor: AppColors.primary.withOpacity(0.2), child: Text("${entry.key + 1}", style: TextStyle(fontSize: 12, color: AppColors.primary))),
+                  const SizedBox(width: 12),
+                  Text(item['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const Spacer(),
+                  Text('₱${price.toStringAsFixed(2)}'),
                 ],
-              );
-            },
-          ),
+              ),
+            );
+          }).toList(),
+          const Divider(),
+          Builder(builder: (context) {
+            double total = double.tryParse(order['total']?.toString() ?? "0") ?? 0.0;
+            return _priceRow('TOTAL', '₱${total.toStringAsFixed(2)}', isBold: true);
+        }),
         ],
       ),
     );
   }
 
-  Widget _progress() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 5),
-      child: Row(
-        children: [
-          SizedBox(
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.secondary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.local_shipping_outlined,
-                color: AppColors.secondary,
-                size: 30,
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
+  Widget _markReady(String status) {
+    String buttonText = "MARK AS READY";
+    if (status == "READY") buttonText = "START DELIVERY";
+    if (status == "OUT_FOR_DELIVERY") buttonText = "COMPLETE DELIVERY";
+    if (status == "DELIVERED") return const SizedBox.shrink();
 
-          Text(
-            'PROGRESS',
-            style: TextStyle(
-              fontSize: 21,
-              fontWeight: FontWeight.bold,
-              color: AppColors.receiptDark,
-              letterSpacing: 1.7,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _progressDetails() {
-    final step1 = "PREPARING";
-    final step2 = "READY";
-    final step3 = "OUT FOR DELIVERY";
-    final step4 = "DELIVERED";
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(30, 25, 30, 25),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.receiptDark.withOpacity(.5),
-            offset: Offset(1, 2),
-            blurRadius: 4,
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                decoration: BoxDecoration(
-                  color: getBoxColor(step1),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.receiptDark.withOpacity(.5),
-                      offset: Offset(0, 4),
-                      blurRadius: 3,
-                      spreadRadius: 0,
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.inventory_2_outlined,
-                  color: getIconColor(step1),
-                  size: 25,
-                ),
-              ),
-              const SizedBox(width: 10),
-
-              Text(
-                step1,
-                style: TextStyle(
-                  color: getColor(step1),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-
-              const Spacer(),
-
-              getStatusIcon(step1),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                decoration: BoxDecoration(
-                  color: getBoxColor(step2),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.receiptDark.withOpacity(.5),
-                      offset: Offset(0, 4),
-                      blurRadius: 3,
-                      spreadRadius: 0,
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.check_circle_outline,
-                  color: getIconColor(step2),
-                  size: 25,
-                ),
-              ),
-              const SizedBox(width: 10),
-
-              Text(
-                step2,
-                style: TextStyle(
-                  color: getColor(step2),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-
-              const Spacer(),
-
-              getStatusIcon(step2),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                decoration: BoxDecoration(
-                  color: getBoxColor(step3),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.receiptDark.withOpacity(.5),
-                      offset: Offset(0, 4),
-                      blurRadius: 3,
-                      spreadRadius: 0,
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.local_shipping_outlined,
-                  color: getIconColor(step3),
-                  size: 25,
-                ),
-              ),
-              const SizedBox(width: 10),
-
-              Text(
-                step3,
-                style: TextStyle(
-                  color: getColor(step3),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-
-              const Spacer(),
-
-              getStatusIcon(step3),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                decoration: BoxDecoration(
-                  color: getBoxColor(step4),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.receiptDark.withOpacity(.5),
-                      offset: Offset(0, 4),
-                      blurRadius: 3,
-                      spreadRadius: 0,
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.check_circle_outline,
-                  color: getIconColor(step4),
-                  size: 25,
-                ),
-              ),
-              const SizedBox(width: 10),
-
-              Text(
-                step4,
-                style: TextStyle(
-                  color: getColor(step4),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-
-              const Spacer(),
-
-              getStatusIcon(step4),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _markReady() {
     return GestureDetector(
+      onTap: () => _handleStatusUpdate(status),
       child: Container(
         alignment: Alignment.center,
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 15),
         decoration: BoxDecoration(
           color: AppColors.secondary,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.receiptDark,
-              offset: Offset(4, 4),
-              blurRadius: 0,
-              spreadRadius: 0,
-            ),
-          ],
           borderRadius: BorderRadius.circular(15),
+          boxShadow: [BoxShadow(color: AppColors.receiptDark, offset: const Offset(4, 4))],
         ),
-        child: Text(
-          'MARK AS READY',
-          style: TextStyle(
-            color: AppColors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 17,
-          ),
-        ),
+        child: Text(buttonText, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17)),
       ),
     );
   }
 
-  Widget _contactCustomer() {
-    return GestureDetector(
-      child: Container(
-        alignment: Alignment.center,
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.receiptDark,
-              offset: Offset(4, 4),
-              blurRadius: 0,
-              spreadRadius: 0,
-            ),
-          ],
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Text(
-          'CONTACT CUSTOMER',
-          style: TextStyle(
-            color: AppColors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 17,
-          ),
-        ),
-      ),
-    );
-  }
+  // --- Reusable UI Helpers to keep it clean ---
+  
+  BoxDecoration _cardDecoration() => BoxDecoration(
+    color: AppColors.white,
+    borderRadius: BorderRadius.circular(16),
+    boxShadow: [BoxShadow(color: AppColors.receiptDark.withOpacity(.2), offset: const Offset(0, 2), blurRadius: 4)],
+  );
 
-  Widget _reportIssue() {
-    return GestureDetector(
-      child: Container(
-        alignment: Alignment.center,
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.receiptDark,
-              offset: Offset(4, 4),
-              blurRadius: 0,
-              spreadRadius: 0,
-            ),
-          ],
-          borderRadius: BorderRadius.circular(15),
-        ),
-        child: Text(
-          'REPORT ISSUE',
-          style: TextStyle(
-            color: AppColors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 17,
-          ),
-        ),
-      ),
-    );
-  }
+  Widget _infoTile(IconData icon, String label, String value, Color color) => Row(
+    children: [
+      Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: color, size: 24)),
+      const SizedBox(width: 14),
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary, fontSize: 12)),
+        Text(value, style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.receiptDark, fontSize: 15)),
+      ]),
+    ],
+  );
+
+  Widget _notesBox(String note) => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(color: AppColors.secondary.withOpacity(0.05), borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.secondary.withOpacity(0.2))),
+    child: Column(children: [
+      Row(children: [Icon(Icons.info_outline, color: AppColors.secondary, size: 18), const SizedBox(width: 8), const Text('NOTES', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold))]),
+      const SizedBox(height: 4),
+      Text(note, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+    ]),
+  );
+
+  Widget _priceRow(String label, String value, {bool isBold = false}) => Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(label, style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal, fontSize: isBold ? 18 : 14)),
+      Text(value, style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal, fontSize: isBold ? 18 : 14)),
+    ],
+  );
+
+  // Remaining Static Widgets (The ones that don't need data)
+  Widget _customer() => _sectionHeader(Icons.person_2_outlined, 'CUSTOMER', AppColors.secondary);
+  Widget _order() => _sectionHeader(Icons.inventory_2_outlined, 'ORDER', AppColors.primary);
+  Widget _progress() => _sectionHeader(Icons.local_shipping_outlined, 'PROGRESS', AppColors.secondary);
+  
+  Widget _sectionHeader(IconData icon, String title, Color color) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+    child: Row(children: [
+      Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: color, size: 24)),
+      const SizedBox(width: 14),
+      Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+    ]),
+  );
+
+  Widget _contactCustomer() => _actionButton('CONTACT CUSTOMER', AppColors.primary);
+  Widget _reportIssue() => _actionButton('REPORT ISSUE', AppColors.primary);
+
+  Widget _actionButton(String text, Color color) => Container(
+    alignment: Alignment.center,
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(vertical: 12),
+    decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(15), boxShadow: [BoxShadow(color: AppColors.receiptDark, offset: const Offset(4, 4))]),
+    child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+  );
 }
