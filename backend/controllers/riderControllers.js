@@ -104,4 +104,36 @@ const getDeliveryOrderDetails= async (req, res) => {
     }
 }
 
-module.exports = { getRiderOrders, getDeliveryOrderDetails };
+const updateDeliveryStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { newStatus } = req.body;
+
+        // ENUM values
+        const validStatuses = ['preparing', 'ready', 'out_for_delivery', 'completed'];
+
+        // Check if newStatus is valid
+        if (!validStatuses.includes(newStatus)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: `Invalid status. Must be one of: ${validStatuses.join(', ')}` 
+            });
+        }
+
+        const sql = "UPDATE orders SET status = ? WHERE id = ?";
+        const [result] = await db.query(sql, [newStatus, id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Order not found" 
+            });
+        }
+
+        res.status(200).json({ success: true, message: `Status updated to ${newStatus}` });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+}
+
+module.exports = { getRiderOrders, getDeliveryOrderDetails, updateDeliveryStatus };
