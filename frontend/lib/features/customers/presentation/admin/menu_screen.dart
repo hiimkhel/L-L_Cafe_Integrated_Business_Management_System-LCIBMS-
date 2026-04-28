@@ -1,8 +1,11 @@
 import 'dart:math' as math;
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
 import 'package:frontend/core/constants/cart_provider.dart';
+import 'package:frontend/core/services/customer/menu_service.dart';
+import 'package:frontend/core/models/menu_item.dart';
 
 const double _kMobile = 900;
 const double _kDesktopMaxWidth = 1400;
@@ -16,161 +19,84 @@ const Color _secondary = Color(0xFFA98258);
 // ─────────────────────────────────────────────────────────────────────────────
 
 enum StockStatus { inStock, outOfStock, limitedStock }
-
-class MenuItem {
-  final String id;
-  final String name;
-  final String description;
-  final double price;
-  final String imageUrl;
-  final List<String> categories;
-  final StockStatus stockStatus;
-
-  const MenuItem({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.price,
-    required this.imageUrl,
-    required this.categories,
-    this.stockStatus = StockStatus.inStock,
-  });
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // MOCK DATA  (swap _kMenuItems with an API/Firestore fetch)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const List<String> _kCategories = [
-  'ALL', 'BEST SELLERS', 'FOODS', 'PARTY TRAY',
-  'WAFFLES', 'COFFEE', 'NON-COFFEE DRINKS', 'FRAPPES',
+const List<Map<String, String>> _kCategories = [
+  {'label': 'ALL', 'value': ''},
+  {'label': 'FOODS', 'value': 'foods'},
+  {'label': 'PARTY TRAY', 'value': 'party_tray'},
+  {'label': 'WAFFLES', 'value': 'waffles'},
+  {'label': 'COFFEE', 'value': 'coffee'},
+  {'label': 'NON-COFFEE DRINKS', 'value': 'non_coffee'},
+  {'label': 'FRAPPES', 'value': 'frappes'},
 ];
 
-final List<MenuItem> _kMenuItems = [
-  MenuItem(
-    id: 'm001', name: 'KITKAT OVERLOAD',
-    description: 'Crispy bubble waffle loaded with KitKat and chocolate drizzle.',
-    price: 130,
-    imageUrl: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400&q=80',
-    categories: ['WAFFLES', 'BEST SELLERS'],
-  ),
-  MenuItem(
-    id: 'm002', name: 'KITKAT OREO',
-    description: 'Crispy bubble waffle topped with KitKat, Oreo, and chocolate drizzle.',
-    price: 110,
-    imageUrl: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&q=80',
-    categories: ['WAFFLES'],
-  ),
-  MenuItem(
-    id: 'm003', name: 'CARAMEL BISCOFF',
-    description: 'Crispy bubble waffle topped with caramel sauce and Biscoff crumbs.',
-    price: 120,
-    imageUrl: 'https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=400&q=80',
-    categories: ['WAFFLES', 'BEST SELLERS'],
-  ),
-  MenuItem(
-    id: 'm004', name: 'PEPERO',
-    description: 'Crispy bubble waffle loaded with crunchy Pepero sticks and chocolate drizzle.',
-    price: 100,
-    imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&q=80',
-    categories: ['WAFFLES'],
-  ),
-  MenuItem(
-    id: 'm005', name: 'DOUBLE PATTY BURGER',
-    description: 'Juicy double beef patties with fresh lettuce, tomato, and signature sauce in a soft bun.',
-    price: 200,
-    imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=80',
-    categories: ['FOODS', 'BEST SELLERS'],
-  ),
-  MenuItem(
-    id: 'm006', name: 'CHICKEN SANDWICH',
-    description: 'Crispy chicken fillet with fresh lettuce, tomato, and creamy sauce in a soft bun.',
-    price: 95,
-    imageUrl: 'https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=400&q=80',
-    categories: ['FOODS'],
-  ),
-  MenuItem(
-    id: 'm007', name: 'HOT HONEY SANDWICH',
-    description: 'Crispy chicken with sweet-spicy honey drizzle, served with fresh veggies in a soft bun.',
-    price: 115,
-    imageUrl: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&q=80',
-    categories: ['FOODS', 'BEST SELLERS'],
-  ),
-  MenuItem(
-    id: 'm008', name: 'HONEY BBQ SANDWICH',
-    description: 'Crispy chicken with smoky honey BBQ powder, fresh lettuce, and tomato in a soft bun.',
-    price: 120,
-    imageUrl: 'https://images.unsplash.com/photo-1553909489-cd47e0907980?w=400&q=80',
-    categories: ['FOODS'],
-  ),
-  MenuItem(
-    id: 'm009', name: 'ICED AMERICANO',
-    description: 'Bold espresso poured over ice for a clean, refreshing coffee kick.',
-    price: 85,
-    imageUrl: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&q=80',
-    categories: ['COFFEE'],
-  ),
-  MenuItem(
-    id: 'm010', name: 'CARAMEL LATTE',
-    description: 'Smooth espresso blended with steamed milk and a drizzle of sweet caramel.',
-    price: 100,
-    imageUrl: 'https://images.unsplash.com/photo-1572286258217-215cf8e2320e?w=400&q=80',
-    categories: ['COFFEE', 'BEST SELLERS'],
-  ),
-  MenuItem(
-    id: 'm011', name: 'MATCHA FRAPPE',
-    description: 'Premium matcha blended with milk and ice, topped with whipped cream.',
-    price: 130,
-    imageUrl: 'https://images.unsplash.com/photo-1594631661960-34506e595b65?w=400&q=80',
-    categories: ['FRAPPES'],
-  ),
-  MenuItem(
-    id: 'm012', name: 'STRAWBERRY FIZZ',
-    description: 'Fresh strawberry syrup mixed with sparkling water and a squeeze of lemon.',
-    price: 75,
-    imageUrl: 'https://images.unsplash.com/photo-1497534446932-c925b458314e?w=400&q=80',
-    categories: ['NON-COFFEE DRINKS'],
-  ),
-  MenuItem(
-    id: 'm013', name: 'BIRTHDAY CAKE TRAY',
-    description: 'Full party tray of assorted bite-sized cakes, perfect for celebrations.',
-    price: 850,
-    imageUrl: 'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=400&q=80',
-    categories: ['PARTY TRAY'],
-  ),
-  MenuItem(
-    id: 'm014', name: 'WAFFLE PARTY TRAY',
-    description: 'A platter of assorted mini bubble waffles with dipping sauces.',
-    price: 650,
-    imageUrl: 'https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=400&q=80',
-    categories: ['PARTY TRAY', 'WAFFLES'],
-    stockStatus: StockStatus.limitedStock,
-  ),
-];
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MENU SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
 
 class MenuScreen extends StatefulWidget {
+  
   const MenuScreen({super.key});
   @override
   State<MenuScreen> createState() => _MenuScreenState();
 }
 
 class _MenuScreenState extends State<MenuScreen> {
-  String _selectedCategory = 'ALL';
+  String _selectedLabel = 'ALL'; 
+  String _activeCategoryValue = '';
+  List<MenuItem> _allRemoteItems = [];
+  Timer? _debounce;
+  bool _isLoading = true;
+
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
 
-  List<MenuItem> get _filteredItems => _kMenuItems.where((item) {
-        final matchCat = _selectedCategory == 'ALL' ||
-            item.categories.contains(_selectedCategory);
-        final matchSearch = _searchQuery.isEmpty ||
-            item.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            item.description.toLowerCase().contains(_searchQuery.toLowerCase());
-        return matchCat && matchSearch;
-      }).toList();
+  @override
+  void initState() {
+    super.initState();
+    _loadMenu();
+  }
+
+  Future<void> _loadMenu() async {
+    if (!mounted) return;
+      setState(() => _isLoading = true);
+
+      try {
+        // Pass the active value (slug) instead of the UI Label
+        final items = await MenuService.fetchMenu(
+          category: _activeCategoryValue, 
+          search: _searchQuery,
+        );
+
+        setState(() {
+          _allRemoteItems = items;
+          _isLoading = false;
+        });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("COULD NOT REFRESH MENU")),
+      );
+    }
+  }
+
+  List<MenuItem> get _filteredItems {
+      return _allRemoteItems.where((item) {
+      // We removed the matchCat logic because the API already filtered by category.
+      // We only keep the search filter here for a "live" feel while typing,
+      // though the API handles this too on reload.
+      final matchSearch = _searchQuery.isEmpty ||
+          item.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          item.description.toLowerCase().contains(_searchQuery.toLowerCase());
+
+      return matchSearch;
+    }).toList();
+  }
 
   @override
   void dispose() {
@@ -178,13 +104,20 @@ class _MenuScreenState extends State<MenuScreen> {
     super.dispose();
   }
 
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      _loadMenu();
+    });
+  }
+
   // ── Add to cart ──────────────────────────────────────────────────────────
 
   void _addToCart(MenuItem menuItem) {
     CartProvider.of(context).add(CartItem(
-      id: menuItem.id,
+      id: menuItem.id.toString(),
       name: menuItem.name,
-      category: menuItem.categories.first,
+      category: "Menu Item",
       price: menuItem.price,
       originalPrice: menuItem.price,
       imageUrl: menuItem.imageUrl,
@@ -297,7 +230,17 @@ class _MenuScreenState extends State<MenuScreen> {
         const SizedBox(height: 36),
         _buildCategoryFilter(scrollable: false),
         const SizedBox(height: 36),
-        if (items.isEmpty) _buildEmptyState() else _buildGrid(items, crossAxisCount: 4),
+        if (_isLoading)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 100),
+              child: CircularProgressIndicator(color: _primary),
+            ),
+          )
+        else if (items.isEmpty)
+          _buildEmptyState()
+        else
+          _buildGrid(items, crossAxisCount: 4),
       ],
     );
   }
@@ -323,7 +266,17 @@ class _MenuScreenState extends State<MenuScreen> {
         const SizedBox(height: 20),
         _buildCategoryFilter(scrollable: true),
         const SizedBox(height: 20),
-        if (items.isEmpty) _buildEmptyState() else _buildGrid(items, crossAxisCount: 2),
+        if (_isLoading)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 100),
+              child: CircularProgressIndicator(color: _primary),
+            ),
+          )
+        else if (items.isEmpty)
+          _buildEmptyState()
+        else
+          _buildGrid(items, crossAxisCount: 2),
       ],
     );
   }
@@ -368,6 +321,10 @@ class _MenuScreenState extends State<MenuScreen> {
       child: TextField(
         controller: _searchController,
         onChanged: (val) => setState(() => _searchQuery = val),
+        onSubmitted: (val) {
+          setState(() => _searchQuery = val);
+          _loadMenu(); 
+        },
         style: const TextStyle(
           fontFamily: 'Urbanist', fontWeight: FontWeight.w700,
           fontSize: 14, color: _bgDark,
@@ -387,6 +344,7 @@ class _MenuScreenState extends State<MenuScreen> {
                   onPressed: () {
                     _searchController.clear();
                     setState(() => _searchQuery = '');
+                    _loadMenu();
                   },
                 )
               : null,
@@ -398,24 +356,38 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
-  Widget _buildCategoryFilter({required bool scrollable}) {
-    final chips = _kCategories
-        .map((cat) => Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: _CategoryChip(
-                label: cat,
-                selected: _selectedCategory == cat,
-                onTap: () => setState(() => _selectedCategory = cat),
-              ),
-            ))
-        .toList();
+    Widget _buildCategoryFilter({required bool scrollable}) {
+      final chips = _kCategories.map((cat) {
+        final label = cat['label']!;
+        final value = cat['value']!;
 
-    if (scrollable) {
-      return SingleChildScrollView(
-          scrollDirection: Axis.horizontal, child: Row(children: chips));
+        return Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: _CategoryChip(
+            label: label,
+            selected: _selectedLabel == label,
+            onTap: () {
+              if (_selectedLabel == label) return;
+
+              setState(() {
+                _selectedLabel = label;
+                _activeCategoryValue = value;
+              });
+
+              _loadMenu(); // Fetch new data from server
+            },
+          ),
+        );
+      }).toList();
+
+      if (scrollable) {
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal, 
+          child: Row(children: chips),
+        );
+      }
+      return Wrap(spacing: 10, runSpacing: 10, children: chips);
     }
-    return Wrap(spacing: 10, runSpacing: 10, children: chips);
-  }
 
   Widget _buildGrid(List<MenuItem> items, {required int crossAxisCount}) {
     return GridView.builder(
@@ -559,24 +531,17 @@ class _MenuCardState extends State<_MenuCard>
   }
 
   Color get _stockColor {
-    switch (widget.item.stockStatus) {
-      case StockStatus.inStock:      return _primary;
-      case StockStatus.limitedStock: return _secondary;
-      case StockStatus.outOfStock:   return Colors.redAccent;
-    }
+    // Uses the boolean from your MenuItem model
+    return widget.item.isAvailable ? _primary : Colors.redAccent;
   }
 
   String get _stockLabel {
-    switch (widget.item.stockStatus) {
-      case StockStatus.inStock:      return 'IN STOCK';
-      case StockStatus.limitedStock: return 'LIMITED';
-      case StockStatus.outOfStock:   return 'OUT OF STOCK';
-    }
+    return widget.item.isAvailable ? 'IN STOCK' : 'OUT OF STOCK';
   }
 
   @override
   Widget build(BuildContext context) {
-    final isOut = widget.item.stockStatus == StockStatus.outOfStock;
+    final isOut = widget.item.isAvailable == StockStatus.outOfStock;
 
     return Container(
       decoration: BoxDecoration(
