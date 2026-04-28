@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/core/widgets/admin_sidebar.dart';
-//import 'package:frontend/core/constants/menu_item.dart';
-import 'package:frontend/core/constants/menu_data.dart';
 //import 'package:frontend/core/constants/menu_controller.dart';
+import 'package:frontend/core/services/admin/menu_service.dart';
 
 class MenuManagementScreen extends StatefulWidget {
   final int activeIndex;
@@ -18,14 +17,21 @@ class MenuManagementScreen extends StatefulWidget {
 
 class _MenuManagementScreenState extends State<MenuManagementScreen> {
   //--------------------------------------------------State---------------------------------------------------------------------
-
   String selectedCategory = 'Foods';
   String? selectedItemName = 'Chicken Burger';
-  bool isAvailable = true;
 
-  final List<String> categories = MenuData.categories;
-  final Map<String, List<Map<String, String>>> itemsByCategory =
-      MenuData.itemsByCategory;
+  // State for UI loading
+  bool isAvailable = true;
+  bool isLoadingItem = false;
+
+  // Handle current item selected on the right panel
+  dynamic selectedItem;
+
+  // Handle the incoming data from the API
+  List<dynamic> categories = [];
+  List<dynamic> items = [];
+  int? selectedCategoryId;
+
 
   late TextEditingController _nameCtrl;
   late TextEditingController _priceCtrl;
@@ -34,10 +40,12 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   @override
   void initState() {
     super.initState();
-    final item = _selectedItemData;
-    _nameCtrl = TextEditingController(text: item?['name'] ?? '');
-    _priceCtrl = TextEditingController(text: item?['price'] ?? '');
-    _descCtrl = TextEditingController(text: item?['desc'] ?? '');
+
+    _nameCtrl = TextEditingController();
+    _priceCtrl = TextEditingController();
+    _descCtrl = TextEditingController();
+
+    _loadCategories();
   }
 
   @override
@@ -48,37 +56,81 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     super.dispose();
   }
 
-  List<Map<String, String>> get _currentItems =>
-      itemsByCategory[selectedCategory] ?? [];
 
-  Map<String, String>? get _selectedItemData {
-    if (selectedItemName == null) return null;
-    try {
-      return _currentItems.firstWhere((i) => i['name'] == selectedItemName);
-    } catch (_) {
-      return null;
+
+  void _onSelectItem(dynamic item) async {
+    setState(() => isLoadingItem = true);
+    try{
+      final freshItem = await MenuService.fetchMenuItemById(item['id']);
+    
+      setState(() {
+        selectedItem = freshItem;
+        selectedItemName = freshItem['name'];
+
+        _nameCtrl.text = freshItem['name'] ?? '';
+        _priceCtrl.text = freshItem['price'].toString();
+        _descCtrl.text = freshItem['description'] ?? '';
+        isAvailable = freshItem['is_available'] == 1;
+      });
+    }catch(err){
+      print("Failed to fetch item: $err");
+    }finally{
+      setState(() => isLoadingItem = false);
     }
+    
   }
 
-  void _onSelectItem(Map<String, String> item) {
+  void _onSelectCategory(dynamic category) {
     setState(() {
-      selectedItemName = item['name'];
-      _nameCtrl.text = item['name'] ?? '';
-      _priceCtrl.text = item['price'] ?? '';
-      _descCtrl.text = item['desc'] ?? '';
-    });
-  }
-
-  void _onSelectCategory(String cat) {
-    setState(() {
-      selectedCategory = cat;
+      selectedCategoryId = category['id'];
+      selectedItem = null; // 
       selectedItemName = null;
-      _nameCtrl.clear();
-      _priceCtrl.clear();
-      _descCtrl.clear();
+      
+    });
+
+    _loadItems(category['id']); // FETCH ITEMS BY CATEGORY
+  }
+
+  Future<void> _loadCategories() async {
+    final data = await MenuService.fetchCategories();
+
+    setState(() {
+      categories = data;
+
+      if (categories.isNotEmpty) {
+        selectedCategoryId = categories[0]['id'];
+      }
+    });
+
+    _loadItems(selectedCategoryId!);
+  }
+
+  Future<void> _loadItems(int categoryId) async {
+    final data = await MenuService.fetchMenuItems(categoryId);
+
+    setState(() {
+      items = data;
     });
   }
 
+  Future<void> _deleteItem(int id) async {
+  try {
+    
+    await MenuService.deleteMenuItem(id);
+
+    setState(() {
+      items.removeWhere((item) => item['id'] == id);
+
+      if (selectedItemName != null &&
+          items.any((i) => i['id'] == id)) {
+        selectedItemName = null;
+      }
+    });
+
+  } catch (e) {
+    print("Delete error: $e");
+  }
+}
   //-----------------------------------------------------------Build--------------------------------------------------------------------
 
   @override
@@ -277,21 +329,24 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
           child: SizedBox(
             height: 32,
             width: 165,
-            child: _greenBtn('+ Add Category', () {}),
+            child: _greenBtn('+ Add Category', (){
+              _showAddDialog(type: "category");
+            }),
           ),
         ),
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-            children: categories.map(_buildCategoryTitle).toList(),
+            children: categories.map((cat) => _buildCategoryTitle(cat)).toList(),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildCategoryTitle(String cat) {
-    final selected = selectedCategory == cat;
+  Widget _buildCategoryTitle(dynamic cat) {
+    final selected = selectedCategoryId == cat['id'];
+
     return GestureDetector(
       onTap: () => _onSelectCategory(cat),
       child: Container(
@@ -300,19 +355,11 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
         decoration: BoxDecoration(
           color: selected ? AppColors.background : Colors.white,
           borderRadius: BorderRadius.circular(9),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.4),
-              offset: Offset(0, 4),
-              blurRadius: 4,
-            ),
-          ],
         ),
         child: Text(
-          cat,
+          (cat?['name'] ?? 'Unknown'),
           style: TextStyle(
             color: AppColors.primary,
-            fontWeight: FontWeight.normal,
             fontSize: 13,
           ),
         ),
@@ -362,70 +409,43 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
           padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
           child: Align(
             alignment: Alignment.centerRight,
-            child: _greenBtn('+  Add Item', () {}),
+            child: _greenBtn('+  Add Item', () {
+              _showAddDialog(type: "item");
+            }),
           ),
         ),
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-            children: _currentItems.map(_buildItemTile).toList(),
+            children: items.map((item) => _buildItemTile(item)).toList()
           ),
         ),
       ],
     );
   }
 
-  Widget _buildItemTile(Map<String, String> item) {
+  Widget _buildItemTile(dynamic item) {
     final selected = selectedItemName == item['name'];
+
     return GestureDetector(
       onTap: () => _onSelectItem(item),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: selected ? AppColors.background : Colors.white,
           borderRadius: BorderRadius.circular(9),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.4),
-              offset: Offset(0, 4),
-              blurRadius: 4,
-            ),
-          ],
         ),
         child: Row(
           children: [
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item['name'] ?? '',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    item['desc'] ?? '',
-                    style: TextStyle(color: AppColors.tertiary, fontSize: 10),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+              child: Text(
+                item['name'],
+                style: TextStyle(color: AppColors.primary),
               ),
             ),
-            const SizedBox(width: 8),
-            Text(
-              item['price'] ?? '',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
+            Text("₱${item['price']}",
+            style: TextStyle(color: AppColors.tertiary)),
           ],
         ),
       ),
@@ -433,7 +453,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   }
 
   Widget _buildDetailsPanel() {
-    if (selectedItemName == null || _selectedItemData == null) {
+    if (selectedItemName == null) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -509,7 +529,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                             'Available',
                             style: TextStyle(
                               fontSize: 14,
-                              color: AppColors.secondary,
+                              color: AppColors.primary,
                               fontWeight: FontWeight.normal,
                             ),
                           ),
@@ -619,7 +639,31 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                 Row(
                   children: [
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () async {
+                        if (selectedItem == null) return;
+
+                        try {
+                          await MenuService.updateMenuItem(
+                            selectedItem['id'],
+                            {
+                              "name": _nameCtrl.text,
+                              "price": double.parse(_priceCtrl.text),
+                              "description": _descCtrl.text,
+                              "is_available": isAvailable ? 1 : 0,
+                            },
+                          );
+
+                          // Refresh list
+                          _loadItems(selectedCategoryId!);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Item updated successfully")),
+                          );
+
+                        } catch (e) {
+                          print("Update error: $e");
+                        }
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
@@ -642,7 +686,11 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                         if (selectedItem == null) return;
+
+                        _confirmDeleteItem(selectedItem);
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red.withOpacity(0.2),
                         foregroundColor: Colors.red,
@@ -732,6 +780,163 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  // Dynamic Add dialog for adding category/item
+  void _showAddDialog({required String type}) {
+    final TextEditingController nameCtrl = TextEditingController();
+    final TextEditingController priceCtrl = TextEditingController();
+    final TextEditingController descCtrl = TextEditingController();
+
+    final isItem = type == "item";
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Container(
+            width: 380,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isItem ? "Add Item" : "Add Category",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 15),
+
+                // NAME
+                TextField(
+                  controller: nameCtrl,
+                  decoration: InputDecoration(
+                    hintText: isItem ? "Item name" : "Category name",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+
+                if (isItem) ...[
+                  const SizedBox(height: 12),
+
+                  // PRICE
+                  TextField(
+                    controller: priceCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: "Price",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // DESCRIPTION
+                  TextField(
+                    controller: descCtrl,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      hintText: "Description",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 20),
+
+                // BUTTONS
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("Cancel"),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: () async {
+                        final name = nameCtrl.text.trim();
+
+                        if (name.isEmpty) return;
+
+                        try {
+                          if (isItem) {
+                            await MenuService.addItem({
+                              "name": name,
+                              "price": double.parse(priceCtrl.text),
+                              "description": descCtrl.text,
+                              "category_id": selectedCategoryId,
+                            });
+
+                            _loadItems(selectedCategoryId!);
+                          } else {
+                            await MenuService.addCategory(name);
+                            _loadCategories();
+                          }
+
+                          Navigator.pop(context);
+                        } catch (e) {
+                          print(e);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                      ),
+                      child: const Text("Save"),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _confirmDeleteItem(dynamic item) {
+    // Error handling
+    if (item == null) return;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Delete Item"),
+          content: Text("Are you sure you want to delete ${item['name']}?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () async {
+                Navigator.pop(context);
+                await _deleteItem(item['id']);
+              },
+              child: const Text("Delete Permanently"),
+            ),
+          ],
+        );
+      },
     );
   }
 }

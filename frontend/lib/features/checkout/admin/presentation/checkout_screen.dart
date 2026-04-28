@@ -2,11 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import '../widgets/order_summary.dart';
 import '../widgets/payment_entry.dart';
+import 'package:frontend/core/widgets/receipt.dart';
 import 'package:frontend/config/theme/app_text_styles.dart';
+import 'package:frontend/core/services/pos/order_service.dart';
+import 'package:frontend/core/models/order_request.dart';
+import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 
 class CheckoutConfirmationScreen extends StatefulWidget {
-  const CheckoutConfirmationScreen({super.key});
+  const CheckoutConfirmationScreen({super.key, required this.orderType, required this.orderItems});
 
+  // Expected data from order_entry.dart screen
+  final List<Map<String, dynamic>> orderItems;
+  final String orderType;
 
   @override
   State<CheckoutConfirmationScreen> createState() => _CheckoutConfirmationScreenState();
@@ -14,58 +21,103 @@ class CheckoutConfirmationScreen extends StatefulWidget {
 }
   class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>{
 
-    // TEMPORARY VALUES
-    final List<Map<String, dynamic>> orderItems = [
-      {"name": "Chicken Burger", "qty": 1, "price": 180.00},
-      {"name": "S'more", "qty": 1, "price": 165.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-      {"name": "Nutella Frappe", "qty": 1, "price": 140.00},
-    ];
-
+  
     double cashGiven = 0;
 
-    double get subtotal =>
-        orderItems.fold(0, (sum, item) => sum + item["price"]);
+    double get subtotal => widget.orderItems.fold(
+      0,
+      (sum, item) => sum + (item["price"] * item["qty"]),
+    );
 
-    double get tax => subtotal * 0.12;
+    double get tax => 20.0;
 
     double get total => subtotal + tax;
 
     double get change => cashGiven - total;
-     @override
+
+    bool get isPaymentValid => cashGiven >= total;
+
+
+    @override
     Widget build(BuildContext context) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        body: Column(children: [
-            _buildHeader(),
-            Expanded(child: Row(children: [
-              Expanded(flex: 4, child: OrderSummary(
-                orderItems: orderItems,
-                subtotal: subtotal,
-                tax: tax,
-                total: total
-              )),
-              Expanded(flex: 6, child: PaymentEntry(
-                total: total,
-                change: change,
-                onCashChanged: (value) => setState(() => cashGiven = value),
-                orderItems: orderItems
-              )),
-            ],),)
-        ],)
+          body: Column(children: [
+              _buildHeader(),
+              Expanded(child: Row(children: [
+                Expanded(flex: 4, child: OrderSummary(
+                  orderItems: widget.orderItems,
+                  subtotal: subtotal,
+                  tax: tax,
+                  total: total,
+                  orderType: widget.orderType
+                )),
+                Expanded(flex: 6, child: PaymentEntry(
+                  total: total,
+                  change: change,
+                  onCashChanged: (value) => setState(() => cashGiven = value),
+                  orderItems: widget.orderItems,
+
+                  onSubmit: () async {
+
+                    final databaseItems = widget.orderItems.map((item) {
+                      return {
+                        "menu_item_id": item["id"],
+                        "name": item["name"],
+                        "qty": item["qty"],
+                        "price": item["price"],
+                      };
+                    }).toList();
+                    // 1. Prepare the OrderRequest for the Database/API
+                    final orderRequest = OrderRequest(
+                      source: "POS",
+                      orderType: widget.orderType,
+                      subtotal: subtotal,
+                      deliveryFee: 0.0,
+                      total: total,
+                      paymentMethod: "CASH", 
+                      paymentStatus: "PAID",
+                      customerName: "WALK-IN CUSTOMER",
+                      items: databaseItems,
+                    );
+
+                    // 2. Call the API
+                    bool success = await OrderService().createOrder(orderRequest);
+
+                    if (success) {
+                      // 3. Prepare data for the Visual Receipt
+                      final receiptData = ReceiptData(
+                        orderNumber: DateTime.now().millisecondsSinceEpoch.toString(),
+                        clientName: "WALK-IN CUSTOMER",
+                        dateTime: DateTime.now(),
+                        orderType: OrderType.walkIn,
+                        paymentMethod: PaymentMethod.cash,
+                        items: widget.orderItems.map((item) {
+                          return OrderItem(
+                            name: item["name"],
+                            quantity: item["qty"],
+                            unitPrice: item["price"],
+                          );
+                        }).toList(),
+                      );
+
+                      // 4. Show the receipt only after successful DB entry
+                      _showReceipt(context, receiptData);
+                    } else {
+                      // Handle error (show a SnackBar)
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Failed to save order to database")),
+                      );
+                    }
+                  },
+                )
+              ),
+              ],),)
+          ],
+        )
       );
     }
-
+  
     Widget _buildHeader(){
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -126,3 +178,30 @@ class CheckoutConfirmationScreen extends StatefulWidget {
   }
 
  
+
+ void _showReceipt(BuildContext context, ReceiptData data) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: LLCafeReceipt(
+            data: data,
+            onPrint: () {
+              Navigator.pop(context);
+
+
+                Navigator.pushAndRemoveUntil(
+              context,
+                MaterialPageRoute(
+                  builder: (context) => OrderQueueScreen(),
+                ),
+                (route) => false, 
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
