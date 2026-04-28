@@ -39,4 +39,30 @@ class OrderService{
       throw Exception('Error: $e');
     }
   }
+
+  Future<bool> updateOrderStatus(int orderId, String newStatus) async {
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/rider/orders/$orderId/status'),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: json.encode({
+          "newStatus": newStatus, // e.g., 'out_for_delivery'
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        final errorBody = json.decode(response.body);
+        print("Update Failed: ${errorBody['message']}");
+        return false;
+      }
+    } catch (e) {
+      print("Network Error: $e");
+      return false;
+    }
+  }
 }

@@ -28,23 +28,23 @@ class _DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
     });
   }
 
-  // void _handleStatusUpdate(String currentStatus) async {
-  //   String nextStatus = '';
-  //   if (currentStatus == 'PREPARING') nextStatus = 'ready';
-  //   else if (currentStatus == 'READY') nextStatus = 'out_for_delivery';
-  //   else if (currentStatus == 'OUT_FOR_DELIVERY') nextStatus = 'delivered';
+  void _handleStatusUpdate(String currentStatus) async {
+    String nextStatus = '';
+    if (currentStatus == 'PREPARING') nextStatus = 'ready';
+    else if (currentStatus == 'READY') nextStatus = 'out_for_delivery';
+    else if (currentStatus == 'OUT_FOR_DELIVERY') nextStatus = 'delivered';
 
-  //   if (nextStatus.isEmpty) return;
+    if (nextStatus.isEmpty) return;
 
-  //   bool success = await _orderService.updateOrderStatus(widget.orderId, nextStatus);
+    bool success = await _orderService.updateOrderStatus(widget.orderId, nextStatus);
     
-  //   if (success) {
-  //     _refreshData();
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text("Status updated to ${nextStatus.replaceAll('_', ' ').toUpperCase()}")),
-  //     );
-  //   }
-  // }
+    if (success) {
+      _refreshData();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Status updated to ${nextStatus.replaceAll('_', ' ').toUpperCase()}")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -217,7 +217,7 @@ class _DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
     if (status == "DELIVERED") return const SizedBox.shrink();
 
     return GestureDetector(
-      // onTap: () => _handleStatusUpdate(status),
+      onTap: () => _handleStatusUpdate(status),
       child: Container(
         alignment: Alignment.center,
         width: double.infinity,
