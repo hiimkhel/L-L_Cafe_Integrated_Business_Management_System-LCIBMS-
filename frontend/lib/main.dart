@@ -17,6 +17,8 @@ import 'features/customers/presentation/admin/cart_screen.dart';
 import 'features/dashboard/presentation/admin/dashboard_screen.dart';
 import 'features/dashboard/presentation/rider/dashboard_screen.dart';
 import 'features/dashboard/presentation/pos/order_entry.dart';
+import 'features/auth/presentation/screens/login_screen.dart';
+import 'features/auth/presentation/screens/register_screen.dart';
 
 // Shared cart state
 import 'core/constants/cart_provider.dart';
@@ -49,13 +51,53 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
   void setUser(User user) => setState(() => currentUser = user);
 
   void logout() {
-    _cartNotifier.clear(); // wipe cart on logout
+    _cartNotifier.clear();
     setState(() => currentUser = null);
   }
 
+  // ── Navigation helpers ────────────────────────────────────────────────────
+
+  /// Push the styled LoginScreen on top of whatever guest screen is showing.
+  /// On success: setUser fires → popUntil(first) → app rebuilds to role screen.
+  void _goLogin(BuildContext ctx) {
+    Navigator.push(
+      ctx,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => LoginScreen(
+          onLogin: (user) {
+            setUser(user);
+            Navigator.of(ctx).popUntil((route) => route.isFirst);
+          },
+        ),
+        transitionsBuilder: (_, anim, __, child) =>
+            FadeTransition(opacity: anim, child: child),
+        transitionDuration: const Duration(milliseconds: 220),
+      ),
+    );
+  }
+
+  /// Push the styled RegisterScreen on top of whatever guest screen is showing.
+  void _goRegister(BuildContext ctx) {
+    Navigator.push(
+      ctx,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => RegisterScreen(
+          onRegister: (user) {
+            setUser(user);
+            Navigator.of(ctx).popUntil((route) => route.isFirst);
+          },
+        ),
+        transitionsBuilder: (_, anim, __, child) =>
+            FadeTransition(opacity: anim, child: child),
+        transitionDuration: const Duration(milliseconds: 220),
+      ),
+    );
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
-    // CartProvider wraps EVERYTHING so every screen shares the same cart
     return CartProvider(
       notifier: _cartNotifier,
       child: MaterialApp(
@@ -65,35 +107,39 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
           switch (settings.name) {
             case '/':
               return _fade(_buildScreen());
+
             case '/home':
               return _fade(CustomerHomeScreen(onLogout: logout));
+
             case '/menu':
               return _fade(const MenuScreen());
-            // /cart → the cart/selection screen
+
             case '/cart':
               return _fade(const CartScreen());
 
-            // /orders → placeholder for the separate Orders History screen
+            // TODO: replace with dedicated OrdersScreen when ready
             case '/orders':
-              return _fade(const CartScreen()); // TODO: replace with OrdersScreen()
+              return _fade(const CartScreen());
+
             case '/about':
               return _fade(Builder(
                 builder: (ctx) => AboutScreen(
-                  onLogin: () => Navigator.pushReplacementNamed(ctx, '/'),
-                  onJoinNow: () => Navigator.pushReplacementNamed(ctx, '/'),
+                  onLogin: () => _goLogin(ctx),
+                  onJoinNow: () => _goRegister(ctx),
                 ),
               ));
 
             case '/contact':
               return _fade(Builder(
                 builder: (ctx) => ContactScreen(
-                  onLogin: () => Navigator.pushReplacementNamed(ctx, '/'),
-                  onJoinNow: () => Navigator.pushReplacementNamed(ctx, '/'),
+                  onLogin: () => _goLogin(ctx),
+                  onJoinNow: () => _goRegister(ctx),
                 ),
               ));
 
             case '/profile':
               return _fade(ProfileScreen(onLogout: logout));
+
             default:
               return null;
           }
@@ -102,7 +148,8 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
     );
   }
 
-  // Smooth fade transition between screens
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
   PageRouteBuilder _fade(Widget page) => PageRouteBuilder(
         pageBuilder: (_, __, ___) => page,
         transitionsBuilder: (_, anim, __, child) =>
