@@ -5,7 +5,9 @@ import 'package:frontend/core/constants/menu_data.dart';
 import 'package:frontend/features/checkout/admin/presentation/checkout_screen.dart';
 import 'package:frontend/features/dashboard/presentation/pos/online_orders_screen.dart';
 import 'package:frontend/core/models/menu_item.dart';
-import 'package:frontend/services/menu_service.dart';
+import 'package:frontend/core/services/menu_service.dart';
+import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
+import 'package:frontend/core/models/menu_category.dart';
 
 class POSOrderScreen extends StatefulWidget {
 
@@ -19,8 +21,16 @@ class POSOrderScreen extends StatefulWidget {
 
 class _POSOrderScreenState extends State<POSOrderScreen> {
   List<MenuItem> menuItems = [];
+  List<MenuCategory> categories = [];
+
+  // Cart State Handler
+  List<Map<String, dynamic>> orderItems = [];
+
   bool isLoading = true;
   String _selectedCategory = 'All';
+  String _searchQuery = '';
+
+  String _orderType = 'DINE IN';
 
   @override
   void initState(){
@@ -28,21 +38,51 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     loadMenu();
   }
 
- Future<void> loadMenu() async {
+  Future<void> loadMenu() async {
     try {
-      final items = await MenuService.fetchMenu();
+      final results = await Future.wait([
+        MenuService.fetchMenu(),
+        MenuService.fetchCategories(),
+      ]);
+
+      final items = results[0] as List<MenuItem>;
+      final cats = results[1] as List<MenuCategory>;
 
       setState(() {
         menuItems = items;
+        categories = cats;
         isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
       print("Error loading menu: $e");
     }
   }
+  String getCategoryName(int id) {
+    return categories.firstWhere(
+      (c) => c.id == id,
+      orElse: () => MenuCategory(id: 0, name: "Unknown"),
+    ).name;
+  }
+
+  // Handle calculation of subtotal price from cart items
+  double getSubtotal() {
+    double subtotal = 0;
+    for (var item in orderItems) {
+      subtotal += item['price'] * item['qty'];
+    }
+    return subtotal;
+  }
+
+  // Fixed tax for VAT
+  double getTax() {
+    return 20.0;
+  }
+
+  double getTotal() {
+    return getSubtotal() + getTax();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +158,14 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
           _headerBtns(
             icon: Icon(Icons.queue, color: AppColors.primary, size: 13),
             label: 'ORDER QUEUE',
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OrderQueueScreen(),
+                ),
+              );
+            },
           ),
           const SizedBox(width: 11),
           _headerBtns(
@@ -240,6 +287,12 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
           const SizedBox(width: 7),
           Expanded(
             child: TextField(
+              // Search  logic
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.toLowerCase();
+                });
+              },
               decoration: InputDecoration(
                 hintText: 'SEARCH ORDERS',
                 hintStyle: TextStyle(
@@ -259,38 +312,55 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
 
   //----------------------------------------Categories Row-----------------------------------------------------------
   Widget _categoriesRow() {
-    final categories = ['All', ...MenuData.categories];
-
     return SizedBox(
-      height: 40,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 28),
-        itemCount: categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 25),
-        itemBuilder: (context, index) {
-          final category = categories[index];
-          final isSelected = category == _selectedCategory;
+      height: 48,
+      child: ScrollConfiguration(
+        behavior: const _NoGlowScrollBehavior(),
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 28),
+          physics: const BouncingScrollPhysics(),
+          itemCount: categories.length + 1,
+          separatorBuilder: (_, __) => const SizedBox(width: 14),
+          itemBuilder: (context, i) {
+            final isAll = i == 0;
 
-          return GestureDetector(
-            onTap: () => setState(() => _selectedCategory = category),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : AppColors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                category,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: isSelected ? AppColors.white : AppColors.primary,
+            final label = isAll ? "All" : categories[i - 1].name;
+            final isSelected = label == _selectedCategory;
+
+            return GestureDetector(
+              onTap: () => setState(() => _selectedCategory = label),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primary : AppColors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    if (isSelected)
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected
+                          ? AppColors.white
+                          : AppColors.primary,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -301,12 +371,19 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final filteredItems =
-        _selectedCategory == 'All'
-            ? menuItems
-            : menuItems
-                .where((item) => item.category == _selectedCategory)
-                .toList();
+      final filteredItems = menuItems.where((item) {
+      final matchesCategory = _selectedCategory == 'All'
+          ? true
+          : categories
+              .firstWhere((c) => c.id == item.categoryId)
+              .name == _selectedCategory;
+
+      final matchesSearch = item.name
+          .toLowerCase()
+          .contains(_searchQuery);
+
+      return matchesCategory && matchesSearch;
+    }).toList();
 
     return GridView.builder(
       padding: const EdgeInsets.all(24),
@@ -314,7 +391,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
         crossAxisCount: 4,
         crossAxisSpacing: 20,
         mainAxisSpacing: 20,
-        childAspectRatio: 1.1,
+        childAspectRatio: 1.1,  
       ),
       itemCount: filteredItems.length,
       itemBuilder: (context, index) {
@@ -342,7 +419,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            item.category.toUpperCase(),
+            getCategoryName(item.categoryId).toUpperCase(),
             style: TextStyle(
               fontSize: 9,
               color: AppColors.primary,
@@ -376,7 +453,20 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
 
               GestureDetector(
                 onTap: () {
-                  print("Add to cart: ${item.name}");
+                  setState(() {
+                    final index = orderItems.indexWhere((e) => e['id'] == item.id);
+
+                    if (index >= 0) {
+                      orderItems[index]['qty'] += 1;
+                    } else {
+                      orderItems.add({
+                        'id': item.id,
+                        'name': item.name,
+                        'price': double.parse(item.price.toString()),
+                        'qty': 1,
+                      });
+                    }
+                  });
                 },
                 child: Container(
                   width: 34,
@@ -460,11 +550,19 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
           //-------------------------------------------------------------------------------------------------------------
           //--------------------------------------------temporary order list---------------------------------------------
           Expanded(
-            child: ListView(
+            child: ListView.builder(
               padding: const EdgeInsets.all(16),
-              children: [
-                _orderItem(name: 'Burger Meal', price: '₱199.00', qty: 2),
-              ],
+              itemCount: orderItems.length,
+              itemBuilder: (context, index) {
+                final item = orderItems[index];
+
+                return _orderItem(
+                  index:index,
+                  name: item['name'],
+                  price: "₱${item['price']}",
+                  qty: item['qty'],
+                );
+              },
             ),
           ),
           const Divider(height: 1, color: Color.fromARGB(255, 237, 236, 236)),
@@ -491,18 +589,28 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                       child: _orderTypeBtn(
                         icon: Icons.restaurant,
                         label: 'DINE IN',
-                        isSelected: true,
+                        isSelected: _orderType == 'DINE IN',
                         isFirst: true,
                         isLast: false,
+                        onTap: () {
+                          setState(() {
+                            _orderType = 'DINE IN';
+                          });
+                        },
                       ),
                     ),
                     Expanded(
                       child: _orderTypeBtn(
                         icon: Icons.shopping_cart,
                         label: 'TAKE OUT',
-                        isSelected: false,
+                        isSelected: _orderType == 'TAKE OUT',
                         isFirst: false,
                         isLast: true,
+                        onTap: () {
+                          setState(() {
+                            _orderType = 'TAKE OUT';
+                          });
+                        },
                       ),
                     ),
                   ],
@@ -528,20 +636,20 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                       ),
                     ),
                     Text(
-                      '₱165.00',
+                      '₱${getSubtotal().toStringAsFixed(2)}',
                       style: TextStyle(
                         fontSize: 11,
                         color: AppColors.primary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ],
+                                      ],
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'ENGINEERING TAX (12%)',
+                      'VAT',
                       style: TextStyle(
                         fontSize: 11,
                         color: AppColors.primary,
@@ -549,7 +657,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                       ),
                     ),
                     Text(
-                      '₱19.80',
+                      '₱${getTax().toStringAsFixed(2)}',
                       style: TextStyle(
                         fontSize: 11,
                         color: AppColors.primary,
@@ -577,7 +685,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                       ),
                     ),
                     Text(
-                      '₱184.80',
+                      '₱${getTotal().toStringAsFixed(2)}',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -593,19 +701,47 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Row(
               children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(12),
+                GestureDetector(
+                    onTap: () {
+                      if (orderItems.isEmpty) return;
+
+                      showDialog(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: const Text('Clear Order'),
+                          content: const Text('Are you sure you want to remove all items?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  orderItems.clear();
+                                });
+                                Navigator.pop(context);
+                              },
+                              child: const Text('Clear'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.delete_outline,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: GestureDetector(
@@ -614,7 +750,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => CheckoutConfirmationScreen(), 
+                          builder: (context) => CheckoutConfirmationScreen( orderItems: orderItems, orderType: _orderType), 
                         ),
                       );
                     },
@@ -664,6 +800,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     required String name,
     required String price,
     required int qty,
+    required int index
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -687,7 +824,16 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                   color: AppColors.receiptDark,
                 ),
               ),
-              Icon(Icons.close, size: 18, color: AppColors.primary),
+              IconButton(
+                icon: Icon(Icons.close, size: 18, color: AppColors.primary),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: () {
+                  setState(() {
+                    orderItems.removeAt(index);
+                  });
+                },
+              ),
             ],
           ),
           const SizedBox(height: 30),
@@ -710,7 +856,15 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                 ),
                 child: Row(
                   children: [
-                    _qtyBtn(Icons.remove, () {}),
+                    _qtyBtn(Icons.remove, () {
+                      setState(() {
+                        if (orderItems[index]['qty'] > 1) {
+                          orderItems[index]['qty']--;
+                        } else {
+                          orderItems.removeAt(index);
+                        }
+                      });
+                    }),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
@@ -722,7 +876,11 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                         ),
                       ),
                     ),
-                    _qtyBtn(Icons.add, () {}),
+                    _qtyBtn(Icons.add, () {
+                        setState(() {
+                        orderItems[index]['qty']++;
+                      });
+                    }),
                   ],
                 ),
               ),
@@ -758,40 +916,53 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     required bool isSelected,
     required bool isFirst,
     required bool isLast,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color:
-            isSelected
-                ? AppColors.secondary
-                : AppColors.background.withOpacity(0.4),
-        borderRadius: BorderRadius.horizontal(
-          left: isFirst ? Radius.circular(10) : Radius.zero,
-          right: isLast ? Radius.circular(10) : Radius.zero,
+    return GestureDetector(
+      onTap: onTap,
+        child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color:
+              isSelected
+                  ? AppColors.secondary
+                  : AppColors.background.withOpacity(0.4),
+          borderRadius: BorderRadius.horizontal(
+            left: isFirst ? Radius.circular(10) : Radius.zero,
+            right: isLast ? Radius.circular(10) : Radius.zero,
+          ),
         ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: isSelected ? AppColors.white : AppColors.primary,
-            size: 14,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
               color: isSelected ? AppColors.white : AppColors.primary,
+              size: 14,
             ),
-          ),
-        ],
-      ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? AppColors.white : AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+      )
     );
   }
+}
 
-  //for improvement.. add logic
+// Helper Function for overflowing categories
+class _NoGlowScrollBehavior extends ScrollBehavior {
+  const _NoGlowScrollBehavior();
+
+  @override
+  Widget buildOverscrollIndicator(
+      BuildContext context, Widget child, ScrollableDetails details) {
+    return child;
+  }
 }

@@ -579,7 +579,7 @@ class _CartItemList extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    'VALUE: ₱${item.originalPrice.toStringAsFixed(2)}',
+                    'UNIT PRICE: ₱${item.originalPrice.toStringAsFixed(2)}',
                     style: TextStyle(
                       fontSize: 10,
                       color: AppColors.primary.withOpacity(0.5),
@@ -753,7 +753,7 @@ class _CartSummary extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '₱${(item.price * item.quantity).toStringAsFixed(2)}',
+                    '₱${(item.price).toStringAsFixed(2)}',
                     style: const TextStyle(
                       color: AppColors.secondary, fontSize: 12,
                       fontWeight: FontWeight.w600, letterSpacing: 0.3,
@@ -822,6 +822,7 @@ class _CartSummary extends StatelessWidget {
                   builder: (_) => CartCheckoutScreen(
                     // Pass a plain List<CartItem> copy to the checkout screen
                     items: cart.items.map((c) => legacy.CartItem(
+                      id: c.id,
                       name: c.name,
                       category: c.category,
                       price: c.price,

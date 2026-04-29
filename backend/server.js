@@ -11,7 +11,6 @@ dotenv.config();
 
 const app = express();
 app.use(cors());
-app.use(express.json());
 
 const PORT = process.env.SERVER_PORT || 3006;
 
@@ -20,18 +19,11 @@ app.use(express.json()); // middleware to parse incoming requests
 // [ ROUTING SYSTEM ]
 // Note: This is where you add your API endpoints
 app.use('/api/auth', require("./routes/authRoutes.js"));
-app.use('/api/customer', (req,res) => {
-    // [!] Temporary: Change this to customerRoutes.js
-    console.log("This are customer module routes");
-})
-app.use('/api/pos', (req,res) => {
-    // [!] Temporary: Change this to posRoutes.js
-    console.log("This are pos module routes");
-})
-app.use('/api/rider', (req,res) => {
-    // [!] Temporary: Change this to riderRoutes.js
-    console.log("This are rider's module routes");
-})
+app.use('/api/customer', require("./routes/customerRoutes.js"))
+app.use('/api/pos', require("./routes/posRoutes.js"));
+
+app.use('/api/orders', require("./routes/orderRoutes.js"));
+app.use('/api/rider', require("./routes/riderRoutes.js"));
 app.use('/api/admin', require("./routes/adminRoutes.js"));
 
 app.use('/api/menu', require("./routes/menuRoutes.js"));

@@ -1,12 +1,12 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:frontend/core/models/user.dart';
-import 'package:frontend/services/auth_service.dart';
-import 'package:frontend/config/theme/app_colors.dart';
-import 'forgot_password_screen.dart';
-import 'register_screen.dart';
+import 'package:frontend/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:frontend/features/auth/presentation/screens/register_screen.dart';
+import 'package:frontend/core/services/auth_service.dart';
 
-const double _kMobile = 700;
+
+const double _kMobile  = 700;
 const Color _bgBeige   = Color(0xFFEFE2C9);
 const Color _bgDark    = Color(0xFF2D2A26);
 const Color _primary   = Color(0xFF758C6D);

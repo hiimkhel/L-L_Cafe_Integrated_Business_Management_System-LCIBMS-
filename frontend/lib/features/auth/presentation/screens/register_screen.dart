@@ -1,18 +1,14 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:frontend/core/models/user.dart';
-import 'package:frontend/services/auth_service.dart';
-import 'login_screen.dart';
+import 'package:frontend/core/services/auth_service.dart';
+import 'package:frontend/features/auth/presentation/screens/login_screen.dart';
 
-const double _kMobile = 700;
+const double _kMobile  = 700;
 const Color _bgBeige   = Color(0xFFEFE2C9);
 const Color _bgDark    = Color(0xFF2D2A26);
 const Color _primary   = Color(0xFF758C6D);
 const Color _secondary = Color(0xFFA98258);
-
-// ─────────────────────────────────────────────────────────────────────────────
-// REGISTER SCREEN
-// ─────────────────────────────────────────────────────────────────────────────
 
 class RegisterScreen extends StatefulWidget {
   final Function(User) onRegister;

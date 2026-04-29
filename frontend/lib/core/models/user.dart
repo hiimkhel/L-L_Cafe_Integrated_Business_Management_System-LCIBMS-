@@ -1,11 +1,11 @@
 enum UserRole { admin, cashier, rider, customer }
 
 class User {
+  final String id;
   final String email;
-  final String password;
-  final UserRole role;
+  UserRole role;
 
-  User(this.email, this.password, this.role);
+  User( this.id,  this.email, this.role);
 }
 
 UserRole stringToRole(String role) {

@@ -1,0 +1,34 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:frontend/core/models/menu_item.dart';
+import 'package:frontend/core/models/menu_category.dart';
+
+class MenuService {
+  static const String baseUrl = "http://localhost:3006/api";
+
+  static Future<List<MenuCategory>> fetchCategories() async {
+    final res = await http.get(
+      Uri.parse("$baseUrl/admin/menu/category"),
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception("Failed to load categories");
+    }
+
+    final List data = jsonDecode(res.body);
+    return data.map((e) => MenuCategory.fromJson(e)).toList();
+  }
+
+  static Future<List<MenuItem>> fetchMenu() async {
+    final res = await http.get(
+      Uri.parse("$baseUrl/menu"),
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception("Failed to load menu");
+    }
+
+    final List data = jsonDecode(res.body);
+    return data.map((e) => MenuItem.fromJson(e)).toList();
+  }
+}

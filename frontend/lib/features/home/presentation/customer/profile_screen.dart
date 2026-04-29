@@ -1,7 +1,11 @@
 import 'dart:math' as math;
+import 'package:http/http.dart' as http;
+import 'dart:core';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
+import 'package:frontend/core/services/customer/profile_service.dart';
 
 const double _kMobile = 900;
 const double _kDesktopMaxWidth = 1400;
@@ -19,29 +23,59 @@ const Color _crimson   = Color(0xFF9B2335); // Delete button
 
 class UserModel {
   final String id;
-  String firstName;
-  String lastName;
+  String fullName;
   String email;
-  String phone;
-  final String memberSince;
+  String? phone; 
+  final DateTime memberSince;
   final int orderCount;
   final bool isActive;
   final String? profileImageUrl;
+   // Store the current user's addresses
+
+  final List<DeliveryAddress> addresses = [];
 
   UserModel({
     required this.id,
-    required this.firstName,
-    required this.lastName,
+    required this.fullName,
     required this.email,
-    required this.phone,
+    this.phone,
     required this.memberSince,
     required this.orderCount,
     required this.isActive,
     this.profileImageUrl,
   });
 
-  String get fullName => '$firstName $lastName'.toUpperCase();
-  String get accountAge => '365 DAYS'; // Derived from memberSince in real app
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['id'].toString(),
+      fullName: json['full_name'] ?? '',
+      email: json['email'] ?? '',
+      phone: json['phone'], 
+      memberSince: DateTime.parse(json['created_at']),
+      orderCount: 0, // backend doesn’t send yet
+      isActive: true,
+      profileImageUrl: json['profile_picture'],
+    );
+  }
+
+
+  // Calculate account age logic
+  String get accountAge {
+    final now = DateTime.now();
+    final diff = now.difference(memberSince);
+
+    if (diff.inDays < 1) {
+      return 'NEW ACCOUNT';
+    } else if (diff.inDays < 30) {
+      return '${diff.inDays} DAYS';
+    } else if (diff.inDays < 365) {
+      final months = (diff.inDays / 30).floor();
+      return '$months MONTHS';
+    } else {
+      final years = (diff.inDays / 365).floor();
+      return '$years YEARS';
+    }
+  }
 }
 
 class DeliveryAddress {
@@ -55,9 +89,11 @@ class DeliveryAddress {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class ProfileScreen extends StatefulWidget {
+  final String userId;
+  final String email;
   final VoidCallback? onLogout; 
   
-  const ProfileScreen({super.key, this.onLogout});
+  const ProfileScreen({super.key, this.onLogout, required this.userId, required this.email});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -74,57 +110,133 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _phoneController;
 
   final List<DeliveryAddress> _deliveryAddresses = [
-    DeliveryAddress(label: 'PRIMARY RESIDENCE (HOME)', address: 'BRGY. TABAN-MANGUINING'),
-    DeliveryAddress(label: 'DESIGN STUDIO (OFFICE)', address: 'SALARDA ST., ALIMODIAN, ILOILO'),
   ];
 
   @override
   void initState() {
     super.initState();
     _currentUser = UserModel(
-      id: 'LL-00124-PH',
-      firstName: 'Juan',
-      lastName: 'Dela Cruz',
-      email: 'juan.dc@gmail.com',
-      phone: '+63 912 345 6789',
-      memberSince: 'AUG 2023',
-      orderCount: 12,
-      isActive: true,
-    );
+        id: widget.userId,
+        fullName: '',
+        email: widget.email,
+        phone: null,
+        memberSince: DateTime.now(),
+        orderCount: 0,
+        isActive: true,
+        profileImageUrl: null,
+      );
 
-    _fullNameController = TextEditingController(text: _currentUser.fullName == '' ? '${_currentUser.firstName} ${_currentUser.lastName}' : '${_currentUser.firstName} ${_currentUser.lastName}');
-    _emailController    = TextEditingController(text: _currentUser.email);
-    _phoneController    = TextEditingController(text: _currentUser.phone);
+    _fullNameController = TextEditingController();
+    _emailController    = TextEditingController();
+    _phoneController    = TextEditingController();
+
+    _fetchUserProfile();
   }
 
+
+  // Backend Call for /api/customer/user endpoint
+  Future<void> _fetchUserProfile() async {
+    if (_currentUser.id.isEmpty) {
+      print("User ID missing — skipping fetch");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:3006/api/customer/${_currentUser.id}'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception("Server error: ${response.statusCode}");
+      }
+
+      final data = jsonDecode(response.body);
+
+      if (data['success'] == true) {
+        final user = UserModel.fromJson(data['user']);
+
+        if (data['addresses'] != null) {
+          for (var a in data['addresses']) {
+            user.addresses.add(
+              DeliveryAddress(
+                label: a['label'] ?? 'NO LABEL',
+                address: a['full_address'] ?? '',
+              ),
+            );
+          }
+        }
+
+        setState(() {
+          _currentUser = user;
+          _fullNameController.text = user.fullName;
+          _emailController.text = user.email;
+          _phoneController.text = user.phone ?? '';
+          
+            _deliveryAddresses
+              ..clear()
+              ..addAll(user.addresses); 
+        });
+      }
+
+    } catch (e) {
+      print('Error fetching profile: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  // Call services for updating profile
+  Future<void> _updateProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await ProfileService.updateProfile(
+        fullName: _fullNameController.text,
+        phone: _phoneController.text,
+      );
+
+      setState(() {
+        _currentUser.fullName = result['user']['full_name'];
+        _currentUser.phone = result['user']['phone'];
+      });
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'PROFILE UPDATED SUCCESSFULLY',
+            style: TextStyle(
+              fontFamily: 'Urbanist',
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1,
+            ),
+          ),
+          backgroundColor: _primary,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Update failed: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
   @override
   void dispose() {
     _fullNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     super.dispose();
-  }
-
-  Future<void> _updateProfile() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() {
-      _currentUser.email = _emailController.text;
-      _currentUser.phone = _phoneController.text;
-      _isLoading = false;
-    });
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('PROFILE UPDATED SUCCESSFULLY',
-            style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w800, letterSpacing: 1)),
-        backgroundColor: _primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -344,8 +456,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 48),
 
-        IntrinsicHeight(
-          child: Row(
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(width: 280, child: _buildProfileCard(isMobile: false)),
@@ -370,7 +481,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-        ),
       ],
     );
   }
@@ -455,7 +565,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 24),
 
-          // ✅ UPDATED: Delete Account Button
+          // Delete Account Button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -516,25 +626,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
             if (!isMobile) ...[
               Row(
                 children: [
-                  Expanded(child: _buildReadOnlyField('FULL LEGAL NAME', '${_currentUser.firstName} ${_currentUser.lastName}'.toUpperCase())),
+                  Expanded(child: _buildEditableFieldWithIcon('FULL LEGAL NAME', _fullNameController)),
                   const SizedBox(width: 20),
-                  Expanded(child: _buildReadOnlyField('CUSTOMER ID / EMAIL', _currentUser.email)),
+                  Expanded(child: _buildReadOnlyField('EMAIL', _currentUser.email)),
                 ],
               ),
               const SizedBox(height: 20),
               Row(
                 children: [
-                  Expanded(child: _buildEditableField('COMMUNICATION LINE', _phoneController, Icons.phone_outlined)),
+                  Expanded(child: _buildEditableFieldWithIcon('CONTACT NUMBER', _phoneController)),
                   const SizedBox(width: 20),
                   Expanded(child: _buildDarkField('ACCOUNT AGE', _currentUser.accountAge)),
                 ],
               ),
             ] else ...[
-              _buildReadOnlyField('FULL LEGAL NAME', '${_currentUser.firstName} ${_currentUser.lastName}'.toUpperCase()),
+              _buildReadOnlyField('FULL LEGAL NAME', '${_currentUser.fullName}'.toUpperCase()),
               const SizedBox(height: 16),
-              _buildEditableFieldWithIcon('CUSTOMER ID / EMAIL', _emailController),
+              _buildReadOnlyField('EMAIL', _currentUser.email),
               const SizedBox(height: 16),
-              _buildEditableFieldWithIcon('COMMUNICATION LINE', _phoneController),
+              _buildEditableFieldWithIcon('CONTACT NUMBER', _phoneController),
               const SizedBox(height: 16),
               _buildDarkField('ACCOUNT AGE', _currentUser.accountAge),
             ],
@@ -588,7 +698,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.redAccent, width: 1)),
             focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.redAccent, width: 1.5)),
           ),
-          validator: (value) => (value == null || value.trim().isEmpty) ? 'This field is required' : null,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) return null; //  allow empty
+
+            // optional: basic PH number validation
+            if (!RegExp(r'^\+?\d{10,13}$').hasMatch(value)) {
+              return 'Invalid phone number';
+            }
+
+            return null;
+          },
         ),
       ],
     );
@@ -634,14 +753,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildDeliveryAddressesDesktop() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            for (int i = 0; i < _deliveryAddresses.length; i++) ...[
-              if (i > 0) const SizedBox(width: 16),
-              Expanded(child: _buildAddressCard(_deliveryAddresses[i], index: i)),
-            ],
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final double itemWidth = (constraints.maxWidth - 16) / 2;
+
+            return Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: _deliveryAddresses.asMap().entries.map((entry) {
+                final index = entry.key;
+                final address = entry.value;
+
+                return SizedBox(
+                  width: itemWidth, // ✅ forces max 2 columns
+                  child: _buildAddressCard(address, index: index),
+                );
+              }).toList(),
+            );
+          },
         ),
         const SizedBox(height: 16),
         _buildAddNewAddressButton(),
