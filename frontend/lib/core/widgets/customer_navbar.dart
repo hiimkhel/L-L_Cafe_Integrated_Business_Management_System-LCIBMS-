@@ -1282,6 +1282,8 @@ class _IconCircleBtn extends StatelessWidget {
           ),
           child: Icon(icon, color: const Color(0xFF2D2A26), size: 17),
         ),
+        
+        // ✅ FIX: This ensures the red dot ONLY appears if the badge is 1 or more
         if (badge > 0)
           Positioned(
             top: -3,
@@ -1298,9 +1300,8 @@ class _IconCircleBtn extends StatelessWidget {
                 child: Text('$badge',
                     style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 7,
-                        fontWeight: FontWeight.w900)),
-              ),
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold))),
             ),
           ),
       ]),

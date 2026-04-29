@@ -83,7 +83,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       backgroundColor: _bgBeige,
       appBar: CustomerNavbar(
         activeRoute: '/home',
-        cartCount:   2,
+        cartCount:   0,
         notifCount:  1,
         onLogout:    () => _logout(context),
         onCart:      () => Navigator.pushNamed(context, '/cart'),
