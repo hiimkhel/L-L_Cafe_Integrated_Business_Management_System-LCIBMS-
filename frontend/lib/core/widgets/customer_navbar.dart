@@ -28,7 +28,7 @@ final List<NotificationItem> _mockNotifications = [
     id: 'n1',
     sender: 'L&L ADMIN',
     time: 'JUST NOW',
-    body: 'WELCOME TO L&L CAFE! WE ARE SO EXCITED TO SERVE YOU THE BEST COFFEE IN TOWN.',
+    body: 'WELCOME TO L&L CAFE! WE ARE SO EXCITED TO SERVE YOU THE BEST FOOD IN TOWN.',
     isPriority: true, // Set to true so it has the nice highlight border!
   ),
 ];
