@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
+import 'package:frontend/core/constants/cart_provider.dart';
+
 
 const double _kMobile = 768;
 const double _kDesktopMaxWidth = 1280;
@@ -79,11 +81,12 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cart = CartProvider.of(context);
     return Scaffold(
       backgroundColor: _bgBeige,
       appBar: CustomerNavbar(
         activeRoute: '/home',
-        cartCount:   0,
+        cartCount:   cart.totalCount,
         notifCount:  1,
         onLogout:    () => _logout(context),
         onCart:      () => Navigator.pushNamed(context, '/cart'),

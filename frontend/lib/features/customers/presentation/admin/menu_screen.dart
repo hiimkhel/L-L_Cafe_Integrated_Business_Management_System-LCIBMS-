@@ -223,7 +223,7 @@ class _MenuScreenState extends State<MenuScreen> {
       backgroundColor: _bgBeige,
       appBar: CustomerNavbar(
         activeRoute: '/menu',
-        cartCount: 0,
+        cartCount: cart.totalCount,
         notifCount: 1,
         userName: 'JANE DOE',
         userClientId: 'CLIENT #LL-00124',

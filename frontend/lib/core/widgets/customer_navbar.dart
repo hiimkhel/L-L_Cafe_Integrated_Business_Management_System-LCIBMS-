@@ -26,24 +26,10 @@ class NotificationItem {
 final List<NotificationItem> _mockNotifications = [
   const NotificationItem(
     id: 'n1',
-    sender: 'SITE MANAGER',
-    time: '10:35 AM',
-    body: 'THE SIGNATURE BLEND BEANS FOR PROJECT #LL-9482 ARE READY.',
-    isPriority: true,
-  ),
-  const NotificationItem(
-    id: 'n2',
-    sender: 'SYSTEM',
-    time: '10:32 AM',
-    body: 'ORDER #LL-9482 STRUCTURAL ASSEMBLY HAS COMMENCED.',
-    isPriority: false,
-  ),
-  const NotificationItem(
-    id: 'n3',
-    sender: 'SYSTEM',
-    time: '09:15 AM',
-    body: 'WEATHER WARNING: SLIGHT HUMIDITY INCREASE DETECTED',
-    isPriority: false,
+    sender: 'L&L ADMIN',
+    time: 'JUST NOW',
+    body: 'WELCOME TO L&L CAFE! WE ARE SO EXCITED TO SERVE YOU THE BEST COFFEE IN TOWN.',
+    isPriority: true, // Set to true so it has the nice highlight border!
   ),
 ];
 
@@ -146,7 +132,7 @@ class NotificationPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'COMMS CHANNEL',
+                  'L&L CHANNEL', // ✅ Changed from COMMS CHANNEL
                   style: TextStyle(
                     fontFamily: 'Urbanist',
                     fontWeight: FontWeight.w900,
@@ -158,7 +144,7 @@ class NotificationPanel extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'ORDER TRANSMISSIONS',
+                  'ORDER NOTIFICATION', // ✅ Changed from ORDER TRANSMISSIONS
                   style: TextStyle(
                     fontFamily: 'Urbanist',
                     fontWeight: FontWeight.w900,
