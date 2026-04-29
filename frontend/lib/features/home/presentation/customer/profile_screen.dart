@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
+import 'package:frontend/core/services/customer/profile_service.dart';
 
 const double _kMobile = 900;
 const double _kDesktopMaxWidth = 1400;
@@ -186,35 +187,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() => _isLoading = false);
     }
   }
+
+  // Call services for updating profile
+  Future<void> _updateProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await ProfileService.updateProfile(
+        fullName: _fullNameController.text,
+        phone: _phoneController.text,
+      );
+
+      setState(() {
+        _currentUser.fullName = result['user']['full_name'];
+        _currentUser.phone = result['user']['phone'];
+      });
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'PROFILE UPDATED SUCCESSFULLY',
+            style: TextStyle(
+              fontFamily: 'Urbanist',
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1,
+            ),
+          ),
+          backgroundColor: _primary,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Update failed: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
   @override
   void dispose() {
     _fullNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     super.dispose();
-  }
-
-  Future<void> _updateProfile() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() {
-      _currentUser.fullName = _fullNameController.text;
-      _currentUser.email = _emailController.text;
-      _currentUser.phone = _phoneController.text;
-      _isLoading = false;
-    });
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('PROFILE UPDATED SUCCESSFULLY',
-            style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w800, letterSpacing: 1)),
-        backgroundColor: _primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
   }
 
   // ─────────────────────────────────────────────────────────────────────────
