@@ -6,6 +6,8 @@ import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
 import 'package:frontend/core/constants/cart_item.dart';
+import 'package:frontend/core/services/customer/order_service.dart';
+import 'package:frontend/core/models/order_request.dart';
 
 const double _kMobile = 768;
 const Color _primary = Color(0xFF758C6D);
@@ -190,6 +192,7 @@ class _BambooPainter extends CustomPainter {
 
 class CartCheckoutScreen extends StatefulWidget {
   final List<CartItem> items;
+  
 
   const CartCheckoutScreen({super.key, required this.items});
 
@@ -201,6 +204,8 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
   //--------------------------ScrollController-----------------------------------
   final ScrollController _scrollController = ScrollController();
   List<CartItem> _items = [];
+  final OrderService _orderService = OrderService();
+  bool _isLoading = false;
 
   bool _isDelivery = true;
   bool _isCash = true;
@@ -211,6 +216,54 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
     _items = widget.items;
   }
 
+  Future<void> _createOrder() async {
+    setState(() => _isLoading = true);
+
+    const double deliveryFee = 45.0;
+
+    final subtotal = _items.fold<double>(
+      0,
+      (sum, item) => sum + (item.price * item.quantity),
+    );
+
+    final total = _isDelivery
+        ? subtotal + deliveryFee
+        : subtotal;
+
+    final order = OrderRequest(
+      source: "online",
+      orderType: _isDelivery ? "delivery" : "pickup",
+      subtotal: subtotal,
+      deliveryFee: _isDelivery ? deliveryFee : 0,
+      total: total,
+      paymentMethod: _isCash ? "cash" : "e-wallet",
+      paymentStatus: "unpaid",
+      customerName: null,
+      customerPhone: null,
+      notes: "this is a note for delivery",
+      items: _items.map((item) {
+        return {
+          "menu_item_id": item.id,
+          "name": item.name,
+          "quantity": item.quantity ?? 1,
+          "unit_price": item.price,
+          "subtotal": item.price * item.quantity
+        };
+      }).toList(),
+    );
+
+    final success = await _orderService.createOrder(order);
+
+    setState(() => _isLoading = false);
+
+    if (success) {
+      Navigator.pushReplacementNamed(context, '/success');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to place order")),
+      );
+    }
+  }
   @override
   void dispose() {
     _scrollController.dispose();
@@ -1244,9 +1297,9 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: () {
-                  print("Process clicked");
-                },
+                
+                onPressed: _isLoading ? null : _createOrder,
+                
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.secondary,
                   foregroundColor: Colors.white,
@@ -1256,14 +1309,16 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'CONFIRM',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.4,
-                  ),
-                ),
+                child: _isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text(
+                      'CONFIRM',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.4,
+                      ),
+                    ),
               ),
             ),
           ],

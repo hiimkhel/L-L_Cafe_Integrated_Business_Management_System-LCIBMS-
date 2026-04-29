@@ -14,6 +14,7 @@ class OrderRequest {
 
   final List<Map<String, dynamic>> items;
 
+  final String? notes;
   OrderRequest({
     required this.source,
     required this.orderType,
@@ -25,6 +26,7 @@ class OrderRequest {
     this.customerName,
     this.customerPhone,
     required this.items,
+    this.notes,
   });
 
   Map<String, dynamic> toJson() {
@@ -39,6 +41,7 @@ class OrderRequest {
       "customer_name": customerName,
       "customer_phone": customerPhone,
       "items": items,
+      "notes": notes
     };
   }
 }

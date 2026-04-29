@@ -17,7 +17,8 @@ const createOrder = async (req, res) => {
       total,
       payment_method,
       payment_status,
-      items
+      items,
+      notes
     } = req.body;
 
     // 1. Create order number
@@ -31,8 +32,8 @@ const createOrder = async (req, res) => {
       `INSERT INTO orders 
       (order_number, source, user_id, customer_name, customer_phone,
        order_type, status, subtotal, delivery_fee, total,
-       payment_status, payment_method)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       payment_status, payment_method, notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         orderNumber,
         source,
@@ -45,7 +46,8 @@ const createOrder = async (req, res) => {
         delivery_fee,
         total,
         payment_status,
-        payment_method
+        payment_method,
+        notes
       ]
     );
 
@@ -61,15 +63,15 @@ const createOrder = async (req, res) => {
           orderId,
           item.menu_item_id,
           item.name,
-          item.qty,
-          item.price,
-          subtotal
+          item.quantity,
+          item.unit_price,
+          item.subtotal
         ]
       );
     }
 
     await conn.commit();
-
+    
     res.json({
       success: true,
       order_id: orderId,

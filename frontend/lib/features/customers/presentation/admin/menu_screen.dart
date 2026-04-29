@@ -120,6 +120,7 @@ class _MenuScreenState extends State<MenuScreen> {
       category: "Menu Item",
       price: menuItem.price,
       originalPrice: menuItem.price,
+      quantity: 1,
       imageUrl: menuItem.imageUrl,
     ));
 
