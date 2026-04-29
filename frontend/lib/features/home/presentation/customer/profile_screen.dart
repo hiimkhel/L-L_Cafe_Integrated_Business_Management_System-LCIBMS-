@@ -1,4 +1,6 @@
 import 'dart:math' as math;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
@@ -19,10 +21,9 @@ const Color _crimson   = Color(0xFF9B2335); // Delete button
 
 class UserModel {
   final String id;
-  String firstName;
-  String lastName;
+  String fullName;
   String email;
-  String phone;
+  String? phone; 
   final String memberSince;
   final int orderCount;
   final bool isActive;
@@ -30,18 +31,29 @@ class UserModel {
 
   UserModel({
     required this.id,
-    required this.firstName,
-    required this.lastName,
+    required this.fullName,
     required this.email,
-    required this.phone,
+    this.phone,
     required this.memberSince,
     required this.orderCount,
     required this.isActive,
     this.profileImageUrl,
   });
 
-  String get fullName => '$firstName $lastName'.toUpperCase();
-  String get accountAge => '365 DAYS'; // Derived from memberSince in real app
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['id'].toString(),
+      fullName: json['full_name'] ?? '',
+      email: json['email'] ?? '',
+      phone: json['phone'], 
+      memberSince: json['created_at'] ?? '',
+      orderCount: 0, // backend doesn’t send yet
+      isActive: true,
+      profileImageUrl: json['profile_picture'],
+    );
+  }
+
+  String get accountAge => '365 DAYS';
 }
 
 class DeliveryAddress {
@@ -55,9 +67,11 @@ class DeliveryAddress {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class ProfileScreen extends StatefulWidget {
+  final String userId;
+  final String email;
   final VoidCallback? onLogout; 
   
-  const ProfileScreen({super.key, this.onLogout});
+  const ProfileScreen({super.key, this.onLogout, required this.userId, required this.email});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -82,21 +96,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _currentUser = UserModel(
-      id: 'LL-00124-PH',
-      firstName: 'Juan',
-      lastName: 'Dela Cruz',
-      email: 'juan.dc@gmail.com',
-      phone: '+63 912 345 6789',
-      memberSince: 'AUG 2023',
-      orderCount: 12,
-      isActive: true,
-    );
+        id: widget.userId,
+        fullName: '',
+        email: widget.email,
+        phone: null,
+        memberSince: '',
+        orderCount: 0,
+        isActive: true,
+        profileImageUrl: null,
+      );
 
-    _fullNameController = TextEditingController(text: _currentUser.fullName == '' ? '${_currentUser.firstName} ${_currentUser.lastName}' : '${_currentUser.firstName} ${_currentUser.lastName}');
-    _emailController    = TextEditingController(text: _currentUser.email);
-    _phoneController    = TextEditingController(text: _currentUser.phone);
+    _fullNameController = TextEditingController();
+    _emailController    = TextEditingController();
+    _phoneController    = TextEditingController();
+
+    _fetchUserProfile();
   }
 
+
+  // Backend Call for /api/customer/user endpoint
+  Future<void> _fetchUserProfile() async {
+    if (_currentUser.id.isEmpty) {
+      print("User ID missing — skipping fetch");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:3006/api/customer/${_currentUser.id}'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception("Server error: ${response.statusCode}");
+      }
+
+      final data = jsonDecode(response.body);
+
+      if (data['success'] == true) {
+        final user = UserModel.fromJson(data['user']);
+
+        setState(() {
+          _currentUser = user;
+          _emailController.text = user.email;
+          _phoneController.text = user.phone ?? '';
+          _deliveryAddresses.clear();
+        });
+      }
+
+    } catch (e) {
+      print('Error fetching profile: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
   @override
   void dispose() {
     _fullNameController.dispose();
@@ -514,7 +569,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             if (!isMobile) ...[
               Row(
                 children: [
-                  Expanded(child: _buildReadOnlyField('FULL LEGAL NAME', '${_currentUser.firstName} ${_currentUser.lastName}'.toUpperCase())),
+                  Expanded(child: _buildReadOnlyField('FULL LEGAL NAME', '${_currentUser.fullName}'.toUpperCase())),
                   const SizedBox(width: 20),
                   Expanded(child: _buildReadOnlyField('CUSTOMER ID / EMAIL', _currentUser.email)),
                 ],
@@ -528,7 +583,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ] else ...[
-              _buildReadOnlyField('FULL LEGAL NAME', '${_currentUser.firstName} ${_currentUser.lastName}'.toUpperCase()),
+              _buildReadOnlyField('FULL LEGAL NAME', '${_currentUser.fullName}'.toUpperCase()),
               const SizedBox(height: 16),
               _buildEditableFieldWithIcon('CUSTOMER ID / EMAIL', _emailController),
               const SizedBox(height: 16),
@@ -586,7 +641,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.redAccent, width: 1)),
             focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.redAccent, width: 1.5)),
           ),
-          validator: (value) => (value == null || value.trim().isEmpty) ? 'This field is required' : null,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) return null; //  allow empty
+
+            // optional: basic PH number validation
+            if (!RegExp(r'^\+?\d{10,13}$').hasMatch(value)) {
+              return 'Invalid phone number';
+            }
+
+            return null;
+          },
         ),
       ],
     );

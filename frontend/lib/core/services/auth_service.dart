@@ -37,8 +37,8 @@ class AuthService {
     }
 
     return User(
+      data['id'].toString(),
       data['email'],
-      '',
       stringToRole(data['role']),
     );
   }

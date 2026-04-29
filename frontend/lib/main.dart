@@ -138,7 +138,15 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
               ));
 
             case '/profile':
-              return _fade(ProfileScreen(onLogout: logout));
+              if (currentUser == null) {
+                return _fade(LandingScreen(onLogin: setUser, onRegister: setUser));
+              }
+
+              return _fade(ProfileScreen(
+                userId: currentUser!.id,
+                email: currentUser!.email,
+                onLogout: logout,
+              ));
 
             default:
               return null;

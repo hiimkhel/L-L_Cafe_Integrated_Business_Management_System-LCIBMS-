@@ -4,7 +4,6 @@ const getUserProfile = async (req, res) => {
 
     try{
         const userId = req.params.id;
-
         // 1. Get user info
         const [userRows] = await db.query(
         `SELECT id, full_name, email, phone, profile_picture, created_at
