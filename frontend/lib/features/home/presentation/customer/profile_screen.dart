@@ -28,6 +28,9 @@ class UserModel {
   final int orderCount;
   final bool isActive;
   final String? profileImageUrl;
+   // Store the current user's addresses
+
+  final List<DeliveryAddress> addresses = [];
 
   UserModel({
     required this.id,
@@ -138,11 +141,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (data['success'] == true) {
         final user = UserModel.fromJson(data['user']);
 
+        if (data['addresses'] != null) {
+          for (var a in data['addresses']) {
+            user.addresses.add(
+              DeliveryAddress(
+                label: a['label'] ?? 'NO LABEL',
+                address: a['full_address'] ?? '',
+              ),
+            );
+          }
+        }
+
         setState(() {
           _currentUser = user;
           _emailController.text = user.email;
           _phoneController.text = user.phone ?? '';
-          _deliveryAddresses.clear();
+          
+            _deliveryAddresses
+              ..clear()
+              ..addAll(user.addresses); 
         });
       }
 
