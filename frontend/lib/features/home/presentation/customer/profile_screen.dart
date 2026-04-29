@@ -109,8 +109,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _phoneController;
 
   final List<DeliveryAddress> _deliveryAddresses = [
-    DeliveryAddress(label: 'PRIMARY RESIDENCE (HOME)', address: 'BRGY. TABAN-MANGUINING'),
-    DeliveryAddress(label: 'DESIGN STUDIO (OFFICE)', address: 'SALARDA ST., ALIMODIAN, ILOILO'),
   ];
 
   @override
