@@ -19,10 +19,7 @@ app.use(express.json()); // middleware to parse incoming requests
 // [ ROUTING SYSTEM ]
 // Note: This is where you add your API endpoints
 app.use('/api/auth', require("./routes/authRoutes.js"));
-app.use('/api/customer', (req,res) => {
-    // [!] Temporary: Change this to customerRoutes.js
-    console.log("This are customer module routes");
-})
+app.use('/api/customer', require("./routes/customerRoutes.js"))
 app.use('/api/pos', require("./routes/posRoutes.js"));
 
 app.use('/api/orders', require("./routes/orderRoutes.js"));
