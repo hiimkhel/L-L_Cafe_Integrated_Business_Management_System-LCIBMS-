@@ -612,7 +612,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 20),
               Row(
                 children: [
-                  Expanded(child: _buildEditableField('CONTACT NUMBER', _phoneController, Icons.phone_outlined)),
+                  Expanded(child: _buildEditableFieldWithIcon('CONTACT NUMBER', _phoneController)),
                   const SizedBox(width: 20),
                   Expanded(child: _buildDarkField('ACCOUNT AGE', _currentUser.accountAge)),
                 ],
