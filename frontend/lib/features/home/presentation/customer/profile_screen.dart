@@ -170,6 +170,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         setState(() {
           _currentUser = user;
+          _fullNameController.text = user.fullName;
           _emailController.text = user.email;
           _phoneController.text = user.phone ?? '';
           
@@ -198,6 +199,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isLoading = true);
     await Future.delayed(const Duration(seconds: 2));
     setState(() {
+      _currentUser.fullName = _fullNameController.text;
       _currentUser.email = _emailController.text;
       _currentUser.phone = _phoneController.text;
       _isLoading = false;
@@ -602,15 +604,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             if (!isMobile) ...[
               Row(
                 children: [
-                  Expanded(child: _buildReadOnlyField('FULL LEGAL NAME', '${_currentUser.fullName}'.toUpperCase())),
+                  Expanded(child: _buildEditableFieldWithIcon('FULL LEGAL NAME', _fullNameController)),
                   const SizedBox(width: 20),
-                  Expanded(child: _buildEditableFieldWithIcon('EMAIL', _emailController)),
+                  Expanded(child: _buildReadOnlyField('EMAIL', _currentUser.email)),
                 ],
               ),
               const SizedBox(height: 20),
               Row(
                 children: [
-                  Expanded(child: _buildEditableFieldWithIcon('CONTACT NUMBER', _phoneController)),
+                  Expanded(child: _buildEditableField('CONTACT NUMBER', _phoneController, Icons.phone_outlined)),
                   const SizedBox(width: 20),
                   Expanded(child: _buildDarkField('ACCOUNT AGE', _currentUser.accountAge)),
                 ],
@@ -618,7 +620,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ] else ...[
               _buildReadOnlyField('FULL LEGAL NAME', '${_currentUser.fullName}'.toUpperCase()),
               const SizedBox(height: 16),
-              _buildEditableFieldWithIcon('EMAIL', _emailController),
+              _buildReadOnlyField('EMAIL', _currentUser.email),
               const SizedBox(height: 16),
               _buildEditableFieldWithIcon('CONTACT NUMBER', _phoneController),
               const SizedBox(height: 16),
