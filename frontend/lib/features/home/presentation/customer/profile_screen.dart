@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:http/http.dart' as http;
+import 'dart:core';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
@@ -24,7 +25,7 @@ class UserModel {
   String fullName;
   String email;
   String? phone; 
-  final String memberSince;
+  final DateTime memberSince;
   final int orderCount;
   final bool isActive;
   final String? profileImageUrl;
@@ -49,14 +50,31 @@ class UserModel {
       fullName: json['full_name'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'], 
-      memberSince: json['created_at'] ?? '',
+      memberSince: DateTime.parse(json['created_at']),
       orderCount: 0, // backend doesn’t send yet
       isActive: true,
       profileImageUrl: json['profile_picture'],
     );
   }
 
-  String get accountAge => '365 DAYS';
+
+  // Calculate account age logic
+  String get accountAge {
+    final now = DateTime.now();
+    final diff = now.difference(memberSince);
+
+    if (diff.inDays < 1) {
+      return 'NEW ACCOUNT';
+    } else if (diff.inDays < 30) {
+      return '${diff.inDays} DAYS';
+    } else if (diff.inDays < 365) {
+      final months = (diff.inDays / 30).floor();
+      return '$months MONTHS';
+    } else {
+      final years = (diff.inDays / 365).floor();
+      return '$years YEARS';
+    }
+  }
 }
 
 class DeliveryAddress {
@@ -103,7 +121,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         fullName: '',
         email: widget.email,
         phone: null,
-        memberSince: '',
+        memberSince: DateTime.now(),
         orderCount: 0,
         isActive: true,
         profileImageUrl: null,
