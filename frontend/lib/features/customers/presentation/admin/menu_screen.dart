@@ -541,7 +541,7 @@ class _MenuCardState extends State<_MenuCard>
 
   @override
   Widget build(BuildContext context) {
-    final isOut = widget.item.isAvailable;
+    final isOut = !widget.item.isAvailable;
 
     return Container(
       decoration: BoxDecoration(
