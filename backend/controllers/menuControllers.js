@@ -9,7 +9,7 @@ const getAllMenuItems = async (req, res) => {
 
         // Category Filter
         if (category && category !== 'ALL') {
-            sql += " AND category = ?";
+            sql += " AND category_id = ?";
             params.push(category);
         }
 

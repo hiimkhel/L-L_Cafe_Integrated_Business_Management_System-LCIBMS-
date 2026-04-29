@@ -25,12 +25,12 @@ enum StockStatus { inStock, outOfStock, limitedStock }
 
 const List<Map<String, String>> _kCategories = [
   {'label': 'ALL', 'value': ''},
-  {'label': 'FOODS', 'value': 'foods'},
-  {'label': 'PARTY TRAY', 'value': 'party_tray'},
-  {'label': 'WAFFLES', 'value': 'waffles'},
-  {'label': 'COFFEE', 'value': 'coffee'},
-  {'label': 'NON-COFFEE DRINKS', 'value': 'non_coffee'},
-  {'label': 'FRAPPES', 'value': 'frappes'},
+  {'label': 'FOODS', 'value': '1'},
+  {'label': 'PARTY TRAY', 'value': '2'},
+  {'label': 'WAFFLES', 'value': '3'},
+  {'label': 'COFFEE', 'value': '4'},
+  {'label': 'NON-COFFEE DRINKS', 'value': '5'},
+  {'label': 'FRAPPES', 'value': '6'},
 ];
 
 
@@ -541,7 +541,7 @@ class _MenuCardState extends State<_MenuCard>
 
   @override
   Widget build(BuildContext context) {
-    final isOut = widget.item.isAvailable == StockStatus.outOfStock;
+    final isOut = widget.item.isAvailable;
 
     return Container(
       decoration: BoxDecoration(
