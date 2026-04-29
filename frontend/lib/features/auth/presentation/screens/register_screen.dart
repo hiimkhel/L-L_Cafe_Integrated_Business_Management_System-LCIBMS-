@@ -106,7 +106,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // ── Build ─────────────────────────────────────────────────────────────────
 
-  @override
+@override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bgBeige,
@@ -117,6 +117,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
             final isMobile = c.maxWidth < _kMobile;
             return isMobile ? _buildMobile() : _buildDesktop();
           }),
+
+          // ✅ MODIFIED BACK BUTTON TO MATCH IMAGE
+          Positioned(
+            top: 16, // Adjust this if needed based on SafeArea
+            left: 16,
+            child: SafeArea(
+              child: IconButton(
+                // 1. Used standard arrow_back for a simple look
+                // 2. Changed color to brown
+                // 3. Size increased slightly since there is no background circle
+                icon: const Icon(Icons.arrow_back, color: Colors.brown, size: 28),
+                onPressed: () {
+                  Navigator.pushReplacementNamed(context, '/'); 
+                },
+              ),
+            ),
+          ),
+
         ],
       ),
     );
