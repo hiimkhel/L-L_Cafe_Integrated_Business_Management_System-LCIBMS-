@@ -22,6 +22,9 @@ class AuthService {
 
     final idToken = await firebaseUser.getIdToken();
     
+    print("🔥 FIREBASE ID TOKEN:");
+    print(idToken);
+    
     final response = await http.post(
       Uri.parse('$baseUrl/$endpoint'),
       headers: {
@@ -37,8 +40,8 @@ class AuthService {
     }
 
     return User(
+      data['id'].toString(),
       data['email'],
-      '',
       stringToRole(data['role']),
     );
   }
@@ -50,7 +53,7 @@ class AuthService {
       password: password,
     );
 
-    return _authenticateWithBackend("");
+    return _authenticateWithBackend("authSync");
   }
 
   ///  Email Register
@@ -62,7 +65,7 @@ class AuthService {
 
     await credential.user?.updateDisplayName(fullName);
 
-    return _authenticateWithBackend("");
+    return _authenticateWithBackend("authSync");
   }
 
   ///  Google Sign-In
@@ -79,7 +82,7 @@ class AuthService {
         throw Exception("Google sign-in failed");
       }
 
-      return await _authenticateWithBackend("");
+      return await _authenticateWithBackend("authSync");
       
     } catch (e) {
       throw Exception("Google Sign-In Error: $e");
@@ -110,7 +113,7 @@ class AuthService {
         throw Exception("Firebase Facebook auth failed");
       }
 
-      return await _authenticateWithBackend("");
+      return await _authenticateWithBackend("authSync");
 
     } catch (e) {
       throw Exception("Facebook Sign-In Error: $e");

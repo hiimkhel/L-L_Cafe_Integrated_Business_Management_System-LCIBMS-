@@ -98,7 +98,7 @@ const authSync = async (req, res) => {
         full_name: name,
         profile_picture: picture,
         provider,
-        role: "customer", // default role ONLY here
+        role: "customer", 
       });
     }
 
