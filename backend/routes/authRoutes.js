@@ -11,6 +11,6 @@ const { login, register, authSync } = require("../controllers/authControllers");
 
 router.post('/login', login);
 router.post('/register', register);
-router.post("/", authSync);
+router.post("/authSync", authSync);
 
 module.exports = router;
