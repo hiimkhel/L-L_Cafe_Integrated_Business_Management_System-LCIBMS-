@@ -541,7 +541,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 24),
 
-          // ✅ UPDATED: Delete Account Button
+          // Delete Account Button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -604,13 +604,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Expanded(child: _buildReadOnlyField('FULL LEGAL NAME', '${_currentUser.fullName}'.toUpperCase())),
                   const SizedBox(width: 20),
-                  Expanded(child: _buildReadOnlyField('CUSTOMER ID / EMAIL', _currentUser.email)),
+                  Expanded(child: _buildEditableFieldWithIcon('EMAIL', _emailController)),
                 ],
               ),
               const SizedBox(height: 20),
               Row(
                 children: [
-                  Expanded(child: _buildEditableField('COMMUNICATION LINE', _phoneController, Icons.phone_outlined)),
+                  Expanded(child: _buildEditableFieldWithIcon('CONTACT NUMBER', _phoneController)),
                   const SizedBox(width: 20),
                   Expanded(child: _buildDarkField('ACCOUNT AGE', _currentUser.accountAge)),
                 ],
@@ -618,9 +618,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ] else ...[
               _buildReadOnlyField('FULL LEGAL NAME', '${_currentUser.fullName}'.toUpperCase()),
               const SizedBox(height: 16),
-              _buildEditableFieldWithIcon('CUSTOMER ID / EMAIL', _emailController),
+              _buildEditableFieldWithIcon('EMAIL', _emailController),
               const SizedBox(height: 16),
-              _buildEditableFieldWithIcon('COMMUNICATION LINE', _phoneController),
+              _buildEditableFieldWithIcon('CONTACT NUMBER', _phoneController),
               const SizedBox(height: 16),
               _buildDarkField('ACCOUNT AGE', _currentUser.accountAge),
             ],
