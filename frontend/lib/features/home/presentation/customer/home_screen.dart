@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
 import 'package:frontend/core/constants/cart_provider.dart';
@@ -74,7 +75,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   void _logout(BuildContext ctx) {
-    // ✅ FIXED: Wipe the user state, then route to the correct '/' path!
+
     if (widget.onLogout != null) {
       widget.onLogout!();
     }
@@ -545,22 +546,35 @@ class PromoCard extends StatelessWidget {
               style: const TextStyle(color: Colors.white70),
             ),
             const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                buttonText,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                width: 160,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: isPrimary ? Colors.white : AppColors.primary,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isPrimary ?_primary : Colors.white,
+                    width: 1.5,
+                  ),
+                ),
+                child: Text(
+                  buttonText,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                    letterSpacing: 1.5,
+                    color: isPrimary ? _primary : Colors.white,
+                  ),
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),
