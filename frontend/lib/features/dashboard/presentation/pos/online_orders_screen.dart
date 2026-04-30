@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/services/pos/order_service.dart';
 
 class OnlineOrdersScreen extends StatefulWidget {
   const OnlineOrdersScreen({super.key});
@@ -17,85 +18,10 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
   String _selectedFilter = 'ALL';
   String? _selectedOrderId;
   final TextEditingController _searchController = TextEditingController();
+  final OrderService _orderService = OrderService();
 
-  final List<Map<String, dynamic>> _orders = [
-    {
-      'id': '#WEB-4501',
-      'time': '2:15 PM',
-      'status': 'PENDING',
-      'customer': 'MARIA SANTOS',
-      'phone': '+63 917 123 4567',
-      'address': '123 Mabini St, Malate, Manila City',
-      'items': [
-        {'name': "S'MORE", 'qty': 2, 'price': 120.00},
-        {'name': 'CHICKEN BURGER', 'qty': 3, 'price': 85.00},
-      ],
-      'specialInstructions': 'Extra hot please',
-      'payment': 'E-WALLET - PAID',
-      'tax': 0.12,
-    },
-    {
-      'id': '#WEB-4502',
-      'time': '2:18 PM',
-      'status': 'ACCEPTED',
-      'customer': 'JUAN DELA CRUZ',
-      'phone': '+63 918 234 5678',
-      'address': '456 Roxas Blvd, Ermita, Manila City',
-      'items': [
-        {'name': 'HABANERO MANGO', 'qty': 1, 'price': 180.00},
-        {'name': 'RED VELVET FRAPPE', 'qty': 1, 'price': 170.00},
-      ],
-      'specialInstructions': null,
-      'payment': 'CASH - PENDING',
-      'tax': 0.12,
-    },
-    {
-      'id': '#WEB-4503',
-      'time': '2:10 PM',
-      'status': 'PENDING',
-      'customer': 'ANA REYES',
-      'phone': '+63 919 345 6789',
-      'address': '789 Taft Ave, Pasay City',
-      'items': [
-        {'name': 'NUTELLA FRAPPE', 'qty': 2, 'price': 195.00},
-        {'name': 'FRIES OVERLOAD', 'qty': 1, 'price': 195.00},
-        {'name': "S'MORE", 'qty': 1, 'price': 120.00},
-      ],
-      'specialInstructions': null,
-      'payment': 'E-WALLET - PAID',
-      'tax': 0.12,
-    },
-    {
-      'id': '#WEB-4504',
-      'time': '2:20 PM',
-      'status': 'REJECTED',
-      'customer': 'CARLOS GARCIA',
-      'phone': '+63 920 456 7890',
-      'address': '321 España Blvd, Sampaloc, Manila City',
-      'items': [
-        {'name': 'FRIES OVERLOAD', 'qty': 1, 'price': 220.00},
-        {'name': 'BISCOFF (NON-COFFEE)', 'qty': 1, 'price': 140.00},
-      ],
-      'specialInstructions': null,
-      'payment': 'CASH - PENDING',
-      'tax': 0.12,
-    },
-    {
-      'id': '#WEB-4505',
-      'time': '2:05 PM',
-      'status': 'ACCEPTED',
-      'customer': 'ROSA MENDOZA',
-      'phone': '+63 921 567 8901',
-      'address': '555 Quezon Ave, Quezon City',
-      'items': [
-        {'name': 'KITKAT WAFFLE', 'qty': 3, 'price': 165.00},
-        {'name': 'BISCOFF (NON-COFFEE)', 'qty': 2, 'price': 95.00},
-      ],
-      'specialInstructions': null,
-      'payment': 'E-WALLET - PAID',
-      'tax': 0.12,
-    },
-  ];
+  List<Map<String, dynamic>> _orders = [];
+  bool _isLoading = true;
 
   List<Map<String, dynamic>> get _filteredOrders {
     List<Map<String, dynamic>> result = _selectedFilter == 'ALL'
@@ -160,18 +86,49 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
     }
   }
 
-  void _acceptOrder(String id) {
-    setState(() {
-      final order = _orders.firstWhere((o) => o['id'] == id);
-      order['status'] = 'ACCEPTED';
-    });
+  Future<void> _acceptOrder(String id) async {
+    final order = _orders.firstWhere((o) => o['id'] == id);
+
+    final success = await _orderService.acceptOrder(order['db_id']);
+
+    if (success) {
+      await fetchOnlineOrders(); 
+    } else {
+      debugPrint("Failed to accept order");
+    }
   }
 
-  void _rejectOrder(String id) {
-    setState(() {
-      final order = _orders.firstWhere((o) => o['id'] == id);
-      order['status'] = 'REJECTED';
-    });
+ Future<void> _rejectOrder(String id) async {
+    final order = _orders.firstWhere((o) => o['id'] == id);
+
+    final success = await _orderService.rejectOrder(order['db_id']);
+
+    if (success) {
+      await fetchOnlineOrders(); // refresh from backend
+    } else {
+      debugPrint("Failed to reject order");
+    }
+  }
+
+  // Call services for data
+  Future<void> fetchOnlineOrders() async {
+    try {
+      final orders = await _orderService.fetchOnlineOrders();
+
+      setState(() {
+        _orders = orders;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print(e);
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchOnlineOrders();
   }
 
   @override
@@ -458,6 +415,10 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
 
   Widget _buildOrderGrid() {
     final orders = _filteredOrders;
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     if (orders.isEmpty) {
       return Center(
         child: Text(

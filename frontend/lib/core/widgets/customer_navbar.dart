@@ -27,29 +27,15 @@ class NotificationItem {
 final List<NotificationItem> _mockNotifications = [
   const NotificationItem(
     id: 'n1',
-    sender: 'SITE MANAGER',
-    time: '10:35 AM',
-    body: 'THE SIGNATURE BLEND BEANS FOR PROJECT #LL-9482 ARE READY.',
-    isPriority: true,
-  ),
-  const NotificationItem(
-    id: 'n2',
-    sender: 'SYSTEM',
-    time: '10:32 AM',
-    body: 'ORDER #LL-9482 STRUCTURAL ASSEMBLY HAS COMMENCED.',
-    isPriority: false,
-  ),
-  const NotificationItem(
-    id: 'n3',
-    sender: 'SYSTEM',
-    time: '09:15 AM',
-    body: 'WEATHER WARNING: SLIGHT HUMIDITY INCREASE DETECTED',
-    isPriority: false,
+    sender: 'L&L ADMIN',
+    time: 'JUST NOW',
+    body: 'WELCOME TO L&L CAFE! WE ARE SO EXCITED TO SERVE YOU THE BEST FOOD IN TOWN.',
+    isPriority: true, // Set to true so it has the nice highlight border!
   ),
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NOTIFICATION POPUP COMPONENT
+// NOTIFICATION PANEL
 // ─────────────────────────────────────────────────────────────────────────────
 
 class NotificationPanel extends StatelessWidget {
@@ -150,12 +136,12 @@ class NotificationPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
-                  'COMMS CHANNEL',
+                  'L&L CHANNEL', // ✅ Changed from COMMS CHANNEL
                   style: TextStyle(
                     fontFamily: 'Urbanist',
                     fontWeight: FontWeight.w900,
@@ -167,7 +153,7 @@ class NotificationPanel extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'ORDER TRANSMISSIONS',
+                  'ORDER NOTIFICATION', // ✅ Changed from ORDER TRANSMISSIONS
                   style: TextStyle(
                     fontFamily: 'Urbanist',
                     fontWeight: FontWeight.w900,
@@ -179,7 +165,7 @@ class NotificationPanel extends StatelessWidget {
               ],
             ),
           ),
-          if (!isMobile)
+          if (!isMobileHeader)
             GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () => Navigator.pop(context),
@@ -345,7 +331,7 @@ class NotificationPanel extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NAVBAR IMPLEMENTATION
+// GUEST NAVBAR
 // ─────────────────────────────────────────────────────────────────────────────
 
 class GuestNavbar extends StatefulWidget implements PreferredSizeWidget {
@@ -368,13 +354,46 @@ class GuestNavbar extends StatefulWidget implements PreferredSizeWidget {
 }
 
 class _GuestNavbarState extends State<GuestNavbar> {
-  bool _menuOpen = false;
+  OverlayEntry? _overlayEntry;
 
   static const _links = [
-    _NI('HOME', '/home'),
+    _NI('HOME', '/'),
     _NI('MENU', '/menu'),
     _NI('ORDERS', '/orders'),
+    _NI('ABOUT',   '/about'),
+    _NI('CONTACT', '/contact'),
   ];
+
+  @override
+  void dispose() {
+    _closeMenu();
+    super.dispose();
+  }
+
+  void _openMenu(BuildContext context) {
+    _closeMenu();
+    _overlayEntry = OverlayEntry(
+      builder: (_) => _GuestMobileMenu(
+        activeRoute: widget.activeRoute,
+        links: _links,
+        onClose: _closeMenu,
+        onNavigate: (route) {
+          _closeMenu();
+          Navigator.pushReplacementNamed(context, route);
+        },
+      ),
+    );
+    Overlay.of(context).insert(_overlayEntry!);
+    setState(() {});
+  }
+
+  void _closeMenu() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    if (mounted) setState(() {});
+  }
+
+  bool get _menuOpen => _overlayEntry != null;
 
   @override
   Widget build(BuildContext context) {
@@ -392,81 +411,67 @@ class _GuestNavbarState extends State<GuestNavbar> {
       decoration: BoxDecoration(
         color: const Color(0xF2EFE2C9),
         border: Border(
-          bottom: BorderSide(color: AppColors.primary.withOpacity(0.1)),
-        ),
+            bottom: BorderSide(color: AppColors.primary.withOpacity(0.1))),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 48),
-      child: Row(
-        children: [
-          _LogoImg(),
-          const SizedBox(width: 48),
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children:
-                    _links
-                        .map(
-                          (l) => Padding(
-                            padding: const EdgeInsets.only(right: 32),
-                            child: _NavLink(
-                              label: l.label,
-                              active: widget.activeRoute == l.route,
-                              onTap: () {
-                                if (widget.activeRoute != l.route) {
-                                  Navigator.pushReplacementNamed(
-                                    context,
-                                    l.route,
-                                  );
-                                }
-                              },
-                            ),
+      child: Row(children: [
+        _LogoImg(),
+        const SizedBox(width: 48),
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+                children: _links
+                    .map((l) => Padding(
+                          padding: const EdgeInsets.only(right: 32),
+                          child: _NavLink(
+                            label: l.label,
+                            active: widget.activeRoute == l.route,
+                            onTap: () {
+                              if (widget.activeRoute != l.route) {
+                                Navigator.pushReplacementNamed(
+                                    context, l.route);
+                              }
+                            },
                           ),
-                        )
-                        .toList(),
-              ),
-            ),
+                        ))
+                    .toList()),
           ),
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: widget.onLogin,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'LOGIN',
+        ),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onLogin,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text('LOGIN',
                 style: TextStyle(
-                  fontFamily: 'Urbanist',
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12,
-                  letterSpacing: 2.0,
-                  color: AppColors.primary,
-                ),
-              ),
-            ),
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                    letterSpacing: 2.0,
+                    color: AppColors.primary)),
           ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: widget.onJoinNow,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 11),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                boxShadow: const [
-                  BoxShadow(color: Color(0xFF2D2A26), offset: Offset(4, 4)),
-                ],
-              ),
-              child: const Text(
-                'JOIN NOW',
-                style: TextStyle(
-                  fontFamily: 'Urbanist',
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12,
-                  letterSpacing: 1.2,
-                  color: Colors.white,
-                ),
-              ),
+        ),
+        const SizedBox(width: 12),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onJoinNow,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 11),
+            decoration: BoxDecoration(
+              color: AppColors.secondary,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: const [
+                BoxShadow(color: Color(0xFF2D2A26), offset: Offset(3, 3))
+              ],
             ),
+            child: const Text('JOIN NOW',
+                style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                    letterSpacing: 1.2,
+                    color: Colors.white)),
           ),
         ],
       ),
@@ -474,148 +479,76 @@ class _GuestNavbarState extends State<GuestNavbar> {
   }
 
   Widget _buildMobile(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          height: 72,
-          decoration: BoxDecoration(
-            color: const Color(0xF2EFE2C9),
-            border: Border(
-              bottom: BorderSide(color: AppColors.primary.withOpacity(0.1)),
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            children: [
-              _LogoImg(),
-              const Spacer(),
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: widget.onLogin,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    'LOGIN',
-                    style: TextStyle(
-                      fontFamily: 'Urbanist',
-                      fontWeight: FontWeight.w900,
-                      fontSize: 11,
-                      letterSpacing: 2,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 2),
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: widget.onJoinNow,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 9,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.secondary,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Text(
-                    'JOIN NOW',
-                    style: TextStyle(
-                      fontFamily: 'Urbanist',
-                      fontWeight: FontWeight.w900,
-                      fontSize: 10,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => setState(() => _menuOpen = !_menuOpen),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: const [
-                      BoxShadow(color: Color(0x1A000000), blurRadius: 4),
-                    ],
-                  ),
-                  child: Icon(
-                    _menuOpen ? Icons.close : Icons.menu_rounded,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ],
+    return Container(
+      height: 72,
+      decoration: BoxDecoration(
+        color: const Color(0xF2EFE2C9),
+        border: Border(
+            bottom: BorderSide(color: AppColors.primary.withOpacity(0.1))),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(children: [
+        _LogoImg(),
+        const Spacer(),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onLogin,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text('LOGIN',
+                style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11,
+                    letterSpacing: 2,
+                    color: AppColors.primary)),
           ),
         ),
-        if (_menuOpen)
-          Positioned(
-            top: 72,
-            left: 0,
-            right: 0,
-            child: Container(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height - 72,
-              ),
-              color: AppColors.background,
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ..._links.map((e) {
-                    final isFirst = e.label == 'HOME';
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          setState(() => _menuOpen = false);
-                          if (widget.activeRoute != e.route) {
-                            Navigator.pushReplacementNamed(context, e.route);
-                          }
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 28,
-                            vertical: 22,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                isFirst
-                                    ? AppColors.secondary
-                                    : const Color(0xFFEFE2C9),
-                            borderRadius: BorderRadius.circular(22),
-                          ),
-                          child: Text(
-                            e.label,
-                            style: TextStyle(
-                              fontFamily: 'Urbanist',
-                              fontWeight: FontWeight.w900,
-                              fontSize: 20,
-                              letterSpacing: 1.5,
-                              color: isFirst ? Colors.white : AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ],
-              ),
+        const SizedBox(width: 6),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onJoinNow,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+            decoration: BoxDecoration(
+              color: AppColors.secondary,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Text('JOIN NOW',
+                style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 10,
+                    color: Colors.white)),
+          ),
+        ),
+        const SizedBox(width: 10),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _menuOpen ? _closeMenu() : _openMenu(context),
+          child: Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: const [BoxShadow(color: Color(0x1A000000), blurRadius: 4)],
+            ),
+            child: Icon(
+              _menuOpen ? Icons.close_rounded : Icons.menu_rounded,
+              color: AppColors.primary,
+              size: 20,
             ),
           ),
-      ],
+        ),
+      ]),
     );
   }
 }
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CUSTOMER NAVBAR
+// ─────────────────────────────────────────────────────────────────────────────
 
 class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
   final String activeRoute;
@@ -650,7 +583,7 @@ class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
         context: context,
         backgroundColor: Colors.transparent,
         isScrollControlled: true,
-        builder: (context) => const NotificationPanel(isMobile: true),
+        builder: (_) => const NotificationPanel(isMobile: true),
       );
     } else {
       showGeneralDialog(
@@ -710,11 +643,16 @@ class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DESKTOP CUSTOMER NAV
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _DesktopCustomerNav extends StatelessWidget {
   final String activeRoute;
   final int cartCount, notifCount;
   final VoidCallback? onCart, onNotif, onProfile, onLogout;
 
+  // ✅ All three nav links are declared and will navigate correctly
   static const _links = [
     _NI('HOME', '/home'),
     _NI('MENU', '/menu'),
@@ -815,6 +753,10 @@ class _DesktopCustomerNav extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MOBILE CUSTOMER NAV
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _MobileCustomerNav extends StatelessWidget {
   final String activeRoute;
   final int cartCount, notifCount;
@@ -881,18 +823,44 @@ class _MobileCustomerNav extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xF2EFE2C9),
         border: Border(
-          bottom: BorderSide(color: AppColors.primary.withOpacity(0.1)),
-        ),
+            bottom: BorderSide(color: AppColors.primary.withOpacity(0.1))),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          _LogoImg(),
-          const Spacer(),
-          _IconCircleBtn(
-            icon: Icons.notifications_none_rounded,
-            badge: notifCount,
-            onTap: onNotif,
+      child: Row(children: [
+        _LogoImg(),
+        const Spacer(),
+
+        _IconCircleBtn(
+          icon: Icons.notifications_none_rounded,
+          badge: notifCount,
+          onTap: onNotif,
+        ),
+        const SizedBox(width: 6),
+
+        _IconCircleBtn(
+          icon: Icons.shopping_cart_outlined,
+          badge: cartCount,
+          onTap: () {
+            if (onCart != null) onCart!();
+            if (activeRoute != '/cart') {
+              Navigator.pushReplacementNamed(context, '/cart');
+            }
+          },
+        ),
+        const SizedBox(width: 10),
+
+        // ✅ Hamburger → opens the side drawer with all nav links
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _openSideDrawer(context),
+          child: Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: const Color(0xFF2D2A26),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.menu_rounded, color: Colors.white, size: 18),
           ),
           const SizedBox(width: 6),
 
@@ -929,11 +897,16 @@ class _MobileCustomerNav extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SIDE DRAWER
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _SideDrawer extends StatelessWidget {
   final String activeRoute, userName, userClientId;
   final VoidCallback? onLogout;
   final void Function(String) onNav;
 
+  // ✅ All 4 routes listed — tapping any of them will navigate correctly
   static const _links = [
     _NID('HOME', '/home', Icons.grid_view_rounded),
     _NID('MENU', '/menu', Icons.receipt_long_rounded),
@@ -959,6 +932,7 @@ class _SideDrawer extends StatelessWidget {
         decoration: const BoxDecoration(color: Color(0xFF2D2A26)),
         child: Column(
           children: [
+            // User header
             Container(
               padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
               decoration: BoxDecoration(
@@ -1005,48 +979,70 @@ class _SideDrawer extends StatelessWidget {
                 ],
               ),
             ),
+
+            // Nav links
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
-                  children:
-                      _links
-                          .map(
-                            (l) => Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: () => onNav(l.route),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      l.icon,
-                                      color: AppColors.primary,
-                                      size: 22,
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Text(
-                                      l.label,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 14,
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                  children: _links.map((l) {
+                    final isActive = activeRoute == l.route;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => onNav(l.route),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: isActive
+                                ? AppColors.primary.withOpacity(0.15)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(children: [
+                            Icon(l.icon,
+                                color: isActive
+                                    ? AppColors.primary
+                                    : AppColors.primary.withOpacity(0.6),
+                                size: 22),
+                            const SizedBox(width: 16),
+                            Text(l.label,
+                                style: TextStyle(
+                                    fontFamily: 'Urbanist',
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                    color: isActive
+                                        ? AppColors.primary
+                                        : AppColors.primary.withOpacity(0.6))),
+                            if (isActive) ...[
+                              const Spacer(),
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle),
                               ),
-                            ),
-                          )
-                          .toList(),
+                            ],
+                          ]),
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
             ),
+
+            // Logout button
             Padding(
               padding: const EdgeInsets.all(24),
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
+                  Navigator.pop(context); // close drawer first
                   if (onLogout != null) onLogout!();
                   // LOGOUT ROUTING FOR SIDE DRAWER BUTTON
                   Navigator.pushNamedAndRemoveUntil(
@@ -1090,6 +1086,177 @@ class _SideDrawer extends StatelessWidget {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GUEST MOBILE MENU OVERLAY
+// Full-screen overlay that slides down from the navbar
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _GuestMobileMenu extends StatelessWidget {
+  final String activeRoute;
+  final List<_NI> links;
+  final VoidCallback onClose;
+  final void Function(String) onNavigate;
+
+  const _GuestMobileMenu({
+    required this.activeRoute,
+    required this.links,
+    required this.onClose,
+    required this.onNavigate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final screenH = MediaQuery.of(context).size.height;
+    return Material(
+      color: Colors.transparent,
+      child: SizedBox(
+        width: double.infinity,
+        height: screenH,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            // ── Navbar row (replaces the actual navbar visually) ──────────
+            Container(
+              height: 72,
+              color: const Color(0xF2EFE2C9),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  // Logo
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset(
+                      'assets/images/lnl.jpg',
+                      width: 44, height: 44, fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 44, height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Center(
+                          child: Text('L&L',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 10)),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  // LOGIN
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text('LOGIN',
+                        style: TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 11,
+                            letterSpacing: 2,
+                            color: AppColors.primary)),
+                  ),
+                  const SizedBox(width: 6),
+                  // JOIN NOW
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text('JOIN NOW',
+                        style: TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 10,
+                            color: Colors.white)),
+                  ),
+                  const SizedBox(width: 10),
+                  // X close button — white circle
+                  GestureDetector(
+                    onTap: onClose,
+                    child: Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: const [
+                          BoxShadow(color: Color(0x1A000000), blurRadius: 4)
+                        ],
+                      ),
+                      child: const Icon(Icons.close_rounded,
+                          color: Color(0xFF2D2A26), size: 20),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Menu items — natural height, no full-screen stretch ──────
+            Container(
+              color: AppColors.background,
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: links.map((e) {
+                  final isActive = activeRoute == e.route ||
+                      (e.route == '/' && activeRoute == '/home') ||
+                      (e.route == '/' && activeRoute == '/');
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: GestureDetector(
+                      onTap: () => onNavigate(e.route),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 28, vertical: 22),
+                        decoration: BoxDecoration(
+                          // Active → same color as JOIN NOW (secondary/gold)
+                          // Inactive → soft beige pill
+                          color: isActive
+                              ? AppColors.secondary
+                              : const Color(0xFFE8D9BF),
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        child: Text(
+                          e.label,
+                          style: TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 20,
+                            letterSpacing: 1.5,
+                            color: isActive
+                                ? Colors.white
+                                : AppColors.secondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            // Tap the rest of the screen to dismiss
+            Expanded(
+              child: GestureDetector(
+                onTap: onClose,
+                child: Container(color: Colors.transparent),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHARED HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _NI {
   final String label, route;

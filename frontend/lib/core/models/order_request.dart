@@ -1,0 +1,53 @@
+class OrderRequest {
+  final String source;
+  final String orderType;
+
+  final double subtotal;
+  final double deliveryFee;
+  final double total;
+
+  final String paymentMethod;
+  final String paymentStatus;
+
+  final String? customerName;
+  final String? customerPhone;
+
+  final List<Map<String, dynamic>> items;
+
+  final String? notes;
+  OrderRequest({
+    required this.source,
+    required this.orderType,
+    required this.subtotal,
+    required this.deliveryFee,
+    required this.total,
+    required this.paymentMethod,
+    required this.paymentStatus,
+    this.customerName,
+    this.customerPhone,
+    required this.items,
+    this.notes,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      "source": source.toLowerCase(),
+      "order_type": orderType.toLowerCase().replaceAll(' ', '-'),
+      "subtotal": subtotal,
+      "delivery_fee": deliveryFee,
+      "total": total,
+      "payment_method": _mapPaymentMethod(paymentMethod),
+      "payment_status": paymentStatus.toLowerCase(),
+      "customer_name": customerName,
+      "customer_phone": customerPhone,
+      "items": items,
+      "notes": notes
+    };
+  }
+}
+
+String _mapPaymentMethod(String method) {
+  String m = method.toLowerCase();
+  if (m == 'gcash' || m == 'maya' || m == 'e-wallet') return 'e-wallet';
+  return m; // returns 'cash' or 'card'
+}

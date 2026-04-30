@@ -30,4 +30,11 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     color: AppColors.textLight,
   );
+
+  static const TextStyle small = TextStyle(
+  fontFamily: fontFamily,
+  fontSize: 12,
+  color: AppColors.textDark,
+  );
+
 }
