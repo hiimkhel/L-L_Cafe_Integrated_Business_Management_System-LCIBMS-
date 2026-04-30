@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/features/customers/presentation/admin/customer_order_screen.dart';
 
 import 'features/home/presentation/customer/home_screen.dart';
 import 'features/dashboard/presentation/admin/dashboard_screen.dart';
@@ -19,7 +20,7 @@ import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // Your Profile Screen Import:
-import 'features/home/presentation/customer/profile_screen.dart'; 
+import 'features/home/presentation/customer/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +32,7 @@ void main() async {
 
   // Firebase Facebook OAuth Initilization
   await FacebookAuth.instance.webAndDesktopInitialize(
-    appId: dotenv.env['FACEBOOK_APP_ID']!, 
+    appId: dotenv.env['FACEBOOK_APP_ID']!,
     cookie: true,
     xfbml: true,
     version: "v13.0",
@@ -57,7 +58,7 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
 
   void logout() {
     setState(() {
-      currentUser = null; 
+      currentUser = null;
     });
   }
 
@@ -70,21 +71,33 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
         switch (settings.name) {
           case '/':
             return MaterialPageRoute(builder: (_) => _buildScreen());
-            
+
           case '/home':
-            return MaterialPageRoute(builder: (_) => CustomerHomeScreen(onLogout: logout)); 
-            
+            return MaterialPageRoute(
+              builder: (_) => CustomerHomeScreen(onLogout: logout),
+            );
+
           case '/cart':
-          case '/orders':
-            // ✅ TURNED BACK ON: Restored the actual CartScreen widget!
             return MaterialPageRoute(builder: (_) => const CartScreen());
-            
+
+          case '/orders':
+            return MaterialPageRoute(
+              builder: (_) => const CustomerOrderScreen(),
+            );
+
           case '/profile':
-            return MaterialPageRoute(builder: (_) => ProfileScreen(onLogout: logout));
+            return MaterialPageRoute(
+              builder: (_) => ProfileScreen(onLogout: logout),
+            );
 
           case '/menu':
-            return MaterialPageRoute(builder: (_) => const Scaffold(body: Center(child: Text('Menu Screen goes here'))));
-            
+            return MaterialPageRoute(
+              builder:
+                  (_) => const Scaffold(
+                    body: Center(child: Text('Menu Screen goes here')),
+                  ),
+            );
+
           default:
             return null;
         }

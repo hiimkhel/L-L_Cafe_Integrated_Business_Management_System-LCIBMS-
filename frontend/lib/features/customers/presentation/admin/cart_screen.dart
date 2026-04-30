@@ -366,7 +366,7 @@ class _CartScreenState extends State<CartScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '${_items.length} UNITS',
+                  '${orders.expand((o) => o.items).length} UNITS',
                   style: const TextStyle(
                     color: AppColors.primary,
                     fontSize: 11,
@@ -383,26 +383,35 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   //-----------------------------cartItemData-----------------------------------
-  final List<CartItem> _items = [
-    CartItem(
-      name: 'Caramel Biscoff',
-      category: 'Waffles',
-      price: 120.0,
-      originalPrice: 130.0,
-    ),
-    CartItem(
-      name: 'Hot Honey Sandwich',
-      category: 'Foods',
-      price: 115.0,
-      originalPrice: 110.0,
-    ),
-    CartItem(
-      name: 'Chicken Sandwich',
-      category: 'Foods',
-      price: 95.0,
-      originalPrice: 95.0,
+  final List<Order> orders = [
+    Order(
+      id: 'LL-001',
+      status: OrderStatus.pending,
+      items: [
+        CartItem(
+          name: 'Caramel Biscoff',
+          category: 'Waffles',
+          price: 120.0,
+          originalPrice: 130.0,
+        ),
+        CartItem(
+          name: 'Hot Honey Sandwich',
+          category: 'Foods',
+          price: 115.0,
+          originalPrice: 110.0,
+        ),
+        CartItem(
+          name: 'Chicken Sandwich',
+          category: 'Foods',
+          price: 95.0,
+          originalPrice: 95.0,
+        ),
+      ],
     ),
   ];
+
+  // flat list of CartItems from all orders
+  List<CartItem> get _cartItems2 => orders.expand((o) => o.items).toList();
 
   //--------------------------CartItems-----------------------------------
 
@@ -411,10 +420,10 @@ class _CartScreenState extends State<CartScreen> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      itemCount: _items.length,
+      itemCount: _cartItems2.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final item = _items[index];
+        final item = _cartItems2[index];
         return Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -514,7 +523,12 @@ class _CartScreenState extends State<CartScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   GestureDetector(
-                    onTap: () => setState(() => _items.removeAt(index)),
+                    onTap:
+                        () => setState(() {
+                          for (final order in orders) {
+                            if (order.items.remove(item)) break;
+                          }
+                        }),
                     child: Container(
                       width: 32,
                       height: 32,
@@ -596,8 +610,9 @@ class _CartScreenState extends State<CartScreen> {
 
   //--------------------------CartSummary-----------------------------------
   Widget _cartSummary({bool isMobile = false}) {
-    const double deliveryFee = 45.0;
-    final double subtotal = _items.fold(
+    //const double deliveryFee = 45.0;
+    final items = orders.expand((o) => o.items).toList();
+    final double subtotal = items.fold(
       0,
       (sum, item) => sum + (item.price * item.quantity),
     );
@@ -656,7 +671,7 @@ class _CartScreenState extends State<CartScreen> {
             ),
             const SizedBox(height: 20),
 
-            ..._items.map(
+            ..._cartItems2.map(
               (item) => Padding(
                 padding: const EdgeInsets.only(bottom: 14),
                 child: Row(
@@ -677,7 +692,7 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'X${item.quantity} UNITS',
+                            'X${orders.expand((o) => o.items).fold(0, (sum, i) => sum + i.quantity)} UNITS',
                             style: TextStyle(
                               color: AppColors.white.withOpacity(0.7),
                               fontSize: 9,
@@ -767,7 +782,7 @@ class _CartScreenState extends State<CartScreen> {
                       MaterialPageRoute(
                         builder:
                             (context) => CartCheckoutScreen(
-                              items: List<CartItem>.from(_items),
+                              items: orders.expand((o) => o.items).toList(),
                             ),
                       ),
                     ),
