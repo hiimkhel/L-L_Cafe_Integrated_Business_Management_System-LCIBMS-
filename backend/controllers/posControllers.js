@@ -154,7 +154,19 @@ const acceptOrder = async (req, res) => {
 
 
 const rejectOrder = async (req, res) => {
+    try{
+        const { id } = req.params;
 
+        await db.query(
+            `UPDATE orders SET status = 'rejected' WHERE id = ?`,
+            [id]
+        );
+
+        res.json({ success: true });
+    }catch(err){
+        console.error(err);
+        res.status(500).json({error: err.message})
+    }
 }
 
 module.exports = {getOrdersByStatus, updateOrderStatus, getOnlineOrders, acceptOrder, rejectOrder}
