@@ -86,18 +86,28 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
     }
   }
 
-  void _acceptOrder(String id) {
-    setState(() {
-      final order = _orders.firstWhere((o) => o['id'] == id);
-      order['status'] = 'ACCEPTED';
-    });
+  Future<void> _acceptOrder(String id) async {
+    final order = _orders.firstWhere((o) => o['id'] == id);
+
+    final success = await _orderService.acceptOrder(order['db_id']);
+
+    if (success) {
+      await fetchOnlineOrders(); 
+    } else {
+      debugPrint("Failed to accept order");
+    }
   }
 
-  void _rejectOrder(String id) {
-    setState(() {
-      final order = _orders.firstWhere((o) => o['id'] == id);
-      order['status'] = 'REJECTED';
-    });
+ Future<void> _rejectOrder(String id) async {
+    final order = _orders.firstWhere((o) => o['id'] == id);
+
+    final success = await _orderService.rejectOrder(order['db_id']);
+
+    if (success) {
+      await fetchOnlineOrders(); // refresh from backend
+    } else {
+      debugPrint("Failed to reject order");
+    }
   }
 
   // Call services for data
@@ -405,6 +415,10 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
 
   Widget _buildOrderGrid() {
     final orders = _filteredOrders;
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     if (orders.isEmpty) {
       return Center(
         child: Text(

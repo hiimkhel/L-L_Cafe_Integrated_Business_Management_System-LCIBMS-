@@ -118,4 +118,12 @@ class OrderService {
       'total': double.parse(o['total'].toString()),
     };
   }
+
+  Future<bool> acceptOrder(int id) async {
+    return await updateOrderStatus(id, 'preparing');
+  }
+
+  Future<bool> rejectOrder(int id) async {
+    return await updateOrderStatus(id, 'rejected');
+  }
 }
