@@ -1,4 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/features/customers/presentation/admin/customer_order_screen.dart';
+
+import 'features/home/presentation/customer/home_screen.dart';
+import 'features/dashboard/presentation/admin/dashboard_screen.dart';
+import 'features/home/presentation/rider/home_screen.dart';
+import 'features/auth/presentation/screens/login_screen.dart';
+import 'features/dashboard/presentation/rider/dashboard_screen.dart';
+import 'features/dashboard/presentation/pos/order_entry.dart';
+import 'features/home/presentation/customer/landing_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -20,6 +29,12 @@ import 'features/dashboard/presentation/pos/order_entry.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
 
+import 'features/checkout/customer/presentation/cart_checkout_screen.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+// Your Profile Screen Import:
+import 'features/home/presentation/customer/profile_screen.dart';
 // Shared cart state
 import 'core/constants/cart_provider.dart';
 
@@ -51,8 +66,10 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
   void setUser(User user) => setState(() => currentUser = user);
 
   void logout() {
+    setState(() {
+      currentUser = null;
+    });
     _cartNotifier.clear();
-    setState(() => currentUser = null);
   }
 
   // ── Navigation helpers ────────────────────────────────────────────────────

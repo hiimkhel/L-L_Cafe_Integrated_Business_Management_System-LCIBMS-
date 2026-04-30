@@ -15,3 +15,14 @@ class CartItem {
     this.quantity = 1,
   });
 }
+
+class Order {
+  final String id;
+  final List<CartItem> items;
+  OrderStatus status;
+
+  Order({required this.id, required this.items, this.status = OrderStatus.pending});
+}
+
+enum OrderStatus { pending, inProgress, archived }
+

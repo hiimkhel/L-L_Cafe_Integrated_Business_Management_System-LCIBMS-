@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/theme/app_colors.dart';
+import 'package:frontend/core/constants/cart_item.dart';
 
 const double _kMobile = 900;
 
@@ -54,20 +55,23 @@ class NotificationPanel extends StatelessWidget {
         height: MediaQuery.of(context).size.height,
         decoration: const BoxDecoration(
           color: Color(0xFFEFE2C9),
-          border: Border(left: BorderSide(color: Color(0x1AA98258), width: 1.0)),
+          border: Border(
+            left: BorderSide(color: Color(0x1AA98258), width: 1.0),
+          ),
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(40),
             bottomLeft: Radius.circular(40),
           ),
           boxShadow: [
-            BoxShadow(color: Color(0x33000000), blurRadius: 50, offset: Offset(-10, 0))
+            BoxShadow(
+              color: Color(0x33000000),
+              blurRadius: 50,
+              offset: Offset(-10, 0),
+            ),
           ],
         ),
         child: Column(
-          children: [
-            _buildHeader(context),
-            Expanded(child: _buildList()),
-          ],
+          children: [_buildHeader(context), Expanded(child: _buildList())],
         ),
       ),
     );
@@ -81,8 +85,9 @@ class NotificationPanel extends StatelessWidget {
           color: Color(0xFFEFE2C9),
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
-        constraints:
-            BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.75,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -110,8 +115,9 @@ class NotificationPanel extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(24, isMobileHeader ? 12 : 32, 24, 24),
       decoration: const BoxDecoration(
         color: Colors.transparent,
-        border:
-            Border(bottom: BorderSide(color: Color(0x1AA98258), width: 1.0)),
+        border: Border(
+          bottom: BorderSide(color: Color(0x1AA98258), width: 1.0),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -123,8 +129,11 @@ class NotificationPanel extends StatelessWidget {
               color: const Color(0xFF758C6D),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.notifications_rounded,
-                color: Colors.white, size: 24),
+            child: const Icon(
+              Icons.notifications_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 16),
           const Expanded(
@@ -168,8 +177,11 @@ class NotificationPanel extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
-                  child: Icon(Icons.close_rounded,
-                      color: Color(0xFFA98258), size: 20),
+                  child: Icon(
+                    Icons.close_rounded,
+                    color: Color(0xFFA98258),
+                    size: 20,
+                  ),
                 ),
               ),
             ),
@@ -191,24 +203,28 @@ class NotificationPanel extends StatelessWidget {
             color: Colors.white.withOpacity(item.isPriority ? 1.0 : 0.8),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: item.isPriority
-                  ? const Color(0x4D758C6D)
-                  : const Color(0x0DA98258),
+              color:
+                  item.isPriority
+                      ? const Color(0x4D758C6D)
+                      : const Color(0x0DA98258),
               width: 1.0,
             ),
-            boxShadow: item.isPriority
-                ? const [
-                    BoxShadow(
+            boxShadow:
+                item.isPriority
+                    ? const [
+                      BoxShadow(
                         color: Color(0x26000000),
                         blurRadius: 20,
-                        offset: Offset(0, 10))
-                  ]
-                : const [
-                    BoxShadow(
+                        offset: Offset(0, 10),
+                      ),
+                    ]
+                    : const [
+                      BoxShadow(
                         color: Color(0x0D000000),
                         blurRadius: 10,
-                        offset: Offset(0, 4))
-                  ],
+                        offset: Offset(0, 4),
+                      ),
+                    ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,9 +238,10 @@ class NotificationPanel extends StatelessWidget {
                         width: 10,
                         height: 10,
                         decoration: BoxDecoration(
-                          color: item.isPriority
-                              ? const Color(0xFF758C6D)
-                              : const Color(0x33A98258),
+                          color:
+                              item.isPriority
+                                  ? const Color(0xFF758C6D)
+                                  : const Color(0x33A98258),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -243,8 +260,11 @@ class NotificationPanel extends StatelessWidget {
                   ),
                   Row(
                     children: [
-                      const Icon(Icons.access_time_rounded,
-                          size: 12, color: Color(0x66A98258)),
+                      const Icon(
+                        Icons.access_time_rounded,
+                        size: 12,
+                        color: Color(0x66A98258),
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         item.time,
@@ -256,7 +276,7 @@ class NotificationPanel extends StatelessWidget {
                         ),
                       ),
                     ],
-                  )
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -277,13 +297,16 @@ class NotificationPanel extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 16),
                   decoration: const BoxDecoration(
                     border: Border(
-                        top: BorderSide(
-                            color: Color(0x1A758C6D), width: 1.0)),
+                      top: BorderSide(color: Color(0x1A758C6D), width: 1.0),
+                    ),
                   ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.warning_rounded,
-                          size: 14, color: Color(0xFF758C6D)),
+                  child: Row(
+                    children: const [
+                      Icon(
+                        Icons.warning_rounded,
+                        size: 14,
+                        color: Color(0xFF758C6D),
+                      ),
                       SizedBox(width: 8),
                       Text(
                         'PRIORITY TRANSMISSION',
@@ -334,7 +357,9 @@ class _GuestNavbarState extends State<GuestNavbar> {
   OverlayEntry? _overlayEntry;
 
   static const _links = [
-    _NI('HOME',    '/'),
+    _NI('HOME', '/'),
+    _NI('MENU', '/menu'),
+    _NI('ORDERS', '/orders'),
     _NI('ABOUT',   '/about'),
     _NI('CONTACT', '/contact'),
   ];
@@ -372,10 +397,12 @@ class _GuestNavbarState extends State<GuestNavbar> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, c) {
-      final isMobile = c.maxWidth < _kMobile;
-      return isMobile ? _buildMobile(context) : _buildDesktop(context);
-    });
+    return LayoutBuilder(
+      builder: (context, c) {
+        final isMobile = c.maxWidth < _kMobile;
+        return isMobile ? _buildMobile(context) : _buildDesktop(context);
+      },
+    );
   }
 
   Widget _buildDesktop(BuildContext context) {
@@ -446,8 +473,8 @@ class _GuestNavbarState extends State<GuestNavbar> {
                     letterSpacing: 1.2,
                     color: Colors.white)),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 
@@ -565,28 +592,34 @@ class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
         barrierLabel: 'Dismiss',
         barrierColor: Colors.black.withOpacity(0.3),
         transitionDuration: const Duration(milliseconds: 350),
-        pageBuilder: (_, __, ___) => const Align(
-          alignment: Alignment.centerRight,
-          child: NotificationPanel(isMobile: false),
-        ),
-        transitionBuilder: (_, animation, __, child) => SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(1, 0),
-            end: Offset.zero,
-          ).animate(
-              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
-          child: child,
-        ),
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return const Align(
+            alignment: Alignment.centerRight,
+            child: NotificationPanel(isMobile: false),
+          );
+        },
+        transitionBuilder: (context, animation, secondaryAnimation, child) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(1, 0),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            ),
+            child: child,
+          );
+        },
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, c) {
-      final bool isMobile = c.maxWidth < _kMobile;
-      return isMobile
-          ? _MobileCustomerNav(
+    return LayoutBuilder(
+      builder: (context, c) {
+        final bool isMobile = c.maxWidth < _kMobile;
+        return isMobile
+            ? _MobileCustomerNav(
               activeRoute: activeRoute,
               cartCount: cartCount,
               notifCount: notifCount,
@@ -596,7 +629,7 @@ class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
               onNotif: () => _showNotifications(context, true),
               onLogout: onLogout,
             )
-          : _DesktopCustomerNav(
+            : _DesktopCustomerNav(
               activeRoute: activeRoute,
               cartCount: cartCount,
               notifCount: notifCount,
@@ -605,7 +638,8 @@ class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
               onProfile: onProfile,
               onLogout: onLogout,
             );
-    });
+      },
+    );
   }
 }
 
@@ -620,8 +654,8 @@ class _DesktopCustomerNav extends StatelessWidget {
 
   // ✅ All three nav links are declared and will navigate correctly
   static const _links = [
-    _NI('HOME',   '/home'),
-    _NI('MENU',   '/menu'),
+    _NI('HOME', '/home'),
+    _NI('MENU', '/menu'),
     _NI('ORDERS', '/orders'),
   ];
 
@@ -642,76 +676,79 @@ class _DesktopCustomerNav extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xF2EFE2C9),
         border: Border(
-            bottom: BorderSide(color: AppColors.primary.withOpacity(0.1))),
+          bottom: BorderSide(color: AppColors.primary.withOpacity(0.1)),
+        ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 48),
-      child: Row(children: [
-        _LogoImg(),
-        const SizedBox(width: 48),
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: _links.map((l) => Padding(
-                padding: const EdgeInsets.only(right: 32),
-                child: _NavLink(
-                  label: l.label,
-                  active: activeRoute == l.route,
-                  // ✅ pushNamed navigates without removing the back stack;
-                  //    use pushReplacementNamed so back arrow doesn't stack duplicates
-                  onTap: () {
-                    if (activeRoute != l.route) {
-                      Navigator.pushReplacementNamed(context, l.route);
-                    }
-                  },
-                ),
-              )).toList(),
+      child: Row(
+        children: [
+          _LogoImg(),
+          const SizedBox(width: 48),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children:
+                    _links
+                        .map(
+                          (l) => Padding(
+                            padding: const EdgeInsets.only(right: 32),
+                            child: _NavLink(
+                              label: l.label,
+                              active: activeRoute == l.route,
+                              onTap: () {
+                                if (activeRoute != l.route) {
+                                  Navigator.pushReplacementNamed(
+                                    context,
+                                    l.route,
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                        )
+                        .toList(),
+              ),
             ),
           ),
-        ),
 
-        // Notifications
-        _IconCircleBtn(
-          icon: Icons.notifications_none_rounded,
-          badge: notifCount,
-          onTap: onNotif,
-        ),
-        const SizedBox(width: 16),
+          _IconCircleBtn(
+            icon: Icons.notifications_none_rounded,
+            badge: notifCount,
+            onTap: onNotif,
+          ),
+          const SizedBox(width: 16),
 
-        // Cart → navigates to /cart (Orders is a separate screen)
-        _IconCircleBtn(
-          icon: Icons.shopping_cart_outlined,
-          badge: cartCount,
-          onTap: () {
-            if (onCart != null) onCart!();
-            if (activeRoute != '/cart') {
-              Navigator.pushReplacementNamed(context, '/cart');
-            }
-          },
-        ),
-        const SizedBox(width: 16),
+          _IconCircleBtn(
+            icon: Icons.shopping_cart_outlined,
+            badge: cartCount,
+            onTap: () {
+              if (onCart != null) onCart!();
+              if (activeRoute != '/cart') Navigator.pushNamed(context, '/cart');
+            },
+          ),
+          const SizedBox(width: 16),
 
-        // Profile
-        _IconCircleBtn(
-          icon: Icons.person_outline_rounded,
-          onTap: () {
-            if (onProfile != null) onProfile!();
-            if (activeRoute != '/profile') {
-              Navigator.pushReplacementNamed(context, '/profile');
-            }
-          },
-        ),
-        const SizedBox(width: 16),
+          _IconCircleBtn(
+            icon: Icons.person_outline_rounded,
+            onTap: () {
+              if (onProfile != null) onProfile!();
+              if (activeRoute != '/profile')
+                Navigator.pushNamed(context, '/profile');
+            },
+          ),
+          const SizedBox(width: 16),
 
-        // Logout
-        _IconCircleBtn(
-          icon: Icons.logout_rounded,
-          onTap: () {
-            if (onLogout != null) onLogout!();
-            Navigator.pushNamedAndRemoveUntil(context, '/', (r) => false);
-          },
-        ),
-      ]),
+          // LOGOUT ROUTING FOR DESKTOP
+          _IconCircleBtn(
+            icon: Icons.logout_rounded,
+            onTap: () {
+              if (onLogout != null) onLogout!();
+              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -743,30 +780,38 @@ class _MobileCustomerNav extends StatelessWidget {
       barrierDismissible: true,
       barrierLabel: '',
       barrierColor: Colors.black.withOpacity(0.5),
-      pageBuilder: (_, __, ___) => Align(
-        alignment: Alignment.centerRight,
-        child: _SideDrawer(
-          activeRoute: activeRoute,
-          userName: userName ?? 'JANE DOE',
-          userClientId: userClientId ?? 'CLIENT #LL-00124',
-          onLogout: () {
-            if (onLogout != null) onLogout!();
-            Navigator.pushNamedAndRemoveUntil(context, '/', (r) => false);
-          },
-          // ✅ onNav closes the drawer first, then navigates to the tapped route
-          onNav: (route) {
-            Navigator.pop(context); // close drawer
-            if (activeRoute != route) {
-              Navigator.pushReplacementNamed(context, route);
-            }
-          },
-        ),
-      ),
-      transitionBuilder: (_, anim, __, child) => SlideTransition(
-        position: Tween(begin: const Offset(1, 0), end: Offset.zero)
-            .animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
-        child: child,
-      ),
+      pageBuilder:
+          (_, __, ___) => Align(
+            alignment: Alignment.centerRight,
+            child: _SideDrawer(
+              activeRoute: activeRoute,
+              userName: userName ?? 'JANE DOE',
+              userClientId: userClientId ?? 'CLIENT #LL-00124',
+              onLogout: () {
+                if (onLogout != null) onLogout!();
+                // LOGOUT ROUTING FOR MOBILE
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/',
+                  (route) => false,
+                );
+              },
+              onNav: (route) {
+                Navigator.pop(context); // Close Drawer
+                if (activeRoute != route) {
+                  Navigator.pushNamed(context, route);
+                }
+              },
+            ),
+          ),
+      transitionBuilder:
+          (_, anim, __, child) => SlideTransition(
+            position: Tween(
+              begin: const Offset(1, 0),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
+            child: child,
+          ),
       transitionDuration: const Duration(milliseconds: 280),
     );
   }
@@ -817,8 +862,37 @@ class _MobileCustomerNav extends StatelessWidget {
             ),
             child: const Icon(Icons.menu_rounded, color: Colors.white, size: 18),
           ),
-        ),
-      ]),
+          const SizedBox(width: 6),
+
+          _IconCircleBtn(
+            icon: Icons.shopping_cart_outlined,
+            badge: cartCount,
+            onTap: () {
+              if (onCart != null) onCart!();
+              if (activeRoute != '/cart') Navigator.pushNamed(context, '/cart');
+            },
+          ),
+          const SizedBox(width: 10),
+
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _openSideDrawer(context),
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2D2A26),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.menu_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -834,9 +908,9 @@ class _SideDrawer extends StatelessWidget {
 
   // ✅ All 4 routes listed — tapping any of them will navigate correctly
   static const _links = [
-    _NID('HOME',    '/home',    Icons.grid_view_rounded),
-    _NID('MENU',    '/menu',    Icons.receipt_long_rounded),
-    _NID('ORDERS',  '/orders',  Icons.shopping_cart_outlined),
+    _NID('HOME', '/home', Icons.grid_view_rounded),
+    _NID('MENU', '/menu', Icons.receipt_long_rounded),
+    _NID('ORDERS', '/orders', Icons.shopping_cart_outlined),
     _NID('PROFILE', '/profile', Icons.person_outline_rounded),
   ];
 
@@ -863,35 +937,47 @@ class _SideDrawer extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
               decoration: BoxDecoration(
                 border: Border(
-                    bottom: BorderSide(color: Colors.white.withOpacity(0.1))),
+                  bottom: BorderSide(color: Colors.white.withOpacity(0.1)),
+                ),
               ),
-              child: Row(children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: const BoxDecoration(
-                      color: Color(0xFF758C6D), shape: BoxShape.circle),
-                  child: const Icon(Icons.person_rounded,
-                      color: Colors.white, size: 28),
-                ),
-                const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(userName,
+              child: Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF758C6D),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.person_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        userName,
                         style: const TextStyle(
-                            fontFamily: 'Urbanist',
-                            fontWeight: FontWeight.w900,
-                            fontSize: 15,
-                            color: Colors.white)),
-                    Text(userClientId,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        userClientId,
                         style: TextStyle(
-                            fontFamily: 'Urbanist',
-                            fontSize: 11,
-                            color: AppColors.primary)),
-                  ],
-                ),
-              ]),
+                          fontSize: 11,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
 
             // Nav links
@@ -958,6 +1044,12 @@ class _SideDrawer extends StatelessWidget {
                 onTap: () {
                   Navigator.pop(context); // close drawer first
                   if (onLogout != null) onLogout!();
+                  // LOGOUT ROUTING FOR SIDE DRAWER BUTTON
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/',
+                    (route) => false,
+                  );
                 },
                 child: Container(
                   width: double.infinity,
@@ -969,15 +1061,20 @@ class _SideDrawer extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.logout_rounded,
-                          color: AppColors.primary, size: 18),
+                      Icon(
+                        Icons.logout_rounded,
+                        color: AppColors.primary,
+                        size: 18,
+                      ),
                       const SizedBox(width: 10),
-                      Text('LOGOUT',
-                          style: TextStyle(
-                              fontFamily: 'Urbanist',
-                              fontWeight: FontWeight.w900,
-                              fontSize: 13,
-                              color: AppColors.primary)),
+                      Text(
+                        'LOGOUT',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
+                          color: AppColors.primary,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1182,19 +1279,25 @@ class _LogoImg extends StatelessWidget {
         width: 44,
         height: 44,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-              color: AppColors.secondary,
-              borderRadius: BorderRadius.circular(12)),
-          child: const Center(
-              child: Text('L&L',
+        errorBuilder:
+            (_, __, ___) => Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.secondary,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: Text(
+                  'L&L',
                   style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 10))),
-        ),
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+            ),
       ),
     );
   }
@@ -1217,20 +1320,23 @@ class _NavLink extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(label,
-                style: TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                    color: active ? AppColors.secondary : AppColors.primary)),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 12,
+                color: active ? AppColors.secondary : AppColors.primary,
+              ),
+            ),
             if (active) ...[
               const SizedBox(height: 3),
               Container(
                 height: 3,
                 width: 24,
                 decoration: BoxDecoration(
-                    color: AppColors.secondary,
-                    borderRadius: BorderRadius.circular(100)),
+                  color: AppColors.secondary,
+                  borderRadius: BorderRadius.circular(100),
+                ),
               ),
             ],
           ],
@@ -1252,45 +1358,51 @@ class _IconCircleBtn extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: Stack(clipBehavior: Clip.none, children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
                   color: Color(0x1A000000),
                   blurRadius: 4,
-                  offset: Offset(0, 2))
-            ],
-          ),
-          child: Icon(icon, color: const Color(0xFF2D2A26), size: 17),
-        ),
-        
-        // ✅ FIX: This ensures the red dot ONLY appears if the badge is 1 or more
-        if (badge > 0)
-          Positioned(
-            top: -3,
-            right: -3,
-            child: Container(
-              width: 15,
-              height: 15,
-              decoration: BoxDecoration(
-                color: AppColors.secondary,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 1.5),
-              ),
-              child: Center(
-                child: Text('$badge',
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold))),
+                  offset: Offset(0, 2),
+                ),
+              ],
             ),
+            child: Icon(icon, color: const Color(0xFF2D2A26), size: 17),
           ),
-      ]),
+          if (badge > 0)
+            Positioned(
+              top: -3,
+              right: -3,
+              child: Container(
+                width: 15,
+                height: 15,
+                decoration: BoxDecoration(
+                  color: AppColors.secondary,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 1.5),
+                ),
+                child: Center(
+                  child: Text(
+                    '$badge',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 7,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
