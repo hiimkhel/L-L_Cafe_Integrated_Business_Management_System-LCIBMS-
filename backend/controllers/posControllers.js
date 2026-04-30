@@ -63,4 +63,77 @@ const updateOrderStatus = async (req, res) => {
     }
 }
 
-module.exports = {getOrdersByStatus, updateOrderStatus}
+
+const getOnlineOrders = async (req, res ) => {
+
+    try {
+        const [rows] = await db.query(`
+        SELECT 
+            o.id,
+            o.order_number,
+            o.customer_name,
+            o.customer_phone,
+            o.status,
+            o.subtotal,
+            o.delivery_fee,
+            o.total,
+            o.payment_status,
+            o.payment_method,
+            o.notes,
+            oi.id AS item_id,
+            oi.item_name,
+            oi.quantity,
+            oi.unit_price,
+            oi.subtotal AS item_subtotal
+        FROM orders o
+        LEFT JOIN order_items oi ON oi.order_id = o.id
+        WHERE o.source = 'online'
+        ORDER BY o.created_at DESC
+        `);
+
+        const ordersMap = {};
+
+        rows.forEach(row => {
+        if (!ordersMap[row.id]) {
+            ordersMap[row.id] = {
+            id: row.id,
+            order_number: row.order_number,
+            customer_name: row.customer_name,
+            customer_phone: row.customer_phone,
+            status: row.status,
+            subtotal: row.subtotal,
+            delivery_fee: row.delivery_fee,
+            total: row.total,
+            payment_status: row.payment_status,
+            payment_method: row.payment_method,
+            notes: row.notes,
+            items: []
+            };
+        }
+
+        if (row.item_id) {
+            ordersMap[row.id].items.push({
+            id: row.item_id,
+            name: row.item_name,
+            quantity: row.quantity,
+            unit_price: row.unit_price,
+            subtotal: row.item_subtotal
+            });
+        }
+        });
+
+        res.json({
+        success: true,
+        data: Object.values(ordersMap)
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({
+        success: false,
+        message: "Failed to fetch online orders"
+        });
+    }
+}
+
+module.exports = {getOrdersByStatus, updateOrderStatus, getOnlineOrders}
