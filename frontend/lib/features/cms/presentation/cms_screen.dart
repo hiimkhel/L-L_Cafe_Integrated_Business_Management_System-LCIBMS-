@@ -3,6 +3,8 @@ import '../../../../core/widgets/admin_sidebar.dart';
 import '../../../../config/theme/app_colors.dart';
 import "../../../core/widgets/admin_header.dart";
 import 'package:frontend/core/services/customer/cms_service.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:convert';
 
 class CMSScreen extends StatefulWidget {
   final int activeIndex;
@@ -59,6 +61,7 @@ class CMSMainSection extends StatefulWidget {
 }
 
 class _CMSMainSectionState extends State<CMSMainSection> {
+
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descController = TextEditingController();
   final TextEditingController buttonController = TextEditingController();
@@ -73,6 +76,10 @@ class _CMSMainSectionState extends State<CMSMainSection> {
   };
 
   final List<String> cardOptions = ["primary", "secondary"];
+
+  // Tracker for pending image ID
+  int? _uploadedImageId;
+  bool _isUploadingImage = false;
 
   @override
   void initState() {
@@ -101,7 +108,7 @@ class _CMSMainSectionState extends State<CMSMainSection> {
   }
 
   Future<void> handlePublish() async {
-    debugPrint("CMS_DEBUG: Publish Button Clicked");
+    
 
     if (_isPublishing) {
       debugPrint("CMS_DEBUG: Blocked - already publishing");
@@ -118,38 +125,44 @@ class _CMSMainSectionState extends State<CMSMainSection> {
     try {
       final idToUse = selectedPromo!['documentId'] ?? selectedPromo!['id'];
 
-      final success = await CmsService.publishPromotion(
-        idToUse,
-        {
-          "Title": titleController.text,
-          "buttonText": buttonController.text,
-          "description": [
-            {
-              "type": "paragraph",
-              "children": [{"type": "text", "text": descController.text}]
-            }
-          ],
-        },
-      );
+      final Map<String, dynamic> payload = {
+        "Title": titleController.text,
+        "buttonText": buttonController.text,
+        "description": [
+          {
+            "type": "paragraph",
+            "children": [{"type": "text", "text": descController.text}]
+          }
+        ],
+      };
 
+      // If an image was uploaded, attach its ID to the promotion
+      if (_uploadedImageId != null) {
+        payload["image"] = _uploadedImageId;
+      }
+
+      final messenger = ScaffoldMessenger.of(context); 
+      
+      final success = await CmsService.publishPromotion(idToUse, payload);
+      debugPrint("CMS_DEBUG: Target ID: $idToUse");
+      debugPrint("CMS_DEBUG: Image ID to link: $_uploadedImageId");
+      debugPrint("CMS_DEBUG: Full Payload: ${jsonEncode({"data": payload})}");
+
+      if (!mounted) return;
 
       if (mounted) {
-        
-        // Use root messenger to be safe
-        final messenger = ScaffoldMessenger.of(context);
-        messenger.removeCurrentSnackBar();
 
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(success ? "Promotion updated successfully!" : "Failed to update promotion."),
-            backgroundColor: success ? Colors.green : Colors.red,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 4),
-            margin: const EdgeInsets.all(20), // Makes it float clearly
-          ),
-        );
+      messenger.removeCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(success ? "Promotion updated!" : "Failed to update."),
+          backgroundColor: success ? Colors.green : Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
 
         if (success) {
+          setState(() => _uploadedImageId = null);
           await loadPromo(selectedCard);
         }
       } 
@@ -160,8 +173,60 @@ class _CMSMainSectionState extends State<CMSMainSection> {
         setState(() => _isPublishing = false);
       }
     }
-  }
+  } 
 
+  // Function to handle the upload from the UI
+  Future<void> handleImageUpload() async {
+
+    const int maxFileSizeInBytes = 10 * 1024 * 1024; 
+
+    try {
+      FilePickerResult? result = await FilePicker.pickFiles(
+        type: FileType.image,
+        withData: true, 
+      );
+
+      if (result != null && result.files.single.bytes != null) {
+        final file = result.files.single;
+
+
+        if (file.size > maxFileSizeInBytes) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("File is too large (${(file.size / 1024 / 1024).toStringAsFixed(1)}MB). Max limit is 10MB."),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+          return;
+        }
+
+        setState(() => _isUploadingImage = true);
+        
+        final bytes = file.bytes!;
+        final name = file.name;
+
+
+        final id = await CmsService.uploadFile(bytes, name);
+
+        setState(() {
+          _uploadedImageId = id;
+          _isUploadingImage = false;
+        });
+
+          debugPrint("CMS_DEBUG: Image ID saved in state: $_uploadedImageId");
+        if (mounted && id != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Image uploaded successfully!")),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("Picker Error: $e");
+      setState(() => _isUploadingImage = false);
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -185,6 +250,8 @@ class _CMSMainSectionState extends State<CMSMainSection> {
                 buttonController: buttonController,
                 selectedPromo: selectedPromo,
                 onPublish: handlePublish,
+                isUploadingImage: _isUploadingImage,
+                onUploadPressed: handleImageUpload,
                 isPublishing: _isPublishing,
               ),
             ),
@@ -206,6 +273,8 @@ class MainCard extends StatelessWidget {
   final TextEditingController descController;
   final TextEditingController buttonController;
   final Map<String, dynamic>? selectedPromo;
+  final VoidCallback onUploadPressed;
+  final bool isUploadingImage;
   final VoidCallback onPublish;
   final bool isPublishing;
 
@@ -220,7 +289,9 @@ class MainCard extends StatelessWidget {
     required this.buttonController,
     required this.selectedPromo,
     required this.onPublish,
+    required this.onUploadPressed,
     required this.isPublishing,
+    required this.isUploadingImage,
   });
 
   @override
@@ -240,13 +311,14 @@ class MainCard extends StatelessWidget {
             onPublish: onPublish,
             cardTypeLabels: cardTypeLabels,
             selectedPromo: selectedPromo,
+            isUploadingImage: isUploadingImage,
             isPublishing: isPublishing,
           ),
           const SizedBox(height: 20),
           Expanded(
             child: Row(
               children: [
-                Expanded(child: ContentInfo(titleController: titleController, descController: descController)),
+                Expanded(child: ContentInfo(titleController: titleController, descController: descController, onUploadPressed: onUploadPressed)),
                 const VerticalDivider(color: AppColors.primary, width: 60, thickness: 1.5),
                 const Expanded(child: ContentPreview()),
               ],
@@ -263,6 +335,8 @@ class TopControls extends StatelessWidget {
   final List<String> cardOptions;
   final Map<String, String> cardTypeLabels;
   final Function(String?) onChanged;
+  final bool isUploadingImage;
+
   final VoidCallback onPublish;
   final Map<String, dynamic>? selectedPromo;
   final bool isPublishing;
@@ -275,6 +349,7 @@ class TopControls extends StatelessWidget {
     required this.cardTypeLabels,
     required this.onPublish,
     required this.selectedPromo,
+    required this.isUploadingImage,
     required this.isPublishing,
   });
 
@@ -319,10 +394,12 @@ class TopControls extends StatelessWidget {
 class ContentInfo extends StatelessWidget {
   final TextEditingController titleController;
   final TextEditingController descController;
+  final VoidCallback onUploadPressed;
   const ContentInfo({
     super.key,
     required this.titleController,
     required this.descController,
+    required this.onUploadPressed
   });
 
   @override
@@ -333,7 +410,7 @@ class ContentInfo extends StatelessWidget {
         const SizedBox(height: 16),
         SubtitleRow(title: "Description", controller: descController),
         const SizedBox(height: 16),
-        const ImageUploadRow(),
+        ImageUploadRow(onPressed: onUploadPressed),
       ],
     );
   }
@@ -444,7 +521,8 @@ class SubtitleRow extends StatelessWidget {
 }
 
 class ImageUploadRow extends StatelessWidget {
-  const ImageUploadRow({super.key});
+  final VoidCallback onPressed;
+  const ImageUploadRow({super.key, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -469,7 +547,7 @@ class ImageUploadRow extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: onPressed,
               style: ElevatedButton.styleFrom(
                 foregroundColor: AppColors.primary,
                 backgroundColor: AppColors.textLight,

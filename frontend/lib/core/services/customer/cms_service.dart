@@ -61,7 +61,7 @@ class CmsService {
     Map<String, dynamic> data,
   ) async {
     try {
-      // 1. Fixed URL (removed the extra /api)
+      
       final url = Uri.parse("$baseUrl/promotions/$idOrDocId");
 
       debugPrint("Attempting PUT to: $url");
@@ -72,8 +72,6 @@ class CmsService {
         body: jsonEncode({
           "data": {
             ...data,
-            // Note: Strapi 5 uses 'publishedAt' for publishing logic, 
-            // but if you have a custom boolean field 'isPublished', keep this.
           }
         }),
 
@@ -93,6 +91,39 @@ class CmsService {
     }
   }
 
+
+ static Future<int?> uploadFile(dynamic fileBytes, String fileName) async {
+  try {
+    // Strip '/api' from the baseUrl for the upload endpoint
+    var request = http.MultipartRequest('POST', Uri.parse("$baseUrl/upload"));
+    
+    debugPrint("CMS_DEBUG: Uploading to $baseUrl/upload");
+
+    request.files.add(http.MultipartFile.fromBytes(
+      'files',
+      fileBytes,
+      filename: fileName,
+    ));
+
+    var response = await request.send();
+    var responseData = await response.stream.bytesToString();
+    
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      var decoded = json.decode(responseData);
+      // Strapi returns a list; we take the first item's ID
+      final int imageId = decoded[0]['id'];
+      debugPrint("CMS_DEBUG: Upload Success! Image ID: $imageId");
+      return imageId;
+    } else {
+      debugPrint("CMS_DEBUG: Upload Failed. Status: ${response.statusCode}");
+      debugPrint("CMS_DEBUG: Upload Error Body: $responseData");
+      return null;
+    }
+  } catch (e) {
+    debugPrint("CMS_DEBUG: Upload Exception: $e");
+    return null;
+  }
+}
   
 }
 
