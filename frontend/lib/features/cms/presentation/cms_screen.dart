@@ -67,6 +67,11 @@ class _CMSMainSectionState extends State<CMSMainSection> {
   String selectedCard = "primary";
   bool _isPublishing = false;
 
+  final Map<String, String> cardTypeLabels = {
+    "primary": "Main Card",
+    "secondary": "Secondary Card",
+  };
+
   final List<String> cardOptions = ["primary", "secondary"];
 
   @override
@@ -112,7 +117,6 @@ class _CMSMainSectionState extends State<CMSMainSection> {
 
     try {
       final idToUse = selectedPromo!['documentId'] ?? selectedPromo!['id'];
-      debugPrint("CMS_DEBUG: Attempting API call for ID: $idToUse");
 
       final success = await CmsService.publishPromotion(
         idToUse,
@@ -128,10 +132,8 @@ class _CMSMainSectionState extends State<CMSMainSection> {
         },
       );
 
-      debugPrint("CMS_DEBUG: API Response success = $success");
 
       if (mounted) {
-        debugPrint("CMS_DEBUG: Widget is mounted, attempting to show SnackBar");
         
         // Use root messenger to be safe
         final messenger = ScaffoldMessenger.of(context);
@@ -148,19 +150,15 @@ class _CMSMainSectionState extends State<CMSMainSection> {
         );
 
         if (success) {
-          debugPrint("CMS_DEBUG: Re-loading promo data...");
           await loadPromo(selectedCard);
         }
-      } else {
-        debugPrint("CMS_DEBUG: Error - Widget unmounted before SnackBar could show");
-      }
+      } 
     } catch (e) {
       debugPrint("CMS_DEBUG: Exception in handlePublish: $e");
     } finally {
       if (mounted) {
         setState(() => _isPublishing = false);
       }
-      debugPrint("CMS_DEBUG: Publishing process finished");
     }
   }
 
@@ -177,6 +175,7 @@ class _CMSMainSectionState extends State<CMSMainSection> {
               child: MainCard(
                 selectedCard: selectedCard,
                 cardOptions: cardOptions,
+                cardTypeLabels: cardTypeLabels,
                 onCardChange: (value) {
                   setState(() => selectedCard = value!);
                   loadPromo(value);
@@ -201,6 +200,7 @@ class _CMSMainSectionState extends State<CMSMainSection> {
 class MainCard extends StatelessWidget {
   final String selectedCard;
   final List<String> cardOptions;
+  final Map<String, String> cardTypeLabels;
   final Function(String?) onCardChange;
   final TextEditingController titleController;
   final TextEditingController descController;
@@ -213,6 +213,7 @@ class MainCard extends StatelessWidget {
     super.key,
     required this.selectedCard,
     required this.cardOptions,
+    required this.cardTypeLabels,
     required this.onCardChange,
     required this.titleController,
     required this.descController,
@@ -237,6 +238,7 @@ class MainCard extends StatelessWidget {
             cardOptions: cardOptions,
             onChanged: onCardChange,
             onPublish: onPublish,
+            cardTypeLabels: cardTypeLabels,
             selectedPromo: selectedPromo,
             isPublishing: isPublishing,
           ),
@@ -259,6 +261,7 @@ class MainCard extends StatelessWidget {
 class TopControls extends StatelessWidget {
   final String selectedCard;
   final List<String> cardOptions;
+  final Map<String, String> cardTypeLabels;
   final Function(String?) onChanged;
   final VoidCallback onPublish;
   final Map<String, dynamic>? selectedPromo;
@@ -269,6 +272,7 @@ class TopControls extends StatelessWidget {
     required this.selectedCard,
     required this.cardOptions,
     required this.onChanged,
+    required this.cardTypeLabels,
     required this.onPublish,
     required this.selectedPromo,
     required this.isPublishing,
@@ -284,7 +288,12 @@ class TopControls extends StatelessWidget {
           width: 320,
           child: DropdownButtonFormField<String>(
             value: selectedCard,
-            items: cardOptions.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+            items: cardOptions.map((key) {
+              return DropdownMenuItem(
+                value: key, 
+                child: Text(cardTypeLabels[key] ?? key), 
+              );
+            }).toList(),
             onChanged: isPublishing ? null : onChanged,
           ),
         ),
