@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
 import 'package:frontend/core/services/customer/profile_service.dart';
+import 'package:frontend/core/constants/cart_provider.dart';
 
 const double _kMobile = 900;
 const double _kDesktopMaxWidth = 1400;
@@ -396,11 +397,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cart = CartProvider.of(context);
     return Scaffold(
       backgroundColor: _bgBeige,
       appBar: CustomerNavbar(
         activeRoute: '/profile',
-        cartCount: 2,
+        cartCount: cart.totalCount,
         notifCount: 1,
         userName: _currentUser.fullName,
         userClientId: 'CLIENT #${_currentUser.id}',
