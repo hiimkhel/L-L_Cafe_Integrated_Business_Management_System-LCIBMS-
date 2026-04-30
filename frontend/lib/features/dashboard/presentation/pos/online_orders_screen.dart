@@ -56,8 +56,9 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
   }
 
   double _total(Map<String, dynamic> order) {
+    final fee = 45.00;
     final sub = _subtotal(order);
-    return sub + (sub * order['tax']);
+    return sub + fee;
   }
 
   Color _statusColor(String status) {
@@ -632,8 +633,8 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
     final color = _statusColor(status);
     final items = order['items'] as List;
     final sub = _subtotal(order);
-    final tax = sub * order['tax'];
-    final total = sub + tax;
+    final fee = 45.00;
+    final total = sub + fee;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -803,7 +804,7 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
                 const SizedBox(height: 14),
                 _totalRow('SUBTOTAL', '₱${sub.toStringAsFixed(2)}'),
                 const SizedBox(height: 4),
-                _totalRow('TAX (12%)', '₱${tax.toStringAsFixed(2)}'),
+                _totalRow('DELIVERY FEE', '₱${fee.toStringAsFixed(2)}'),
                 const Divider(height: 20),
                 Row(
                   children: [
