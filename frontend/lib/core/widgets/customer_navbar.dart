@@ -473,6 +473,7 @@ class _GuestNavbarState extends State<GuestNavbar> {
                     letterSpacing: 1.2,
                     color: Colors.white)),
           ),
+          )
         ],
       ),
     );
@@ -862,8 +863,9 @@ class _MobileCustomerNav extends StatelessWidget {
             ),
             child: const Icon(Icons.menu_rounded, color: Colors.white, size: 18),
           ),
-          const SizedBox(width: 6),
+        ),
 
+          const SizedBox(width: 6),
           _IconCircleBtn(
             icon: Icons.shopping_cart_outlined,
             badge: cartCount,
