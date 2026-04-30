@@ -546,35 +546,38 @@ class PromoCard extends StatelessWidget {
               style: const TextStyle(color: Colors.white70),
             ),
             const Spacer(),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                width: 160,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: isPrimary ? Colors.white : AppColors.primary,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isPrimary ?_primary : Colors.white,
-                    width: 1.5,
-                  ),
-                ),
-                child: Text(
-                  buttonText,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                    letterSpacing: 1.5,
-                    color: isPrimary ? _primary : Colors.white,
-                  ),
-                ),
-              ),
-            ),
+            GestureDetector(
+  onTap: () {
+    final route = isPrimary ? '/contact' : '/menu';
+    Navigator.pushNamed(context, route);
+  },
+  child: Container(
+    width: 160,
+    padding: const EdgeInsets.symmetric(
+      vertical: 12,
+      horizontal: 16,
+    ),
+    decoration: BoxDecoration(
+      color: isPrimary ? Colors.white : AppColors.primary,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: isPrimary ? _primary : Colors.white,
+        width: 1.5,
+      ),
+    ),
+    child: Text(
+      buttonText,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontFamily: 'Urbanist',
+        fontWeight: FontWeight.w900,
+        fontSize: 12,
+        letterSpacing: 1.5,
+        color: isPrimary ? _primary : Colors.white,
+      ),
+    ),
+  ),
+)
           ],
         ),
       ),

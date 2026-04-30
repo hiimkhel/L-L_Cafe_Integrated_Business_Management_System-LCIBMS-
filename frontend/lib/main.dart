@@ -37,7 +37,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'features/home/presentation/customer/profile_screen.dart';
 // Shared cart state
 import 'core/constants/cart_provider.dart';
-
+// Centralized Routing System
+import 'package:frontend/core/constants/routes.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -125,20 +126,20 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
             case '/':
               return _fade(_buildScreen());
 
-            case '/home':
+            case AppRoutes.home:
               return _fade(CustomerHomeScreen(onLogout: logout));
 
-            case '/menu':
+            case AppRoutes.menu:
               return _fade(const MenuScreen());
 
-            case '/cart':
+            case AppRoutes.cart:
               return _fade(const CartScreen());
 
             // TODO: replace with dedicated OrdersScreen when ready
-            case '/orders':
+            case AppRoutes.orders:
               return _fade(const CartScreen());
 
-            case '/about':
+            case AppRoutes.about:
               return _fade(Builder(
                 builder: (ctx) => AboutScreen(
                   onLogin: () => _goLogin(ctx),
@@ -146,7 +147,7 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
                 ),
               ));
 
-            case '/contact':
+            case AppRoutes.contact:
               return _fade(Builder(
                 builder: (ctx) => ContactScreen(
                   onLogin: () => _goLogin(ctx),
@@ -154,7 +155,7 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
                 ),
               ));
 
-            case '/profile':
+            case AppRoutes.profile:
               if (currentUser == null) {
                 return _fade(LandingScreen(onLogin: setUser, onRegister: setUser));
               }
