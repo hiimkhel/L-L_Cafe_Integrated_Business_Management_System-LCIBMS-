@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
 import 'package:frontend/core/constants/cart_provider.dart';
+import 'package:frontend/core/services/customer/cms_service.dart';
 
 
 const double _kMobile = 768;
@@ -40,7 +42,7 @@ const _featuredBeverages = <HomeMenuItem>[
 // ─────────────────────────────────────────────────────────────────────────────
 
 class CustomerHomeScreen extends StatefulWidget {
-  // ✅ ADDED: Catcher for the logout function from main.dart
+  
   final VoidCallback? onLogout;
   
   const CustomerHomeScreen({super.key, this.onLogout});
@@ -61,6 +63,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     super.dispose();
   }
 
+
   void _submit() {
     if (_stars == 0) return;
     setState(() {
@@ -72,7 +75,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   void _logout(BuildContext ctx) {
-    // ✅ FIXED: Wipe the user state, then route to the correct '/' path!
+
     if (widget.onLogout != null) {
       widget.onLogout!();
     }
@@ -319,6 +322,7 @@ class _BambooPainter extends CustomPainter {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _MainHero extends StatelessWidget {
+  
   const _MainHero();
   @override
   Widget build(BuildContext context) {
@@ -393,37 +397,194 @@ class _MainHero extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // PROMO BANNERS
 // ─────────────────────────────────────────────────────────────────────────────
+  String? getImageUrl(dynamic data) {
+    try {
+      final image = data['image'];
+      if (image == null) return null;
+
+      // Strapi v5 flattened structure
+      final String? path = image['url'];
+
+      if (path == null) return null;
+
+      // Always ensure the path starts with /
+      return path.startsWith('http') ? path : "http://localhost:1337$path";
+    } catch (e) {
+      debugPrint("Error parsing image URL: $e");
+      return null;
+    }
+  }
 
 class _PromoSection extends StatelessWidget {
   const _PromoSection();
+
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (_, c) {
-      final isMobile = c.maxWidth < _kMobile;
-      final ph = isMobile ? 24.0 : 75.0; 
+    return FutureBuilder(
+      future: CmsService.getPromotions(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-      return Padding(
-        padding: EdgeInsets.fromLTRB(ph, 0, ph, 0),
-        child: isMobile
-            ? const Column(children: [
-                _Promo1(isMobile: true),
-                SizedBox(height: 20),
-                _Promo2(isMobile: true),
-              ])
-            : LayoutBuilder(builder: (_, cc) {
-                final w = (cc.maxWidth - 32) / 2;
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    SizedBox(width: w, child: const _Promo1(isMobile: false)),
-                    SizedBox(width: w, child: const _Promo2(isMobile: false)),
-                  ]
-                );
-              }),
-      );
-    });
+        final promos = snapshot.data as List;
+
+        final primary = promos.firstWhere(
+          (p) => p['type'] == 'primary',
+          orElse: () => null,
+        );
+
+        final secondary = promos.firstWhere(
+          (p) => p['type'] == 'secondary',
+          orElse: () => null,
+        );
+
+        return LayoutBuilder(builder: (_, c) {
+          final isMobile = c.maxWidth < 768;
+
+          return Padding(
+            padding: EdgeInsets.all(isMobile ? 24 : 75),
+            child: isMobile
+                ? Column(
+                    children: [
+                      if (primary != null)
+                        PromoCard(data: primary, isPrimary: true),
+                      const SizedBox(height: 20),
+                      if (secondary != null)
+                        PromoCard(data: secondary, isPrimary: false),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      if (primary != null)
+                        Expanded(child: PromoCard(data: primary, isPrimary: true)),
+                      const SizedBox(width: 20),
+                      if (secondary != null)
+                        Expanded(child: PromoCard(data: secondary, isPrimary: false)),
+                    ],
+                  ),
+          );
+        });
+      },
+    );
   }
 }
+
+
+class PromoCard extends StatelessWidget {
+  final dynamic data;
+  final bool isPrimary;
+
+  const PromoCard({
+    super.key,
+    required this.data,
+    required this.isPrimary,
+  });
+
+  String extractText(dynamic desc) {
+    try {
+      if (desc == null || desc is! List || desc.isEmpty) return '';
+
+      return desc[0]['children'][0]['text'] ?? '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final title = data['Title'] ?? '';
+    final description = extractText(data['description']);
+    final buttonText = data['buttonText'] ?? '';
+    final imageUrl = getImageUrl(data);
+
+
+    return Container(
+      height: 260,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(32),
+        image: imageUrl != null
+            ? DecorationImage(
+                image: NetworkImage(imageUrl),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.white.withOpacity(0.4), 
+                  BlendMode.dstIn,
+                ),
+              )
+            : null,
+        color: Colors.grey,
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(32),
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.black54,
+              Colors.black26,
+            ],
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title.toUpperCase(),
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 20,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              description,
+              style: const TextStyle(color: Colors.white70),
+            ),
+            const Spacer(),
+            GestureDetector(
+  onTap: () {
+    final route = isPrimary ? '/contact' : '/menu';
+    Navigator.pushNamed(context, route);
+  },
+  child: Container(
+    width: 160,
+    padding: const EdgeInsets.symmetric(
+      vertical: 12,
+      horizontal: 16,
+    ),
+    decoration: BoxDecoration(
+      color: isPrimary ? Colors.white : AppColors.primary,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: isPrimary ? _primary : Colors.white,
+        width: 1.5,
+      ),
+    ),
+    child: Text(
+      buttonText,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontFamily: 'Urbanist',
+        fontWeight: FontWeight.w900,
+        fontSize: 12,
+        letterSpacing: 1.5,
+        color: isPrimary ? _primary : Colors.white,
+      ),
+    ),
+  ),
+)
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 
 class _Promo1 extends StatelessWidget {
   final bool isMobile;
