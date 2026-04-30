@@ -508,7 +508,7 @@ class PromoCard extends StatelessWidget {
                 image: NetworkImage(imageUrl),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
-                  Colors.white.withOpacity(0.6), // 0.6 = 60%
+                  Colors.white.withOpacity(0.4), 
                   BlendMode.dstIn,
                 ),
               )
