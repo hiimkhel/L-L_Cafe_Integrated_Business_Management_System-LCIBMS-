@@ -9,6 +9,9 @@ import 'package:frontend/core/constants/cart_item.dart';
 import 'package:frontend/core/services/customer/order_service.dart';
 import 'package:frontend/core/models/order_request.dart';
 import 'package:frontend/core/widgets/bamboo_background.dart';
+import 'package:frontend/core/models/user.dart';
+import 'package:frontend/core/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 const double _kMobile = 768;
 
@@ -71,13 +74,20 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
     );
     final currentDeliveryFee = _isDelivery ? deliveryFee : 0.0;
     final total = subtotal + currentDeliveryFee;
+  
+
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+
+    final int? currentUserId = auth.user != null 
+      ? int.tryParse(auth.user!.id) 
+      : null;
 
     // 3. Map to OrderRequest 
     // Make sure your OrderRequest class has the 'deliveryAddress' field!
     final order = OrderRequest(
       source: "online",
       orderType: _isDelivery ? "delivery" : "pickup",
-      userId: 3, 
+      userId: currentUserId, 
       subtotal: subtotal,
       deliveryFee: currentDeliveryFee,
       deliveryAddress: _isDelivery ? _addressController.text : "STORE PICKUP", 
