@@ -1,13 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/features/customers/presentation/admin/customer_order_screen.dart';
-
-import 'features/home/presentation/customer/home_screen.dart';
-import 'features/dashboard/presentation/admin/dashboard_screen.dart';
-import 'features/home/presentation/rider/home_screen.dart';
-import 'features/auth/presentation/screens/login_screen.dart';
-import 'features/dashboard/presentation/rider/dashboard_screen.dart';
-import 'features/dashboard/presentation/pos/order_entry.dart';
-import 'features/home/presentation/customer/landing_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -15,7 +6,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'core/models/user.dart';
 
-// Screens
+// ── Shared State & Routes ───────────────────────────────────────────────────
+import 'core/constants/cart_provider.dart';
+import 'package:frontend/core/constants/routes.dart';
+
+// ── Screens ─────────────────────────────────────────────────────────────────
+import 'package:frontend/features/customers/presentation/admin/customer_order_screen.dart';
 import 'features/home/presentation/customer/landing_screen.dart';
 import 'features/home/presentation/customer/home_screen.dart';
 import 'features/customers/presentation/admin/menu_screen.dart';
@@ -23,22 +19,17 @@ import 'features/home/presentation/customer/contact_screen.dart';
 import 'features/home/presentation/customer/about_screen.dart';
 import 'features/home/presentation/customer/profile_screen.dart';
 import 'features/customers/presentation/admin/cart_screen.dart';
-import 'features/dashboard/presentation/admin/dashboard_screen.dart';
-import 'features/dashboard/presentation/rider/dashboard_screen.dart';
-import 'features/dashboard/presentation/pos/order_entry.dart';
+import 'features/checkout/customer/presentation/cart_checkout_screen.dart';
+
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
 
-import 'features/checkout/customer/presentation/cart_checkout_screen.dart';
-import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'features/dashboard/presentation/admin/dashboard_screen.dart';
+import 'features/dashboard/presentation/rider/dashboard_screen.dart';
+import 'features/dashboard/presentation/pos/order_entry.dart';
+import 'features/home/presentation/rider/home_screen.dart';
 
-// Your Profile Screen Import:
-import 'features/home/presentation/customer/profile_screen.dart';
-// Shared cart state
-import 'core/constants/cart_provider.dart';
-// Centralized Routing System
-import 'package:frontend/core/constants/routes.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -76,7 +67,6 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
   // ── Navigation helpers ────────────────────────────────────────────────────
 
   /// Push the styled LoginScreen on top of whatever guest screen is showing.
-  /// On success: setUser fires → popUntil(first) → app rebuilds to role screen.
   void _goLogin(BuildContext ctx) {
     Navigator.push(
       ctx,
@@ -135,9 +125,12 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
             case AppRoutes.cart:
               return _fade(const CartScreen());
 
-            // TODO: replace with dedicated OrdersScreen when ready
+            // ✅ FIX: Changed to CustomerOrderScreen from CartScreen
             case AppRoutes.orders:
-              return _fade(const CartScreen());
+              if (currentUser == null) {
+                return _fade(LandingScreen(onLogin: setUser, onRegister: setUser));
+              }
+              return _fade(const CustomerOrderScreen());
 
             case AppRoutes.about:
               return _fade(Builder(
@@ -200,6 +193,10 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
           activeIndex: 0,
           onLogout: logout,
         );
+      
+      // ✅ FIX: Added a default fallback to satisfy the compiler
+      default:
+        return LandingScreen(onLogin: setUser, onRegister: setUser);
     }
   }
 }

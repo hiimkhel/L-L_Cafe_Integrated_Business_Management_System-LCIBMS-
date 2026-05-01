@@ -93,7 +93,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         notifCount:  1,
         onLogout:    () => _logout(context),
         onCart:      () => Navigator.pushNamed(context, '/cart'),
-        onNotif:     () {},
+        onNotif:     () { ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text("Notifications clicked")),
+  );},
         onProfile:   () {},
       ),
       body: Stack(

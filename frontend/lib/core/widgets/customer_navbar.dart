@@ -607,6 +607,7 @@ class _DesktopCustomerNav extends StatelessWidget {
   static const _links = [
     _NI('HOME', '/home'),
     _NI('MENU', '/menu'),
+    _NI('ORDERS', '/orders')
   ];
 
   const _DesktopCustomerNav({
@@ -905,6 +906,7 @@ class _SideDrawer extends StatelessWidget {
   static const _loggedInLinks = [
     _NID('HOME',    '/home',    Icons.grid_view_rounded),
     _NID('MENU',    '/menu',    Icons.receipt_long_rounded),
+    _NID('ORDERS', '/orders', Icons.receipt_long_rounded),
     _NID('PROFILE', '/profile', Icons.person_outline_rounded),
   ];
 

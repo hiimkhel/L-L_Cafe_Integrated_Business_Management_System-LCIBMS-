@@ -7,6 +7,8 @@ import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
 import 'package:frontend/core/constants/cart_item.dart';
 import 'package:frontend/features/customers/presentation/admin/cart_screen.dart';
+import 'package:frontend/core/constants/cart_provider.dart';
+
 
 const double _kMobile = 768;
 const double _kDesktopMaxWidth = 1280;
@@ -203,18 +205,19 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
   int _selectedIndex = 0;
   @override
   Widget build(BuildContext context) {
+    final cart = CartProvider.of(context);
     final isMobile = MediaQuery.of(context).size.width < _kMobile;
     return Scaffold(
       backgroundColor: AppColors.background,
 
       body: Stack(
-        children: [
+        children: [        
           const Positioned.fill(child: _BambooBackground()),
           Column(
             children: [
               CustomerNavbar(
                 activeRoute: '/orders',
-                cartCount: 3,
+                cartCount: cart.totalCount,
                 notifCount: 1,
                 onCart: () {},
                 onNotif: () {},

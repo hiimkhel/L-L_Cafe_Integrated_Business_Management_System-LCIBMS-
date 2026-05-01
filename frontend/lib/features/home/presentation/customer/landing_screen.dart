@@ -3,14 +3,12 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
 import 'package:frontend/features/auth/presentation/screens/register_screen.dart';
-import 'package:frontend/features/home/presentation/customer/landing_screen.dart';
 import 'package:frontend/core/models/user.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 
 const double _kMobile = 768;
-// Max width constraint for the main content
 const double _kDesktopMaxWidth = 1280;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -20,16 +18,28 @@ const double _kDesktopMaxWidth = 1280;
 class LandingMenuItem {
   final String id, name, price, badge;
   final String? imageAsset;
-  const LandingMenuItem({required this.id, required this.name, required this.price,
-      this.badge = 'BEST SELLER', this.imageAsset});
+  const LandingMenuItem({
+    required this.id,
+    required this.name,
+    required this.price,
+    this.badge = 'BEST SELLER',
+    this.imageAsset,
+  });
 }
 
 class LandingReview {
   final String id, reviewer, initials, timeAgo, headline;
   final int stars;
   final bool isVerified;
-  const LandingReview({required this.id, required this.reviewer, required this.initials,
-      required this.timeAgo, required this.headline, required this.stars, this.isVerified = false});
+  const LandingReview({
+    required this.id,
+    required this.reviewer,
+    required this.initials,
+    required this.timeAgo,
+    required this.headline,
+    required this.stars,
+    this.isVerified = false,
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -56,18 +66,14 @@ const _reviews = <LandingReview>[
   LandingReview(id: 'r-2', reviewer: 'Jose Reyes',   initials: 'J', stars: 5,
       timeAgo: '9 months ago', headline: '10/10'),
   LandingReview(id: 'r-3', reviewer: 'Ana de Leon',  initials: 'A', stars: 5,
-      timeAgo: '10 months ago', headline: 'Quality coffee perfect for any kind of event, highly recommended',
+      timeAgo: '10 months ago',
+      headline: 'Quality coffee perfect for any kind of event, highly recommended',
       isVerified: true),
 ];
 
 const _gallerySlots = <String?>[null, null, null];
 
-// Define assets here for the hero collage.
-// When asset is null, the wireframe placeholder shows.
-const _heroImageAssets = <String?>[
-  null, // Left image path goes here, e.g., 'assets/images/hero_left.jpg'
-  null, // Right image path goes here, e.g., 'assets/images/hero_right.jpg'
-];
+const _heroImageAssets = <String?>[null, null];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SCREEN
@@ -77,47 +83,63 @@ class LandingScreen extends StatelessWidget {
   final Function(User) onLogin;
   final Function(User) onRegister;
 
-  const LandingScreen({super.key, required this.onLogin, required this.onRegister});
+  const LandingScreen({
+    super.key,
+    required this.onLogin,
+    required this.onRegister,
+  });
 
   @override
   Widget build(BuildContext context) {
-    void goLogin() => Navigator.push(context,
-        MaterialPageRoute(builder: (_) => LoginScreen(onLogin: onLogin)));
+    // ── Both buttons lead to login. Login screen handles "create account" ──
+    void goLogin() => Navigator.push(
+        context, MaterialPageRoute(builder: (_) => LoginScreen(onLogin: onLogin)));
 
-    void goRegister() => Navigator.push(context,
-        MaterialPageRoute(builder: (_) => RegisterScreen(onRegister: onRegister)));
-
+    void goRegister() => Navigator.push(
+        context, MaterialPageRoute(builder: (_) => RegisterScreen(onRegister: onRegister)));
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: GuestNavbar(activeRoute: '/home', onLogin: goLogin, onJoinNow: goRegister),
+      // ✅ GuestNavbar used here (not CustomerNavbar) — correct for landing page
+      appBar: GuestNavbar(
+        activeRoute: '/home',
+        onLogin: goLogin,
+        onJoinNow: goRegister,
+      ),
       body: Stack(
         children: [
-          // ── Full-page animated bamboo stripe background ──────────────────
           const Positioned.fill(child: _BambooBackground()),
-
-          // ── Scrollable content ───────────────────────────────────────────
           SingleChildScrollView(
             child: Column(
               children: [
-                // Centered & Constrained main content area
                 Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: _kDesktopMaxWidth),
+                    constraints:
+                        const BoxConstraints(maxWidth: _kDesktopMaxWidth),
                     child: Column(children: [
+                      // ✅ onBrowse → goLogin so guests can't go straight to menu
                       _HeroSection(onBrowse: goLogin),
                       _HighlightsBar(),
                       _GalleryCarousel(slots: _gallerySlots),
                       _WhyUsSection(),
-                      _MenuGrid(title: 'BEST SELLERS', cta: 'SEE ALL', items: _bestSellers),
-                      _MenuGrid(title: 'SEASONAL FAVORITES', cta: 'REGISTER TO ORDER', items: _seasonal),
+                      // ✅ onCtaTap → goLogin so "SEE ALL" also gates correctly
+                      _MenuGrid(
+                        title: 'BEST SELLERS',
+                        cta: 'SEE ALL',
+                        items: _bestSellers,
+                        onCtaTap: goLogin,
+                      ),
+                      _MenuGrid(
+                        title: 'SEASONAL FAVORITES',
+                        cta: 'REGISTER TO ORDER',
+                        items: _seasonal,
+                        onCtaTap: goRegister,
+                      ),
                       _ReviewsSection(reviews: _reviews),
                       _Newsletter(),
                     ]),
                   ),
                 ),
-                
-                // Footer pulled OUTSIDE the constrained box so it hits edge-to-edge
                 const GuestFooter(),
               ],
             ),
@@ -139,16 +161,16 @@ class _BambooBackground extends StatefulWidget {
   State<_BambooBackground> createState() => _BambooBackgroundState();
 }
 
-class _BambooBackgroundState extends State<_BambooBackground> with SingleTickerProviderStateMixin {
+class _BambooBackgroundState extends State<_BambooBackground>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 30),
-    )..repeat();
+    _controller =
+        AnimationController(vsync: this, duration: const Duration(seconds: 30))
+          ..repeat();
   }
 
   @override
@@ -159,20 +181,14 @@ class _BambooBackgroundState extends State<_BambooBackground> with SingleTickerP
 
   @override
   Widget build(BuildContext context) {
-    // Detect mobile to adapt cognitive load
     final isMobile = MediaQuery.of(context).size.width < _kMobile;
-
     return AnimatedBuilder(
       animation: _controller,
-      builder: (context, child) {
-        return CustomPaint(
-          painter: _BambooPainter(
-            animationValue: _controller.value,
-            isMobile: isMobile,
-          ),
-          size: Size.infinite,
-        );
-      },
+      builder: (context, child) => CustomPaint(
+        painter: _BambooPainter(
+            animationValue: _controller.value, isMobile: isMobile),
+        size: Size.infinite,
+      ),
     );
   }
 }
@@ -180,36 +196,32 @@ class _BambooBackgroundState extends State<_BambooBackground> with SingleTickerP
 class _BambooPainter extends CustomPainter {
   final double animationValue;
   final bool isMobile;
-  
+
   _BambooPainter({required this.animationValue, required this.isMobile});
 
   static const _bamboos = [
-    [0.040, 13.0,  0.12, 1.53], [0.095, 7.0,   0.10, -1.84],
-    [0.133, 14.0,  0.13, 1.45], [0.190, 9.0,   0.10, -0.72],
-    [0.236, 9.5,   0.10, -0.71], [0.283, 13.0,  0.12, -1.53],
-    [0.321, 13.0,  0.11, 1.24], [0.374, 1.9,   0.08, 0.29],
-    [0.423, 2.2,   0.08, 0.35], [0.469, 2.6,   0.08, -0.34],
-    [0.503, 20.0,  0.13, 2.00], [0.560, 4.1,   0.09, 1.06],
-    [0.598, 17.6,  0.12, 1.82], [0.656, 8.9,   0.10, -0.98],
-    [0.693, 15.5,  0.11, 1.72], [0.739, 17.9,  0.12, 1.99],
-    [0.783, 18.8,  0.12, 1.81], [0.839, 8.9,   0.10, 0.66],
-    [0.890, 5.2,   0.08, -1.98], [0.936, 16.6,  0.11, -1.89],
+    [0.040, 13.0, 0.12, 1.53],  [0.095, 7.0,  0.10, -1.84],
+    [0.133, 14.0, 0.13, 1.45],  [0.190, 9.0,  0.10, -0.72],
+    [0.236, 9.5,  0.10, -0.71], [0.283, 13.0, 0.12, -1.53],
+    [0.321, 13.0, 0.11, 1.24],  [0.374, 1.9,  0.08, 0.29],
+    [0.423, 2.2,  0.08, 0.35],  [0.469, 2.6,  0.08, -0.34],
+    [0.503, 20.0, 0.13, 2.00],  [0.560, 4.1,  0.09, 1.06],
+    [0.598, 17.6, 0.12, 1.82],  [0.656, 8.9,  0.10, -0.98],
+    [0.693, 15.5, 0.11, 1.72],  [0.739, 17.9, 0.12, 1.99],
+    [0.783, 18.8, 0.12, 1.81],  [0.839, 8.9,  0.10, 0.66],
+    [0.890, 5.2,  0.08, -1.98], [0.936, 16.6, 0.11, -1.89],
   ];
 
-  // Helper method to draw an organic, pointed bamboo leaf
-  void _drawLeaf(Canvas canvas, Offset offset, double angle, double length, double width, Paint paint) {
+  void _drawLeaf(Canvas canvas, Offset offset, double angle, double length,
+      double width, Paint paint) {
     canvas.save();
     canvas.translate(offset.dx, offset.dy);
     canvas.rotate(angle);
-    
     final path = Path()
       ..moveTo(0, 0)
-      // Top curve of the leaf
       ..quadraticBezierTo(length * 0.4, -width, length, 0)
-      // Bottom curve of the leaf
       ..quadraticBezierTo(length * 0.6, width, 0, 0)
       ..close();
-      
     canvas.drawPath(path, paint);
     canvas.restore();
   }
@@ -217,84 +229,65 @@ class _BambooPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = const Color(0xFF758C6D);
-    
     int index = 0;
     for (final b in _bamboos) {
       index++;
-      // If mobile, drastically reduce the number of moving objects.
       if (isMobile && index % 3 != 0) continue;
-
-      final baseX  = size.width * (b[0] as double);
-      final w      = b[1] as double;
-      final deg    = b[3] as double;
-      final h      = size.height;
-
+      final baseX = size.width * (b[0] as double);
+      final w = b[1] as double;
+      final deg = b[3] as double;
+      final h = size.height;
       final double baseOp = b[2] as double;
-      // Further reduce opacity on mobile
       final op = isMobile ? baseOp * 0.4 : baseOp;
-      
-      final movementX = animationValue * size.width * (op * 8);
-      final x = (baseX + movementX) % size.width;
-
-      final sway = math.sin((animationValue * math.pi * 4) + (x * 0.01)) * 0.015;
+      final x = (baseX + animationValue * size.width * (op * 8)) % size.width;
+      final sway =
+          math.sin((animationValue * math.pi * 4) + (x * 0.01)) * 0.015;
       final rad = (deg * math.pi / 180) + sway;
-
       paint.color = const Color(0xFF758C6D).withOpacity(op);
-
       canvas.save();
       canvas.translate(x + w / 2, h / 2);
       canvas.rotate(rad);
-      
-      // 1. Draw the main stalk
       canvas.drawRect(Rect.fromLTWH(-w / 2, -h / 2 - 20, w, h + 40), paint);
-
-      // 2. Draw nodes and leaves along the stalk
-      // Calculate dynamic segments based on stalk height and width
-      int segments = (h / (w * 10 + 60)).ceil().clamp(3, 10); 
-      double segmentHeight = (h + 40) / segments;
-
+      final segments = (h / (w * 10 + 60)).ceil().clamp(3, 10);
+      final segmentHeight = (h + 40) / segments;
       for (int i = 1; i < segments; i++) {
-        double jointY = (-h / 2 - 20) + (i * segmentHeight);
-
-        // Draw a subtle thicker line to represent the bamboo joint (node)
-        canvas.drawRect(Rect.fromLTWH(-w / 2 - 1.5, jointY - 1, w + 3, 2.5), paint);
-
-        // Add clusters of leaves, alternating sides based on height and bamboo index
-        if ((index + i) % 4 != 0) { 
-          bool isLeft = (index + i) % 2 == 0;
-
-          // Scale leaves proportional to stalk width
-          double leafLength = w * 2.5 + 20.0;
-          double leafWidth = leafLength * 0.25;
-
-          // Base angle: pointing slightly outwards and drooping down
-          double angle = isLeft ? math.pi * 0.8 : math.pi * 0.2;
-
-          // Draw primary leaf
-          _drawLeaf(canvas, Offset(isLeft ? -w / 2 : w / 2, jointY), angle, leafLength, leafWidth, paint);
-
-          // Occasionally add a secondary clustered leaf pointing slightly higher
+        final jointY = (-h / 2 - 20) + (i * segmentHeight);
+        canvas.drawRect(
+            Rect.fromLTWH(-w / 2 - 1.5, jointY - 1, w + 3, 2.5), paint);
+        if ((index + i) % 4 != 0) {
+          final isLeft = (index + i) % 2 == 0;
+          final leafLength = w * 2.5 + 20.0;
+          final leafWidth = leafLength * 0.25;
+          _drawLeaf(
+              canvas,
+              Offset(isLeft ? -w / 2 : w / 2, jointY),
+              isLeft ? math.pi * 0.8 : math.pi * 0.2,
+              leafLength,
+              leafWidth,
+              paint);
           if (i % 2 == 0) {
-             double secondaryAngle = isLeft ? math.pi * 1.1 : -math.pi * 0.1;
-             _drawLeaf(canvas, Offset(isLeft ? -w / 2 : w / 2, jointY), secondaryAngle, leafLength * 0.8, leafWidth * 0.8, paint);
+            _drawLeaf(
+                canvas,
+                Offset(isLeft ? -w / 2 : w / 2, jointY),
+                isLeft ? math.pi * 1.1 : -math.pi * 0.1,
+                leafLength * 0.8,
+                leafWidth * 0.8,
+                paint);
           }
         }
       }
-
-      // 3. Keep the original stylized angled base
       canvas.translate(0, h * 0.2);
       canvas.rotate(math.pi / 4);
-      canvas.drawRect(Rect.fromLTWH(-w * 0.6, -w * 0.6, w * 1.2, w * 1.2), paint);
-      
+      canvas.drawRect(
+          Rect.fromLTWH(-w * 0.6, -w * 0.6, w * 1.2, w * 1.2), paint);
       canvas.restore();
     }
   }
 
   @override
-  bool shouldRepaint(covariant _BambooPainter oldDelegate) {
-    return oldDelegate.animationValue != animationValue ||
-           oldDelegate.isMobile != isMobile;
-  }
+  bool shouldRepaint(covariant _BambooPainter oldDelegate) =>
+      oldDelegate.animationValue != animationValue ||
+      oldDelegate.isMobile != isMobile;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -313,7 +306,8 @@ class _HeroSection extends StatelessWidget {
 
       return Container(
         width: double.infinity,
-        padding: EdgeInsets.fromLTRB(ph, isMobile ? 32 : 64, ph, isMobile ? 32 : 72),
+        padding: EdgeInsets.fromLTRB(
+            ph, isMobile ? 32 : 64, ph, isMobile ? 32 : 72),
         child: isMobile
             ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 _HeroText(onBrowse: onBrowse, isMobile: true),
@@ -346,60 +340,76 @@ class _HeroText extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (!isMobile)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 11),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.45),
-                border: Border.all(color: AppColors.primary.withOpacity(0.35)),
-                borderRadius: BorderRadius.circular(100),
-              ),
-              child: const Text('ESTABLISHED 2020',
-                  style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                      fontSize: 10, letterSpacing: 4.5, color: Color(0xFFEFE2C9))),
+        if (!isMobile) ...[
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 22, vertical: 11),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.45),
+              border:
+                  Border.all(color: AppColors.primary.withOpacity(0.35)),
+              borderRadius: BorderRadius.circular(100),
             ),
+            child: const Text('ESTABLISHED 2020',
+                style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 10,
+                    letterSpacing: 4.5,
+                    color: Color(0xFFEFE2C9))),
           ),
-
-        if (!isMobile) const SizedBox(height: 28),
-
+          const SizedBox(height: 28),
+        ],
         RichText(
           text: TextSpan(children: [
             TextSpan(
               text: 'L&L ',
-              style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w700,
-                  fontSize: isMobile ? 52 : 98, color: const Color(0xFF2D2A26)),
+              style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w700,
+                  fontSize: isMobile ? 52 : 98,
+                  color: const Color(0xFF2D2A26)),
             ),
             TextSpan(
               text: 'CAFE',
-              style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w700,
-                  fontSize: isMobile ? 52 : 98, color: AppColors.secondary),
+              style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w700,
+                  fontSize: isMobile ? 52 : 98,
+                  color: AppColors.secondary),
             ),
           ]),
         ),
-
         const SizedBox(height: 10),
-
         Text("Making good food for people's happiness",
-            style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w400,
-                fontSize: isMobile ? 15 : 26, height: 1.3, color: AppColors.primary)),
-
+            style: TextStyle(
+                fontFamily: 'Urbanist',
+                fontWeight: FontWeight.w400,
+                fontSize: isMobile ? 15 : 26,
+                height: 1.3,
+                color: AppColors.primary)),
         const SizedBox(height: 28),
-
+        // ✅ BROWSE MENU → goLogin (passed in as onBrowse)
         GestureDetector(
           onTap: onBrowse,
           child: Container(
             padding: EdgeInsets.symmetric(
-                horizontal: isMobile ? 28 : 40, vertical: isMobile ? 14 : 22),
+                horizontal: isMobile ? 28 : 40,
+                vertical: isMobile ? 14 : 22),
             decoration: BoxDecoration(
               color: AppColors.secondary,
               borderRadius: BorderRadius.circular(20),
-              boxShadow: const [BoxShadow(color: Color(0xFF2D2A26), offset: Offset(4, 4))],
+              boxShadow: const [
+                BoxShadow(color: Color(0xFF2D2A26), offset: Offset(4, 4))
+              ],
             ),
             child: Text('BROWSE MENU',
-                style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                    fontSize: isMobile ? 11 : 13, letterSpacing: 1.2, color: Colors.white)),
+                style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: isMobile ? 11 : 13,
+                    letterSpacing: 1.2,
+                    color: Colors.white)),
           ),
         ),
       ],
@@ -408,7 +418,7 @@ class _HeroText extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HERO COLLAGE (Accurate to Wireframe)
+// HERO COLLAGE
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _HeroCollage extends StatelessWidget {
@@ -423,104 +433,88 @@ class _HeroCollage extends StatelessWidget {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _HeroCard(w: w, h: w * 1.3, isTabRight: true, asset: _heroImageAssets[0]),
+            _HeroCard(
+                w: w, h: w * 1.3, isTabRight: true, asset: _heroImageAssets[0]),
             const SizedBox(width: 16),
             Padding(
-              padding: const EdgeInsets.only(top: 40), // Shift the right card down
-              child: _HeroCard(w: w, h: w * 1.3, isTabRight: false, asset: _heroImageAssets[1]),
+              padding: const EdgeInsets.only(top: 40),
+              child: _HeroCard(
+                  w: w,
+                  h: w * 1.3,
+                  isTabRight: false,
+                  asset: _heroImageAssets[1]),
             ),
           ],
         );
       });
     }
-
-    // Accurate wireframe layout for Desktop
     return SizedBox(
       width: 480,
-      height: 440, // 360 card height + 80 offset
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Left Card: Image on left, brown tab on right
-          Positioned(
-            left: 0,
-            top: 0,
-            child: _HeroCard(
-              w: 230,
-              h: 360,
-              isTabRight: true,
-              asset: _heroImageAssets[0],
-            ),
-          ),
-          // Right Card: Brown tab on left, image on right. Shifted down by 80px
-          Positioned(
-            right: 0,
-            top: 80,
-            child: _HeroCard(
-              w: 230,
-              h: 360,
-              isTabRight: false,
-              asset: _heroImageAssets[1],
-            ),
-          ),
-        ],
-      ),
+      height: 440,
+      child: Stack(clipBehavior: Clip.none, children: [
+        Positioned(
+          left: 0,
+          top: 0,
+          child: _HeroCard(
+              w: 230, h: 360, isTabRight: true, asset: _heroImageAssets[0]),
+        ),
+        Positioned(
+          right: 0,
+          top: 80,
+          child: _HeroCard(
+              w: 230, h: 360, isTabRight: false, asset: _heroImageAssets[1]),
+        ),
+      ]),
     );
   }
 }
 
-// Creates the dual-tone rounded card with the image area and the colored tab.
 class _HeroCard extends StatelessWidget {
   final double w, h;
   final bool isTabRight;
   final String? asset;
 
-  const _HeroCard({
-    required this.w,
-    required this.h,
-    required this.isTabRight,
-    this.asset,
-  });
+  const _HeroCard(
+      {required this.w,
+      required this.h,
+      required this.isTabRight,
+      this.asset});
 
   @override
   Widget build(BuildContext context) {
-    final tabWidth = w * 0.20; // Tab takes up ~20% of the card width
+    final tabWidth = w * 0.20;
     final imgWidth = w - tabWidth;
-
     return Container(
       width: w,
       height: h,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         boxShadow: const [
-          BoxShadow(color: Color(0x14000000), blurRadius: 20, offset: Offset(0, 10))
+          BoxShadow(
+              color: Color(0x14000000), blurRadius: 20, offset: Offset(0, 10))
         ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),
         child: Row(
           children: [
-            // If the tab belongs on the left side
             if (!isTabRight)
-              Container(width: tabWidth, height: h, color: AppColors.secondary),
-            
-            // Image / Placeholder Area
+              Container(
+                  width: tabWidth, height: h, color: AppColors.secondary),
             Container(
               width: imgWidth,
               height: h,
-              color: AppColors.primary.withOpacity(0.08), // Light grey background
+              color: AppColors.primary.withOpacity(0.08),
               child: asset != null
                   ? Image.asset(asset!, fit: BoxFit.cover)
                   : Center(
-                      // Wireframe accuracy: simple mountain/image icon
                       child: Icon(Icons.image_outlined,
                           color: AppColors.primary.withOpacity(0.2), size: 40),
                     ),
             ),
-
-            // If the tab belongs on the right side
             if (isTabRight)
-              Container(width: tabWidth, height: h, color: AppColors.secondary),
+              Container(
+                  width: tabWidth, height: h, color: AppColors.secondary),
           ],
         ),
       ),
@@ -533,7 +527,12 @@ class _HeroCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _HighlightsBar extends StatelessWidget {
-  static const _items = ['Open Daily', 'Free Wifi', 'Made with Love', 'Cozy Atmosphere'];
+  static const _items = [
+    'Open Daily',
+    'Free Wifi',
+    'Made with Love',
+    'Cozy Atmosphere'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -541,7 +540,8 @@ class _HighlightsBar extends StatelessWidget {
       final isMobile = c.maxWidth < _kMobile;
       return Container(
         margin: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 75),
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: isMobile ? 8 : 10),
+        padding: EdgeInsets.symmetric(
+            horizontal: 16, vertical: isMobile ? 8 : 10),
         decoration: BoxDecoration(
           color: AppColors.background,
           border: Border.all(color: AppColors.primary),
@@ -555,11 +555,18 @@ class _HighlightsBar extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (e.key > 0) ...[
-                Container(width: isMobile ? 5 : 7, height: isMobile ? 5 : 7,
-                    decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle)),
+                Container(
+                    width: isMobile ? 5 : 7,
+                    height: isMobile ? 5 : 7,
+                    decoration: BoxDecoration(
+                        color: AppColors.primary, shape: BoxShape.circle)),
                 SizedBox(width: isMobile ? 6 : 12),
               ],
-              Text(e.value, style: TextStyle(fontFamily: 'Urbanist', fontSize: isMobile ? 11 : 15, color: AppColors.primary)),
+              Text(e.value,
+                  style: TextStyle(
+                      fontFamily: 'Urbanist',
+                      fontSize: isMobile ? 11 : 15,
+                      color: AppColors.primary)),
             ],
           )).toList(),
         ),
@@ -569,7 +576,7 @@ class _HighlightsBar extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GALLERY AUTO-CAROUSEL
+// GALLERY CAROUSEL
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _GalleryCarousel extends StatefulWidget {
@@ -581,8 +588,8 @@ class _GalleryCarousel extends StatefulWidget {
 }
 
 class _GalleryCarouselState extends State<_GalleryCarousel> {
-  final _ctrl   = PageController();
-  int _current  = 0;
+  final _ctrl = PageController();
+  int _current = 0;
   Timer? _timer;
 
   @override
@@ -591,14 +598,20 @@ class _GalleryCarouselState extends State<_GalleryCarousel> {
     _timer = Timer.periodic(const Duration(seconds: 3), (_) {
       final next = (_current + 1) % widget.slots.length;
       _ctrl.animateToPage(next,
-          duration: const Duration(milliseconds: 600), curve: Curves.easeInOut);
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut);
     });
   }
 
   @override
-  void dispose() { _timer?.cancel(); _ctrl.dispose(); super.dispose(); }
+  void dispose() {
+    _timer?.cancel();
+    _ctrl.dispose();
+    super.dispose();
+  }
 
-  void _go(int i) => _ctrl.animateToPage(i, duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
+  void _go(int i) => _ctrl.animateToPage(i,
+      duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
 
   @override
   Widget build(BuildContext context) {
@@ -610,18 +623,29 @@ class _GalleryCarouselState extends State<_GalleryCarousel> {
         padding: EdgeInsets.only(top: isMobile ? 28 : 64),
         child: Column(children: [
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 75),
+            padding:
+                EdgeInsets.symmetric(horizontal: isMobile ? 20 : 75),
             child: RichText(
               textAlign: TextAlign.center,
               text: TextSpan(children: [
-                const TextSpan(text: 'Experience the Heart of ',
-                  style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w700, fontSize: 32, color: Color(0xFF2D2A26))),
-                TextSpan(text: 'L&L Cafe',
-                  style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w700, fontSize: 32, color: AppColors.secondary)),
-            ])),
+                const TextSpan(
+                    text: 'Experience the Heart of ',
+                    style: TextStyle(
+                        fontFamily: 'Urbanist',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 32,
+                        color: Color(0xFF2D2A26))),
+                TextSpan(
+                    text: 'L&L Cafe',
+                    style: TextStyle(
+                        fontFamily: 'Urbanist',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 32,
+                        color: AppColors.secondary)),
+              ]),
+            ),
           ),
           const SizedBox(height: 28),
-
           SizedBox(
             height: imgH,
             child: Stack(children: [
@@ -632,50 +656,78 @@ class _GalleryCarouselState extends State<_GalleryCarousel> {
                 itemBuilder: (_, i) {
                   final asset = widget.slots[i];
                   return Padding(
-                    padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 75),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 20 : 75),
                     child: Container(
                       decoration: BoxDecoration(
                         color: AppColors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withOpacity(0.6), width: 6),
-                        boxShadow: const [BoxShadow(color: Color(0x26000000), blurRadius: 50, offset: Offset(0, 25))],
+                        border: Border.all(
+                            color: Colors.white.withOpacity(0.6), width: 6),
+                        boxShadow: const [
+                          BoxShadow(
+                              color: Color(0x26000000),
+                              blurRadius: 50,
+                              offset: Offset(0, 25))
+                        ],
                       ),
                       child: asset != null
-                          ? ClipRRect(borderRadius: BorderRadius.circular(14), child: Image.asset(asset, fit: BoxFit.cover))
-                          : Center(child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.add_photo_alternate_outlined, color: AppColors.primary.withOpacity(0.28), size: 48),
-                                const SizedBox(height: 8),
-                                Text('Gallery Image ${i + 1}', style: TextStyle(fontFamily: 'Urbanist', fontSize: 13, color: AppColors.primary.withOpacity(0.4))),
-                              ],
-                            )),
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: Image.asset(asset, fit: BoxFit.cover))
+                          : Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add_photo_alternate_outlined,
+                                      color:
+                                          AppColors.primary.withOpacity(0.28),
+                                      size: 48),
+                                  const SizedBox(height: 8),
+                                  Text('Gallery Image ${i + 1}',
+                                      style: TextStyle(
+                                          fontFamily: 'Urbanist',
+                                          fontSize: 13,
+                                          color: AppColors.primary
+                                              .withOpacity(0.4))),
+                                ],
+                              )),
                     ),
                   );
                 },
               ),
-
               Positioned(
-                left: isMobile ? 4 : 48, top: imgH / 2 - 22,
-                child: _ChevronBtn(icon: Icons.chevron_left, onTap: () => _go((_current - 1 + widget.slots.length) % widget.slots.length)),
+                left: isMobile ? 4 : 48,
+                top: imgH / 2 - 22,
+                child: _ChevronBtn(
+                    icon: Icons.chevron_left,
+                    onTap: () => _go((_current - 1 + widget.slots.length) %
+                        widget.slots.length)),
               ),
               Positioned(
-                right: isMobile ? 4 : 48, top: imgH / 2 - 22,
-                child: _ChevronBtn(icon: Icons.chevron_right, onTap: () => _go((_current + 1) % widget.slots.length)),
+                right: isMobile ? 4 : 48,
+                top: imgH / 2 - 22,
+                child: _ChevronBtn(
+                    icon: Icons.chevron_right,
+                    onTap: () =>
+                        _go((_current + 1) % widget.slots.length)),
               ),
             ]),
           ),
-
           const SizedBox(height: 16),
-
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 120),
-            child: Text('From handcrafted beverages to freshly prepared meals, every corner of L&L Cafe is designed to bring comfort, flavor, and connection.',
-              textAlign: TextAlign.center, style: TextStyle(fontFamily: 'Urbanist', fontSize: isMobile ? 13 : 18, height: 1.5, color: AppColors.primary)),
+            padding: EdgeInsets.symmetric(
+                horizontal: isMobile ? 20 : 120),
+            child: Text(
+                'From handcrafted beverages to freshly prepared meals, every corner of L&L Cafe is designed to bring comfort, flavor, and connection.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontSize: isMobile ? 13 : 18,
+                    height: 1.5,
+                    color: AppColors.primary)),
           ),
-
           const SizedBox(height: 16),
-
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(widget.slots.length, (i) {
@@ -685,8 +737,13 @@ class _GalleryCarouselState extends State<_GalleryCarousel> {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: on ? 30 : 10, height: 10,
-                  decoration: BoxDecoration(color: on ? AppColors.secondary : AppColors.primary.withOpacity(0.3), borderRadius: BorderRadius.circular(100)),
+                  width: on ? 30 : 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                      color: on
+                          ? AppColors.secondary
+                          : AppColors.primary.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(100)),
                 ),
               );
             }),
@@ -707,11 +764,15 @@ class _ChevronBtn extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 44, height: 44,
+        width: 44,
+        height: 44,
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.85),
           shape: BoxShape.circle,
-          boxShadow: const [BoxShadow(color: Color(0x1A000000), blurRadius: 8, offset: Offset(0, 4))],
+          boxShadow: const [
+            BoxShadow(
+                color: Color(0x1A000000), blurRadius: 8, offset: Offset(0, 4))
+          ],
         ),
         child: Icon(icon, color: AppColors.primary, size: 22),
       ),
@@ -725,9 +786,12 @@ class _ChevronBtn extends StatelessWidget {
 
 class _WhyUsSection extends StatelessWidget {
   static const _cards = [
-    _WD('01', 'Sweet & Savory Delights', 'From indulgent waffles and buttery toast to savory burgers, fries, and pasta. We have something for every taste.'),
-    _WD('02', 'Affordable Quality', 'We believe great food and drinks should be accessible, offering premium experience at reasonable prices.'),
-    _WD('03', 'Perfect for Sharing', 'Our party-size trays let you bring L&L Cafe to any gathering — share our bestsellers with friends and family.'),
+    _WD('01', 'Sweet & Savory Delights',
+        'From indulgent waffles and buttery toast to savory burgers, fries, and pasta. We have something for every taste.'),
+    _WD('02', 'Affordable Quality',
+        'We believe great food and drinks should be accessible, offering premium experience at reasonable prices.'),
+    _WD('03', 'Perfect for Sharing',
+        'Our party-size trays let you bring L&L Cafe to any gathering — share our bestsellers with friends and family.'),
   ];
 
   @override
@@ -735,11 +799,15 @@ class _WhyUsSection extends StatelessWidget {
     return LayoutBuilder(builder: (_, c) {
       final isMobile = c.maxWidth < _kMobile;
       final ph = isMobile ? 20.0 : 75.0;
-
       return Padding(
         padding: EdgeInsets.fromLTRB(ph, isMobile ? 32 : 80, ph, 0),
         child: isMobile
-            ? Column(children: _cards.map((w) => Padding(padding: const EdgeInsets.only(bottom: 14), child: _WhyCard(data: w))).toList())
+            ? Column(
+                children: _cards
+                    .map((w) => Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: _WhyCard(data: w)))
+                    .toList())
             : LayoutBuilder(builder: (_, cc) {
                 final cardW = (cc.maxWidth - 40) / 3;
                 return Row(
@@ -772,22 +840,47 @@ class _WhyCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppColors.primary.withOpacity(0.06)),
-        boxShadow: const [BoxShadow(color: Color(0x0A000000), blurRadius: 15, offset: Offset(0, 8))],
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x0A000000),
+              blurRadius: 15,
+              offset: Offset(0, 8))
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 42, height: 42,
-            decoration: BoxDecoration(color: AppColors.secondary, borderRadius: BorderRadius.circular(12)),
-            child: Center(child: Text(data.number, style: const TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontSize: 16, color: Colors.white))),
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+                color: AppColors.secondary,
+                borderRadius: BorderRadius.circular(12)),
+            child: Center(
+                child: Text(data.number,
+                    style: const TextStyle(
+                        fontFamily: 'Urbanist',
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
+                        color: Colors.white))),
           ),
           const SizedBox(height: 20),
           Text(data.title.toUpperCase(),
-              style: const TextStyle(fontFamily: 'Urbanist', fontStyle: FontStyle.italic, fontWeight: FontWeight.w900, fontSize: 17, color: Color(0xFF2D2A26))),
+              style: const TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 17,
+                  color: Color(0xFF2D2A26))),
           const SizedBox(height: 8),
           Text(data.body,
-              style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w700, fontSize: 11, letterSpacing: 0.3, height: 1.7, color: AppColors.primary)),
+              style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                  letterSpacing: 0.3,
+                  height: 1.7,
+                  color: AppColors.primary)),
         ],
       ),
     );
@@ -801,8 +894,14 @@ class _WhyCard extends StatelessWidget {
 class _MenuGrid extends StatelessWidget {
   final String title, cta;
   final List<LandingMenuItem> items;
+  final VoidCallback? onCtaTap;
 
-  const _MenuGrid({required this.title, required this.cta, required this.items});
+  const _MenuGrid({
+    required this.title,
+    required this.cta,
+    required this.items,
+    this.onCtaTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -814,36 +913,69 @@ class _MenuGrid extends StatelessWidget {
       final rest = words.skip(1).join(' ');
 
       return Padding(
-        padding: EdgeInsets.fromLTRB(ph, isMobile ? 32 : 72, ph, 0),
+        padding:
+            EdgeInsets.fromLTRB(ph, isMobile ? 32 : 72, ph, 0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               padding: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.primary.withOpacity(0.15)))),
+              decoration: BoxDecoration(
+                  border: Border(
+                      bottom: BorderSide(
+                          color: AppColors.primary.withOpacity(0.15)))),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  RichText(text: TextSpan(children: [
-                    TextSpan(text: '$firstWord ', style: const TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontSize: 24, letterSpacing: -1, color: Color(0xFF2D2A26))),
-                    TextSpan(text: rest, style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontSize: 24, letterSpacing: -1, color: AppColors.secondary)),
+                  RichText(
+                      text: TextSpan(children: [
+                    TextSpan(
+                        text: '$firstWord ',
+                        style: const TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 24,
+                            letterSpacing: -1,
+                            color: Color(0xFF2D2A26))),
+                    TextSpan(
+                        text: rest,
+                        style: TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 24,
+                            letterSpacing: -1,
+                            color: AppColors.secondary)),
                   ])),
-                  Row(children: [
-                    Text(cta, style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w700, fontSize: 10, letterSpacing: 2.5, color: AppColors.primary)),
-                    const SizedBox(width: 4),
-                    Icon(Icons.chevron_right, size: 16, color: AppColors.primary),
-                  ]),
+                  // ✅ CTA taps also gate to login/register
+                  GestureDetector(
+                    onTap: onCtaTap,
+                    child: Row(children: [
+                      Text(cta,
+                          style: TextStyle(
+                              fontFamily: 'Urbanist',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 10,
+                              letterSpacing: 2.5,
+                              color: AppColors.primary)),
+                      const SizedBox(width: 4),
+                      Icon(Icons.chevron_right,
+                          size: 16, color: AppColors.primary),
+                    ]),
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-
             LayoutBuilder(builder: (_, cc) {
-              final cols  = cc.maxWidth > 600 ? 4 : 2;
-              final gap   = 16.0;
+              final cols = cc.maxWidth > 600 ? 4 : 2;
+              const gap = 16.0;
               final cardW = (cc.maxWidth - gap * (cols - 1)) / cols;
-              return Wrap(spacing: gap, runSpacing: gap,
-                  children: items.map((i) => _MenuTile(item: i, width: cardW)).toList());
+              return Wrap(
+                  spacing: gap,
+                  runSpacing: gap,
+                  children: items
+                      .map((i) => _MenuTile(item: i, width: cardW))
+                      .toList());
             }),
           ],
         ),
@@ -857,8 +989,7 @@ class _MenuTile extends StatelessWidget {
   final double width;
   const _MenuTile({required this.item, required this.width});
 
-        
-            @override
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: width,
@@ -872,18 +1003,42 @@ class _MenuTile extends StatelessWidget {
                 color: AppColors.primary.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(22),
               ),
-            child: item.imageAsset != null
-                ? ClipRRect(borderRadius: BorderRadius.circular(22), child: Image.asset(item.imageAsset!, fit: BoxFit.cover))
-                : Center(child: Icon(Icons.add_photo_alternate_outlined, color: AppColors.primary.withOpacity(0.22), size: 28)),
+              child: item.imageAsset != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(22),
+                      child:
+                          Image.asset(item.imageAsset!, fit: BoxFit.cover))
+                  : Center(
+                      child: Icon(Icons.add_photo_alternate_outlined,
+                          color: AppColors.primary.withOpacity(0.22),
+                          size: 28)),
             ),
           ),
           const SizedBox(height: 10),
-          Text(item.badge, style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontSize: 8, letterSpacing: 3.5, color: AppColors.primary.withOpacity(0.55))),
+          Text(item.badge,
+              style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 8,
+                  letterSpacing: 3.5,
+                  color: AppColors.primary.withOpacity(0.55))),
           const SizedBox(height: 4),
-          Text(item.name.toUpperCase(), textAlign: TextAlign.center, maxLines: 2,
-              style: const TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF2D2A26))),
+          Text(item.name.toUpperCase(),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              style: const TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
+                  color: Color(0xFF2D2A26))),
           const SizedBox(height: 6),
-          Text(item.price, style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, fontSize: 20, color: AppColors.secondary)),
+          Text(item.price,
+              style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w900,
+                  fontStyle: FontStyle.italic,
+                  fontSize: 20,
+                  color: AppColors.secondary)),
         ],
       ),
     );
@@ -907,45 +1062,77 @@ class _ReviewsSectionState extends State<_ReviewsSection> {
   int _current = 0;
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (_, c) {
       final isMobile = c.maxWidth < _kMobile;
       final ph = isMobile ? 20.0 : 75.0;
-
       return Padding(
         padding: EdgeInsets.fromLTRB(ph, isMobile ? 32 : 72, ph, 0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-             Container(
+            Container(
               padding: const EdgeInsets.only(bottom: 14),
-              decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.primary.withOpacity(0.12)))),
+              decoration: BoxDecoration(
+                  border: Border(
+                      bottom: BorderSide(
+                          color: AppColors.primary.withOpacity(0.12)))),
               child: Row(
-                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  RichText(text: TextSpan(children: [
-                    const TextSpan(text: 'CUSTOMER ', style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontSize: 24, letterSpacing: -1, color: Color(0xFF2D2A26))),
-                    TextSpan(text: 'REVIEWS', style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontSize: 24, letterSpacing: -1, color: AppColors.secondary)),
+                  RichText(
+                      text: TextSpan(children: [
+                    const TextSpan(
+                        text: 'CUSTOMER ',
+                        style: TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 24,
+                            letterSpacing: -1,
+                            color: Color(0xFF2D2A26))),
+                    TextSpan(
+                        text: 'REVIEWS',
+                        style: TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 24,
+                            letterSpacing: -1,
+                            color: AppColors.secondary)),
                   ])),
                   if (!isMobile)
                     Row(children: [
-                      _Arr(left: true,  disabled: _current == 0,
-                          onTap: () { setState(() => _current = math.max(0, _current - 1));
-                          _ctrl.animateToPage(_current, duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
-                      }),
+                      _Arr(
+                          left: true,
+                          disabled: _current == 0,
+                          onTap: () {
+                            setState(
+                                () => _current = math.max(0, _current - 1));
+                            _ctrl.animateToPage(_current,
+                                duration: const Duration(milliseconds: 400),
+                                curve: Curves.easeInOut);
+                          }),
                       const SizedBox(width: 10),
-                      _Arr(left: false, disabled: _current == widget.reviews.length - 1,
-                          onTap: () { setState(() => _current = math.min(widget.reviews.length - 1, _current + 1)); 
-                          _ctrl.animateToPage(_current, duration: const Duration(milliseconds: 400), curve: Curves.easeInOut); }),
+                      _Arr(
+                          left: false,
+                          disabled: _current == widget.reviews.length - 1,
+                          onTap: () {
+                            setState(() => _current = math.min(
+                                widget.reviews.length - 1, _current + 1));
+                            _ctrl.animateToPage(_current,
+                                duration: const Duration(milliseconds: 400),
+                                curve: Curves.easeInOut);
+                          }),
                     ]),
                 ],
               ),
             ),
             const SizedBox(height: 24),
-
             isMobile
                 ? SizedBox(
                     height: 230,
@@ -953,28 +1140,40 @@ class _ReviewsSectionState extends State<_ReviewsSection> {
                       controller: _ctrl,
                       itemCount: widget.reviews.length,
                       onPageChanged: (i) => setState(() => _current = i),
-                      itemBuilder: (_, i) => Padding(padding: const EdgeInsets.only(right: 12), child: _RevCard(r: widget.reviews[i])),
+                      itemBuilder: (_, i) => Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: _RevCard(r: widget.reviews[i])),
                     ),
                   )
                 : LayoutBuilder(builder: (_, cc) {
-                    final cols  = cc.maxWidth > 700 ? 3 : 1;
-                    final gap   = 20.0;
+                    final cols = cc.maxWidth > 700 ? 3 : 1;
+                    const gap = 20.0;
                     final cardW = (cc.maxWidth - gap * (cols - 1)) / cols;
-                     return Wrap(spacing: gap, runSpacing: gap,
-                        children: widget.reviews.map((r) => _RevCard(r: r, width: cardW)).toList());
+                    return Wrap(
+                        spacing: gap,
+                        runSpacing: gap,
+                        children: widget.reviews
+                            .map((r) => _RevCard(r: r, width: cardW))
+                            .toList());
                   }),
-
             const SizedBox(height: 16),
-            Row(mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(widget.reviews.length, (i) {
-                  final on = i == _current;
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: on ? 30 : 10, height: 10,
-                    decoration: BoxDecoration(color: on ? AppColors.secondary : AppColors.primary.withOpacity(0.3), borderRadius: BorderRadius.circular(100)),
-                  );
-                })),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(widget.reviews.length, (i) {
+                final on = i == _current;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: on ? 30 : 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                      color: on
+                          ? AppColors.secondary
+                          : AppColors.primary.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(100)),
+                );
+              }),
+            ),
           ],
         ),
       );
@@ -985,7 +1184,6 @@ class _ReviewsSectionState extends State<_ReviewsSection> {
 class _Arr extends StatelessWidget {
   final bool left, disabled;
   final VoidCallback? onTap;
-
   const _Arr({required this.left, this.disabled = false, this.onTap});
 
   @override
@@ -993,15 +1191,23 @@ class _Arr extends StatelessWidget {
     return GestureDetector(
       onTap: disabled ? null : onTap,
       child: Container(
-        width: 42, height: 42,
+        width: 42,
+        height: 42,
         decoration: BoxDecoration(
           color: disabled ? Colors.white.withOpacity(0.4) : Colors.white,
           border: Border.all(color: AppColors.primary.withOpacity(0.2)),
           borderRadius: BorderRadius.circular(14),
-          boxShadow: const [BoxShadow(color: Color(0x12000000), blurRadius: 5, offset: Offset(0, 3))],
+          boxShadow: const [
+            BoxShadow(
+                color: Color(0x12000000), blurRadius: 5, offset: Offset(0, 3))
+          ],
         ),
-        child: Icon(left ? Icons.chevron_left : Icons.chevron_right,
-            color: disabled ? AppColors.primary.withOpacity(0.3) : AppColors.primary, size: 20),
+        child: Icon(
+            left ? Icons.chevron_left : Icons.chevron_right,
+            color: disabled
+                ? AppColors.primary.withOpacity(0.3)
+                : AppColors.primary,
+            size: 20),
       ),
     );
   }
@@ -1021,45 +1227,89 @@ class _RevCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: AppColors.primary.withOpacity(0.05)),
-        boxShadow: const [BoxShadow(color: Color(0x12000000), blurRadius: 10, offset: Offset(0, 5))],
+        boxShadow: const [
+          BoxShadow(
+              color: Color(0x12000000), blurRadius: 10, offset: Offset(0, 5))
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: List.generate(5, (i) => Padding(
-            padding: const EdgeInsets.only(right: 3),
-            child: Icon(i < r.stars ? Icons.star : Icons.star_border, color: AppColors.primary, size: 16),
-          ))),
+          Row(
+              children: List.generate(
+                  5,
+                  (i) => Padding(
+                      padding: const EdgeInsets.only(right: 3),
+                      child: Icon(
+                          i < r.stars ? Icons.star : Icons.star_border,
+                          color: AppColors.primary,
+                          size: 16)))),
           const SizedBox(height: 6),
-          Text(r.timeAgo.toUpperCase(), style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontSize: 9, letterSpacing: 0.9, color: AppColors.primary.withOpacity(0.55))),
+          Text(r.timeAgo.toUpperCase(),
+              style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 9,
+                  letterSpacing: 0.9,
+                  color: AppColors.primary.withOpacity(0.55))),
           const SizedBox(height: 6),
-          Text(r.headline, maxLines: 3, overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w700, fontSize: 14, height: 1.5, color: Color(0xFF2D2A26))),
+          Text(r.headline,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  height: 1.5,
+                  color: Color(0xFF2D2A26))),
           const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(border: Border(top: BorderSide(color: AppColors.primary.withOpacity(0.1)))),
+            decoration: BoxDecoration(
+                border: Border(
+                    top: BorderSide(
+                        color: AppColors.primary.withOpacity(0.1)))),
             child: Row(children: [
               Container(
-                width: 34, height: 34,
-                decoration: BoxDecoration(color: AppColors.secondary, borderRadius: BorderRadius.circular(10)),
-                child: Center(child: Text(r.initials, style: const TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontSize: 12, color: Colors.white))),
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                    color: AppColors.secondary,
+                    borderRadius: BorderRadius.circular(10)),
+                child: Center(
+                    child: Text(r.initials,
+                        style: const TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 12,
+                            color: Colors.white))),
               ),
               const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(r.reviewer.toUpperCase(), style: const TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontSize: 12, color: Color(0xFF2D2A26))),
+                  Text(r.reviewer.toUpperCase(),
+                      style: const TextStyle(
+                          fontFamily: 'Urbanist',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                          color: Color(0xFF2D2A26))),
                   if (r.isVerified)
                     Row(children: [
-                      Icon(Icons.verified, color: AppColors.secondary, size: 11),
+                      Icon(Icons.verified,
+                          color: AppColors.secondary, size: 11),
                       const SizedBox(width: 3),
-                      Text('VERIFIED', style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w700, fontSize: 8, color: AppColors.secondary)),
+                      Text('VERIFIED',
+                          style: TextStyle(
+                              fontFamily: 'Urbanist',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 8,
+                              color: AppColors.secondary)),
                     ]),
                 ],
               ),
             ]),
-           ),
+          ),
         ],
       ),
     );
@@ -1076,53 +1326,89 @@ class _Newsletter extends StatelessWidget {
     return LayoutBuilder(builder: (_, c) {
       final isMobile = c.maxWidth < _kMobile;
       final ph = isMobile ? 20.0 : 75.0;
-
       return Container(
-        margin: EdgeInsets.fromLTRB(ph, isMobile ? 32 : 72, ph, isMobile ? 32 : 72),
-        padding: EdgeInsets.symmetric(horizontal: isMobile ? 24 : 64, vertical: isMobile ? 40 : 64),
+        margin: EdgeInsets.fromLTRB(
+            ph, isMobile ? 32 : 72, ph, isMobile ? 32 : 72),
+        padding: EdgeInsets.symmetric(
+            horizontal: isMobile ? 24 : 64,
+            vertical: isMobile ? 40 : 64),
         decoration: BoxDecoration(
           color: AppColors.secondary,
           borderRadius: BorderRadius.circular(28),
-          boxShadow: [BoxShadow(color: AppColors.secondary.withOpacity(0.25), blurRadius: 40, offset: const Offset(0, 20))],
+          boxShadow: [
+            BoxShadow(
+                color: AppColors.secondary.withOpacity(0.25),
+                blurRadius: 40,
+                offset: const Offset(0, 20))
+          ],
         ),
         child: Column(children: [
           Text('STAY IN THE LOOP',
               textAlign: TextAlign.center,
-              style: TextStyle(fontFamily: 'Urbanist', fontStyle: FontStyle.italic, fontWeight: FontWeight.w900, fontSize: isMobile ? 28 : 40, letterSpacing: -1.5, color: Colors.white)),
+              style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.w900,
+                  fontSize: isMobile ? 28 : 40,
+                  letterSpacing: -1.5,
+                  color: Colors.white)),
           const SizedBox(height: 10),
-          Text('SUBSCRIBE TO GET NOTIFIED ABOUT SECRET MENU ITEMS AND ARCHITECT-LED COFFEE WORKSHOPS.',
+          Text(
+              'SUBSCRIBE TO GET NOTIFIED ABOUT SECRET MENU ITEMS AND ARCHITECT-LED COFFEE WORKSHOPS.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w700, fontSize: isMobile ? 10 : 12, letterSpacing: 1.5, height: 1.8, color: Colors.white.withOpacity(0.8))),
+              style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w700,
+                  fontSize: isMobile ? 10 : 12,
+                  letterSpacing: 1.5,
+                  height: 1.8,
+                  color: Colors.white.withOpacity(0.8))),
           const SizedBox(height: 28),
-
           Row(children: [
             Expanded(
               child: Container(
                 height: 52,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), border: Border.all(color: Colors.white.withOpacity(0.3)), borderRadius: BorderRadius.circular(14)),
+                decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    border:
+                        Border.all(color: Colors.white.withOpacity(0.3)),
+                    borderRadius: BorderRadius.circular(14)),
                 child: const TextField(
                   style: TextStyle(color: Colors.white, fontSize: 13),
                   decoration: InputDecoration(
                     hintText: 'ENTER EMAIL ADDRESS',
-                    hintStyle: TextStyle(color: Color(0x99FFFFFF), fontFamily: 'Urbanist', fontWeight: FontWeight.w700, fontSize: 11, letterSpacing: 1),
-                    border: InputBorder.none, isDense: true,
+                    hintStyle: TextStyle(
+                        color: Color(0x99FFFFFF),
+                        fontFamily: 'Urbanist',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                        letterSpacing: 1),
+                    border: InputBorder.none,
+                    isDense: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
               ),
             ),
             const SizedBox(width: 12),
-            GestureDetector(
-              onTap: () {
-                
-              },
-              child: Container(
-                height: 52,
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), boxShadow: const [BoxShadow(color: Color(0x1A000000), blurRadius: 10)]),
-                child: Center(child: Text('JOIN NOW', style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 3, color: AppColors.secondary))),
-              ),
+            Container(
+              height: 52,
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: const [
+                    BoxShadow(color: Color(0x1A000000), blurRadius: 10)
+                  ]),
+              child: Center(
+                  child: Text('JOIN NOW',
+                      style: TextStyle(
+                          fontFamily: 'Urbanist',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                          letterSpacing: 3,
+                          color: AppColors.secondary))),
             ),
           ]),
         ]),
