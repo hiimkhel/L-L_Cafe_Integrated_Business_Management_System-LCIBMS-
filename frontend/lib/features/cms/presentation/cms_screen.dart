@@ -85,6 +85,8 @@ class _CMSMainSectionState extends State<CMSMainSection> {
   // Stores the local image data
   Uint8List? _localPickedImageBytes;
 
+  String? _existingImageUrl;
+
   @override
   void initState() {
     super.initState();
@@ -103,6 +105,15 @@ class _CMSMainSectionState extends State<CMSMainSection> {
           titleController.text = data?['Title'] ?? '';
           buttonController.text = data?['buttonText'] ?? '';
           descController.text = CmsService.extractDescription(data?['description']);
+
+         final rawUrl = data?['image']?['url'];
+
+          if (rawUrl != null) {
+            _existingImageUrl = CmsService.getFullImageUrl(rawUrl);
+          } else {
+            _existingImageUrl = null;
+          }
+
         });
         debugPrint("CMS_DEBUG: Load success. ID: ${data?['id']}");
       }
@@ -110,6 +121,8 @@ class _CMSMainSectionState extends State<CMSMainSection> {
       debugPrint("CMS_DEBUG: Load Error: $e");
     }
   }
+
+
 
   Future<void> handlePublish() async {
     
@@ -271,6 +284,7 @@ class _CMSMainSectionState extends State<CMSMainSection> {
                 isPublishing: _isPublishing,
                 localPickedImageBytes: _localPickedImageBytes,
                 uploadedImageId: _uploadedImageId,
+                existingImageUrl:_existingImageUrl,
                 onClearImage: () {
                   setState(() {
                     _uploadedImageId = null;
@@ -305,6 +319,7 @@ class MainCard extends StatelessWidget {
   final VoidCallback onPublish;
   final bool isPublishing;
   final Uint8List? localPickedImageBytes;
+  final String? existingImageUrl;
 
   const MainCard({
     super.key,
@@ -323,6 +338,7 @@ class MainCard extends StatelessWidget {
     required this.isPublishing,
     required this.isUploadingImage,
     required this.localPickedImageBytes,
+    required this.existingImageUrl,
   });
 
   @override
@@ -358,6 +374,7 @@ class MainCard extends StatelessWidget {
                   descController: descController,
                   uploadedImageId: uploadedImageId,
                   localImageBytes: localPickedImageBytes,
+                  existingImageUrl: existingImageUrl
                 )),
               ],
             ),
@@ -663,6 +680,7 @@ class ContentPreview extends StatelessWidget {
   final int? uploadedImageId;
   final Uint8List? localImageBytes;
   final bool isUploading;
+  final String? existingImageUrl;
 
   const ContentPreview({super.key,
     required this.titleController,
@@ -670,6 +688,7 @@ class ContentPreview extends StatelessWidget {
     this.uploadedImageId,
     this.localImageBytes,
     this.isUploading = false,
+    required this.existingImageUrl,
   });
 
   @override
@@ -726,28 +745,12 @@ class ContentPreview extends StatelessWidget {
                               children: [
                                 
                                 // --- 1. THE IMAGE (Bottom of Stack) ---
-                                if (localImageBytes != null)
-                                  Opacity(
-                                    opacity: 0.4, 
-                                    child: Image.memory(
-                                      localImageBytes!,
-                                      width: double.infinity,
-                                      height: double.infinity,
-                                      fit: BoxFit.cover, 
-                                    ),
-                                  )
-                                else
-                                  Container(
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    color: Colors.grey.shade800, 
-                                    child: Icon(
-                                      Icons.image, 
-                                      size: 80, 
-                                      color: Colors.grey.shade400 
-                                    ),
-                                  ),
-
+                               Positioned.fill(
+                                child: Opacity(
+                                  opacity: 0.4,
+                                  child: _buildImageChild()
+                                )
+                               ),
                                 // --- 2. THE TEXT CONTENT (Top of Stack) ---
                                 Padding(
                                   padding: const EdgeInsets.all(24.0),
@@ -789,6 +792,39 @@ class ContentPreview extends StatelessWidget {
             ],
           );
       }
+    );
+  }
+
+  Widget _buildImageChild() {
+     // 1. Local picked image (highest priority)
+  if (localImageBytes != null && localImageBytes!.isNotEmpty) {
+    return Image.memory(localImageBytes!, fit: BoxFit.cover);
+  }
+
+  // 2. Existing CMS image (default fallback)
+  if (existingImageUrl != null && existingImageUrl!.isNotEmpty) {
+    return Image.network(
+      existingImageUrl!,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, progress) {
+        if (progress == null) return child;
+        return const Center(child: CircularProgressIndicator());
+      },
+      errorBuilder: (ctx, err, stack) {
+        debugPrint("Image load failed: $err");
+        return _buildPlaceholder();
+      },
+    );
+  }
+
+    // Priority 3: Fallback Placeholder
+    return _buildPlaceholder();
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      color: Colors.grey.shade800,
+      child: Icon(Icons.image, size: 80, color: Colors.grey.shade400),
     );
   }
 }
