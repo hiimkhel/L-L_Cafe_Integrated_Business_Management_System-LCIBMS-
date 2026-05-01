@@ -45,7 +45,7 @@ const createOrder = async (req, res) => {
         initialStatus,
         subtotal,
         delivery_fee,
-        delivery_address || 'WALK-IN',
+        delivery_address,
         total,
         payment_status,
         payment_method,
