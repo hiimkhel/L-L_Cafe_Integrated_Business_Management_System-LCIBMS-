@@ -630,7 +630,7 @@ class _CartSummary extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '₱${(item.price).toStringAsFixed(2)}',
+                    '₱${(item.price * item.quantity).toStringAsFixed(2)}',
                     style: const TextStyle(
                       color: AppColors.secondary, fontSize: 12,
                       fontWeight: FontWeight.w600, letterSpacing: 0.3,
