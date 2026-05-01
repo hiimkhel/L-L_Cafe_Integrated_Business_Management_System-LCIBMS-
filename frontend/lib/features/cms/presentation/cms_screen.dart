@@ -253,7 +253,13 @@ class _CMSMainSectionState extends State<CMSMainSection> {
                 isUploadingImage: _isUploadingImage,
                 onUploadPressed: handleImageUpload,
                 isPublishing: _isPublishing,
-                uploadedImageId: _uploadedImageId
+                uploadedImageId: _uploadedImageId,
+                onClearImage: () {
+                  setState(() {
+                    _uploadedImageId = null;
+                  });
+                  debugPrint("CMS_DEBUG: Image unlinked by user");
+                },
               ),
             ),
           ],
@@ -277,6 +283,7 @@ class MainCard extends StatelessWidget {
   final VoidCallback onUploadPressed;
   final bool isUploadingImage;
   final int? uploadedImageId;
+  final VoidCallback onClearImage;
   final VoidCallback onPublish;
   final bool isPublishing;
 
@@ -291,6 +298,7 @@ class MainCard extends StatelessWidget {
     required this.buttonController,
     required this.selectedPromo,
     required this.onPublish,
+    required this.onClearImage,
     required this.onUploadPressed,
     required this.uploadedImageId,
     required this.isPublishing,
@@ -322,7 +330,9 @@ class MainCard extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(child: ContentInfo(titleController: titleController, 
-                descController: descController, onUploadPressed: onUploadPressed, uploadedImageId: uploadedImageId,isUploadingImage: isUploadingImage)),
+                descController: descController, onUploadPressed: onUploadPressed, uploadedImageId: uploadedImageId,isUploadingImage: isUploadingImage,
+                onClearImage: onClearImage
+                )),
                 const VerticalDivider(color: AppColors.primary, width: 60, thickness: 1.5),
                 const Expanded(child: ContentPreview()),
               ],
@@ -398,6 +408,7 @@ class TopControls extends StatelessWidget {
 class ContentInfo extends StatelessWidget {
   final TextEditingController titleController;
   final TextEditingController descController;
+  final VoidCallback onClearImage;
   final VoidCallback onUploadPressed;
   final int? uploadedImageId; 
   final bool isUploadingImage;
@@ -407,6 +418,7 @@ class ContentInfo extends StatelessWidget {
     required this.descController,
     required this.onUploadPressed,
     required this.uploadedImageId,
+    required this.onClearImage,
     required this.isUploadingImage
   });
 
@@ -418,7 +430,7 @@ class ContentInfo extends StatelessWidget {
         const SizedBox(height: 16),
         SubtitleRow(title: "Description", controller: descController),
         const SizedBox(height: 16),
-        ImageUploadRow(onPressed: onUploadPressed, uploadedImageId: uploadedImageId, isUploading: isUploadingImage),
+        ImageUploadRow(onPressed: onUploadPressed, uploadedImageId: uploadedImageId,onClear: onClearImage, isUploading: isUploadingImage),
       ],
     );
   }
@@ -531,8 +543,9 @@ class SubtitleRow extends StatelessWidget {
 class ImageUploadRow extends StatelessWidget {
   final VoidCallback onPressed;
   final int? uploadedImageId; 
+  final VoidCallback onClear;
   final bool isUploading;
-  const ImageUploadRow({super.key, required this.onPressed, required this.uploadedImageId, this.isUploading = false});
+  const ImageUploadRow({super.key, required this.onPressed, required this.uploadedImageId, required this.onClear, this.isUploading = false});
 
   @override
   Widget build(BuildContext context) {
@@ -584,9 +597,7 @@ class ImageUploadRow extends StatelessWidget {
                   top: 0,
                   child: IconButton(
                     icon: const Icon(Icons.close, color: Colors.red),
-                    onPressed: () {
-                      // Logic to clear the image
-                    },
+                    onPressed: onClear
                   ),
                 )
             ],
