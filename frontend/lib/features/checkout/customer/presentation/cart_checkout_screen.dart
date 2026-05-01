@@ -47,52 +47,58 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
     _items = widget.items;
   }
 
+
   Future<void> _createOrder() async {
+    // 1. Validation logic
     if (_nameController.text.isEmpty || _phoneController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill in contact details")),
-      );
+      _showErrorSnackBar("Please fill in contact details");
+      return;
+    }
+
+    // Ensure address is provided if delivery is selected
+    if (_isDelivery && _addressController.text.trim().isEmpty) {
+      _showErrorSnackBar("Please provide a delivery address");
       return;
     }
 
     setState(() => _isLoading = true);
 
+    // 2. Financial Calculations
     const double deliveryFee = 45.0;
-
     final subtotal = _items.fold<double>(
       0,
       (sum, item) => sum + (item.price * item.quantity),
     );
-
     final currentDeliveryFee = _isDelivery ? deliveryFee : 0.0;
     final total = subtotal + currentDeliveryFee;
 
-    final fullNotes = _isDelivery 
-        ? "Address: ${_addressController.text}\nNotes: ${_notesController.text}" 
-        : _notesController.text;
-
+    // 3. Map to OrderRequest 
+    // Make sure your OrderRequest class has the 'deliveryAddress' field!
     final order = OrderRequest(
       source: "online",
       orderType: _isDelivery ? "delivery" : "pickup",
+      userId: 3, 
       subtotal: subtotal,
       deliveryFee: currentDeliveryFee,
+      deliveryAddress: _isDelivery ? _addressController.text : "STORE PICKUP", 
       total: total,
       paymentMethod: _isCash ? "cash" : "e-wallet",
       paymentStatus: "unpaid",
       customerName: _nameController.text,
       customerPhone: _phoneController.text,
-      notes: fullNotes,
+      notes: _notesController.text, // Now just the notes, clean and separate
       items: _items.map((item) {
         return {
           "menu_item_id": item.id,
           "name": item.name,
           "quantity": item.quantity ?? 1,
           "unit_price": item.price,
-          "subtotal": item.price * item.quantity
+          "subtotal": item.price * (item.quantity ?? 1)
         };
       }).toList(),
     );
 
+    // 4. API Call
     final success = await _orderService.createOrder(order);
 
     setState(() => _isLoading = false);
@@ -100,11 +106,16 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
     if (success) {
       Navigator.pushReplacementNamed(context, '/success');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to place order")),
-      );
+      _showErrorSnackBar("Failed to place order");
     }
   }
+
+// Helper to keep code clean
+void _showErrorSnackBar(String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
+  );
+}
 
   @override
   void dispose() {
@@ -254,7 +265,7 @@ Widget _finalizeHeader({bool isMobile = false}) {
           GestureDetector(
             onTap: () => Navigator.maybePop(context),
             child: Container(
-              padding: const EdgeInsets.all(4), // Give the icon some breathing room
+              padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 color: AppColors.white,
                 borderRadius: BorderRadius.circular(8),
@@ -808,8 +819,8 @@ Widget _finalizeHeader({bool isMobile = false}) {
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
-              ], // Correctly closing the list here
-            ), // Correctly closing the BoxDecoration here
+              ],
+            ), 
             child: TextField(
               controller: _notesController,
               minLines: 4,
@@ -1013,7 +1024,7 @@ Widget _finalizeHeader({bool isMobile = false}) {
     );
   }
 
-  // Helper for cleaner code
+
   Widget _buildSummaryRow(String label, String value) {
     return Row(
       children: [
