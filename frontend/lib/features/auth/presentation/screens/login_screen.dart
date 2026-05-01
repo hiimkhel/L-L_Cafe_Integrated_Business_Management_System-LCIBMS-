@@ -4,6 +4,7 @@ import 'package:frontend/core/models/user.dart';
 import 'package:frontend/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:frontend/features/auth/presentation/screens/register_screen.dart';
 import 'package:frontend/core/services/auth_service.dart';
+import 'package:frontend/core/widgets/bamboo_background.dart';
 
 
 const double _kMobile  = 700;
@@ -91,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: _bgBeige,
       body: Stack(
         children: [
-          const Positioned.fill(child: _BambooBackground()),
+          const BambooBackground(),
           LayoutBuilder(builder: (context, c) {
             final isMobile = c.maxWidth < _kMobile;
             return isMobile ? _buildMobile(context) : _buildDesktop();
@@ -487,101 +488,4 @@ class _GooglePainter extends CustomPainter {
   }
   @override
   bool shouldRepaint(_) => false;
-}
-
-class _BambooBackground extends StatefulWidget {
-  const _BambooBackground();
-  @override
-  State<_BambooBackground> createState() => _BambooBackgroundState();
-}
-
-class _BambooBackgroundState extends State<_BambooBackground>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(seconds: 30))..repeat();
-  }
-  @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
-  @override
-  Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < _kMobile;
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (_, __) => CustomPaint(
-        painter: _BambooPainter(animationValue: _ctrl.value, isMobile: isMobile),
-        size: Size.infinite,
-      ),
-    );
-  }
-}
-
-class _BambooPainter extends CustomPainter {
-  final double animationValue;
-  final bool isMobile;
-  _BambooPainter({required this.animationValue, required this.isMobile});
-
-  static const _bamboos = [
-    [0.040, 13.0, 0.12, 1.53],  [0.095,  7.0, 0.10, -1.84],
-    [0.133, 14.0, 0.13, 1.45],  [0.190,  9.0, 0.10, -0.72],
-    [0.236,  9.5, 0.10, -0.71], [0.283, 13.0, 0.12, -1.53],
-    [0.321, 13.0, 0.11, 1.24],  [0.374,  1.9, 0.08,  0.29],
-    [0.503, 20.0, 0.13, 2.00],  [0.560,  4.1, 0.09,  1.06],
-    [0.598, 17.6, 0.12, 1.82],  [0.693, 15.5, 0.11,  1.72],
-    [0.783, 18.8, 0.12, 1.81],  [0.890,  5.2, 0.08, -1.98],
-  ];
-
-  void _drawLeaf(Canvas c, Offset o, double angle, double len, double w, Paint p) {
-    c.save(); c.translate(o.dx, o.dy); c.rotate(angle);
-    final path = Path()..moveTo(0, 0)
-      ..quadraticBezierTo(len * 0.4, -w, len, 0)
-      ..quadraticBezierTo(len * 0.6, w, 0, 0)..close();
-    c.drawPath(path, p); c.restore();
-  }
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint();
-    int index = 0;
-    for (final b in _bamboos) {
-      index++;
-      if (isMobile && index % 3 != 0) continue;
-      final baseX = size.width * (b[0] as double);
-      final w = b[1] as double; final deg = b[3] as double; final h = size.height;
-      final double baseOp = b[2] as double;
-      final op = isMobile ? baseOp * 0.35 : baseOp * 0.8;
-      final x = ((baseX + animationValue * size.width * (op * 10)) % size.width);
-      final sway = math.sin((animationValue * math.pi * 4) + (x * 0.01)) * 0.015;
-      final rad = (deg * math.pi / 180) + sway;
-      paint.color = const Color(0xFF758C6D).withOpacity(op);
-      canvas.save();
-      canvas.translate(x + w / 2, h / 2); canvas.rotate(rad);
-      canvas.drawRect(Rect.fromLTWH(-w / 2, -h / 2 - 20, w, h + 40), paint);
-      final segments = (h / (w * 10 + 60)).ceil().clamp(3, 10);
-      final segH = (h + 40) / segments;
-      for (int i = 1; i < segments; i++) {
-        final jY = (-h / 2 - 20) + (i * segH);
-        canvas.drawRect(Rect.fromLTWH(-w / 2 - 1.5, jY - 1, w + 3, 2.5), paint);
-        if ((index + i) % 4 != 0) {
-          final isLeft = (index + i) % 2 == 0;
-          final ll = w * 2.5 + 20.0; final lw = ll * 0.25;
-          _drawLeaf(canvas, Offset(isLeft ? -w / 2 : w / 2, jY),
-              isLeft ? math.pi * 0.8 : math.pi * 0.2, ll, lw, paint);
-          if (i % 2 == 0) {
-            _drawLeaf(canvas, Offset(isLeft ? -w / 2 : w / 2, jY),
-                isLeft ? math.pi * 1.1 : -math.pi * 0.1, ll * 0.8, lw * 0.8, paint);
-          }
-        }
-      }
-      canvas.translate(0, h * 0.2); canvas.rotate(math.pi / 4);
-      canvas.drawRect(Rect.fromLTWH(-w * 0.6, -w * 0.6, w * 1.2, w * 1.2), paint);
-      canvas.restore();
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _BambooPainter old) =>
-      old.animationValue != animationValue || old.isMobile != isMobile;
 }

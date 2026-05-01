@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+// Firebase & Core
 import 'firebase_options.dart';
 import 'core/models/user.dart';
+import 'core/providers/auth_provider.dart'; 
+import 'core/constants/cart_provider.dart';
+import 'core/constants/routes.dart';
 
 // ── Shared State & Routes ───────────────────────────────────────────────────
 import 'core/constants/cart_provider.dart';
@@ -14,32 +19,30 @@ import 'package:frontend/core/constants/routes.dart';
 import 'package:frontend/features/customers/presentation/admin/customer_order_screen.dart';
 import 'features/home/presentation/customer/landing_screen.dart';
 import 'features/home/presentation/customer/home_screen.dart';
-import 'features/customers/presentation/admin/menu_screen.dart';
-import 'features/home/presentation/customer/contact_screen.dart';
-import 'features/home/presentation/customer/about_screen.dart';
-import 'features/home/presentation/customer/profile_screen.dart';
-import 'features/customers/presentation/admin/cart_screen.dart';
-import 'features/checkout/customer/presentation/cart_checkout_screen.dart';
-
-import 'features/auth/presentation/screens/login_screen.dart';
-import 'features/auth/presentation/screens/register_screen.dart';
-
+import 'features/home/presentation/rider/home_screen.dart';
 import 'features/dashboard/presentation/admin/dashboard_screen.dart';
 import 'features/dashboard/presentation/rider/dashboard_screen.dart';
 import 'features/dashboard/presentation/pos/order_entry.dart';
-import 'features/home/presentation/rider/home_screen.dart';
-
+import 'features/auth/presentation/screens/login_screen.dart';
+import 'features/auth/presentation/screens/register_screen.dart';
+import 'features/customers/presentation/admin/menu_screen.dart';
+import 'features/customers/presentation/admin/cart_screen.dart';
+import 'features/home/presentation/customer/contact_screen.dart';
+import 'features/home/presentation/customer/about_screen.dart';
+import 'features/home/presentation/customer/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await dotenv.load(fileName: ".env");
+  
   await FacebookAuth.instance.webAndDesktopInitialize(
     appId: dotenv.env['FACEBOOK_APP_ID']!,
     cookie: true,
     xfbml: true,
     version: "v13.0",
   );
+
   runApp(const LCIBMSApp());
 }
 
@@ -50,153 +53,144 @@ class LCIBMSApp extends StatefulWidget {
 }
 
 class _LCIBMSAppState extends State<LCIBMSApp> {
-  User? currentUser;
-
-  // Single CartNotifier that lives for the app's entire lifetime
   final CartNotifier _cartNotifier = CartNotifier();
-
-  void setUser(User user) => setState(() => currentUser = user);
-
-  void logout() {
-    setState(() {
-      currentUser = null;
-    });
-    _cartNotifier.clear();
-  }
 
   // ── Navigation helpers ────────────────────────────────────────────────────
 
-  /// Push the styled LoginScreen on top of whatever guest screen is showing.
   void _goLogin(BuildContext ctx) {
     Navigator.push(
       ctx,
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => LoginScreen(
           onLogin: (user) {
-            setUser(user);
+            ctx.read<AuthProvider>().setUser(user);
             Navigator.of(ctx).popUntil((route) => route.isFirst);
           },
         ),
-        transitionsBuilder: (_, anim, __, child) =>
-            FadeTransition(opacity: anim, child: child),
+        transitionsBuilder: (_, anim, __, child) => FadeTransition(opacity: anim, child: child),
         transitionDuration: const Duration(milliseconds: 220),
       ),
     );
   }
 
-  /// Push the styled RegisterScreen on top of whatever guest screen is showing.
   void _goRegister(BuildContext ctx) {
     Navigator.push(
       ctx,
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => RegisterScreen(
           onRegister: (user) {
-            setUser(user);
+            ctx.read<AuthProvider>().setUser(user);
             Navigator.of(ctx).popUntil((route) => route.isFirst);
           },
         ),
-        transitionsBuilder: (_, anim, __, child) =>
-            FadeTransition(opacity: anim, child: child),
+        transitionsBuilder: (_, anim, __, child) => FadeTransition(opacity: anim, child: child),
         transitionDuration: const Duration(milliseconds: 220),
       ),
     );
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
-    return CartProvider(
-      notifier: _cartNotifier,
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: _buildScreen(),
-        onGenerateRoute: (settings) {
-          switch (settings.name) {
-            case '/':
-              return _fade(_buildScreen());
-
-            case AppRoutes.home:
-              return _fade(CustomerHomeScreen(onLogout: logout));
-
-            case AppRoutes.menu:
-              return _fade(const MenuScreen());
-
-            case AppRoutes.cart:
-              return _fade(const CartScreen());
-
-            // ✅ FIX: Changed to CustomerOrderScreen from CartScreen
-            case AppRoutes.orders:
-              if (currentUser == null) {
-                return _fade(LandingScreen(onLogin: setUser, onRegister: setUser));
-              }
-              return _fade(const CustomerOrderScreen());
-
-            case AppRoutes.about:
-              return _fade(Builder(
-                builder: (ctx) => AboutScreen(
-                  onLogin: () => _goLogin(ctx),
-                  onJoinNow: () => _goRegister(ctx),
-                ),
-              ));
-
-            case AppRoutes.contact:
-              return _fade(Builder(
-                builder: (ctx) => ContactScreen(
-                  onLogin: () => _goLogin(ctx),
-                  onJoinNow: () => _goRegister(ctx),
-                ),
-              ));
-
-            case AppRoutes.profile:
-              if (currentUser == null) {
-                return _fade(LandingScreen(onLogin: setUser, onRegister: setUser));
-              }
-
-              return _fade(ProfileScreen(
-                userId: currentUser!.id,
-                email: currentUser!.email,
-                onLogout: logout,
-              ));
-
-            default:
-              return null;
-          }
+    // 1. First, we provide the Auth state
+    return ChangeNotifierProvider(
+      create: (_) => AuthProvider(),
+      child: Consumer<AuthProvider>(
+        builder: (context, auth, _) {
+          // 2. Then we wrap the CartProvider inside it
+          return CartProvider(
+            notifier: _cartNotifier,
+            // 3. Finally, the MaterialApp lives inside both
+            child: MaterialApp(
+              debugShowCheckedModeBanner: false,
+              home: _buildRootScreen(auth),
+              onGenerateRoute: (settings) => _handleRoutes(settings, auth),
+            ),
+          );
         },
       ),
     );
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // ── Route & Screen Logic ──────────────────────────────────────────────────
 
-  PageRouteBuilder _fade(Widget page) => PageRouteBuilder(
-        pageBuilder: (_, __, ___) => page,
-        transitionsBuilder: (_, anim, __, child) =>
-            FadeTransition(opacity: anim, child: child),
-        transitionDuration: const Duration(milliseconds: 220),
+  Widget _buildRootScreen(AuthProvider auth) {
+    final user = auth.user;
+    if (user == null) {
+      return LandingScreen(
+        onLogin: (u) => auth.setUser(u),
+        onRegister: (u) => auth.setUser(u),
       );
-
-  Widget _buildScreen() {
-    if (currentUser == null) {
-      return LandingScreen(onLogin: setUser, onRegister: setUser);
     }
-    switch (currentUser!.role) {
+
+    switch (user.role) {
       case UserRole.customer:
-        return CustomerHomeScreen(onLogout: logout);
+        return CustomerHomeScreen(onLogout: () {
+          auth.logout();
+          _cartNotifier.clear();
+        });
       case UserRole.rider:
         return DeliveryDashboardScreen();
       case UserRole.cashier:
         return POSOrderScreen();
       case UserRole.admin:
         return AdminDashboardScreen(
-          key: ValueKey(currentUser!.email),
+          key: ValueKey(user.email),
           activeIndex: 0,
-          onLogout: logout,
+          onLogout: () {
+            auth.logout();
+            _cartNotifier.clear();
+          },
         );
-      
-      // ✅ FIX: Added a default fallback to satisfy the compiler
       default:
-        return LandingScreen(onLogin: setUser, onRegister: setUser);
+        return const Center(child: Text("Role not recognized"));
     }
   }
+
+  Route? _handleRoutes(RouteSettings settings, AuthProvider auth) {
+    final user = auth.user;
+
+    switch (settings.name) {
+      case '/':
+        return _fade(_buildRootScreen(auth));
+
+      case AppRoutes.home:
+        return _fade(CustomerHomeScreen(onLogout: auth.logout));
+
+      case AppRoutes.profile:
+        if (user == null) return _fade(_buildRootScreen(auth));
+        return _fade(ProfileScreen(
+          userId: user.id,
+          email: user.email,
+          onLogout: () {
+            auth.logout();
+            _cartNotifier.clear();
+          },
+        ));
+
+      case AppRoutes.about:
+      case AppRoutes.contact:
+        return _fade(Builder(
+          builder: (ctx) {
+            final page = settings.name == AppRoutes.about 
+                ? AboutScreen(onLogin: () => _goLogin(ctx), onJoinNow: () => _goRegister(ctx))
+                : ContactScreen(onLogin: () => _goLogin(ctx), onJoinNow: () => _goRegister(ctx));
+            return page;
+          },
+        ));
+
+      case AppRoutes.menu:
+        return _fade(const MenuScreen());
+      case AppRoutes.cart:
+        return _fade(const CartScreen());
+
+      default:
+        return null;
+    }
+  }
+
+  PageRouteBuilder _fade(Widget page) => PageRouteBuilder(
+        pageBuilder: (_, __, ___) => page,
+        transitionsBuilder: (_, anim, __, child) => FadeTransition(opacity: anim, child: child),
+        transitionDuration: const Duration(milliseconds: 220),
+      );
 }

@@ -124,6 +124,12 @@ class CmsService {
     return null;
   }
 }
+
+static String getFullImageUrl(String path) {
+  const baseUrl = "http://localhost:1337"; // change for prod
+  if (path.startsWith("http")) return path;
+  return "$baseUrl$path";
+}
   
 }
 

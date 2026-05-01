@@ -5,6 +5,7 @@ import "../../../core/widgets/admin_header.dart";
 import 'package:frontend/core/services/customer/cms_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:convert';
+import 'dart:typed_data';
 
 class CMSScreen extends StatefulWidget {
   final int activeIndex;
@@ -81,6 +82,11 @@ class _CMSMainSectionState extends State<CMSMainSection> {
   int? _uploadedImageId;
   bool _isUploadingImage = false;
 
+  // Stores the local image data
+  Uint8List? _localPickedImageBytes;
+
+  String? _existingImageUrl;
+
   @override
   void initState() {
     super.initState();
@@ -99,6 +105,15 @@ class _CMSMainSectionState extends State<CMSMainSection> {
           titleController.text = data?['Title'] ?? '';
           buttonController.text = data?['buttonText'] ?? '';
           descController.text = CmsService.extractDescription(data?['description']);
+
+         final rawUrl = data?['image']?['url'];
+
+          if (rawUrl != null) {
+            _existingImageUrl = CmsService.getFullImageUrl(rawUrl);
+          } else {
+            _existingImageUrl = null;
+          }
+
         });
         debugPrint("CMS_DEBUG: Load success. ID: ${data?['id']}");
       }
@@ -106,6 +121,8 @@ class _CMSMainSectionState extends State<CMSMainSection> {
       debugPrint("CMS_DEBUG: Load Error: $e");
     }
   }
+
+
 
   Future<void> handlePublish() async {
     
@@ -162,7 +179,11 @@ class _CMSMainSectionState extends State<CMSMainSection> {
       );
 
         if (success) {
-          setState(() => _uploadedImageId = null);
+          setState(() {
+            // Clear data
+            _uploadedImageId = null;
+            _localPickedImageBytes = null;
+          });
           await loadPromo(selectedCard);
         }
       } 
@@ -181,15 +202,19 @@ class _CMSMainSectionState extends State<CMSMainSection> {
     const int maxFileSizeInBytes = 10 * 1024 * 1024; 
 
     try {
+
+      // File picker logic
       FilePickerResult? result = await FilePicker.pickFiles(
         type: FileType.image,
         withData: true, 
       );
 
+      // Check size
       if (result != null && result.files.single.bytes != null) {
         final file = result.files.single;
 
 
+        
         if (file.size > maxFileSizeInBytes) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -202,7 +227,11 @@ class _CMSMainSectionState extends State<CMSMainSection> {
           return;
         }
 
-        setState(() => _isUploadingImage = true);
+        setState(() {
+          _isUploadingImage = true;
+          // Store bytes for local preview  
+          _localPickedImageBytes = file.bytes;
+        });
         
         final bytes = file.bytes!;
         final name = file.name;
@@ -253,6 +282,16 @@ class _CMSMainSectionState extends State<CMSMainSection> {
                 isUploadingImage: _isUploadingImage,
                 onUploadPressed: handleImageUpload,
                 isPublishing: _isPublishing,
+                localPickedImageBytes: _localPickedImageBytes,
+                uploadedImageId: _uploadedImageId,
+                existingImageUrl:_existingImageUrl,
+                onClearImage: () {
+                  setState(() {
+                    _uploadedImageId = null;
+                  });
+                  debugPrint("CMS_DEBUG: Image unlinked by user");
+                },
+                
               ),
             ),
           ],
@@ -275,8 +314,12 @@ class MainCard extends StatelessWidget {
   final Map<String, dynamic>? selectedPromo;
   final VoidCallback onUploadPressed;
   final bool isUploadingImage;
+  final int? uploadedImageId;
+  final VoidCallback onClearImage;
   final VoidCallback onPublish;
   final bool isPublishing;
+  final Uint8List? localPickedImageBytes;
+  final String? existingImageUrl;
 
   const MainCard({
     super.key,
@@ -289,9 +332,13 @@ class MainCard extends StatelessWidget {
     required this.buttonController,
     required this.selectedPromo,
     required this.onPublish,
+    required this.onClearImage,
     required this.onUploadPressed,
+    required this.uploadedImageId,
     required this.isPublishing,
     required this.isUploadingImage,
+    required this.localPickedImageBytes,
+    required this.existingImageUrl,
   });
 
   @override
@@ -300,7 +347,6 @@ class MainCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.background,
-        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         children: [
@@ -318,9 +364,18 @@ class MainCard extends StatelessWidget {
           Expanded(
             child: Row(
               children: [
-                Expanded(child: ContentInfo(titleController: titleController, descController: descController, onUploadPressed: onUploadPressed)),
+                Expanded(child: ContentInfo(titleController: titleController, 
+                descController: descController, onUploadPressed: onUploadPressed, uploadedImageId: uploadedImageId,isUploadingImage: isUploadingImage,
+                onClearImage: onClearImage
+                )),
                 const VerticalDivider(color: AppColors.primary, width: 60, thickness: 1.5),
-                const Expanded(child: ContentPreview()),
+                Expanded(child: ContentPreview(
+                  titleController: titleController,
+                  descController: descController,
+                  uploadedImageId: uploadedImageId,
+                  localImageBytes: localPickedImageBytes,
+                  existingImageUrl: existingImageUrl
+                )),
               ],
             ),
           ),
@@ -357,16 +412,25 @@ class TopControls extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Icon(Icons.dashboard_customize, size: 28, color: AppColors.primary),
-        const SizedBox(width: 10),
         SizedBox(
           width: 320,
           child: DropdownButtonFormField<String>(
             value: selectedCard,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.primary),
+              ),
+              prefixIcon: const Icon(Icons.layers, color: AppColors.primary), // Layer icon for context
+            ),
+            icon: const Icon(Icons.arrow_drop_down_circle_outlined, color: AppColors.primary),
             items: cardOptions.map((key) {
               return DropdownMenuItem(
                 value: key, 
-                child: Text(cardTypeLabels[key] ?? key), 
+                child: Text(cardTypeLabels[key] ?? key, style: const TextStyle(fontWeight: FontWeight.w600)), 
               );
             }).toList(),
             onChanged: isPublishing ? null : onChanged,
@@ -394,23 +458,30 @@ class TopControls extends StatelessWidget {
 class ContentInfo extends StatelessWidget {
   final TextEditingController titleController;
   final TextEditingController descController;
+  final VoidCallback onClearImage;
   final VoidCallback onUploadPressed;
+  final int? uploadedImageId; 
+  final bool isUploadingImage;
   const ContentInfo({
     super.key,
     required this.titleController,
     required this.descController,
-    required this.onUploadPressed
+    required this.onUploadPressed,
+    required this.uploadedImageId,
+    required this.onClearImage,
+    required this.isUploadingImage
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
+        const SizedBox(height: 45),
         TitleRow(title: "Title", controller: titleController),
         const SizedBox(height: 16),
         SubtitleRow(title: "Description", controller: descController),
         const SizedBox(height: 16),
-        ImageUploadRow(onPressed: onUploadPressed),
+        ImageUploadRow(onPressed: onUploadPressed, uploadedImageId: uploadedImageId,onClear: onClearImage, isUploading: isUploadingImage),
       ],
     );
   }
@@ -473,8 +544,16 @@ class TitleRow extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           color: Colors.white,
-          border: Border.all(color: AppColors.primary, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            )
+          ],
+          border: Border.all(color: AppColors.primary.withOpacity(0.5), width: 1),
         ),
+        
         child: TextField(
           controller: controller,
           style: const TextStyle(fontSize: 18),
@@ -503,7 +582,14 @@ class SubtitleRow extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           color: Colors.white,
-          border: Border.all(color: AppColors.primary, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            )
+          ],
+          border: Border.all(color: AppColors.primary.withOpacity(0.5), width: 1),
         ),
         child: TextField(
           controller: controller,
@@ -522,40 +608,66 @@ class SubtitleRow extends StatelessWidget {
 
 class ImageUploadRow extends StatelessWidget {
   final VoidCallback onPressed;
-  const ImageUploadRow({super.key, required this.onPressed});
+  final int? uploadedImageId; 
+  final VoidCallback onClear;
+  final bool isUploading;
+  const ImageUploadRow({super.key, required this.onPressed, required this.uploadedImageId, required this.onClear, this.isUploading = false});
 
   @override
   Widget build(BuildContext context) {
     return ContentRow(
       icon: Icons.image,
-      rowHeight: 140,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: AppColors.textLight,
-          border: Border.all(color: AppColors.primary, width: 1),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.cloud_upload, size: 36, color: AppColors.primary),
-            const SizedBox(height: 8),
-            const Text(
-              "Choose a file or drag & drop it here",
-              style: TextStyle(color: AppColors.primary),
+      rowHeight: 160,
+      child: InkWell(
+        onTap: isUploading ? null : onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: uploadedImageId != null ? Colors.green.withOpacity(0.05) : AppColors.textLight,
+            border: Border.all(
+              color: uploadedImageId != null ? Colors.green : AppColors.primary.withOpacity(0.5), 
+              width: uploadedImageId != null ? 2 : 1,
+              style: BorderStyle.solid,
             ),
-            const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: onPressed,
-              style: ElevatedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                backgroundColor: AppColors.textLight,
-                side: const BorderSide(color: AppColors.primary),
+          ),
+          child: Stack(
+            children: [
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (isUploading)
+                      const CircularProgressIndicator()
+                    else if (uploadedImageId != null)
+                      const Icon(Icons.check_circle, size: 40, color: Colors.green)
+                    else
+                      const Icon(Icons.cloud_upload, size: 40, color: AppColors.primary),
+                    const SizedBox(height: 12),
+                    Text(
+                      uploadedImageId != null 
+                        ? "Image Uploaded!" 
+                        : "Click to upload Banner Image",
+                      style: TextStyle(
+                        color: uploadedImageId != null ? Colors.green : AppColors.primary,
+                        fontWeight: uploadedImageId != null ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: const Text("Browse File"),
-            ),
-          ],
+              if (uploadedImageId != null)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.red),
+                    onPressed: onClear
+                  ),
+                )
+            ],
+          ),
         ),
       ),
     );
@@ -563,50 +675,156 @@ class ImageUploadRow extends StatelessWidget {
 }
 
 class ContentPreview extends StatelessWidget {
-  const ContentPreview({super.key});
+  final TextEditingController titleController;
+  final TextEditingController descController;
+  final int? uploadedImageId;
+  final Uint8List? localImageBytes;
+  final bool isUploading;
+  final String? existingImageUrl;
+
+  const ContentPreview({super.key,
+    required this.titleController,
+    required this.descController,
+    this.uploadedImageId,
+    this.localImageBytes,
+    this.isUploading = false,
+    required this.existingImageUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Center(
-          child: IntrinsicWidth(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                "CONTENT PREVIEW",
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16,
-                  color: AppColors.textLight,
+    return ListenableBuilder(
+      listenable: Listenable.merge([titleController, descController]),
+      builder: (context, _) {
+           return Column(
+            children: [
+              Center(
+                child: IntrinsicWidth(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      "CONTENT PREVIEW",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 16,
+                        color: AppColors.textLight,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-        ),
-        Expanded(
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(32),
-            child: Center(
-              child: Container(
-                height: 260,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Colors.grey.shade300,
+              Expanded(
+                child: ListenableBuilder(
+                  listenable: Listenable.merge([titleController, descController]),
+                  builder: (context, _) {
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(32),
+                      child: Center(
+                        child: Container(
+                          height: 260,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(32),
+                            color: Colors.grey,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              )
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(32),
+                            child: Stack(
+                              children: [
+                                
+                                // --- 1. THE IMAGE (Bottom of Stack) ---
+                               Positioned.fill(
+                                child: Opacity(
+                                  opacity: 0.4,
+                                  child: _buildImageChild()
+                                )
+                               ),
+                                // --- 2. THE TEXT CONTENT (Top of Stack) ---
+                                Padding(
+                                  padding: const EdgeInsets.all(24.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        titleController.text.isEmpty
+                                            ? "Title Preview"
+                                            : titleController.text,
+                                        style: const TextStyle(
+                                          fontSize: 24, // Increased size
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        descController.text.isEmpty
+                                            ? "Promo description goes here..."
+                                            : descController.text,
+                                        style: TextStyle(color: Colors.white70),
+                                        maxLines: 4,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-                child: const Center(child: Text("Preview Area")),
               ),
-            ),
-          ),
-        ),
-      ],
+            ],
+          );
+      }
+    );
+  }
+
+  Widget _buildImageChild() {
+     // 1. Local picked image (highest priority)
+  if (localImageBytes != null && localImageBytes!.isNotEmpty) {
+    return Image.memory(localImageBytes!, fit: BoxFit.cover);
+  }
+
+  // 2. Existing CMS image (default fallback)
+  if (existingImageUrl != null && existingImageUrl!.isNotEmpty) {
+    return Image.network(
+      existingImageUrl!,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, progress) {
+        if (progress == null) return child;
+        return const Center(child: CircularProgressIndicator());
+      },
+      errorBuilder: (ctx, err, stack) {
+        debugPrint("Image load failed: $err");
+        return _buildPlaceholder();
+      },
+    );
+  }
+
+    // Priority 3: Fallback Placeholder
+    return _buildPlaceholder();
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      color: Colors.grey.shade800,
+      child: Icon(Icons.image, size: 80, color: Colors.grey.shade400),
     );
   }
 }
