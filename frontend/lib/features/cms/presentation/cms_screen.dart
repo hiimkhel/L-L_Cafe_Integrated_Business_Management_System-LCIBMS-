@@ -331,7 +331,6 @@ class MainCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.background,
-        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         children: [
@@ -396,16 +395,25 @@ class TopControls extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Icon(Icons.dashboard_customize, size: 28, color: AppColors.primary),
-        const SizedBox(width: 10),
         SizedBox(
           width: 320,
           child: DropdownButtonFormField<String>(
             value: selectedCard,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.primary),
+              ),
+              prefixIcon: const Icon(Icons.layers, color: AppColors.primary), // Layer icon for context
+            ),
+            icon: const Icon(Icons.arrow_drop_down_circle_outlined, color: AppColors.primary),
             items: cardOptions.map((key) {
               return DropdownMenuItem(
                 value: key, 
-                child: Text(cardTypeLabels[key] ?? key), 
+                child: Text(cardTypeLabels[key] ?? key, style: const TextStyle(fontWeight: FontWeight.w600)), 
               );
             }).toList(),
             onChanged: isPublishing ? null : onChanged,
@@ -451,6 +459,7 @@ class ContentInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        const SizedBox(height: 45),
         TitleRow(title: "Title", controller: titleController),
         const SizedBox(height: 16),
         SubtitleRow(title: "Description", controller: descController),
@@ -518,8 +527,16 @@ class TitleRow extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           color: Colors.white,
-          border: Border.all(color: AppColors.primary, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            )
+          ],
+          border: Border.all(color: AppColors.primary.withOpacity(0.5), width: 1),
         ),
+        
         child: TextField(
           controller: controller,
           style: const TextStyle(fontSize: 18),
@@ -548,7 +565,14 @@ class SubtitleRow extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           color: Colors.white,
-          border: Border.all(color: AppColors.primary, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            )
+          ],
+          border: Border.all(color: AppColors.primary.withOpacity(0.5), width: 1),
         ),
         child: TextField(
           controller: controller,
