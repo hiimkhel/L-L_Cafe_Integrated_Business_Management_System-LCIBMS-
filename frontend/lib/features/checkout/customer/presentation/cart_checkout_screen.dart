@@ -28,6 +28,12 @@ class CartCheckoutScreen extends StatefulWidget {
 class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
   //--------------------------ScrollController-----------------------------------
   final ScrollController _scrollController = ScrollController();
+
+  // Text input fields controllers
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
   List<CartItem> _items = [];
   final OrderService _orderService = OrderService();
   bool _isLoading = false;
@@ -42,6 +48,13 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
   }
 
   Future<void> _createOrder() async {
+    if (_nameController.text.isEmpty || _phoneController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill in contact details")),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     const double deliveryFee = 45.0;
@@ -51,21 +64,24 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
       (sum, item) => sum + (item.price * item.quantity),
     );
 
-    final total = _isDelivery
-        ? subtotal + deliveryFee
-        : subtotal;
+    final currentDeliveryFee = _isDelivery ? deliveryFee : 0.0;
+    final total = subtotal + currentDeliveryFee;
+
+    final fullNotes = _isDelivery 
+        ? "Address: ${_addressController.text}\nNotes: ${_notesController.text}" 
+        : _notesController.text;
 
     final order = OrderRequest(
       source: "online",
       orderType: _isDelivery ? "delivery" : "pickup",
       subtotal: subtotal,
-      deliveryFee: _isDelivery ? deliveryFee : 0,
+      deliveryFee: currentDeliveryFee,
       total: total,
       paymentMethod: _isCash ? "cash" : "e-wallet",
       paymentStatus: "unpaid",
-      customerName: null,
-      customerPhone: null,
-      notes: "this is a note for delivery",
+      customerName: _nameController.text,
+      customerPhone: _phoneController.text,
+      notes: fullNotes,
       items: _items.map((item) {
         return {
           "menu_item_id": item.id,
@@ -89,9 +105,14 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
       );
     }
   }
+
   @override
   void dispose() {
     _scrollController.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -130,49 +151,12 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      if (isMobile) ...[
-                        const SizedBox(height: 15),
-                        _orderMethod(isMobile: isMobile),
-                        const SizedBox(height: 15),
-                        _deliveryPickup(isMobile: isMobile),
-                        const SizedBox(height: 15),
-                        _clientDetails(isMobile: isMobile),
-                        const SizedBox(height: 20),
-                        _fieldNotes(isMobile: isMobile),
-                        const SizedBox(height: 25),
-                        _paymentMethod(isMobile: isMobile),
-                        const SizedBox(height: 10),
-                        _paymentChoices(isMobile: isMobile),
-                        const SizedBox(height: 10),
-                        _cartCheckoutSummary(isMobile: true),
-                      ] else ...[
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 15),
-                                  _orderMethod(),
-                                  const SizedBox(height: 15),
-                                  _deliveryPickup(),
-                                  const SizedBox(height: 15),
-                                  _clientDetails(),
-                                  const SizedBox(height: 25),
-                                  _paymentMethod(),
-                                  const SizedBox(height: 10),
-                                  _paymentChoices(),
-                                  const SizedBox(height: 20),
-                                  _fieldNotes(),
-                                ],
-                              ),
-                            ),
-                            Expanded(flex: 1, child: _cartCheckoutSummary()),
-                          ],
-                        ),
-                      ],
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: isMobile ? 0 : 40),
+                        child: isMobile 
+                          ? _buildVerticalLayout(true) 
+                          : _buildHorizontalLayout(),
+                      ),
                       const CustomerFooter(),
                     ],
                   ),
@@ -185,7 +169,77 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
     );
   }
 
-  Widget _finalizeHeader({bool isMobile = false}) {
+  Widget _buildVerticalLayout(bool isMobile) {
+    return Column(
+      children: [
+        _orderMethod(isMobile: isMobile),
+        _deliveryPickup(isMobile: isMobile),
+        const SizedBox(height: 30),
+        _clientDetails(isMobile: isMobile),
+        _paymentMethod(isMobile: isMobile),
+        _paymentChoices(isMobile: isMobile),
+        _fieldNotes(isMobile: isMobile),
+        _cartCheckoutSummary(isMobile: true),
+      ],
+    );
+  }
+
+  Widget _buildHorizontalLayout() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 2,
+          child: Column(
+            children: [
+              _orderMethod(),
+              _deliveryPickup(),
+              const SizedBox(height: 30),
+              _clientDetails(),
+              _paymentMethod(),
+              _paymentChoices(),
+              _fieldNotes(),
+            ],
+          ),
+        ),
+        Expanded(flex: 1, child: _cartCheckoutSummary()),
+      ],
+    );
+  }
+  
+  // --- Reusable Input Field Helper ---
+  Widget _customTextField({
+    required String label,
+    required String hint,
+    required IconData icon,
+    required TextEditingController controller,
+    TextInputType? keyboard,
+    int maxLines = 1,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 10)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType: keyboard,
+          maxLines: maxLines,
+          style: const TextStyle(fontSize: 14, color: AppColors.primary),
+          decoration: InputDecoration(
+            hintText: hint,
+            prefixIcon: Icon(icon, size: 18, color: AppColors.primary.withOpacity(0.5)),
+            filled: true,
+            fillColor: AppColors.primary.withOpacity(0.05),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(13), borderSide: BorderSide.none),
+            contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+Widget _finalizeHeader({bool isMobile = false}) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
         isMobile ? 16 : 45,
@@ -196,14 +250,11 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Styled Back Button
           GestureDetector(
             onTap: () => Navigator.maybePop(context),
             child: Container(
-              child: Icon(
-                Icons.chevron_left,
-                color: AppColors.primary,
-                size: 30,
-              ),
+              padding: const EdgeInsets.all(4), // Give the icon some breathing room
               decoration: BoxDecoration(
                 color: AppColors.white,
                 borderRadius: BorderRadius.circular(8),
@@ -215,15 +266,22 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
                   ),
                 ],
               ),
+              child: const Icon(
+                Icons.chevron_left,
+                color: AppColors.primary,
+                size: 30,
+              ),
             ),
           ),
           const SizedBox(width: 12),
+          // Stylized Multi-color Title
           RichText(
             text: TextSpan(
               style: TextStyle(
                 fontSize: isMobile ? 24 : 32,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.2,
+                fontFamily: 'Inter', // Ensure this matches your app's font
               ),
               children: const [
                 TextSpan(
@@ -242,7 +300,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
     );
   }
 
-  Widget _orderMethod({bool isMobile = false}) {
+   Widget _orderMethod({bool isMobile = false}) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
         isMobile ? 16 : 60,
@@ -270,78 +328,31 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
 
   Widget _deliveryPickup({bool isMobile = false}) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        isMobile ? 16 : 60,
-        0,
-        isMobile ? 16 : 60,
-        5,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 60),
       child: Row(
         children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _isDelivery = true),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
-                height: 58,
-                decoration: BoxDecoration(
-                  color: _isDelivery ? AppColors.primary : AppColors.white,
-                  borderRadius: BorderRadius.circular(17),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  'DELIVERY',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.4,
-                    color: _isDelivery ? AppColors.white : AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _isDelivery = false),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
-                height: 58,
-                decoration: BoxDecoration(
-                  color: !_isDelivery ? AppColors.primary : AppColors.white,
-                  borderRadius: BorderRadius.circular(17),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  'SITE PICKUP',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.4,
-                    color: !_isDelivery ? AppColors.white : AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          _toggleBtn("DELIVERY", _isDelivery, () => setState(() => _isDelivery = true)),
+          const SizedBox(width: 10),
+          _toggleBtn("PICKUP", !_isDelivery, () => setState(() => _isDelivery = false)),
         ],
+      ),
+    );
+  }
+
+  Widget _toggleBtn(String label, bool isActive, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 50,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isActive ? AppColors.primary : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.primary),
+          ),
+          child: Text(label, style: TextStyle(color: isActive ? Colors.white : AppColors.primary, fontWeight: FontWeight.bold)),
+        ),
       ),
     );
   }
