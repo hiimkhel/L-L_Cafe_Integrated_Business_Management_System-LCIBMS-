@@ -357,7 +357,7 @@ Widget _finalizeHeader({bool isMobile = false}) {
     );
   }
 
-  Widget _clientDetails({bool isMobile = false}) {
+ Widget _clientDetails({bool isMobile = false}) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
         isMobile ? 16 : 60,
@@ -365,19 +365,20 @@ Widget _finalizeHeader({bool isMobile = false}) {
         isMobile ? 16 : 60,
         5,
       ),
-      child:
-          _isDelivery
-              ? _deliveryDetails(isMobile: isMobile)
-              : _pickupDetails(isMobile: isMobile),
+      child: _isDelivery
+          ? _deliveryDetails(isMobile: isMobile)
+          : _pickupDetails(isMobile: isMobile),
     );
   }
 
+
   Widget _deliveryDetails({bool isMobile = false}) {
-    // helper to avoid repeating the field decoration
-    Widget _field({
+    // Helper used for Name and Contact
+    Widget _styledField({
       required String label,
       required String hint,
       required IconData icon,
+      required TextEditingController controller,
       TextInputType? keyboard,
     }) {
       return Column(
@@ -385,7 +386,7 @@ Widget _finalizeHeader({bool isMobile = false}) {
         children: [
           Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.primary,
               fontWeight: FontWeight.bold,
               fontSize: 10,
@@ -403,8 +404,9 @@ Widget _finalizeHeader({bool isMobile = false}) {
                 borderRadius: BorderRadius.circular(13),
               ),
               child: TextField(
+                controller: controller,
                 keyboardType: keyboard,
-                style: TextStyle(fontSize: 14, color: AppColors.primary),
+                style: const TextStyle(fontSize: 14, color: AppColors.primary),
                 decoration: InputDecoration(
                   hintText: hint,
                   hintStyle: TextStyle(
@@ -427,7 +429,7 @@ Widget _finalizeHeader({bool isMobile = false}) {
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(13),
-                    borderSide: BorderSide(color: Colors.transparent),
+                    borderSide: const BorderSide(color: Colors.transparent),
                   ),
                 ),
               ),
@@ -436,18 +438,6 @@ Widget _finalizeHeader({bool isMobile = false}) {
         ],
       );
     }
-
-    final nameField = _field(
-      label: 'FULL NAME',
-      hint: 'ENTER NAME...',
-      icon: Icons.person_2_outlined,
-    );
-    final contactField = _field(
-      label: 'CONTACT NUMBER',
-      hint: '09XX XXX XXXX',
-      icon: Icons.call_outlined,
-      keyboard: TextInputType.phone,
-    );
 
     return Container(
       padding: const EdgeInsets.all(23),
@@ -465,114 +455,35 @@ Widget _finalizeHeader({bool isMobile = false}) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(
-                Icons.person_2_outlined,
-                color: AppColors.secondary,
-                size: 22,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'CLIENT SPECIFICATIONS',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.receiptDark,
-                  fontSize: 15,
-                ),
-              ),
-            ],
-          ),
+          _clientSpecsHeader(),
           const SizedBox(height: 25),
-
-          //stacks vertically on mobile, side-by-side on desktop
           if (isMobile) ...[
-            nameField,
+            _styledField(label: 'FULL NAME', hint: 'ENTER NAME...', icon: Icons.person_2_outlined, controller: _nameController),
             const SizedBox(height: 16),
-            contactField,
+            _styledField(label: 'CONTACT NUMBER', hint: '09XX XXX XXXX', icon: Icons.call_outlined, keyboard: TextInputType.phone, controller: _phoneController),
           ] else
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: nameField),
+                Expanded(child: _styledField(label: 'FULL NAME', hint: 'ENTER NAME...', icon: Icons.person_2_outlined, controller: _nameController)),
                 const SizedBox(width: 20),
-                Expanded(child: contactField),
+                Expanded(child: _styledField(label: 'CONTACT NUMBER', hint: '09XX XXX XXXX', icon: Icons.call_outlined, keyboard: TextInputType.phone, controller: _phoneController)),
               ],
             ),
-
           const SizedBox(height: 20),
-          // address field, also fix width
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'DELIVERY ADDRESS',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 10,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.09),
-                    border: Border.all(
-                      color: AppColors.primary.withOpacity(0.2),
-                    ),
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                  child: TextField(
-                    style: TextStyle(fontSize: 14, color: AppColors.primary),
-                    textAlignVertical: TextAlignVertical.center,
-                    decoration: InputDecoration(
-                      hintText: 'ENTER FULL ADDRESS...',
-                      hintStyle: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.primary.withOpacity(0.5),
-                        fontWeight: FontWeight.w500,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.location_pin,
-                        size: 17,
-                        color: AppColors.primary.withOpacity(0.5),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 0,
-                        horizontal: 12,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(13),
-                        borderSide: BorderSide(
-                          color: AppColors.primary.withOpacity(0.5),
-                          width: 1,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(13),
-                        borderSide: BorderSide(color: Colors.transparent),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          _addressFieldStyled(), // Styled specifically for address
         ],
       ),
     );
   }
 
   Widget _pickupDetails({bool isMobile = false}) {
-    // helper to avoid repeating the field decoration
-    Widget _field({
+    // Shared styled field for pickup (Name & Contact only)
+    Widget _styledField({
       required String label,
       required String hint,
       required IconData icon,
+      required TextEditingController controller,
       TextInputType? keyboard,
     }) {
       return Column(
@@ -580,7 +491,7 @@ Widget _finalizeHeader({bool isMobile = false}) {
         children: [
           Text(
             label,
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.primary,
               fontWeight: FontWeight.bold,
               fontSize: 10,
@@ -589,7 +500,6 @@ Widget _finalizeHeader({bool isMobile = false}) {
           ),
           const SizedBox(height: 10),
           SizedBox(
-            //width: double.infinity,
             height: 50,
             child: Container(
               decoration: BoxDecoration(
@@ -598,31 +508,21 @@ Widget _finalizeHeader({bool isMobile = false}) {
                 borderRadius: BorderRadius.circular(13),
               ),
               child: TextField(
+                controller: controller,
                 keyboardType: keyboard,
-                style: TextStyle(fontSize: 14, color: AppColors.primary),
+                style: const TextStyle(fontSize: 14, color: AppColors.primary),
                 decoration: InputDecoration(
                   hintText: hint,
-                  hintStyle: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.primary.withOpacity(0.5),
-                    fontWeight: FontWeight.w500,
-                  ),
-                  prefixIcon: Icon(
-                    icon,
-                    size: 17,
-                    color: AppColors.primary.withOpacity(0.5),
-                  ),
+                  hintStyle: TextStyle(fontSize: 12, color: AppColors.primary.withOpacity(0.5), fontWeight: FontWeight.w500),
+                  prefixIcon: Icon(icon, size: 17, color: AppColors.primary.withOpacity(0.5)),
                   contentPadding: const EdgeInsets.symmetric(vertical: 13),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(13),
-                    borderSide: BorderSide(
-                      color: AppColors.primary.withOpacity(0.5),
-                      width: 1,
-                    ),
+                    borderSide: BorderSide(color: AppColors.primary.withOpacity(0.5), width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(13),
-                    borderSide: BorderSide(color: Colors.transparent),
+                    borderSide: const BorderSide(color: Colors.transparent),
                   ),
                 ),
               ),
@@ -631,18 +531,6 @@ Widget _finalizeHeader({bool isMobile = false}) {
         ],
       );
     }
-
-    final nameField = _field(
-      label: 'FULL NAME',
-      hint: 'ENTER NAME...',
-      icon: Icons.person_2_outlined,
-    );
-    final contactField = _field(
-      label: 'CONTACT NUMBER',
-      hint: '09XX XXX XXXX',
-      icon: Icons.call_outlined,
-      keyboard: TextInputType.phone,
-    );
 
     return Container(
       padding: const EdgeInsets.all(23),
@@ -660,171 +548,118 @@ Widget _finalizeHeader({bool isMobile = false}) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(
-                Icons.person_2_outlined,
-                color: AppColors.secondary,
-                size: 22,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'CLIENT SPECIFICATIONS',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.receiptDark,
-                  fontSize: 15,
-                ),
-              ),
-            ],
-          ),
+          _clientSpecsHeader(),
           const SizedBox(height: 25),
-
-          //stacks vertically on mobile, side-by-side on desktop
           if (isMobile) ...[
-            SizedBox(width: double.infinity, child: nameField),
+            SizedBox(width: double.infinity, child: _styledField(label: 'FULL NAME', hint: 'ENTER NAME...', icon: Icons.person_2_outlined, controller: _nameController)),
             const SizedBox(height: 16),
-            SizedBox(width: double.infinity, child: contactField),
+            SizedBox(width: double.infinity, child: _styledField(label: 'CONTACT NUMBER', hint: '09XX XXX XXXX', icon: Icons.call_outlined, keyboard: TextInputType.phone, controller: _phoneController)),
           ] else
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: nameField),
+                Expanded(child: _styledField(label: 'FULL NAME', hint: 'ENTER NAME...', icon: Icons.person_2_outlined, controller: _nameController)),
                 const SizedBox(width: 20),
-                Expanded(child: contactField),
+                Expanded(child: _styledField(label: 'CONTACT NUMBER', hint: '09XX XXX XXXX', icon: Icons.call_outlined, keyboard: TextInputType.phone, controller: _phoneController)),
               ],
             ),
-
-          const SizedBox(height: 20),
-          // address field, also fix width
         ],
       ),
     );
   }
 
-  Widget _paymentMethod({bool isMobile = false}) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        isMobile ? 16 : 60,
-        15,
-        isMobile ? 16 : 60,
-        5,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(Icons.credit_card_rounded, color: AppColors.secondary, size: 20),
-          const SizedBox(width: 12),
-          Text(
-            'PAYMENT METHOD',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+  // --- Sub-widgets for cleaner code ---
+
+  Widget _clientSpecsHeader() {
+    return Row(
+      children: [
+        const Icon(Icons.person_2_outlined, color: AppColors.secondary, size: 22),
+        const SizedBox(width: 10),
+        const Text(
+          'CLIENT SPECIFICATIONS',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: AppColors.receiptDark,
+            fontSize: 15,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _addressFieldStyled() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'DELIVERY ADDRESS',
+          style: TextStyle(
+            color: AppColors.primary,
+            fontWeight: FontWeight.bold,
+            fontSize: 10,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.09),
+              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: TextField(
+              controller: _addressController,
+              style: const TextStyle(fontSize: 14, color: AppColors.primary),
+              textAlignVertical: TextAlignVertical.center,
+              decoration: InputDecoration(
+                hintText: 'ENTER FULL ADDRESS...',
+                hintStyle: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.primary.withOpacity(0.5),
+                  fontWeight: FontWeight.w500,
+                ),
+                prefixIcon: Icon(
+                  Icons.location_pin,
+                  size: 17,
+                  color: AppColors.primary.withOpacity(0.5),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(13),
+                  borderSide: BorderSide(color: AppColors.primary.withOpacity(0.5), width: 1),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(13),
+                  borderSide: const BorderSide(color: Colors.transparent),
+                ),
+              ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
+    );
+  }
+
+
+  Widget _paymentMethod({bool isMobile = false}) {
+    return ListTile(
+      contentPadding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 60),
+      leading: const Icon(Icons.payment, color: AppColors.secondary),
+      title: const Text("PAYMENT METHOD", style: TextStyle(fontWeight: FontWeight.bold)),
     );
   }
 
   Widget _paymentChoices({bool isMobile = false}) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        isMobile ? 16 : 60,
-        0,
-        isMobile ? 16 : 60,
-        5,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 60),
       child: Row(
         children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _isCash = true),
-              child: AnimatedContainer(
-                padding: const EdgeInsets.only(top: 14),
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
-                height: 58,
-                decoration: BoxDecoration(
-                  color: _isCash ? AppColors.secondary : AppColors.white,
-                  borderRadius: BorderRadius.circular(17),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                alignment: Alignment.center,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.money,
-                      color: _isCash ? AppColors.white : AppColors.primary,
-                      size: 15,
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      'CASH ON DELIVERY',
-                      style: TextStyle(
-                        fontSize: 8,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.4,
-                        color: _isCash ? AppColors.white : AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _isCash = false),
-              child: AnimatedContainer(
-                padding: const EdgeInsets.only(top: 14),
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeInOut,
-                height: 58,
-                decoration: BoxDecoration(
-                  color: !_isCash ? AppColors.secondary : AppColors.white,
-                  borderRadius: BorderRadius.circular(17),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
-                      blurRadius: 6,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                alignment: Alignment.center,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.phone_iphone,
-                      color: _isCash ? AppColors.primary : AppColors.white,
-                      size: 15,
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      'ONLINE PAYMENT',
-                      style: TextStyle(
-                        fontSize: 8,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.4,
-                        color: _isCash ? AppColors.primary : AppColors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          _toggleBtn("CASH", _isCash, () => setState(() => _isCash = true)),
+          const SizedBox(width: 10),
+          _toggleBtn("E-WALLET", !_isCash, () => setState(() => _isCash = false)),
         ],
       ),
     );
@@ -832,334 +667,60 @@ Widget _finalizeHeader({bool isMobile = false}) {
 
   Widget _fieldNotes({bool isMobile = false}) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        isMobile ? 16 : 60,
-        15,
-        isMobile ? 16 : 60,
-        5,
-      ),
+      padding: EdgeInsets.all(isMobile ? 16 : 60),
+      child: _customTextField(label: "SPECIAL INSTRUCTIONS", hint: "No onions, extra spicy...", icon: Icons.note, controller: _notesController, maxLines: 3),
+    );
+  }
+
+  Widget _cartCheckoutSummary({bool isMobile = false}) {
+    final subtotal = _items.fold<double>(0, (sum, item) => sum + (item.price * item.quantity));
+    final deliveryFee = _isDelivery ? 45.0 : 0.0;
+    final total = subtotal + deliveryFee;
+
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(color: AppColors.receiptDark, borderRadius: BorderRadius.circular(20)),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.message_sharp, size: 20, color: AppColors.secondary),
-              const SizedBox(width: 12),
-              Text(
-                'FIELD NOTES',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-            ],
-          ),
+          const Row(children: [Icon(Icons.receipt_long, color: Colors.white), SizedBox(width: 10), Text("ORDER SUMMARY", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))]),
+          const Divider(color: Colors.white24),
+          ..._items.map((item) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("${item.quantity}x ${item.name}", style: const TextStyle(color: Colors.white70)),
+                Text("₱${(item.price * item.quantity).toStringAsFixed(2)}", style: const TextStyle(color: Colors.white)),
+              ],
+            ),
+          )),
+          const Divider(color: Colors.white24),
+          _summaryRow("Subtotal", subtotal),
+          _summaryRow("Delivery Fee", deliveryFee),
           const SizedBox(height: 10),
+          _summaryRow("TOTAL", total, isTotal: true),
+          const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
-            height: 90,
-            child: TextField(
-              minLines: 4,
-              maxLines: 4,
-              style: TextStyle(fontSize: 12, color: AppColors.primary),
-              textAlignVertical: TextAlignVertical.center,
-              decoration: InputDecoration(
-                hintText: 'ADD SPECIAL INSTRUCTIONS...',
-                hintStyle: TextStyle(
-                  fontSize: 10,
-                  color: AppColors.primary.withOpacity(0.5),
-                  fontWeight: FontWeight.w500,
-                ),
-                filled: true,
-                fillColor: AppColors.white,
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: BorderSide(
-                    color: AppColors.primary.withOpacity(0.1),
-                    width: 1,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: BorderSide(
-                    color: AppColors.primary.withOpacity(0.2),
-                  ),
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 10,
-                ),
-                border: OutlineInputBorder(),
-              ),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.secondary, padding: const EdgeInsets.symmetric(vertical: 15)),
+              onPressed: _isLoading ? null : _createOrder,
+              child: const Text("PLACE ORDER", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
             ),
-          ),
+          )
         ],
       ),
     );
   }
 
-  Widget _cartCheckoutSummary({bool isMobile = false}) {
-    const double deliveryFee = 45.0;
-    final double subTotal = _items.fold(
-      0,
-      (sum, item) => sum + (item.price * item.quantity),
-    );
-
-    //if pickup fee is 0
-    final double appliedDeliveryFee = _isDelivery ? deliveryFee : 0.0;
-
-    final double orderTotal = _isDelivery ? subTotal + deliveryFee : subTotal;
-
-    return Container(
-      padding: const EdgeInsets.all(25),
-      margin:
-          isMobile
-              ? const EdgeInsets.fromLTRB(16, 8, 16, 20) // full-width on mobile
-              : const EdgeInsets.fromLTRB(1, 20, 30, 20), // original desktop
-      decoration: BoxDecoration(
-        color: AppColors.receiptDark,
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.receiptDark.withOpacity(.3),
-            offset: const Offset(0, 4),
-            blurRadius: 4,
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.secondary,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    CupertinoIcons.checkmark_shield,
-                    size: 22,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  'ORDER LOG',
-                  style: TextStyle(
-                    color: AppColors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            //the pulled ordered item should be displayed here
-            ..._items.map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 14),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.name.toUpperCase(),
-                            style: TextStyle(
-                              color: AppColors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'X${item.quantity} UNITS',
-                            style: TextStyle(
-                              color: AppColors.white.withOpacity(0.7),
-                              fontSize: 9,
-                              letterSpacing: 0.4,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      '₱${(item.price * item.quantity).toStringAsFixed(2)}',
-                      style: TextStyle(
-                        color: AppColors.secondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (_items.isEmpty)
-              Text("NO ITEMS PASSED", style: TextStyle(color: Colors.white)),
-
-            const SizedBox(height: 16),
-            Divider(thickness: 1, color: AppColors.white.withOpacity(0.1)),
-            const SizedBox(height: 10),
-
-            Row(
-              children: [
-                Text(
-                  'SUBTOTAL',
-                  style: TextStyle(
-                    color: AppColors.white.withOpacity(0.55),
-                    fontSize: 10,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-
-                const Spacer(),
-
-                Text(
-                  '₱${subTotal.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    color: AppColors.white.withOpacity(0.55),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            Row(
-              children: [
-                Text(
-                  _isDelivery ? 'DELIVERY FEE' : ' ',
-                  style: TextStyle(
-                    color: AppColors.white.withOpacity(0.55),
-                    fontSize: 10,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-
-                const Spacer(),
-
-                Text(
-                  _isDelivery
-                      ? '₱${appliedDeliveryFee.toStringAsFixed(2)}'
-                      : ' ',
-                  style: TextStyle(
-                    color: AppColors.white.withOpacity(0.55),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  'TOTAL COST',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                const Spacer(),
-
-                Text(
-                  '₱${orderTotal.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    color: AppColors.secondary,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 29),
-
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 14),
-              decoration: BoxDecoration(
-                color: AppColors.white.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(17),
-                border: Border.all(color: AppColors.white.withOpacity(0.1)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.phone_android,
-                    size: 18,
-                    color: AppColors.white.withOpacity(0.6),
-                  ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      _isCash
-                          ? 'PAYMENT METHOD: CASH ON DELIVERY'
-                          : 'PAYMENT METHOD: ONLINE PAYMENT',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AppColors.white.withOpacity(0.7),
-                        fontSize: 10,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 19),
-
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                
-                onPressed: _isLoading ? null : _createOrder,
-                
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secondary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 19),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero,
-                  ),
-                  elevation: 0,
-                ),
-                child: _isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text(
-                      'CONFIRM',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.4,
-                      ),
-                    ),
-              ),
-            ),
-          ],
-        ),
-      ),
+  Widget _summaryRow(String label, double value, {bool isTotal = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: TextStyle(color: isTotal ? Colors.white : Colors.white70, fontSize: isTotal ? 18 : 14, fontWeight: isTotal ? FontWeight.bold : FontWeight.normal)),
+        Text("₱${value.toStringAsFixed(2)}", style: TextStyle(color: isTotal ? AppColors.secondary : Colors.white, fontSize: isTotal ? 18 : 14, fontWeight: isTotal ? FontWeight.bold : FontWeight.normal)),
+      ],
     );
   }
 }
