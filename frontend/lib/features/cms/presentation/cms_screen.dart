@@ -334,7 +334,11 @@ class MainCard extends StatelessWidget {
                 onClearImage: onClearImage
                 )),
                 const VerticalDivider(color: AppColors.primary, width: 60, thickness: 1.5),
-                const Expanded(child: ContentPreview()),
+                Expanded(child: ContentPreview(
+                  titleController: titleController,
+                  descController: descController,
+                  uploadedImageId: uploadedImageId,
+                )),
               ],
             ),
           ),
@@ -609,7 +613,15 @@ class ImageUploadRow extends StatelessWidget {
 }
 
 class ContentPreview extends StatelessWidget {
-  const ContentPreview({super.key});
+  final TextEditingController titleController;
+  final TextEditingController descController;
+  final int? uploadedImageId;
+
+  const ContentPreview({super.key,
+    required this.titleController,
+    required this.descController,
+    this.uploadedImageId
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -636,20 +648,65 @@ class ContentPreview extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(32),
-            child: Center(
-              child: Container(
-                height: 260,
+          child: ListenableBuilder(
+            listenable: Listenable.merge([titleController, descController]),
+            builder: (context, _) {
+              return Container(
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Colors.grey.shade300,
+                padding: const EdgeInsets.all(32),
+                child: Center(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        )
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // IMAGE PREVIEW AREA
+                          Container(
+                            height: 140,
+                            width: double.infinity,
+                            color: Colors.grey.shade200,
+                            child: uploadedImageId != null
+                                ? const Icon(Icons.image, size: 50, color: Colors.green)
+                                : const Center(child: Text("No Image Selected")),
+                          ),
+                          // TEXT PREVIEW AREA
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  titleController.text.isEmpty ? "Title Preview" : titleController.text,
+                                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  descController.text.isEmpty ? "Description will appear here..." : descController.text,
+                                  style: TextStyle(color: Colors.grey.shade600),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-                child: const Center(child: Text("Preview Area")),
-              ),
-            ),
+              );
+            },
           ),
         ),
       ],
