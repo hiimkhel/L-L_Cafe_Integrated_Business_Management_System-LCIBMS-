@@ -851,53 +851,175 @@ Widget _finalizeHeader({bool isMobile = false}) {
  
 
   Widget _cartCheckoutSummary({bool isMobile = false}) {
-    final subtotal = _items.fold<double>(0, (sum, item) => sum + (item.price * item.quantity));
-    final deliveryFee = _isDelivery ? 45.0 : 0.0;
-    final total = subtotal + deliveryFee;
+    const double deliveryFee = 45.0;
+    final double subTotal = _items.fold(
+      0,
+      (sum, item) => sum + (item.price * item.quantity),
+    );
+
+    final double appliedDeliveryFee = _isDelivery ? deliveryFee : 0.0;
+    final double orderTotal = subTotal + appliedDeliveryFee;
 
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: AppColors.receiptDark, borderRadius: BorderRadius.circular(20)),
-      child: Column(
-        children: [
-          const Row(children: [Icon(Icons.receipt_long, color: Colors.white), SizedBox(width: 10), Text("ORDER SUMMARY", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))]),
-          const Divider(color: Colors.white24),
-          ..._items.map((item) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.all(25),
+      margin: isMobile
+          ? const EdgeInsets.fromLTRB(16, 8, 16, 20)
+          : const EdgeInsets.fromLTRB(1, 20, 30, 20),
+      decoration: BoxDecoration(
+        color: AppColors.receiptDark,
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.receiptDark.withOpacity(.3),
+            offset: const Offset(0, 4),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
               children: [
-                Text("${item.quantity}x ${item.name}", style: const TextStyle(color: Colors.white70)),
-                Text("₱${(item.price * item.quantity).toStringAsFixed(2)}", style: const TextStyle(color: Colors.white)),
+                Container(
+                  width: 32,
+                  height: 32,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(CupertinoIcons.checkmark_shield, size: 20, color: Colors.white),
+                ),
+                const SizedBox(width: 16),
+                const Text(
+                  'ORDER LOG',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
               ],
             ),
-          )),
-          const Divider(color: Colors.white24),
-          _summaryRow("Subtotal", subtotal),
-          _summaryRow("Delivery Fee", deliveryFee),
-          const SizedBox(height: 10),
-          _summaryRow("TOTAL", total, isTotal: true),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.secondary, padding: const EdgeInsets.symmetric(vertical: 15)),
-              onPressed: _isLoading ? null : _createOrder,
-              child: const Text("PLACE ORDER", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 25),
+
+            // Order Items List
+            ..._items.map((item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.name.toUpperCase(),
+                              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              '${item.quantity} UNITS',
+                              style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 9),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        '₱${(item.price * item.quantity).toStringAsFixed(2)}',
+                        style: const TextStyle(color: AppColors.secondary, fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                )),
+
+            if (_items.isEmpty)
+              const Center(child: Text("NO ITEMS IN CART", style: TextStyle(color: Colors.white54, fontSize: 10))),
+
+            const SizedBox(height: 10),
+            Divider(thickness: 1, color: Colors.white.withOpacity(0.1)),
+            const SizedBox(height: 15),
+
+            // Calculation Rows
+            _buildSummaryRow('SUBTOTAL', '₱${subTotal.toStringAsFixed(2)}'),
+            if (_isDelivery) ...[
+              const SizedBox(height: 12),
+              _buildSummaryRow('DELIVERY FEE', '₱${appliedDeliveryFee.toStringAsFixed(2)}'),
+            ],
+
+            const SizedBox(height: 20),
+
+            // Grand Total
+            Row(
+              children: [
+                const Text('TOTAL COST', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                const Spacer(),
+                Text(
+                  '₱${orderTotal.toStringAsFixed(2)}',
+                  style: const TextStyle(color: AppColors.secondary, fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
-          )
-        ],
+            const SizedBox(height: 25),
+
+            // Payment Method Badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: Colors.white.withOpacity(0.1)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.payments_outlined, size: 16, color: Colors.white.withOpacity(0.6)),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      _isCash 
+                        ? (_isDelivery ? 'CASH ON DELIVERY' : 'CASH ON PICKUP')
+                        : 'ONLINE PAYMENT',
+                      style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 10, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Confirm Button
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _createOrder,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.secondary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  elevation: 0,
+                ),
+                child: _isLoading
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('CONFIRM ORDER', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1.1)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _summaryRow(String label, double value, {bool isTotal = false}) {
+  // Helper for cleaner code
+  Widget _buildSummaryRow(String label, String value) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(color: isTotal ? Colors.white : Colors.white70, fontSize: isTotal ? 18 : 14, fontWeight: isTotal ? FontWeight.bold : FontWeight.normal)),
-        Text("₱${value.toStringAsFixed(2)}", style: TextStyle(color: isTotal ? AppColors.secondary : Colors.white, fontSize: isTotal ? 18 : 14, fontWeight: isTotal ? FontWeight.bold : FontWeight.normal)),
+        Text(label, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10, letterSpacing: 0.5)),
+        const Spacer(),
+        Text(value, style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 11, fontWeight: FontWeight.w500)),
       ],
     );
   }
