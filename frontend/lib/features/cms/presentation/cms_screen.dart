@@ -253,6 +253,7 @@ class _CMSMainSectionState extends State<CMSMainSection> {
                 isUploadingImage: _isUploadingImage,
                 onUploadPressed: handleImageUpload,
                 isPublishing: _isPublishing,
+                uploadedImageId: _uploadedImageId
               ),
             ),
           ],
@@ -275,6 +276,7 @@ class MainCard extends StatelessWidget {
   final Map<String, dynamic>? selectedPromo;
   final VoidCallback onUploadPressed;
   final bool isUploadingImage;
+  final int? uploadedImageId;
   final VoidCallback onPublish;
   final bool isPublishing;
 
@@ -290,6 +292,7 @@ class MainCard extends StatelessWidget {
     required this.selectedPromo,
     required this.onPublish,
     required this.onUploadPressed,
+    required this.uploadedImageId,
     required this.isPublishing,
     required this.isUploadingImage,
   });
@@ -318,7 +321,8 @@ class MainCard extends StatelessWidget {
           Expanded(
             child: Row(
               children: [
-                Expanded(child: ContentInfo(titleController: titleController, descController: descController, onUploadPressed: onUploadPressed)),
+                Expanded(child: ContentInfo(titleController: titleController, 
+                descController: descController, onUploadPressed: onUploadPressed, uploadedImageId: uploadedImageId,isUploadingImage: isUploadingImage)),
                 const VerticalDivider(color: AppColors.primary, width: 60, thickness: 1.5),
                 const Expanded(child: ContentPreview()),
               ],
@@ -395,11 +399,15 @@ class ContentInfo extends StatelessWidget {
   final TextEditingController titleController;
   final TextEditingController descController;
   final VoidCallback onUploadPressed;
+  final int? uploadedImageId; 
+  final bool isUploadingImage;
   const ContentInfo({
     super.key,
     required this.titleController,
     required this.descController,
-    required this.onUploadPressed
+    required this.onUploadPressed,
+    required this.uploadedImageId,
+    required this.isUploadingImage
   });
 
   @override
@@ -410,7 +418,7 @@ class ContentInfo extends StatelessWidget {
         const SizedBox(height: 16),
         SubtitleRow(title: "Description", controller: descController),
         const SizedBox(height: 16),
-        ImageUploadRow(onPressed: onUploadPressed),
+        ImageUploadRow(onPressed: onUploadPressed, uploadedImageId: uploadedImageId, isUploading: isUploadingImage),
       ],
     );
   }
@@ -522,40 +530,67 @@ class SubtitleRow extends StatelessWidget {
 
 class ImageUploadRow extends StatelessWidget {
   final VoidCallback onPressed;
-  const ImageUploadRow({super.key, required this.onPressed});
+  final int? uploadedImageId; 
+  final bool isUploading;
+  const ImageUploadRow({super.key, required this.onPressed, required this.uploadedImageId, this.isUploading = false});
 
   @override
   Widget build(BuildContext context) {
     return ContentRow(
       icon: Icons.image,
-      rowHeight: 140,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: AppColors.textLight,
-          border: Border.all(color: AppColors.primary, width: 1),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.cloud_upload, size: 36, color: AppColors.primary),
-            const SizedBox(height: 8),
-            const Text(
-              "Choose a file or drag & drop it here",
-              style: TextStyle(color: AppColors.primary),
+      rowHeight: 160,
+      child: InkWell(
+        onTap: isUploading ? null : onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: uploadedImageId != null ? Colors.green.withOpacity(0.05) : AppColors.textLight,
+            border: Border.all(
+              color: uploadedImageId != null ? Colors.green : AppColors.primary.withOpacity(0.5), 
+              width: uploadedImageId != null ? 2 : 1,
+              style: BorderStyle.solid,
             ),
-            const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: onPressed,
-              style: ElevatedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                backgroundColor: AppColors.textLight,
-                side: const BorderSide(color: AppColors.primary),
+          ),
+          child: Stack(
+            children: [
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (isUploading)
+                      const CircularProgressIndicator()
+                    else if (uploadedImageId != null)
+                      const Icon(Icons.check_circle, size: 40, color: Colors.green)
+                    else
+                      const Icon(Icons.cloud_upload, size: 40, color: AppColors.primary),
+                    const SizedBox(height: 12),
+                    Text(
+                      uploadedImageId != null 
+                        ? "Image Uploaded (ID: $uploadedImageId)" 
+                        : "Click to upload Banner Image",
+                      style: TextStyle(
+                        color: uploadedImageId != null ? Colors.green : AppColors.primary,
+                        fontWeight: uploadedImageId != null ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: const Text("Browse File"),
-            ),
-          ],
+              if (uploadedImageId != null)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.red),
+                    onPressed: () {
+                      // Logic to clear the image
+                    },
+                  ),
+                )
+            ],
+          ),
         ),
       ),
     );
