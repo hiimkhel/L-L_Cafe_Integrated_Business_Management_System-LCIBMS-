@@ -5,6 +5,7 @@ import "../../../core/widgets/admin_header.dart";
 import 'package:frontend/core/services/customer/cms_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:convert';
+import 'dart:typed_data';
 
 class CMSScreen extends StatefulWidget {
   final int activeIndex;
@@ -80,6 +81,9 @@ class _CMSMainSectionState extends State<CMSMainSection> {
   // Tracker for pending image ID
   int? _uploadedImageId;
   bool _isUploadingImage = false;
+
+  // Stores the local image data
+  Uint8List? _localPickedImageBytes;
 
   @override
   void initState() {
@@ -162,7 +166,11 @@ class _CMSMainSectionState extends State<CMSMainSection> {
       );
 
         if (success) {
-          setState(() => _uploadedImageId = null);
+          setState(() {
+            // Clear data
+            _uploadedImageId = null;
+            _localPickedImageBytes = null;
+          });
           await loadPromo(selectedCard);
         }
       } 
@@ -181,15 +189,19 @@ class _CMSMainSectionState extends State<CMSMainSection> {
     const int maxFileSizeInBytes = 10 * 1024 * 1024; 
 
     try {
+
+      // File picker logic
       FilePickerResult? result = await FilePicker.pickFiles(
         type: FileType.image,
         withData: true, 
       );
 
+      // Check size
       if (result != null && result.files.single.bytes != null) {
         final file = result.files.single;
 
 
+        
         if (file.size > maxFileSizeInBytes) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -202,7 +214,11 @@ class _CMSMainSectionState extends State<CMSMainSection> {
           return;
         }
 
-        setState(() => _isUploadingImage = true);
+        setState(() {
+          _isUploadingImage = true;
+          // Store bytes for local preview  
+          _localPickedImageBytes = file.bytes;
+        });
         
         final bytes = file.bytes!;
         final name = file.name;
@@ -253,6 +269,7 @@ class _CMSMainSectionState extends State<CMSMainSection> {
                 isUploadingImage: _isUploadingImage,
                 onUploadPressed: handleImageUpload,
                 isPublishing: _isPublishing,
+                localPickedImageBytes: _localPickedImageBytes,
                 uploadedImageId: _uploadedImageId,
                 onClearImage: () {
                   setState(() {
@@ -260,6 +277,7 @@ class _CMSMainSectionState extends State<CMSMainSection> {
                   });
                   debugPrint("CMS_DEBUG: Image unlinked by user");
                 },
+                
               ),
             ),
           ],
@@ -286,6 +304,7 @@ class MainCard extends StatelessWidget {
   final VoidCallback onClearImage;
   final VoidCallback onPublish;
   final bool isPublishing;
+  final Uint8List? localPickedImageBytes;
 
   const MainCard({
     super.key,
@@ -303,6 +322,7 @@ class MainCard extends StatelessWidget {
     required this.uploadedImageId,
     required this.isPublishing,
     required this.isUploadingImage,
+    required this.localPickedImageBytes,
   });
 
   @override
@@ -338,6 +358,7 @@ class MainCard extends StatelessWidget {
                   titleController: titleController,
                   descController: descController,
                   uploadedImageId: uploadedImageId,
+                  localImageBytes: localPickedImageBytes,
                 )),
               ],
             ),
@@ -585,7 +606,7 @@ class ImageUploadRow extends StatelessWidget {
                     const SizedBox(height: 12),
                     Text(
                       uploadedImageId != null 
-                        ? "Image Uploaded (ID: $uploadedImageId)" 
+                        ? "Image Uploaded!" 
                         : "Click to upload Banner Image",
                       style: TextStyle(
                         color: uploadedImageId != null ? Colors.green : AppColors.primary,
@@ -616,100 +637,134 @@ class ContentPreview extends StatelessWidget {
   final TextEditingController titleController;
   final TextEditingController descController;
   final int? uploadedImageId;
+  final Uint8List? localImageBytes;
+  final bool isUploading;
 
   const ContentPreview({super.key,
     required this.titleController,
     required this.descController,
-    this.uploadedImageId
+    this.uploadedImageId,
+    this.localImageBytes,
+    this.isUploading = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Center(
-          child: IntrinsicWidth(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                "CONTENT PREVIEW",
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16,
-                  color: AppColors.textLight,
-                ),
-              ),
-            ),
-          ),
-        ),
-        Expanded(
-          child: ListenableBuilder(
-            listenable: Listenable.merge([titleController, descController]),
-            builder: (context, _) {
-              return Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(32),
-                child: Center(
+    return ListenableBuilder(
+      listenable: Listenable.merge([titleController, descController]),
+      builder: (context, _) {
+           return Column(
+            children: [
+              Center(
+                child: IntrinsicWidth(
                   child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    margin: const EdgeInsets.only(bottom: 20),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        )
-                      ],
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // IMAGE PREVIEW AREA
-                          Container(
-                            height: 140,
-                            width: double.infinity,
-                            color: Colors.grey.shade200,
-                            child: uploadedImageId != null
-                                ? const Icon(Icons.image, size: 50, color: Colors.green)
-                                : const Center(child: Text("No Image Selected")),
-                          ),
-                          // TEXT PREVIEW AREA
-                          Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  titleController.text.isEmpty ? "Title Preview" : titleController.text,
-                                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  descController.text.isEmpty ? "Description will appear here..." : descController.text,
-                                  style: TextStyle(color: Colors.grey.shade600),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                    child: const Text(
+                      "CONTENT PREVIEW",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 16,
+                        color: AppColors.textLight,
                       ),
                     ),
                   ),
                 ),
-              );
-            },
-          ),
-        ),
-      ],
+              ),
+              Expanded(
+                child: ListenableBuilder(
+                  listenable: Listenable.merge([titleController, descController]),
+                  builder: (context, _) {
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(32),
+                      child: Center(
+                        child: Container(
+                          height: 260,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(32),
+                            color: Colors.grey,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              )
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(32),
+                            child: Stack(
+                              children: [
+                                
+                                // --- 1. THE IMAGE (Bottom of Stack) ---
+                                if (localImageBytes != null)
+                                  Opacity(
+                                    opacity: 0.4, 
+                                    child: Image.memory(
+                                      localImageBytes!,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      fit: BoxFit.cover, 
+                                    ),
+                                  )
+                                else
+                                  Container(
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    color: Colors.grey.shade800, 
+                                    child: Icon(
+                                      Icons.image, 
+                                      size: 80, 
+                                      color: Colors.grey.shade400 
+                                    ),
+                                  ),
+
+                                // --- 2. THE TEXT CONTENT (Top of Stack) ---
+                                Padding(
+                                  padding: const EdgeInsets.all(24.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        titleController.text.isEmpty
+                                            ? "Title Preview"
+                                            : titleController.text,
+                                        style: const TextStyle(
+                                          fontSize: 24, // Increased size
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        descController.text.isEmpty
+                                            ? "Promo description goes here..."
+                                            : descController.text,
+                                        style: TextStyle(color: Colors.white70),
+                                        maxLines: 4,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          );
+      }
     );
   }
 }
