@@ -645,21 +645,129 @@ Widget _finalizeHeader({bool isMobile = false}) {
 
 
   Widget _paymentMethod({bool isMobile = false}) {
-    return ListTile(
-      contentPadding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 60),
-      leading: const Icon(Icons.payment, color: AppColors.secondary),
-      title: const Text("PAYMENT METHOD", style: TextStyle(fontWeight: FontWeight.bold)),
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        isMobile ? 16 : 60,
+        15,
+        isMobile ? 16 : 60,
+        5,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Icon(Icons.credit_card_rounded, color: AppColors.secondary, size: 20),
+          const SizedBox(width: 12),
+          const Text(
+            'PAYMENT METHOD',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _paymentChoices({bool isMobile = false}) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 60),
+      padding: EdgeInsets.fromLTRB(
+        isMobile ? 16 : 60,
+        0,
+        isMobile ? 16 : 60,
+        5,
+      ),
       child: Row(
         children: [
-          _toggleBtn("CASH", _isCash, () => setState(() => _isCash = true)),
-          const SizedBox(width: 10),
-          _toggleBtn("E-WALLET", !_isCash, () => setState(() => _isCash = false)),
+          // Cash Option
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _isCash = true),
+              child: AnimatedContainer(
+                padding: const EdgeInsets.only(top: 14),
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: _isCash ? AppColors.secondary : AppColors.white,
+                  borderRadius: BorderRadius.circular(17),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.money,
+                      color: _isCash ? AppColors.white : AppColors.primary,
+                      size: 15,
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      // Dynamic label based on delivery vs pickup
+                      _isDelivery ? 'CASH ON DELIVERY' : 'CASH ON PICKUP',
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.4,
+                        color: _isCash ? AppColors.white : AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Online Option
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _isCash = false),
+              child: AnimatedContainer(
+                padding: const EdgeInsets.only(top: 14),
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: !_isCash ? AppColors.secondary : AppColors.white,
+                  borderRadius: BorderRadius.circular(17),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.phone_iphone,
+                      color: !_isCash ? AppColors.white : AppColors.primary,
+                      size: 15,
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      'ONLINE PAYMENT',
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.4,
+                        color: !_isCash ? AppColors.white : AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -667,10 +775,80 @@ Widget _finalizeHeader({bool isMobile = false}) {
 
   Widget _fieldNotes({bool isMobile = false}) {
     return Padding(
-      padding: EdgeInsets.all(isMobile ? 16 : 60),
-      child: _customTextField(label: "SPECIAL INSTRUCTIONS", hint: "No onions, extra spicy...", icon: Icons.note, controller: _notesController, maxLines: 3),
+      padding: EdgeInsets.fromLTRB(
+        isMobile ? 16 : 60,
+        15,
+        isMobile ? 16 : 60,
+        5,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.message_sharp, size: 20, color: AppColors.secondary),
+              const SizedBox(width: 12),
+              const Text(
+                'FIELD NOTES',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ], // Correctly closing the list here
+            ), // Correctly closing the BoxDecoration here
+            child: TextField(
+              controller: _notesController,
+              minLines: 4,
+              maxLines: 6,
+              style: const TextStyle(fontSize: 12, color: AppColors.primary),
+              decoration: InputDecoration(
+                hintText: 'ADD SPECIAL INSTRUCTIONS...',
+                hintStyle: TextStyle(
+                  fontSize: 10,
+                  color: AppColors.primary.withOpacity(0.5),
+                  fontWeight: FontWeight.w500,
+                ),
+                filled: true,
+                fillColor: AppColors.white,
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 15,
+                  horizontal: 15,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  borderSide: BorderSide(
+                    color: AppColors.primary.withOpacity(0.3),
+                    width: 1.5,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  borderSide: BorderSide(
+                    color: AppColors.primary.withOpacity(0.1),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
+ 
 
   Widget _cartCheckoutSummary({bool isMobile = false}) {
     final subtotal = _items.fold<double>(0, (sum, item) => sum + (item.price * item.quantity));
