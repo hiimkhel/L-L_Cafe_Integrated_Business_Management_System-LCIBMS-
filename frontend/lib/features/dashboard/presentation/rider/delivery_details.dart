@@ -32,7 +32,8 @@ class _DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
     String nextStatus = '';
     if (currentStatus == 'PREPARING') nextStatus = 'ready';
     else if (currentStatus == 'READY') nextStatus = 'out_for_delivery';
-    else if (currentStatus == 'OUT_FOR_DELIVERY') nextStatus = 'delivered';
+    else if (currentStatus == 'OUT_FOR_DELIVERY') nextStatus = 'completed';
+
 
     if (nextStatus.isEmpty) return;
 
@@ -99,7 +100,7 @@ class _DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
 
     if (status == "PREPARING") statusColor = AppColors.preparingColor;
     else if (status == "OUT_FOR_DELIVERY") statusColor = AppColors.deliveringColor;
-    else if (status == "READY") statusColor = Colors.green;
+    else if (status == "COMPLETED") statusColor = Colors.green;
     else if (status == "DELIVERED") statusColor = AppColors.deliveredColor;
     else statusColor = Colors.grey;
 
@@ -263,7 +264,41 @@ class _DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
     String buttonText = "MARK AS READY";
     if (status == "READY") buttonText = "START DELIVERY";
     if (status == "OUT_FOR_DELIVERY") buttonText = "COMPLETE DELIVERY";
-    if (status == "DELIVERED") return const SizedBox.shrink();
+
+    if (status == "COMPLETED") {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.green.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(
+            color: Colors.green.withOpacity(0.4),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              "COMPLETED",
+              style: TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                letterSpacing: 1,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.check_circle,
+              color: Colors.green,
+              size: 20,
+            ),
+          ],
+        ),
+      );
+    }
+
 
     return GestureDetector(
       onTap: () => _handleStatusUpdate(status),
