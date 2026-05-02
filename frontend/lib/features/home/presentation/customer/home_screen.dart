@@ -41,17 +41,17 @@ class HomeMenuItem {
 
 const _featuredBeverages = <HomeMenuItem>[
   HomeMenuItem(
-    id: 100,
-    name: 'Nutella Frappe',
-    price: 120.00,
+    id: 100, 
+    name: 'Nutella Frappe', 
+    price: 120.00, 
     imageAsset: null,
-  ),
+    ),
   HomeMenuItem(
-    id: 101,
-    name: 'Red Velvet Frappe',
-    price: 150.00,
+    id: 101, 
+    name: 'Red Velvet Frappe', 
+    price: 150.00, 
     imageAsset: null,
-  ),
+    ),
   HomeMenuItem(id: 102, name: 'S\'more', price: 110.00, imageAsset: null),
   HomeMenuItem(id: 103, name: 'Biscoff', price: 180.00, imageAsset: null),
 ];
@@ -82,20 +82,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     super.dispose();
   }
 
-  /*
-  void _submit() {
-    if (_stars == 0) return;
-    setState(() {
-      _sent = true;
-      _msg =
-          _stars >= 4
-              ? '✨ Great! Thank you for the positive feedback!'
-              : '🙏 Thank you! We\'ll work on improving your experience.';
-      _stars = 0;
-    });
-  }
-  */
-
   void _logout(BuildContext ctx) {
 
     if (widget.onLogout != null) {
@@ -104,7 +90,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     Navigator.of(ctx).pushNamedAndRemoveUntil('/', (route) => false);
   }
 
-  Future<void> submitReview(int stars, String reviewText) async {
+   Future<void> submitReview(int stars, String reviewText) async {
     try {
       final prefs = await SharedPreferences.getInstance();
 
@@ -167,7 +153,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       setState(() => _msg = "Error: $e");
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final cart = CartProvider.of(context);
@@ -179,7 +164,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         notifCount: 1,
         onLogout: () => _logout(context),
         onCart: () => Navigator.pushNamed(context, '/cart'),
-        onNotif: () {},
+        onNotif: () { ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text("Notifications clicked")),
+  );},
         onProfile: () {},
       ),
       body: Stack(
@@ -333,7 +320,7 @@ class _MainHero extends StatelessWidget {
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < _kMobile;
 
-        return Padding(
+      return Padding(
           padding: EdgeInsets.symmetric(vertical: isMobile ? 32 : 64),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -605,9 +592,9 @@ class _FeaturedBeveragesSection extends StatelessWidget {
     return LayoutBuilder(
       builder: (_, c) {
         final isMobile = c.maxWidth < _kMobile;
-        final ph = isMobile ? 24.0 : 75.0;
+        final ph = isMobile ? 24.0 : 75.0; 
 
-        return Padding(
+              return Padding(
           padding: EdgeInsets.fromLTRB(ph, isMobile ? 40 : 80, ph, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
