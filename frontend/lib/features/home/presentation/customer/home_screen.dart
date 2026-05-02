@@ -151,7 +151,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         setState(() {
           _sent = true;
           _stars = 4;
-         _msg =
+          _msg =
               stars >= 4
                   ? '✨ Great! Thank you for the positive feedback!'
                   : '🙏 Thank you! We\'ll work on improving your experience.';
@@ -229,13 +229,17 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                             }
 
                             //------------------------------------------------validation---------------------------------------------------
-                           if (_stars >= 4) {
+                            if (_stars >= 4) {
                               setState(
-                                () => _msg = "✨ Great! Thank you for the positive feedback!",
+                                () =>
+                                    _msg =
+                                        "✨ Great! Thank you for the positive feedback!",
                               );
                             } else {
                               setState(
-                                () => _msg = "🙏 Thank you! We'll work on improving your experience.",
+                                () =>
+                                    _msg =
+                                        "🙏 Thank you! We'll work on improving your experience.",
                               );
                             }
 
