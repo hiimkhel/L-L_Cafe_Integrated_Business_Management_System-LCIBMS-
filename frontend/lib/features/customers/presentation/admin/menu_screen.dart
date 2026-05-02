@@ -14,40 +14,42 @@ const Color _bgDark    = Color(0xFF2D2A26);
 const Color _primary   = Color(0xFF758C6D);
 const Color _secondary = Color(0xFFA98258);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MENU ITEM MODEL
-// ─────────────────────────────────────────────────────────────────────────────
-
 enum StockStatus { inStock, outOfStock, limitedStock }
-// ─────────────────────────────────────────────────────────────────────────────
-// MOCK DATA  (swap _kMenuItems with an API/Firestore fetch)
-// ─────────────────────────────────────────────────────────────────────────────
 
 const List<Map<String, String>> _kCategories = [
-  {'label': 'ALL', 'value': ''},
-  {'label': 'FOODS', 'value': '1'},
-  {'label': 'PARTY TRAY', 'value': '2'},
-  {'label': 'WAFFLES', 'value': '3'},
-  {'label': 'COFFEE', 'value': '4'},
-  {'label': 'NON-COFFEE DRINKS', 'value': '5'},
-  {'label': 'FRAPPES', 'value': '6'},
+  {'label': 'ALL',              'value': ''},
+  {'label': 'FOODS',            'value': '1'},
+  {'label': 'PARTY TRAY',       'value': '2'},
+  {'label': 'WAFFLES',          'value': '3'},
+  {'label': 'COFFEE',           'value': '4'},
+  {'label': 'NON-COFFEE DRINKS','value': '5'},
+  {'label': 'FRAPPES',          'value': '6'},
 ];
-
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MENU SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
 
 class MenuScreen extends StatefulWidget {
-  
-  const MenuScreen({super.key});
+  /// Pass true when the user is not logged in so the add-to-cart button
+  /// redirects to login instead of adding items.
+  final bool isGuest;
+
+  /// Called when a guest taps add-to-cart — show the login screen here.
+  final VoidCallback? onLoginRequired;
+
+  const MenuScreen({
+    super.key,
+    this.isGuest = false,
+    this.onLoginRequired,
+  });
+
   @override
   State<MenuScreen> createState() => _MenuScreenState();
 }
 
 class _MenuScreenState extends State<MenuScreen> {
-  String _selectedLabel = 'ALL'; 
+  String _selectedLabel      = 'ALL';
   String _activeCategoryValue = '';
   List<MenuItem> _allRemoteItems = [];
   Timer? _debounce;
@@ -64,60 +66,58 @@ class _MenuScreenState extends State<MenuScreen> {
 
   Future<void> _loadMenu() async {
     if (!mounted) return;
-      setState(() => _isLoading = true);
-
-      try {
-        // Pass the active value (slug) instead of the UI Label
-        final items = await MenuService.fetchMenu(
-          category: _activeCategoryValue, 
-          search: _searchQuery,
-        );
-
-        setState(() {
-          _allRemoteItems = items;
-          _isLoading = false;
-        });
+    setState(() => _isLoading = true);
+    try {
+      final items = await MenuService.fetchMenu(
+        category: _activeCategoryValue,
+        search: _searchQuery,
+      );
+      setState(() {
+        _allRemoteItems = items;
+        _isLoading = false;
+      });
     } catch (e) {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("COULD NOT REFRESH MENU")),
+        const SnackBar(content: Text('COULD NOT REFRESH MENU')),
       );
     }
   }
 
   List<MenuItem> get _filteredItems {
-      return _allRemoteItems.where((item) {
-      // We removed the matchCat logic because the API already filtered by category.
-      // We only keep the search filter here for a "live" feel while typing,
-      // though the API handles this too on reload.
+    return _allRemoteItems.where((item) {
       final matchSearch = _searchQuery.isEmpty ||
           item.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           item.description.toLowerCase().contains(_searchQuery.toLowerCase());
-
       return matchSearch;
     }).toList();
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () {
-      _loadMenu();
-    });
+    _debounce = Timer(const Duration(milliseconds: 500), _loadMenu);
   }
 
   // ── Add to cart ──────────────────────────────────────────────────────────
 
   void _addToCart(MenuItem menuItem) {
+    // ✅ Guest taps add-to-cart → redirect to login instead
+    if (widget.isGuest) {
+      widget.onLoginRequired?.call();
+      return;
+    }
+
     CartProvider.of(context).add(CartItem(
       id: menuItem.id.toString(),
       name: menuItem.name,
-      category: "Menu Item",
+      category: 'Menu Item',
       price: menuItem.price,
       originalPrice: menuItem.price,
       quantity: 1,
@@ -130,7 +130,9 @@ class _MenuScreenState extends State<MenuScreen> {
         content: Text(
           '${menuItem.name} ADDED TO CART',
           style: const TextStyle(
-            fontFamily: 'Urbanist', fontWeight: FontWeight.w800, letterSpacing: 1,
+            fontFamily: 'Urbanist',
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1,
           ),
         ),
         backgroundColor: _primary,
@@ -150,17 +152,19 @@ class _MenuScreenState extends State<MenuScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Subscribes to cart so navbar badge updates live
-    final cart = CartProvider.of(context);
+    final cart = widget.isGuest ? null : CartProvider.of(context);
 
     return Scaffold(
       backgroundColor: _bgBeige,
       appBar: CustomerNavbar(
         activeRoute: '/menu',
-        cartCount: cart.totalCount,
-        notifCount: 1,
-        userName: 'JANE DOE',
-        userClientId: 'CLIENT #LL-00124',
+        cartCount: cart?.totalCount ?? 0,
+        notifCount: widget.isGuest ? 0 : 1,
+        userName: widget.isGuest ? null : 'JANE DOE',
+        userClientId: widget.isGuest ? null : 'CLIENT #LL-00124',
+        // ✅ Pass guest state so the navbar cart button also redirects to login
+        isGuest: widget.isGuest,
+        onLoginRequired: widget.onLoginRequired,
       ),
       body: Stack(
         children: [
@@ -174,8 +178,7 @@ class _MenuScreenState extends State<MenuScreen> {
                   children: [
                     Center(
                       child: ConstrainedBox(
-                        constraints:
-                            const BoxConstraints(maxWidth: _kDesktopMaxWidth),
+                        constraints: const BoxConstraints(maxWidth: _kDesktopMaxWidth),
                         child: Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: isMobile ? 20 : 64,
@@ -256,7 +259,7 @@ class _MenuScreenState extends State<MenuScreen> {
         _buildPageTitle(),
         const SizedBox(height: 6),
         const Text(
-          'L&L CAFE STRUCTURAL CATALOG',
+          'L&L CAFE MENU',
           style: TextStyle(
             fontFamily: 'Urbanist', fontWeight: FontWeight.w700,
             fontSize: 10, letterSpacing: 2.5, color: _secondary,
@@ -321,10 +324,13 @@ class _MenuScreenState extends State<MenuScreen> {
       ),
       child: TextField(
         controller: _searchController,
-        onChanged: (val) => setState(() => _searchQuery = val),
+        onChanged: (val) {
+          setState(() => _searchQuery = val);
+          _onSearchChanged(val);
+        },
         onSubmitted: (val) {
           setState(() => _searchQuery = val);
-          _loadMenu(); 
+          _loadMenu();
         },
         style: const TextStyle(
           fontFamily: 'Urbanist', fontWeight: FontWeight.w700,
@@ -336,8 +342,8 @@ class _MenuScreenState extends State<MenuScreen> {
             fontFamily: 'Urbanist', fontWeight: FontWeight.w600,
             fontSize: 13, color: _bgDark.withOpacity(0.35), letterSpacing: 1.5,
           ),
-          prefixIcon:
-              Icon(Icons.search_rounded, color: _bgDark.withOpacity(0.4), size: 20),
+          prefixIcon: Icon(Icons.search_rounded,
+              color: _bgDark.withOpacity(0.4), size: 20),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
                   icon: Icon(Icons.close_rounded,
@@ -357,38 +363,35 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
-    Widget _buildCategoryFilter({required bool scrollable}) {
-      final chips = _kCategories.map((cat) {
-        final label = cat['label']!;
-        final value = cat['value']!;
+  Widget _buildCategoryFilter({required bool scrollable}) {
+    final chips = _kCategories.map((cat) {
+      final label = cat['label']!;
+      final value = cat['value']!;
+      return Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: _CategoryChip(
+          label: label,
+          selected: _selectedLabel == label,
+          onTap: () {
+            if (_selectedLabel == label) return;
+            setState(() {
+              _selectedLabel = label;
+              _activeCategoryValue = value;
+            });
+            _loadMenu();
+          },
+        ),
+      );
+    }).toList();
 
-        return Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: _CategoryChip(
-            label: label,
-            selected: _selectedLabel == label,
-            onTap: () {
-              if (_selectedLabel == label) return;
-
-              setState(() {
-                _selectedLabel = label;
-                _activeCategoryValue = value;
-              });
-
-              _loadMenu(); // Fetch new data from server
-            },
-          ),
-        );
-      }).toList();
-
-      if (scrollable) {
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal, 
-          child: Row(children: chips),
-        );
-      }
-      return Wrap(spacing: 10, runSpacing: 10, children: chips);
+    if (scrollable) {
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(children: chips),
+      );
     }
+    return Wrap(spacing: 10, runSpacing: 10, children: chips);
+  }
 
   Widget _buildGrid(List<MenuItem> items, {required int crossAxisCount}) {
     return GridView.builder(
@@ -404,6 +407,7 @@ class _MenuScreenState extends State<MenuScreen> {
       itemBuilder: (_, i) => _MenuCard(
         item: items[i],
         isMobile: crossAxisCount == 2,
+        isGuest: widget.isGuest,
         onAddToCart: () => _addToCart(items[i]),
       ),
     );
@@ -418,22 +422,18 @@ class _MenuScreenState extends State<MenuScreen> {
             Icon(Icons.search_off_rounded,
                 size: 64, color: _secondary.withOpacity(0.3)),
             const SizedBox(height: 16),
-            Text(
-              'NO ITEMS FOUND',
-              style: TextStyle(
-                fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                fontSize: 16, letterSpacing: 2.0,
-                color: _bgDark.withOpacity(0.4),
-              ),
-            ),
+            Text('NO ITEMS FOUND',
+                style: TextStyle(
+                  fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                  fontSize: 16, letterSpacing: 2.0,
+                  color: _bgDark.withOpacity(0.4),
+                )),
             const SizedBox(height: 8),
-            Text(
-              'Try a different search or category',
-              style: TextStyle(
-                fontFamily: 'Urbanist', fontWeight: FontWeight.w600,
-                fontSize: 13, color: _bgDark.withOpacity(0.3),
-              ),
-            ),
+            Text('Try a different search or category',
+                style: TextStyle(
+                  fontFamily: 'Urbanist', fontWeight: FontWeight.w600,
+                  fontSize: 13, color: _bgDark.withOpacity(0.3),
+                )),
           ],
         ),
       ),
@@ -468,22 +468,18 @@ class _CategoryChip extends StatelessWidget {
             width: 1.5,
           ),
           boxShadow: selected
-              ? [
-                  BoxShadow(
-                      color: _secondary.withOpacity(0.25),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4))
-                ]
+              ? [BoxShadow(
+                  color: _secondary.withOpacity(0.25),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4))]
               : [],
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Urbanist', fontWeight: FontWeight.w800,
-            fontSize: 11, letterSpacing: 1.5,
-            color: selected ? Colors.white : _bgDark.withOpacity(0.7),
-          ),
-        ),
+        child: Text(label,
+            style: TextStyle(
+              fontFamily: 'Urbanist', fontWeight: FontWeight.w800,
+              fontSize: 11, letterSpacing: 1.5,
+              color: selected ? Colors.white : _bgDark.withOpacity(0.7),
+            )),
       ),
     );
   }
@@ -497,9 +493,14 @@ class _MenuCard extends StatefulWidget {
   final MenuItem item;
   final VoidCallback onAddToCart;
   final bool isMobile;
+  final bool isGuest;
 
-  const _MenuCard(
-      {required this.item, required this.onAddToCart, required this.isMobile});
+  const _MenuCard({
+    required this.item,
+    required this.onAddToCart,
+    required this.isMobile,
+    required this.isGuest,
+  });
 
   @override
   State<_MenuCard> createState() => _MenuCardState();
@@ -515,8 +516,8 @@ class _MenuCardState extends State<_MenuCard>
     super.initState();
     _bounceCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 140));
-    _scaleAnim = Tween<double>(begin: 1.0, end: 0.88).animate(
-        CurvedAnimation(parent: _bounceCtrl, curve: Curves.easeInOut));
+    _scaleAnim = Tween<double>(begin: 1.0, end: 0.88)
+        .animate(CurvedAnimation(parent: _bounceCtrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -526,19 +527,19 @@ class _MenuCardState extends State<_MenuCard>
   }
 
   Future<void> _handleAddToCart() async {
-    await _bounceCtrl.forward();
-    await _bounceCtrl.reverse();
+    // Skip bounce animation for guests — they'll be redirected
+    if (!widget.isGuest) {
+      await _bounceCtrl.forward();
+      await _bounceCtrl.reverse();
+    }
     widget.onAddToCart();
   }
 
-  Color get _stockColor {
-    // Uses the boolean from your MenuItem model
-    return widget.item.isAvailable ? _primary : Colors.redAccent;
-  }
+  Color get _stockColor =>
+      widget.item.isAvailable ? _primary : Colors.redAccent;
 
-  String get _stockLabel {
-    return widget.item.isAvailable ? 'IN STOCK' : 'OUT OF STOCK';
-  }
+  String get _stockLabel =>
+      widget.item.isAvailable ? 'IN STOCK' : 'OUT OF STOCK';
 
   @override
   Widget build(BuildContext context) {
@@ -592,10 +593,8 @@ class _MenuCardState extends State<_MenuCard>
                   ),
                 ),
                 if (isOut) Container(color: Colors.black.withOpacity(0.4)),
-                // Stock badge
                 Positioned(
-                  top: 12,
-                  left: 12,
+                  top: 12, left: 12,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 5),
@@ -603,18 +602,17 @@ class _MenuCardState extends State<_MenuCard>
                       color: _stockColor,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(
-                      _stockLabel,
-                      style: const TextStyle(
-                        fontFamily: 'Urbanist', fontWeight: FontWeight.w800,
-                        fontSize: 8, letterSpacing: 1.0, color: Colors.white,
-                      ),
-                    ),
+                    child: Text(_stockLabel,
+                        style: const TextStyle(
+                          fontFamily: 'Urbanist', fontWeight: FontWeight.w800,
+                          fontSize: 8, letterSpacing: 1.0, color: Colors.white,
+                        )),
                   ),
                 ),
               ],
             ),
           ),
+
           // Info
           Expanded(
             flex: 4,
@@ -670,13 +668,25 @@ class _MenuCardState extends State<_MenuCard>
                             decoration: BoxDecoration(
                               color: isOut
                                   ? Colors.grey.shade200
-                                  : _secondary.withOpacity(0.15),
+                                  // ✅ Guests see a slightly different tint
+                                  // on the button to hint login is needed,
+                                  // but the button still shows — it just
+                                  // redirects to login on tap.
+                                  : _secondary.withOpacity(
+                                      widget.isGuest ? 0.08 : 0.15),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
-                              Icons.shopping_cart_outlined,
+                              // ✅ Show lock icon for guests so it's clear
+                              widget.isGuest && !isOut
+                                  ? Icons.lock_outline_rounded
+                                  : Icons.shopping_cart_outlined,
                               size: widget.isMobile ? 16 : 20,
-                              color: isOut ? Colors.grey : _secondary,
+                              color: isOut
+                                  ? Colors.grey
+                                  : widget.isGuest
+                                      ? _secondary.withOpacity(0.5)
+                                      : _secondary,
                             ),
                           ),
                         ),
@@ -694,7 +704,7 @@ class _MenuCardState extends State<_MenuCard>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BAMBOO BACKGROUND (retained)
+// BAMBOO BACKGROUND
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _BambooBackground extends StatefulWidget {
@@ -706,6 +716,7 @@ class _BambooBackground extends StatefulWidget {
 class _BambooBackgroundState extends State<_BambooBackground>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+
   @override
   void initState() {
     super.initState();
@@ -741,16 +752,16 @@ class _BambooPainter extends CustomPainter {
   _BambooPainter({required this.animationValue, required this.isMobile});
 
   static const _bamboos = [
-    [0.040, 13.0, 0.12, 1.53], [0.095, 7.0, 0.10, -1.84],
-    [0.133, 14.0, 0.13, 1.45], [0.190, 9.0, 0.10, -0.72],
-    [0.236, 9.5, 0.10, -0.71], [0.283, 13.0, 0.12, -1.53],
-    [0.321, 13.0, 0.11, 1.24], [0.374, 1.9, 0.08, 0.29],
-    [0.423, 2.2, 0.08, 0.35], [0.469, 2.6, 0.08, -0.34],
-    [0.503, 20.0, 0.13, 2.00], [0.560, 4.1, 0.09, 1.06],
-    [0.598, 17.6, 0.12, 1.82], [0.656, 8.9, 0.10, -0.98],
-    [0.693, 15.5, 0.11, 1.72], [0.739, 17.9, 0.12, 1.99],
-    [0.783, 18.8, 0.12, 1.81], [0.839, 8.9, 0.10, 0.66],
-    [0.890, 5.2, 0.08, -1.98], [0.936, 16.6, 0.11, -1.89],
+    [0.040, 13.0, 0.12, 1.53],  [0.095, 7.0,  0.10, -1.84],
+    [0.133, 14.0, 0.13, 1.45],  [0.190, 9.0,  0.10, -0.72],
+    [0.236, 9.5,  0.10, -0.71], [0.283, 13.0, 0.12, -1.53],
+    [0.321, 13.0, 0.11, 1.24],  [0.374, 1.9,  0.08, 0.29],
+    [0.423, 2.2,  0.08, 0.35],  [0.469, 2.6,  0.08, -0.34],
+    [0.503, 20.0, 0.13, 2.00],  [0.560, 4.1,  0.09, 1.06],
+    [0.598, 17.6, 0.12, 1.82],  [0.656, 8.9,  0.10, -0.98],
+    [0.693, 15.5, 0.11, 1.72],  [0.739, 17.9, 0.12, 1.99],
+    [0.783, 18.8, 0.12, 1.81],  [0.839, 8.9,  0.10, 0.66],
+    [0.890, 5.2,  0.08, -1.98], [0.936, 16.6, 0.11, -1.89],
   ];
 
   void _drawLeaf(Canvas c, Offset o, double angle, double len, double w, Paint p) {
@@ -760,7 +771,8 @@ class _BambooPainter extends CustomPainter {
       ..quadraticBezierTo(len * 0.4, -w, len, 0)
       ..quadraticBezierTo(len * 0.6, w, 0, 0)
       ..close();
-    c.drawPath(path, p); c.restore();
+    c.drawPath(path, p);
+    c.restore();
   }
 
   @override
@@ -776,10 +788,8 @@ class _BambooPainter extends CustomPainter {
       final h = size.height;
       final double baseOp = b[2] as double;
       final op = isMobile ? baseOp * 0.4 : baseOp;
-      final x =
-          ((baseX + animationValue * size.width * (op * 8)) % size.width);
-      final sway =
-          math.sin((animationValue * math.pi * 4) + (x * 0.01)) * 0.015;
+      final x = ((baseX + animationValue * size.width * (op * 8)) % size.width);
+      final sway = math.sin((animationValue * math.pi * 4) + (x * 0.01)) * 0.015;
       final rad = (deg * math.pi / 180) + sway;
       paint.color = _primary.withOpacity(op);
       canvas.save();
@@ -804,8 +814,7 @@ class _BambooPainter extends CustomPainter {
       }
       canvas.translate(0, h * 0.2);
       canvas.rotate(math.pi / 4);
-      canvas.drawRect(
-          Rect.fromLTWH(-w * 0.6, -w * 0.6, w * 1.2, w * 1.2), paint);
+      canvas.drawRect(Rect.fromLTWH(-w * 0.6, -w * 0.6, w * 1.2, w * 1.2), paint);
       canvas.restore();
     }
   }

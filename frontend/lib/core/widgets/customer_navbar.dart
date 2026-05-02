@@ -127,28 +127,24 @@ class NotificationPanel extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'L&L CHANNEL',
-                  style: TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 20,
-                    height: 1.1,
-                    letterSpacing: -0.5,
-                    color: Color(0xFF2D2A26),
-                  ),
-                ),
+                Text('L&L CHANNEL',
+                    style: TextStyle(
+                      fontFamily: 'Urbanist',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                      height: 1.1,
+                      letterSpacing: -0.5,
+                      color: Color(0xFF2D2A26),
+                    )),
                 SizedBox(height: 4),
-                Text(
-                  'ORDER NOTIFICATION',
-                  style: TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 10,
-                    letterSpacing: 1.0,
-                    color: Color(0xFFA98258),
-                  ),
-                ),
+                Text('ORDER NOTIFICATION',
+                    style: TextStyle(
+                      fontFamily: 'Urbanist',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 10,
+                      letterSpacing: 1.0,
+                      color: Color(0xFFA98258),
+                    )),
               ],
             ),
           ),
@@ -183,9 +179,7 @@ class NotificationPanel extends StatelessWidget {
             color: Colors.white.withOpacity(item.isPriority ? 1.0 : 0.8),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: item.isPriority
-                  ? const Color(0x4D758C6D)
-                  : const Color(0x0DA98258),
+              color: item.isPriority ? const Color(0x4D758C6D) : const Color(0x0DA98258),
               width: 1.0,
             ),
             boxShadow: item.isPriority
@@ -198,61 +192,49 @@ class NotificationPanel extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: item.isPriority
-                              ? const Color(0xFF758C6D)
-                              : const Color(0x33A98258),
-                          shape: BoxShape.circle,
-                        ),
+                  Row(children: [
+                    Container(
+                      width: 10, height: 10,
+                      decoration: BoxDecoration(
+                        color: item.isPriority
+                            ? const Color(0xFF758C6D)
+                            : const Color(0x33A98258),
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(width: 10),
-                      Text(
-                        item.sender,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(item.sender,
                         style: const TextStyle(
                           fontFamily: 'Urbanist',
                           fontWeight: FontWeight.w900,
                           fontSize: 10,
                           letterSpacing: 1.5,
                           color: Color(0xFF2D2A26),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      const Icon(Icons.access_time_rounded,
-                          size: 12, color: Color(0x66A98258)),
-                      const SizedBox(width: 6),
-                      Text(
-                        item.time,
+                        )),
+                  ]),
+                  Row(children: [
+                    const Icon(Icons.access_time_rounded, size: 12, color: Color(0x66A98258)),
+                    const SizedBox(width: 6),
+                    Text(item.time,
                         style: const TextStyle(
                           fontFamily: 'Urbanist',
                           fontWeight: FontWeight.w800,
                           fontSize: 10,
                           color: Color(0x66A98258),
-                        ),
-                      ),
-                    ],
-                  ),
+                        )),
+                  ]),
                 ],
               ),
               const SizedBox(height: 16),
-              Text(
-                item.body,
-                style: const TextStyle(
-                  fontFamily: 'Urbanist',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                  height: 1.5,
-                  letterSpacing: 0.5,
-                  color: Color(0xFFA98258),
-                ),
-              ),
+              Text(item.body,
+                  style: const TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    height: 1.5,
+                    letterSpacing: 0.5,
+                    color: Color(0xFFA98258),
+                  )),
               if (item.isPriority) ...[
                 const SizedBox(height: 16),
                 Container(
@@ -260,22 +242,18 @@ class NotificationPanel extends StatelessWidget {
                   decoration: const BoxDecoration(
                     border: Border(top: BorderSide(color: Color(0x1A758C6D), width: 1.0)),
                   ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.warning_rounded, size: 14, color: Color(0xFF758C6D)),
-                      SizedBox(width: 8),
-                      Text(
-                        'PRIORITY TRANSMISSION',
+                  child: const Row(children: [
+                    Icon(Icons.warning_rounded, size: 14, color: Color(0xFF758C6D)),
+                    SizedBox(width: 8),
+                    Text('PRIORITY TRANSMISSION',
                         style: TextStyle(
                           fontFamily: 'Urbanist',
                           fontWeight: FontWeight.w900,
                           fontSize: 9,
                           letterSpacing: 0.9,
                           color: Color(0xFF758C6D),
-                        ),
-                      ),
-                    ],
-                  ),
+                        )),
+                  ]),
                 ),
               ],
             ],
@@ -319,10 +297,7 @@ class _GuestNavbarState extends State<GuestNavbar> {
   ];
 
   @override
-  void dispose() {
-    _closeMenu();
-    super.dispose();
-  }
+  void dispose() { _closeMenu(); super.dispose(); }
 
   void _openMenu(BuildContext context) {
     _closeMenu();
@@ -372,20 +347,18 @@ class _GuestNavbarState extends State<GuestNavbar> {
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: _links
-                  .map((l) => Padding(
-                        padding: const EdgeInsets.only(right: 32),
-                        child: _NavLink(
-                          label: l.label,
-                          active: widget.activeRoute == l.route,
-                          onTap: () {
-                            if (widget.activeRoute != l.route) {
-                              Navigator.pushReplacementNamed(context, l.route);
-                            }
-                          },
-                        ),
-                      ))
-                  .toList(),
+              children: _links.map((l) => Padding(
+                padding: const EdgeInsets.only(right: 32),
+                child: _NavLink(
+                  label: l.label,
+                  active: widget.activeRoute == l.route,
+                  onTap: () {
+                    if (widget.activeRoute != l.route) {
+                      Navigator.pushReplacementNamed(context, l.route);
+                    }
+                  },
+                ),
+              )).toList(),
             ),
           ),
         ),
@@ -475,8 +448,7 @@ class _GuestNavbarState extends State<GuestNavbar> {
           behavior: HitTestBehavior.opaque,
           onTap: () => _menuOpen ? _closeMenu() : _openMenu(context),
           child: Container(
-            width: 40,
-            height: 40,
+            width: 40, height: 40,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(10),
@@ -505,15 +477,18 @@ class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
   final String? userName;
   final String? userClientId;
 
-  /// Pass [isGuest: true] on the landing/guest pages so the cart button
-  /// and MENU link redirect to login instead of protected routes.
+  /// Set to true when the user is NOT logged in (e.g. browsing the menu as a
+  /// guest). The cart button will redirect to login instead of /cart.
+  /// All menu browsing remains freely accessible.
   final bool isGuest;
 
   final VoidCallback? onCart;
   final VoidCallback? onNotif;
   final VoidCallback? onProfile;
   final VoidCallback? onLogout;
-  final VoidCallback? onLogin; // called when guest taps cart or menu
+
+  /// Fired when a guest taps the cart button — navigate to login screen here.
+  final VoidCallback? onLoginRequired;
 
   const CustomerNavbar({
     super.key,
@@ -527,7 +502,7 @@ class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
     this.onNotif,
     this.onProfile,
     this.onLogout,
-    this.onLogin,
+    this.onLoginRequired,
   });
 
   @override
@@ -576,7 +551,7 @@ class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
               onCart: onCart,
               onNotif: () => _showNotifications(context, true),
               onLogout: onLogout,
-              onLogin: onLogin,
+              onLoginRequired: onLoginRequired,
             )
           : _DesktopCustomerNav(
               activeRoute: activeRoute,
@@ -587,7 +562,7 @@ class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
               onNotif: () => _showNotifications(context, false),
               onProfile: onProfile,
               onLogout: onLogout,
-              onLogin: onLogin,
+              onLoginRequired: onLoginRequired,
             );
     });
   }
@@ -601,13 +576,12 @@ class _DesktopCustomerNav extends StatelessWidget {
   final String activeRoute;
   final int cartCount, notifCount;
   final bool isGuest;
-  final VoidCallback? onCart, onNotif, onProfile, onLogout, onLogin;
+  final VoidCallback? onCart, onNotif, onProfile, onLogout, onLoginRequired;
 
-  // ✅ ORDERS removed — only HOME and MENU for logged-in customers
   static const _links = [
-    _NI('HOME', '/home'),
-    _NI('MENU', '/menu'),
-    _NI('ORDERS', '/orders')
+    _NI('HOME',   '/home'),
+    _NI('MENU',   '/menu'),
+    _NI('ORDERS', '/orders'),
   ];
 
   const _DesktopCustomerNav({
@@ -619,27 +593,16 @@ class _DesktopCustomerNav extends StatelessWidget {
     this.onNotif,
     this.onProfile,
     this.onLogout,
-    this.onLogin,
+    this.onLoginRequired,
   });
 
-  void _handleMenuTap(BuildContext context) {
-    if (isGuest) {
-      // Guest taps MENU → send to login
-      if (onLogin != null) onLogin!();
-      return;
-    }
-    if (activeRoute != '/menu') {
-      Navigator.pushReplacementNamed(context, '/menu');
-    }
-  }
-
+  // ✅ Guests tapping cart → login. Logged-in → /cart.
   void _handleCartTap(BuildContext context) {
     if (isGuest) {
-      // Guest taps cart → send to login
-      if (onLogin != null) onLogin!();
+      onLoginRequired?.call();
       return;
     }
-    if (onCart != null) onCart!();
+    onCart?.call();
     if (activeRoute != '/cart') {
       Navigator.pushReplacementNamed(context, '/cart');
     }
@@ -657,32 +620,28 @@ class _DesktopCustomerNav extends StatelessWidget {
       child: Row(children: [
         _LogoImg(),
         const SizedBox(width: 48),
+        // Nav links — all visible, menu browsing is free for guests too
         Expanded(
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: _links.map((l) {
-                final isMenu = l.route == '/menu';
-                return Padding(
-                  padding: const EdgeInsets.only(right: 32),
-                  child: _NavLink(
-                    label: l.label,
-                    active: activeRoute == l.route,
-                    onTap: () {
-                      if (isMenu) {
-                        _handleMenuTap(context);
-                      } else if (activeRoute != l.route) {
-                        Navigator.pushReplacementNamed(context, l.route);
-                      }
-                    },
-                  ),
-                );
-              }).toList(),
+              children: _links.map((l) => Padding(
+                padding: const EdgeInsets.only(right: 32),
+                child: _NavLink(
+                  label: l.label,
+                  active: activeRoute == l.route,
+                  onTap: () {
+                    if (activeRoute != l.route) {
+                      Navigator.pushReplacementNamed(context, l.route);
+                    }
+                  },
+                ),
+              )).toList(),
             ),
           ),
         ),
 
-        // Notifications (only for logged-in users)
+        // Notifications — logged-in only
         if (!isGuest) ...[
           _IconCircleBtn(
             icon: Icons.notifications_none_rounded,
@@ -692,7 +651,7 @@ class _DesktopCustomerNav extends StatelessWidget {
           const SizedBox(width: 16),
         ],
 
-        // Cart — redirects guest to login
+        // ✅ Cart — badge hidden & tap → login for guests
         _IconCircleBtn(
           icon: Icons.shopping_cart_outlined,
           badge: isGuest ? 0 : cartCount,
@@ -700,12 +659,11 @@ class _DesktopCustomerNav extends StatelessWidget {
         ),
         const SizedBox(width: 16),
 
-        // Profile (logged-in only)
         if (!isGuest) ...[
           _IconCircleBtn(
             icon: Icons.person_outline_rounded,
             onTap: () {
-              if (onProfile != null) onProfile!();
+              onProfile?.call();
               if (activeRoute != '/profile') {
                 Navigator.pushReplacementNamed(context, '/profile');
               }
@@ -715,17 +673,17 @@ class _DesktopCustomerNav extends StatelessWidget {
           _IconCircleBtn(
             icon: Icons.logout_rounded,
             onTap: () {
-              if (onLogout != null) onLogout!();
+              onLogout?.call();
               Navigator.pushNamedAndRemoveUntil(context, '/', (r) => false);
             },
           ),
         ],
 
-        // Guest: show Login + Join Now buttons instead
+        // Guest: show Login + Join Now buttons
         if (isGuest) ...[
           GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: onLogin,
+            onTap: onLoginRequired,
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text('LOGIN',
@@ -740,7 +698,7 @@ class _DesktopCustomerNav extends StatelessWidget {
           const SizedBox(width: 12),
           GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: onLogin,
+            onTap: onLoginRequired,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 11),
               decoration: BoxDecoration(
@@ -772,7 +730,7 @@ class _MobileCustomerNav extends StatelessWidget {
   final int cartCount, notifCount;
   final String? userName, userClientId;
   final bool isGuest;
-  final VoidCallback? onCart, onNotif, onLogout, onLogin;
+  final VoidCallback? onCart, onNotif, onLogout, onLoginRequired;
 
   const _MobileCustomerNav({
     required this.activeRoute,
@@ -784,15 +742,16 @@ class _MobileCustomerNav extends StatelessWidget {
     this.onCart,
     this.onNotif,
     this.onLogout,
-    this.onLogin,
+    this.onLoginRequired,
   });
 
+  // ✅ Guests tapping cart → login. Logged-in → /cart.
   void _handleCartTap(BuildContext context) {
     if (isGuest) {
-      if (onLogin != null) onLogin!();
+      onLoginRequired?.call();
       return;
     }
-    if (onCart != null) onCart!();
+    onCart?.call();
     if (activeRoute != '/cart') {
       Navigator.pushReplacementNamed(context, '/cart');
     }
@@ -814,17 +773,12 @@ class _MobileCustomerNav extends StatelessWidget {
           onLogout: isGuest
               ? null
               : () {
-                  if (onLogout != null) onLogout!();
+                  onLogout?.call();
                   Navigator.pushNamedAndRemoveUntil(context, '/', (r) => false);
                 },
-          onLogin: onLogin,
+          onLoginRequired: onLoginRequired,
           onNav: (route) {
-            Navigator.pop(context); // close drawer
-            if (route == '/menu' && isGuest) {
-              // Guest tapped MENU in drawer → login
-              if (onLogin != null) onLogin!();
-              return;
-            }
+            Navigator.pop(context); // close drawer first
             if (activeRoute != route) {
               Navigator.pushReplacementNamed(context, route);
             }
@@ -849,7 +803,7 @@ class _MobileCustomerNav extends StatelessWidget {
         border: Border(bottom: BorderSide(color: AppColors.primary.withOpacity(0.1))),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      // ✅ Single Row — duplicate cart button removed
+      // ✅ Single clean Row — duplicate cart/hamburger buttons removed
       child: Row(children: [
         _LogoImg(),
         const Spacer(),
@@ -864,7 +818,7 @@ class _MobileCustomerNav extends StatelessWidget {
           const SizedBox(width: 6),
         ],
 
-        // Cart — guest redirects to login
+        // ✅ Cart — badge hidden & tap → login for guests
         _IconCircleBtn(
           icon: Icons.shopping_cart_outlined,
           badge: isGuest ? 0 : cartCount,
@@ -872,7 +826,7 @@ class _MobileCustomerNav extends StatelessWidget {
         ),
         const SizedBox(width: 10),
 
-        // Hamburger menu
+        // Hamburger → side drawer
         GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () => _openSideDrawer(context),
@@ -898,21 +852,21 @@ class _MobileCustomerNav extends StatelessWidget {
 class _SideDrawer extends StatelessWidget {
   final String activeRoute, userName, userClientId;
   final bool isGuest;
-  final VoidCallback? onLogout;
-  final VoidCallback? onLogin;
+  final VoidCallback? onLogout, onLoginRequired;
   final void Function(String) onNav;
 
-  // ✅ ORDERS removed — HOME and MENU only for customers
+  // Logged-in customers see all 4 links
   static const _loggedInLinks = [
     _NID('HOME',    '/home',    Icons.grid_view_rounded),
     _NID('MENU',    '/menu',    Icons.receipt_long_rounded),
-    _NID('ORDERS', '/orders', Icons.receipt_long_rounded),
+    _NID('ORDERS',  '/orders',  Icons.shopping_cart_outlined),
     _NID('PROFILE', '/profile', Icons.person_outline_rounded),
   ];
 
+  // ✅ Guests can see and freely navigate to HOME and MENU
   static const _guestLinks = [
-    _NID('HOME',    '/',     Icons.grid_view_rounded),
-    _NID('MENU',    '/menu', Icons.receipt_long_rounded),
+    _NID('HOME', '/home', Icons.grid_view_rounded),
+    _NID('MENU', '/menu', Icons.receipt_long_rounded),
   ];
 
   const _SideDrawer({
@@ -921,7 +875,7 @@ class _SideDrawer extends StatelessWidget {
     required this.userClientId,
     required this.isGuest,
     this.onLogout,
-    this.onLogin,
+    this.onLoginRequired,
     required this.onNav,
   });
 
@@ -937,7 +891,7 @@ class _SideDrawer extends StatelessWidget {
         decoration: const BoxDecoration(color: Color(0xFF2D2A26)),
         child: Column(
           children: [
-            // User / Guest header
+            // Header
             Container(
               padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
               decoration: BoxDecoration(
@@ -965,11 +919,15 @@ class _SideDrawer extends StatelessWidget {
                   children: [
                     Text(userName,
                         style: const TextStyle(
+                            fontFamily: 'Urbanist',
                             fontWeight: FontWeight.w900,
                             fontSize: 15,
                             color: Colors.white)),
                     Text(userClientId,
-                        style: TextStyle(fontSize: 11, color: AppColors.primary)),
+                        style: TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontSize: 11,
+                            color: AppColors.primary)),
                   ],
                 ),
               ]),
@@ -1012,17 +970,10 @@ class _SideDrawer extends StatelessWidget {
                                     color: isActive
                                         ? AppColors.primary
                                         : AppColors.primary.withOpacity(0.6))),
-                            // Lock icon on MENU for guests
-                            if (isGuest && l.route == '/menu') ...[
-                              const Spacer(),
-                              Icon(Icons.lock_outline_rounded,
-                                  size: 14,
-                                  color: AppColors.primary.withOpacity(0.5)),
-                            ] else if (isActive) ...[
+                            if (isActive) ...[
                               const Spacer(),
                               Container(
-                                width: 6,
-                                height: 6,
+                                width: 6, height: 6,
                                 decoration: BoxDecoration(
                                     color: AppColors.primary,
                                     shape: BoxShape.circle),
@@ -1037,105 +988,96 @@ class _SideDrawer extends StatelessWidget {
               ),
             ),
 
-            // Bottom action: Logout (logged-in) or Login/Register (guest)
+            // Bottom — Login/Join for guests, Logout for logged-in
             Padding(
               padding: const EdgeInsets.all(24),
               child: isGuest
-                  ? Column(
-                      children: [
-                        // LOGIN button
-                        GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            Navigator.pop(context);
-                            if (onLogin != null) onLogin!();
-                          },
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.login_rounded,
-                                    color: Colors.white, size: 18),
-                                SizedBox(width: 10),
-                                Text('LOGIN',
-                                    style: TextStyle(
-                                        fontFamily: 'Urbanist',
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 13,
-                                        color: Colors.white)),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        // JOIN NOW button
-                        GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            Navigator.pop(context);
-                            if (onLogin != null) onLogin!();
-                          },
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEFE2C9),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.person_add_outlined,
-                                    color: AppColors.secondary, size: 18),
-                                const SizedBox(width: 10),
-                                Text('JOIN NOW',
-                                    style: TextStyle(
-                                        fontFamily: 'Urbanist',
-                                        fontWeight: FontWeight.w900,
-                                        fontSize: 13,
-                                        color: AppColors.secondary)),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : GestureDetector(
-                      behavior: HitTestBehavior.opaque,
+                  ? Column(children: [
+                      _DrawerBtn(
+                        label: 'LOGIN',
+                        icon: Icons.login_rounded,
+                        bgColor: AppColors.primary,
+                        textColor: Colors.white,
+                        onTap: () {
+                          Navigator.pop(context);
+                          onLoginRequired?.call();
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      _DrawerBtn(
+                        label: 'JOIN NOW',
+                        icon: Icons.person_add_outlined,
+                        bgColor: const Color(0xFFEFE2C9),
+                        textColor: AppColors.secondary,
+                        iconColor: AppColors.secondary,
+                        onTap: () {
+                          Navigator.pop(context);
+                          onLoginRequired?.call();
+                        },
+                      ),
+                    ])
+                  : _DrawerBtn(
+                      label: 'LOGOUT',
+                      icon: Icons.logout_rounded,
+                      bgColor: const Color(0xFFEFE2C9),
+                      textColor: AppColors.primary,
+                      iconColor: AppColors.primary,
                       onTap: () {
                         Navigator.pop(context);
-                        if (onLogout != null) onLogout!();
+                        onLogout?.call();
                       },
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEFE2C9),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.logout_rounded,
-                                color: AppColors.primary, size: 18),
-                            const SizedBox(width: 10),
-                            Text('LOGOUT',
-                                style: TextStyle(
-                                    fontFamily: 'Urbanist',
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 13,
-                                    color: AppColors.primary)),
-                          ],
-                        ),
-                      ),
                     ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DRAWER BUTTON HELPER
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _DrawerBtn extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color bgColor, textColor;
+  final Color? iconColor;
+  final VoidCallback onTap;
+
+  const _DrawerBtn({
+    required this.label,
+    required this.icon,
+    required this.bgColor,
+    required this.textColor,
+    this.iconColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: iconColor ?? textColor, size: 18),
+            const SizedBox(width: 10),
+            Text(label,
+                style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                    color: textColor)),
           ],
         ),
       ),
@@ -1170,18 +1112,15 @@ class _GuestMobileMenu extends StatelessWidget {
         height: screenH,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.max,
           children: [
             Container(
               height: 72,
               color: const Color(0xF2EFE2C9),
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.asset(
-                      'assets/images/lnl.jpg',
+              child: Row(children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.asset('assets/images/lnl.jpg',
                       width: 44, height: 44, fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Container(
                         width: 44, height: 44,
@@ -1196,53 +1135,47 @@ class _GuestMobileMenu extends StatelessWidget {
                                   fontWeight: FontWeight.w900,
                                   fontSize: 10)),
                         ),
-                      ),
-                    ),
+                      )),
+                ),
+                const Spacer(),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('LOGIN',
+                      style: TextStyle(
+                          fontFamily: 'Urbanist',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 11,
+                          letterSpacing: 2,
+                          color: AppColors.primary)),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  const Spacer(),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text('LOGIN',
-                        style: TextStyle(
-                            fontFamily: 'Urbanist',
-                            fontWeight: FontWeight.w900,
-                            fontSize: 11,
-                            letterSpacing: 2,
-                            color: AppColors.primary)),
-                  ),
-                  const SizedBox(width: 6),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                  child: const Text('JOIN NOW',
+                      style: TextStyle(
+                          fontFamily: 'Urbanist',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 10,
+                          color: Colors.white)),
+                ),
+                const SizedBox(width: 10),
+                GestureDetector(
+                  onTap: onClose,
+                  child: Container(
+                    width: 40, height: 40,
                     decoration: BoxDecoration(
-                      color: AppColors.secondary,
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(10),
+                      boxShadow: const [BoxShadow(color: Color(0x1A000000), blurRadius: 4)],
                     ),
-                    child: const Text('JOIN NOW',
-                        style: TextStyle(
-                            fontFamily: 'Urbanist',
-                            fontWeight: FontWeight.w900,
-                            fontSize: 10,
-                            color: Colors.white)),
+                    child: const Icon(Icons.close_rounded, color: Color(0xFF2D2A26), size: 20),
                   ),
-                  const SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: onClose,
-                    child: Container(
-                      width: 40, height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: const [
-                          BoxShadow(color: Color(0x1A000000), blurRadius: 4)
-                        ],
-                      ),
-                      child: const Icon(Icons.close_rounded,
-                          color: Color(0xFF2D2A26), size: 20),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ]),
             ),
             Container(
               color: AppColors.background,
@@ -1260,24 +1193,19 @@ class _GuestMobileMenu extends StatelessWidget {
                       onTap: () => onNavigate(e.route),
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 28, vertical: 22),
+                        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 22),
                         decoration: BoxDecoration(
-                          color: isActive
-                              ? AppColors.secondary
-                              : const Color(0xFFE8D9BF),
+                          color: isActive ? AppColors.secondary : const Color(0xFFE8D9BF),
                           borderRadius: BorderRadius.circular(22),
                         ),
-                        child: Text(
-                          e.label,
-                          style: TextStyle(
-                            fontFamily: 'Urbanist',
-                            fontWeight: FontWeight.w900,
-                            fontSize: 20,
-                            letterSpacing: 1.5,
-                            color: isActive ? Colors.white : AppColors.secondary,
-                          ),
-                        ),
+                        child: Text(e.label,
+                            style: TextStyle(
+                              fontFamily: 'Urbanist',
+                              fontWeight: FontWeight.w900,
+                              fontSize: 20,
+                              letterSpacing: 1.5,
+                              color: isActive ? Colors.white : AppColors.secondary,
+                            )),
                       ),
                     ),
                   );
@@ -1317,22 +1245,20 @@ class _LogoImg extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: Image.asset(
-        'assets/images/lnl.jpg',
-        width: 44, height: 44, fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Container(
-          width: 44, height: 44,
-          decoration: BoxDecoration(
-              color: AppColors.secondary,
-              borderRadius: BorderRadius.circular(12)),
-          child: const Center(
-              child: Text('L&L',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 10))),
-        ),
-      ),
+      child: Image.asset('assets/images/lnl.jpg',
+          width: 44, height: 44, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Container(
+            width: 44, height: 44,
+            decoration: BoxDecoration(
+                color: AppColors.secondary,
+                borderRadius: BorderRadius.circular(12)),
+            child: const Center(
+                child: Text('L&L',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 10))),
+          )),
     );
   }
 }
@@ -1363,8 +1289,7 @@ class _NavLink extends StatelessWidget {
             if (active) ...[
               const SizedBox(height: 3),
               Container(
-                height: 3,
-                width: 24,
+                height: 3, width: 24,
                 decoration: BoxDecoration(
                     color: AppColors.secondary,
                     borderRadius: BorderRadius.circular(100)),
@@ -1392,27 +1317,21 @@ class _IconCircleBtn extends StatelessWidget {
       onTap: onTap,
       child: Stack(clipBehavior: Clip.none, children: [
         Container(
-          width: 38,
-          height: 38,
+          width: 38, height: 38,
           decoration: const BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
             boxShadow: [
-              BoxShadow(
-                  color: Color(0x1A000000),
-                  blurRadius: 4,
-                  offset: Offset(0, 2))
+              BoxShadow(color: Color(0x1A000000), blurRadius: 4, offset: Offset(0, 2))
             ],
           ),
           child: Icon(icon, color: const Color(0xFF2D2A26), size: 17),
         ),
         if (badge > 0)
           Positioned(
-            top: -3,
-            right: -3,
+            top: -3, right: -3,
             child: Container(
-              width: 15,
-              height: 15,
+              width: 15, height: 15,
               decoration: BoxDecoration(
                 color: AppColors.secondary,
                 shape: BoxShape.circle,
@@ -1422,9 +1341,7 @@ class _IconCircleBtn extends StatelessWidget {
                 child: Text(
                   badge > 99 ? '99+' : '$badge',
                   style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 7,
-                      fontWeight: FontWeight.w900),
+                      color: Colors.white, fontSize: 7, fontWeight: FontWeight.w900),
                 ),
               ),
             ),
