@@ -158,7 +158,7 @@ class _DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
           const SizedBox(height: 15),
           _infoTile(Icons.call_outlined, 'PHONE', '+${order['phone'] ?? 'N/A'}', AppColors.primary),
           const SizedBox(height: 15),
-          _infoTile(Icons.place_outlined, 'ADDRESS', order['address'] ?? 'No Address', AppColors.receiptDark),
+          _infoTile(Icons.place_outlined, 'ADDRESS', order['delivery_address'] ?? 'No Address', AppColors.receiptDark),
           const SizedBox(height: 18),
           _notesBox(order['notes'] ?? 'No special instructions'),
         ],
@@ -167,7 +167,10 @@ class _DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
   }
 
   Widget _orderDetails(Map<String, dynamic> order) {
-    final List items = order['order'] ?? [];
+    final List items = (order['items'] ?? order['order'] ?? []) as List;
+    double deliveryFee =
+    double.tryParse(order['deliveryFee']?.toString() ?? "0") ?? 0.0;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -178,10 +181,12 @@ class _DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
             children: [
               Icon(Icons.access_time_outlined, color: AppColors.secondary, size: 22),
               const SizedBox(width: 10),
-              Text(order['time'] ?? 'Just now', style: TextStyle(color: AppColors.secondary, fontWeight: FontWeight.bold)),
+              Text(order['time'] ?? 'Just now',
+                  style: TextStyle(color: AppColors.secondary, fontWeight: FontWeight.bold)),
             ],
           ),
           const Divider(),
+
           ...items.asMap().entries.map((entry) {
             final item = entry.value;
 
@@ -191,20 +196,64 @@ class _DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Row(
                 children: [
-                  CircleAvatar(radius: 14, backgroundColor: AppColors.primary.withOpacity(0.2), child: Text("${entry.key + 1}", style: TextStyle(fontSize: 12, color: AppColors.primary))),
+                  CircleAvatar(
+                    radius: 14,
+                    backgroundColor: AppColors.primary.withOpacity(0.2),
+                    child: Text("${entry.key + 1}",
+                        style: TextStyle(fontSize: 12, color: AppColors.primary)),
+                  ),
                   const SizedBox(width: 12),
-                  Text(item['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item['name'] ?? 'Item',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        "${item['qty'] ?? 1}x",
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.tertiary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                   const Spacer(),
                   Text('₱${price.toStringAsFixed(2)}'),
                 ],
               ),
             );
-          }).toList(),
+          }),
+
           const Divider(),
+
           Builder(builder: (context) {
-            double total = double.tryParse(order['total']?.toString() ?? "0") ?? 0.0;
-            return _priceRow('TOTAL', '₱${total.toStringAsFixed(2)}', isBold: true);
-        }),
+            double subtotal =
+                double.tryParse(order['subtotal']?.toString() ?? "0") ?? 0.0;
+
+            double deliveryFee =
+                double.tryParse(order['delivery_fee']?.toString() ?? "0") ?? 0.0;
+
+            double total =
+                double.tryParse(order['total']?.toString() ?? "0") ?? 0.0;
+
+            return Column(
+              children: [
+                _priceRow('SUBTOTAL', '₱${subtotal.toStringAsFixed(2)}'),
+                const SizedBox(height: 5),
+                _priceRow('DELIVERY FEE', '₱${deliveryFee.toStringAsFixed(2)}'),
+                const Divider(),
+                _priceRow(
+                  'TOTAL',
+                  '₱${total.toStringAsFixed(2)}',
+                  isBold: true,
+                ),
+              ],
+            );
+          }),
         ],
       ),
     );

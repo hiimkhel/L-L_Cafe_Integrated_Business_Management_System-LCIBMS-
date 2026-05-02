@@ -6,15 +6,22 @@ const getRiderOrders = async (req, res) => {
 
         const sql = `
             SELECT 
-                o.id, o.order_number, o.customer_name, o.customer_phone, 
-                o.status, o.total, o.created_at,
-                ua.label as address_label, ua.full_address,
-                oi.item_name, oi.quantity, oi.unit_price
-            FROM orders o 
-            LEFT JOIN user_addresses ua ON o.address_id = ua.id
+                o.id,
+                o.order_number,
+                o.customer_name,
+                o.customer_phone,
+                o.status,
+                o.total,
+                o.created_at,
+                o.delivery_address,
+                oi.item_name,
+                oi.quantity,
+                oi.unit_price
+            FROM orders o
             LEFT JOIN order_items oi ON o.id = oi.order_id
             WHERE o.status = ? AND o.order_type = 'delivery'
-            ORDER BY o.created_at ASC`;
+            ORDER BY o.created_at ASC
+        `;
             
         const [rows] = await db.query(sql, [status]);
 
@@ -26,9 +33,7 @@ const getRiderOrders = async (req, res) => {
                     order_number: row.order_number,
                     customer_name: row.customer_name || "Guest",
                     customer_phone: row.customer_phone,
-                    // Combine address fields into a readable string for the Rider
-                    address: `${row.address_line || 'No Address'}, ${row.city || ''}`.trim(),
-                    address_notes: row.address_notes,
+                    delivery_address: row.delivery_address || "No Address",
                     status: row.status,
                     total: row.total,
                     created_at: row.created_at,
@@ -51,58 +56,72 @@ const getRiderOrders = async (req, res) => {
     }
 };
 
-const getDeliveryOrderDetails= async (req, res) => {
-    try{
-
+const getDeliveryOrderDetails = async (req, res) => {
+    try {
         const { id } = req.params;
 
-       const [orderRows] = await db.query(
+        const [orderRows] = await db.query(
             `SELECT 
-                o.order_number AS id, 
-                o.status, 
-                o.customer_name AS name, 
-                o.customer_phone AS phone, 
+                o.id,
+                o.order_number,
+                o.status,
+                o.customer_name,
+                o.customer_phone,
                 o.notes,
-                o.delivery_fee AS deliveryFee,
-                o.created_at AS time,
-                ua.full_address AS address 
+                o.subtotal,
+                o.delivery_fee,
+                o.total,
+                o.created_at,
+                o.delivery_address
              FROM orders o
-             LEFT JOIN user_addresses ua ON o.address_id = ua.id
-             WHERE o.id = ?`, 
+             WHERE o.id = ?`,
             [id]
         );
-        
-        // Check order existence
+
         if (orderRows.length === 0) {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
 
         const orderInfo = orderRows[0];
 
-        // 2. Fetch the specific items for this order
         const [itemRows] = await db.query(
-            `SELECT item_name AS name, unit_price AS price, quantity 
-             FROM order_items 
-             WHERE order_id = ?`, 
+            `SELECT 
+                item_name AS name,
+                unit_price AS price,
+                quantity AS qty
+            FROM order_items 
+            WHERE order_id = ?`,
             [id]
         );
 
-        // 3. Combine them to match your Flutter "Map<String, dynamic> order"
-        const responseData = {
-            ...orderInfo,
-            // Convert status to uppercase to match your Flutter logic if necessary
-            status: orderInfo.status.toUpperCase(), 
-            order: itemRows
-        };
+        const formattedItems = itemRows.map(item => ({
+            name: item.name,
+            qty: Number(item.qty),
+            price: Number(item.price)
+        }));
 
         res.status(200).json({
             success: true,
-            data: responseData
+            data: {
+                id: orderInfo.order_number,
+                db_id: orderInfo.id,
+                name: orderInfo.customer_name,
+                phone: orderInfo.customer_phone,
+                delivery_address: orderInfo.delivery_address,
+                notes: orderInfo.notes,
+                status: orderInfo.status.toUpperCase(),
+                time: orderInfo.created_at,
+                subtotal: orderInfo.subtotal,        // 👈 ADD THIS
+                delivery_fee: orderInfo.delivery_fee,
+                total: orderInfo.total,
+                items: formattedItems   
+            }
         });
-    }catch(err){
-        res.status(500).json({error: err.message});
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-}
+};
 
 const updateDeliveryStatus = async (req, res) => {
     try {
