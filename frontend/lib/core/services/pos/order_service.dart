@@ -105,7 +105,7 @@ class OrderService {
       'status': mapStatus(o['status']),
       'customer': o['customer_name'] ?? 'Guest',
       'phone': o['customer_phone'] ?? 'N/A',
-      'address': 'No address yet',
+      'delivery_address': o['delivery_address'] ?? 'No address yet',
       'items': (o['items'] as List).map((i) => {
             'name': i['name'],
             'qty': i['quantity'],
