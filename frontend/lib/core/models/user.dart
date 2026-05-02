@@ -6,7 +6,7 @@ class User {
   UserRole role;
   final String? token;
 
-  User( this.id,  this.email, this.role);
+  User( this.id,  this.email, this.role, this.token);
 
   // Helper for getting the current user's id
   int get mysqlId => int.parse(id);
