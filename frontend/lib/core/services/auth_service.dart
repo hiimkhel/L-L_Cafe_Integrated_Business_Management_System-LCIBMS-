@@ -21,10 +21,10 @@ class AuthService {
     }
 
     final idToken = await firebaseUser.getIdToken();
-    
+
     print("🔥 FIREBASE ID TOKEN:");
     print(idToken);
-    
+
     final response = await http.post(
       Uri.parse('$baseUrl/$endpoint'),
       headers: {
@@ -43,15 +43,13 @@ class AuthService {
       data['id'].toString(),
       data['email'],
       stringToRole(data['role']),
+      data['token'] ?? '',
     );
   }
 
   ///  Email Login
   Future<User> login(String email, String password) async {
-    await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    await _auth.signInWithEmailAndPassword(email: email, password: password);
 
     return _authenticateWithBackend("authSync");
   }
@@ -69,12 +67,13 @@ class AuthService {
   }
 
   ///  Google Sign-In
- Future<User> signInWithGoogle() async {
+  Future<User> signInWithGoogle() async {
     try {
       final googleProvider = fb.GoogleAuthProvider();
 
-      final userCredential =
-          await fb.FirebaseAuth.instance.signInWithPopup(googleProvider);
+      final userCredential = await fb.FirebaseAuth.instance.signInWithPopup(
+        googleProvider,
+      );
 
       final user = userCredential.user;
 
@@ -83,12 +82,10 @@ class AuthService {
       }
 
       return await _authenticateWithBackend("authSync");
-      
     } catch (e) {
       throw Exception("Google Sign-In Error: $e");
     }
   }
-
 
   Future<User> signInWithFacebook() async {
     try {
@@ -104,8 +101,8 @@ class AuthService {
         accessToken.tokenString,
       );
 
-      final userCredential =
-          await fb.FirebaseAuth.instance.signInWithCredential(credential);
+      final userCredential = await fb.FirebaseAuth.instance
+          .signInWithCredential(credential);
 
       final user = userCredential.user;
 
@@ -114,7 +111,6 @@ class AuthService {
       }
 
       return await _authenticateWithBackend("authSync");
-
     } catch (e) {
       throw Exception("Facebook Sign-In Error: $e");
     }
