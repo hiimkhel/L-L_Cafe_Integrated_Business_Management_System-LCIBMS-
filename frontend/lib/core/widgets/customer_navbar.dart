@@ -272,12 +272,14 @@ class GuestNavbar extends StatefulWidget implements PreferredSizeWidget {
   final String activeRoute;
   final VoidCallback? onLogin;
   final VoidCallback? onJoinNow;
+  final VoidCallback? onBrowseMenu; // ← NEW
 
   const GuestNavbar({
     super.key,
     this.activeRoute = '/home',
     this.onLogin,
     this.onJoinNow,
+    this.onBrowseMenu, // ← NEW
   });
 
   @override
@@ -290,8 +292,10 @@ class GuestNavbar extends StatefulWidget implements PreferredSizeWidget {
 class _GuestNavbarState extends State<GuestNavbar> {
   OverlayEntry? _overlayEntry;
 
+  // ← MENU added between HOME and ABOUT
   static const _links = [
     _NI('HOME',    '/'),
+    _NI('MENU',    '/menu'),
     _NI('ABOUT',   '/about'),
     _NI('CONTACT', '/contact'),
   ];
@@ -308,7 +312,12 @@ class _GuestNavbarState extends State<GuestNavbar> {
         onClose: _closeMenu,
         onNavigate: (route) {
           _closeMenu();
-          Navigator.pushReplacementNamed(context, route);
+          // ← Intercept MENU tap → open guest MenuScreen
+          if (route == '/menu') {
+            widget.onBrowseMenu?.call();
+          } else {
+            Navigator.pushReplacementNamed(context, route);
+          }
         },
       ),
     );
@@ -353,7 +362,10 @@ class _GuestNavbarState extends State<GuestNavbar> {
                   label: l.label,
                   active: widget.activeRoute == l.route,
                   onTap: () {
-                    if (widget.activeRoute != l.route) {
+                    // ← Intercept MENU tap → open guest MenuScreen
+                    if (l.route == '/menu') {
+                      widget.onBrowseMenu?.call();
+                    } else if (widget.activeRoute != l.route) {
                       Navigator.pushReplacementNamed(context, l.route);
                     }
                   },
@@ -477,17 +489,12 @@ class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
   final String? userName;
   final String? userClientId;
 
-  /// Set to true when the user is NOT logged in (e.g. browsing the menu as a
-  /// guest). The cart button will redirect to login instead of /cart.
-  /// All menu browsing remains freely accessible.
   final bool isGuest;
 
   final VoidCallback? onCart;
   final VoidCallback? onNotif;
   final VoidCallback? onProfile;
   final VoidCallback? onLogout;
-
-  /// Fired when a guest taps the cart button — navigate to login screen here.
   final VoidCallback? onLoginRequired;
 
   const CustomerNavbar({
@@ -596,7 +603,6 @@ class _DesktopCustomerNav extends StatelessWidget {
     this.onLoginRequired,
   });
 
-  // ✅ Guests tapping cart → login. Logged-in → /cart.
   void _handleCartTap(BuildContext context) {
     if (isGuest) {
       onLoginRequired?.call();
@@ -620,7 +626,6 @@ class _DesktopCustomerNav extends StatelessWidget {
       child: Row(children: [
         _LogoImg(),
         const SizedBox(width: 48),
-        // Nav links — all visible, menu browsing is free for guests too
         Expanded(
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -641,7 +646,6 @@ class _DesktopCustomerNav extends StatelessWidget {
           ),
         ),
 
-        // Notifications — logged-in only
         if (!isGuest) ...[
           _IconCircleBtn(
             icon: Icons.notifications_none_rounded,
@@ -651,7 +655,6 @@ class _DesktopCustomerNav extends StatelessWidget {
           const SizedBox(width: 16),
         ],
 
-        // ✅ Cart — badge hidden & tap → login for guests
         _IconCircleBtn(
           icon: Icons.shopping_cart_outlined,
           badge: isGuest ? 0 : cartCount,
@@ -679,7 +682,6 @@ class _DesktopCustomerNav extends StatelessWidget {
           ),
         ],
 
-        // Guest: show Login + Join Now buttons
         if (isGuest) ...[
           GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -745,7 +747,6 @@ class _MobileCustomerNav extends StatelessWidget {
     this.onLoginRequired,
   });
 
-  // ✅ Guests tapping cart → login. Logged-in → /cart.
   void _handleCartTap(BuildContext context) {
     if (isGuest) {
       onLoginRequired?.call();
@@ -778,7 +779,7 @@ class _MobileCustomerNav extends StatelessWidget {
                 },
           onLoginRequired: onLoginRequired,
           onNav: (route) {
-            Navigator.pop(context); // close drawer first
+            Navigator.pop(context);
             if (activeRoute != route) {
               Navigator.pushReplacementNamed(context, route);
             }
@@ -803,12 +804,10 @@ class _MobileCustomerNav extends StatelessWidget {
         border: Border(bottom: BorderSide(color: AppColors.primary.withOpacity(0.1))),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      // ✅ Single clean Row — duplicate cart/hamburger buttons removed
       child: Row(children: [
         _LogoImg(),
         const Spacer(),
 
-        // Notifications — logged-in only
         if (!isGuest) ...[
           _IconCircleBtn(
             icon: Icons.notifications_none_rounded,
@@ -818,7 +817,6 @@ class _MobileCustomerNav extends StatelessWidget {
           const SizedBox(width: 6),
         ],
 
-        // ✅ Cart — badge hidden & tap → login for guests
         _IconCircleBtn(
           icon: Icons.shopping_cart_outlined,
           badge: isGuest ? 0 : cartCount,
@@ -826,7 +824,6 @@ class _MobileCustomerNav extends StatelessWidget {
         ),
         const SizedBox(width: 10),
 
-        // Hamburger → side drawer
         GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () => _openSideDrawer(context),
@@ -855,7 +852,6 @@ class _SideDrawer extends StatelessWidget {
   final VoidCallback? onLogout, onLoginRequired;
   final void Function(String) onNav;
 
-  // Logged-in customers see all 4 links
   static const _loggedInLinks = [
     _NID('HOME',    '/home',    Icons.grid_view_rounded),
     _NID('MENU',    '/menu',    Icons.receipt_long_rounded),
@@ -863,7 +859,6 @@ class _SideDrawer extends StatelessWidget {
     _NID('PROFILE', '/profile', Icons.person_outline_rounded),
   ];
 
-  // ✅ Guests can see and freely navigate to HOME and MENU
   static const _guestLinks = [
     _NID('HOME', '/home', Icons.grid_view_rounded),
     _NID('MENU', '/menu', Icons.receipt_long_rounded),
@@ -891,7 +886,6 @@ class _SideDrawer extends StatelessWidget {
         decoration: const BoxDecoration(color: Color(0xFF2D2A26)),
         child: Column(
           children: [
-            // Header
             Container(
               padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
               decoration: BoxDecoration(
@@ -933,7 +927,6 @@ class _SideDrawer extends StatelessWidget {
               ]),
             ),
 
-            // Nav links
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -988,7 +981,6 @@ class _SideDrawer extends StatelessWidget {
               ),
             ),
 
-            // Bottom — Login/Join for guests, Logout for logged-in
             Padding(
               padding: const EdgeInsets.all(24),
               child: isGuest
@@ -1302,7 +1294,6 @@ class _NavLink extends StatelessWidget {
   }
 }
 
-// Badge only renders when badge > 0
 class _IconCircleBtn extends StatelessWidget {
   final IconData icon;
   final int badge;
