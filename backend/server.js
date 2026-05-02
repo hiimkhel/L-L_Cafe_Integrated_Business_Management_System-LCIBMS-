@@ -26,6 +26,7 @@ app.use('/api/orders', require("./routes/orderRoutes.js"));
 app.use('/api/rider', require("./routes/riderRoutes.js"));
 app.use('/api/admin', require("./routes/adminRoutes.js"));
 
+app.use('/api/reviews', require("./routes/reviewRoutes.js"));
 app.use('/api/menu', require("./routes/menuRoutes.js"));
 app.listen(PORT, () => {
     console.log(`Server is running on ${PORT}`);
