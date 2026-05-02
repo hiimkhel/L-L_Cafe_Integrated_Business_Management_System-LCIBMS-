@@ -559,7 +559,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                 return _orderItem(
                   index:index,
                   name: item['name'],
-                  price: "₱${item['price']}",
+                  price: "₱${item['price'] * item['qty']}",
                   qty: item['qty'],
                 );
               },

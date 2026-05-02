@@ -6,6 +6,9 @@ class User {
   UserRole role;
 
   User( this.id,  this.email, this.role);
+
+  // Helper for getting the current user's id
+  int get mysqlId => int.parse(id);
 }
 
 UserRole stringToRole(String role) {
