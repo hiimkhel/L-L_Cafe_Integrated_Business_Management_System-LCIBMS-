@@ -108,6 +108,7 @@ class LandingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ── Navigate to login screen ─────────────────────────────────────────
     void goLogin() => Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => LoginScreen(onLogin: onLogin)));
@@ -117,17 +118,25 @@ class LandingScreen extends StatelessWidget {
         MaterialPageRoute(
             builder: (_) => RegisterScreen(onRegister: onRegister)));
 
+    // ✅ FIX: BROWSE MENU → open MenuScreen in guest mode.
+    // onLoginRequired uses pushReplacement INSIDE MenuScreen's own context
+    // (passed via the builder) so we never touch the potentially-stale
+    // landing context after the route transition. This avoids the
+    // "_elements.contains(element) is not true" assertion.
     void goGuestMenu() => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => MenuScreen(
+          builder: (menuContext) => MenuScreen(
             isGuest: true,
             onLoginRequired: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
+              // pushReplacement swaps MenuScreen → LoginScreen in one step.
+              // No pop() needed — no stale context touched.
+              Navigator.of(menuContext).pushReplacement(
                 MaterialPageRoute(
-                  builder: (_) => LoginScreen(onLogin: onLogin),
+                  builder: (_) => LoginScreen(
+                    onLogin: onLogin,
+                    popToRootOnSuccess: true,
+                  ),
                 ),
               );
             },
@@ -140,7 +149,7 @@ class LandingScreen extends StatelessWidget {
         activeRoute: '/home',
         onLogin: goLogin,
         onJoinNow: goRegister,
-        onBrowseMenu: goGuestMenu, // ← NEW: MENU nav link wired up
+        onBrowseMenu: goGuestMenu, // ✅ wires MENU nav link to guest MenuScreen
       ),
       body: Stack(
         children: [
@@ -153,16 +162,19 @@ class LandingScreen extends StatelessWidget {
                     constraints:
                         const BoxConstraints(maxWidth: _kDesktopMaxWidth),
                     child: Column(children: [
+                      // Hero "BROWSE MENU" → guest MenuScreen
                       _HeroSection(onBrowse: goGuestMenu),
                       _HighlightsBar(),
                       _GalleryCarousel(slots: _gallerySlots),
                       _WhyUsSection(),
+                      // "SEE ALL" → guest MenuScreen (browsing is free)
                       _MenuGrid(
                         title: 'BEST SELLERS',
                         cta: 'SEE ALL',
                         items: _bestSellers,
                         onCtaTap: goGuestMenu,
                       ),
+                      // "REGISTER TO ORDER" → register screen
                       _MenuGrid(
                         title: 'SEASONAL FAVORITES',
                         cta: 'REGISTER TO ORDER',

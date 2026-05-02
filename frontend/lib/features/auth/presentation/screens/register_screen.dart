@@ -40,6 +40,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  // ── Safe back ─────────────────────────────────────────────────────────────
+
+  void _goBack() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+    }
+  }
+
   // ── Actions ───────────────────────────────────────────────────────────────
 
   Future<void> _register() async {
@@ -106,36 +116,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // ── Build ─────────────────────────────────────────────────────────────────
 
-@override
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _bgBeige,
-      body: Stack(
-        children: [
-          const Positioned.fill(child: _BambooBackground()),
-          LayoutBuilder(builder: (context, c) {
-            final isMobile = c.maxWidth < _kMobile;
-            return isMobile ? _buildMobile() : _buildDesktop();
-          }),
-
-          // ✅ MODIFIED BACK BUTTON TO MATCH IMAGE
-          Positioned(
-            top: 16, // Adjust this if needed based on SafeArea
-            left: 16,
-            child: SafeArea(
-              child: IconButton(
-                // 1. Used standard arrow_back for a simple look
-                // 2. Changed color to brown
-                // 3. Size increased slightly since there is no background circle
-                icon: const Icon(Icons.arrow_back, color: Colors.brown, size: 28),
-                onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/'); 
-                },
-              ),
-            ),
-          ),
-
-        ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _goBack();
+      },
+      child: Scaffold(
+        backgroundColor: _bgBeige,
+        body: Stack(
+          children: [
+            const Positioned.fill(child: _BambooBackground()),
+            LayoutBuilder(builder: (context, c) {
+              final isMobile = c.maxWidth < _kMobile;
+              return isMobile ? _buildMobile() : _buildDesktop();
+            }),
+          ],
+        ),
       ),
     );
   }
@@ -158,6 +156,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           child: Column(
             children: [
+              // ── Back button ────────────────────────────────────────────
+              Align(
+                alignment: Alignment.centerLeft,
+                child: GestureDetector(
+                  onTap: _goBack,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.arrow_back_ios_new_rounded, size: 13, color: _secondary),
+                      SizedBox(width: 4),
+                      Text('BACK',
+                        style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w700,
+                          fontSize: 10, letterSpacing: 1.5, color: _secondary)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
               // Logo
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
@@ -254,6 +271,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
             color: _primary,
             child: Column(
               children: [
+                // ── Back button ────────────────────────────────────────────
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: GestureDetector(
+                    onTap: _goBack,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.arrow_back_ios_new_rounded,
+                            size: 13, color: Colors.white70),
+                        SizedBox(width: 4),
+                        Text('BACK',
+                          style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w700,
+                            fontSize: 10, letterSpacing: 1.5, color: Colors.white70)),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
                 ClipRRect(
                   borderRadius: BorderRadius.circular(18),
                   child: Image.asset('assets/images/lnl.jpg',

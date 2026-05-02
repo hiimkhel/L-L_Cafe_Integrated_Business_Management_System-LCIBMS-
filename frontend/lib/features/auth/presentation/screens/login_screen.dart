@@ -5,7 +5,6 @@ import 'package:frontend/features/auth/presentation/screens/forgot_password_scre
 import 'package:frontend/features/auth/presentation/screens/register_screen.dart';
 import 'package:frontend/core/services/auth_service.dart';
 
-
 const double _kMobile  = 700;
 const Color _bgBeige   = Color(0xFFEFE2C9);
 const Color _bgDark    = Color(0xFF2D2A26);
@@ -14,7 +13,17 @@ const Color _secondary = Color(0xFFA98258);
 
 class LoginScreen extends StatefulWidget {
   final Function(User) onLogin;
-  const LoginScreen({super.key, required this.onLogin});
+
+  /// When true, a successful login clears the whole stack back to '/'.
+  /// Always set this when LoginScreen is pushed via pushReplacement from
+  /// a guest MenuScreen so the menu is never left orphaned on the stack.
+  final bool popToRootOnSuccess;
+
+  const LoginScreen({
+    super.key,
+    required this.onLogin,
+    this.popToRootOnSuccess = false,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -36,15 +45,51 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // ── Safe back ─────────────────────────────────────────────────────────────
+  // When this screen was pushed via pushReplacement (from guest MenuScreen),
+  // canPop() is false because there is nothing behind it — so we always go
+  // back to root '/' in that case. This prevents the
+  // "_elements.contains(element) is not true" assertion.
+
+  void _goBack() {
+    if (!mounted) return;
+    final nav = Navigator.of(context);
+    if (widget.popToRootOnSuccess) {
+      // Came from pushReplacement — go home, don't try to pop
+      nav.pushNamedAndRemoveUntil('/', (route) => false);
+    } else if (nav.canPop()) {
+      nav.pop();
+    } else {
+      nav.pushNamedAndRemoveUntil('/', (route) => false);
+    }
+  }
+
+  // ── Login success ─────────────────────────────────────────────────────────
+
+  void _handleSuccess(User user) {
+    widget.onLogin(user);
+    if (!mounted) return;
+    if (widget.popToRootOnSuccess) {
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+    } else {
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      } else {
+        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+      }
+    }
+  }
+
+  // ── Actions ───────────────────────────────────────────────────────────────
+
   Future<void> _login() async {
     setState(() { error = ''; isLoading = true; });
     try {
       final user = await _authService.login(
           _emailCtrl.text.trim(), _passwordCtrl.text.trim());
-      widget.onLogin(user);
-      if (mounted) Navigator.pop(context);
+      _handleSuccess(user);
     } catch (e) {
-      setState(() => error = e.toString().replaceAll('Exception: ', ''));
+      if (mounted) setState(() => error = e.toString().replaceAll('Exception: ', ''));
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
@@ -54,10 +99,9 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() { error = ''; isLoading = true; });
     try {
       final user = await _authService.signInWithGoogle();
-      widget.onLogin(user);
-      if (mounted) Navigator.pop(context);
+      _handleSuccess(user);
     } catch (e) {
-      setState(() => error = e.toString().replaceAll('Exception: ', ''));
+      if (mounted) setState(() => error = e.toString().replaceAll('Exception: ', ''));
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
@@ -67,10 +111,9 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() { error = ''; isLoading = true; });
     try {
       final user = await _authService.signInWithFacebook();
-      widget.onLogin(user);
-      if (mounted) Navigator.pop(context);
+      _handleSuccess(user);
     } catch (e) {
-      setState(() => error = e.toString().replaceAll('Exception: ', ''));
+      if (mounted) setState(() => error = e.toString().replaceAll('Exception: ', ''));
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
@@ -82,21 +125,26 @@ class _LoginScreenState extends State<LoginScreen> {
   void _goRegister() => Navigator.pushReplacement(context,
       MaterialPageRoute(builder: (_) => RegisterScreen(onRegister: widget.onLogin)));
 
-  // ✅ Back to landing — pop since landing pushed us here
-  void _goBack() => Navigator.pop(context);
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _bgBeige,
-      body: Stack(
-        children: [
-          const Positioned.fill(child: _BambooBackground()),
-          LayoutBuilder(builder: (context, c) {
-            final isMobile = c.maxWidth < _kMobile;
-            return isMobile ? _buildMobile(context) : _buildDesktop();
-          }),
-        ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _goBack();
+      },
+      child: Scaffold(
+        backgroundColor: _bgBeige,
+        body: Stack(
+          children: [
+            const Positioned.fill(child: _BambooBackground()),
+            LayoutBuilder(builder: (context, c) {
+              final isMobile = c.maxWidth < _kMobile;
+              return isMobile ? _buildMobile(context) : _buildDesktop();
+            }),
+          ],
+        ),
       ),
     );
   }
@@ -119,7 +167,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           child: Column(
             children: [
-              // ── Back button ──────────────────────────────────────────────
               Align(
                 alignment: Alignment.centerLeft,
                 child: GestureDetector(
@@ -157,14 +204,13 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Green header ─────────────────────────────────────────────────
+          // Green header
           Container(
             color: _primary,
             padding: const EdgeInsets.fromLTRB(24, 56, 24, 32),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ── Back button ────────────────────────────────────────────
                 Align(
                   alignment: Alignment.centerLeft,
                   child: GestureDetector(
@@ -183,7 +229,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-
                 ClipRRect(
                   borderRadius: BorderRadius.circular(18),
                   child: Image.asset(
@@ -214,7 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-          // ── White body ───────────────────────────────────────────────────
+          // White body
           ConstrainedBox(
             constraints: BoxConstraints(minHeight: bodyMinH),
             child: Container(
@@ -228,7 +273,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ── Shared form content ───────────────────────────────────────────────────
+  // ── Form ──────────────────────────────────────────────────────────────────
 
   Widget _buildFormContent({required bool isMobile}) {
     return Column(
@@ -352,6 +397,8 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
   Widget _buildLabel(String text) => Align(
         alignment: Alignment.centerLeft,
         child: Text(text,
@@ -396,9 +443,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildPrimaryButton({
-    required String label,
-    VoidCallback? onTap,
-    bool isLoading = false,
+    required String label, VoidCallback? onTap, bool isLoading = false,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -463,6 +508,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
+// ── Google Icon ───────────────────────────────────────────────────────────────
+
 class _GoogleIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
@@ -488,6 +535,8 @@ class _GooglePainter extends CustomPainter {
   @override
   bool shouldRepaint(_) => false;
 }
+
+// ── Bamboo Background ─────────────────────────────────────────────────────────
 
 class _BambooBackground extends StatefulWidget {
   const _BambooBackground();

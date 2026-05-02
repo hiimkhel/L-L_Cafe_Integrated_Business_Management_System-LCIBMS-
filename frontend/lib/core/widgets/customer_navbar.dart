@@ -272,6 +272,9 @@ class GuestNavbar extends StatefulWidget implements PreferredSizeWidget {
   final String activeRoute;
   final VoidCallback? onLogin;
   final VoidCallback? onJoinNow;
+
+  /// ✅ Called when MENU is tapped from the guest navbar (desktop or mobile).
+  /// Pass goGuestMenu from LandingScreen here.
   final VoidCallback? onBrowseMenu;
 
   const GuestNavbar({
@@ -292,6 +295,7 @@ class GuestNavbar extends StatefulWidget implements PreferredSizeWidget {
 class _GuestNavbarState extends State<GuestNavbar> {
   OverlayEntry? _overlayEntry;
 
+  // ✅ MENU sits between HOME and ABOUT
   static const _links = [
     _NI('HOME',    '/'),
     _NI('MENU',    '/menu'),
@@ -302,6 +306,16 @@ class _GuestNavbarState extends State<GuestNavbar> {
   @override
   void dispose() { _closeMenu(); super.dispose(); }
 
+  // ✅ Central handler — MENU taps fire onBrowseMenu, others navigate normally
+  void _handleLinkTap(BuildContext context, String route) {
+    _closeMenu();
+    if (route == '/menu') {
+      widget.onBrowseMenu?.call();
+    } else {
+      Navigator.pushReplacementNamed(context, route);
+    }
+  }
+
   void _openMenu(BuildContext context) {
     _closeMenu();
     _overlayEntry = OverlayEntry(
@@ -309,14 +323,10 @@ class _GuestNavbarState extends State<GuestNavbar> {
         activeRoute: widget.activeRoute,
         links: _links,
         onClose: _closeMenu,
-        onNavigate: (route) {
-          _closeMenu();
-          if (route == '/menu') {
-            widget.onBrowseMenu?.call();
-          } else {
-            Navigator.pushReplacementNamed(context, route);
-          }
-        },
+        // ✅ Pass login/join callbacks so the overlay buttons work
+        onLogin: widget.onLogin,
+        onJoinNow: widget.onJoinNow,
+        onNavigate: (route) => _handleLinkTap(context, route),
       ),
     );
     Overlay.of(context).insert(_overlayEntry!);
@@ -359,13 +369,8 @@ class _GuestNavbarState extends State<GuestNavbar> {
                 child: _NavLink(
                   label: l.label,
                   active: widget.activeRoute == l.route,
-                  onTap: () {
-                    if (l.route == '/menu') {
-                      widget.onBrowseMenu?.call();
-                    } else if (widget.activeRoute != l.route) {
-                      Navigator.pushReplacementNamed(context, l.route);
-                    }
-                  },
+                  // ✅ Uses central handler — MENU fires onBrowseMenu
+                  onTap: () => _handleLinkTap(context, l.route),
                 ),
               )).toList(),
             ),
@@ -485,9 +490,7 @@ class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
   final int notifCount;
   final String? userName;
   final String? userClientId;
-
   final bool isGuest;
-
   final VoidCallback? onCart;
   final VoidCallback? onNotif;
   final VoidCallback? onProfile;
@@ -611,8 +614,6 @@ class _DesktopCustomerNav extends StatelessWidget {
     }
   }
 
-  // ── KEY FIX: navigate via named routes so main.dart's onGenerateRoute
-  // always rebuilds the screen with the correct isGuest state from currentUser.
   void _handleNavTap(BuildContext context, String route) {
     if (activeRoute == route) return;
     Navigator.pushReplacementNamed(context, route);
@@ -628,7 +629,6 @@ class _DesktopCustomerNav extends StatelessWidget {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 48),
       child: Row(children: [
-        // Tapping the logo always goes home
         GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () => _handleNavTap(context, '/home'),
@@ -651,7 +651,6 @@ class _DesktopCustomerNav extends StatelessWidget {
           ),
         ),
 
-        // ── Logged-in actions ─────────────────────────────────────────────
         if (!isGuest) ...[
           _IconCircleBtn(
             icon: Icons.notifications_none_rounded,
@@ -684,7 +683,6 @@ class _DesktopCustomerNav extends StatelessWidget {
           ),
         ],
 
-        // ── Guest actions ─────────────────────────────────────────────────
         if (isGuest) ...[
           _IconCircleBtn(
             icon: Icons.shopping_cart_outlined,
@@ -814,7 +812,6 @@ class _MobileCustomerNav extends StatelessWidget {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(children: [
-        // Tapping logo goes home
         GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {
@@ -911,8 +908,7 @@ class _SideDrawer extends StatelessWidget {
               ),
               child: Row(children: [
                 Container(
-                  width: 56,
-                  height: 56,
+                  width: 56, height: 56,
                   decoration: BoxDecoration(
                     color: isGuest
                         ? const Color(0xFFA98258).withOpacity(0.6)
@@ -1105,11 +1101,17 @@ class _GuestMobileMenu extends StatelessWidget {
   final VoidCallback onClose;
   final void Function(String) onNavigate;
 
+  // ✅ Login/Join callbacks passed through so overlay buttons actually work
+  final VoidCallback? onLogin;
+  final VoidCallback? onJoinNow;
+
   const _GuestMobileMenu({
     required this.activeRoute,
     required this.links,
     required this.onClose,
     required this.onNavigate,
+    this.onLogin,
+    this.onJoinNow,
   });
 
   @override
@@ -1148,29 +1150,45 @@ class _GuestMobileMenu extends StatelessWidget {
                       )),
                 ),
                 const Spacer(),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text('LOGIN',
-                      style: TextStyle(
-                          fontFamily: 'Urbanist',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 11,
-                          letterSpacing: 2,
-                          color: AppColors.primary)),
+                // ✅ LOGIN button wired
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    onClose();
+                    onLogin?.call();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text('LOGIN',
+                        style: TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 11,
+                            letterSpacing: 2,
+                            color: AppColors.primary)),
+                  ),
                 ),
                 const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-                  decoration: BoxDecoration(
-                    color: AppColors.secondary,
-                    borderRadius: BorderRadius.circular(10),
+                // ✅ JOIN NOW button wired
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    onClose();
+                    onJoinNow?.call();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text('JOIN NOW',
+                        style: TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 10,
+                            color: Colors.white)),
                   ),
-                  child: const Text('JOIN NOW',
-                      style: TextStyle(
-                          fontFamily: 'Urbanist',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 10,
-                          color: Colors.white)),
                 ),
                 const SizedBox(width: 10),
                 GestureDetector(
@@ -1200,6 +1218,7 @@ class _GuestMobileMenu extends StatelessWidget {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: GestureDetector(
+                      // ✅ onNavigate handles MENU specially (calls onBrowseMenu)
                       onTap: () => onNavigate(e.route),
                       child: Container(
                         width: double.infinity,
