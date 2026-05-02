@@ -14,6 +14,7 @@ const createOrder = async (req, res) => {
       customer_phone,
       subtotal,
       delivery_fee,
+      delivery_address,
       total,
       payment_method,
       payment_status,
@@ -31,9 +32,9 @@ const createOrder = async (req, res) => {
     const [orderResult] = await conn.query(
       `INSERT INTO orders 
       (order_number, source, user_id, customer_name, customer_phone,
-       order_type, status, subtotal, delivery_fee, total,
+       order_type, status, subtotal, delivery_fee, delivery_address, total,
        payment_status, payment_method, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         orderNumber,
         source,
@@ -44,6 +45,7 @@ const createOrder = async (req, res) => {
         initialStatus,
         subtotal,
         delivery_fee,
+        delivery_address,
         total,
         payment_status,
         payment_method,

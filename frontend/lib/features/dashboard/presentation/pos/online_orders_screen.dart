@@ -511,7 +511,7 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
             const SizedBox(height: 3),
             _infoRow(Icons.phone_outlined, order['phone']),
             const SizedBox(height: 3),
-            _infoRow(Icons.delivery_dining_outlined, order['address']),
+            _infoRow(Icons.delivery_dining_outlined, order['delivery_address']),
             const SizedBox(height: 10),
             ...displayItems.map((item) => Padding(
                   padding: const EdgeInsets.only(bottom: 2),
@@ -729,7 +729,7 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
                       _detailRow(Icons.phone_outlined, order['phone']),
                       const SizedBox(height: 6),
                       _detailRow(
-                          Icons.delivery_dining_outlined, order['address']),
+                          Icons.delivery_dining_outlined, order['delivery_address']),
                     ],
                   ),
                 ),

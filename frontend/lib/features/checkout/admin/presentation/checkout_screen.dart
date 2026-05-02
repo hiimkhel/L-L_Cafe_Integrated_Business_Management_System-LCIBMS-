@@ -64,8 +64,9 @@ class CheckoutConfirmationScreen extends StatefulWidget {
                       return {
                         "menu_item_id": item["id"],
                         "name": item["name"],
-                        "qty": item["qty"],
-                        "price": item["price"],
+                        "quantity": item["qty"],
+                        "unit_price": item["price"],
+                        "subtotal": (item["price"] as double) * (item["qty"] as int),
                       };
                     }).toList();
                     // 1. Prepare the OrderRequest for the Database/API
@@ -78,6 +79,8 @@ class CheckoutConfirmationScreen extends StatefulWidget {
                       paymentMethod: "CASH", 
                       paymentStatus: "PAID",
                       customerName: "WALK-IN CUSTOMER",
+                      customerPhone: "09xxxxxxxxx",
+                      notes: "N/A",
                       items: databaseItems,
                     );
 
