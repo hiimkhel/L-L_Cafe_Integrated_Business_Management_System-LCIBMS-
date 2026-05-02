@@ -272,14 +272,14 @@ class GuestNavbar extends StatefulWidget implements PreferredSizeWidget {
   final String activeRoute;
   final VoidCallback? onLogin;
   final VoidCallback? onJoinNow;
-  final VoidCallback? onBrowseMenu; // ← NEW
+  final VoidCallback? onBrowseMenu;
 
   const GuestNavbar({
     super.key,
     this.activeRoute = '/home',
     this.onLogin,
     this.onJoinNow,
-    this.onBrowseMenu, // ← NEW
+    this.onBrowseMenu,
   });
 
   @override
@@ -292,7 +292,6 @@ class GuestNavbar extends StatefulWidget implements PreferredSizeWidget {
 class _GuestNavbarState extends State<GuestNavbar> {
   OverlayEntry? _overlayEntry;
 
-  // ← MENU added between HOME and ABOUT
   static const _links = [
     _NI('HOME',    '/'),
     _NI('MENU',    '/menu'),
@@ -312,7 +311,6 @@ class _GuestNavbarState extends State<GuestNavbar> {
         onClose: _closeMenu,
         onNavigate: (route) {
           _closeMenu();
-          // ← Intercept MENU tap → open guest MenuScreen
           if (route == '/menu') {
             widget.onBrowseMenu?.call();
           } else {
@@ -362,7 +360,6 @@ class _GuestNavbarState extends State<GuestNavbar> {
                   label: l.label,
                   active: widget.activeRoute == l.route,
                   onTap: () {
-                    // ← Intercept MENU tap → open guest MenuScreen
                     if (l.route == '/menu') {
                       widget.onBrowseMenu?.call();
                     } else if (widget.activeRoute != l.route) {
@@ -614,6 +611,13 @@ class _DesktopCustomerNav extends StatelessWidget {
     }
   }
 
+  // ── KEY FIX: navigate via named routes so main.dart's onGenerateRoute
+  // always rebuilds the screen with the correct isGuest state from currentUser.
+  void _handleNavTap(BuildContext context, String route) {
+    if (activeRoute == route) return;
+    Navigator.pushReplacementNamed(context, route);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -624,7 +628,12 @@ class _DesktopCustomerNav extends StatelessWidget {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 48),
       child: Row(children: [
-        _LogoImg(),
+        // Tapping the logo always goes home
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _handleNavTap(context, '/home'),
+          child: _LogoImg(),
+        ),
         const SizedBox(width: 48),
         Expanded(
           child: SingleChildScrollView(
@@ -635,17 +644,14 @@ class _DesktopCustomerNav extends StatelessWidget {
                 child: _NavLink(
                   label: l.label,
                   active: activeRoute == l.route,
-                  onTap: () {
-                    if (activeRoute != l.route) {
-                      Navigator.pushReplacementNamed(context, l.route);
-                    }
-                  },
+                  onTap: () => _handleNavTap(context, l.route),
                 ),
               )).toList(),
             ),
           ),
         ),
 
+        // ── Logged-in actions ─────────────────────────────────────────────
         if (!isGuest) ...[
           _IconCircleBtn(
             icon: Icons.notifications_none_rounded,
@@ -653,16 +659,12 @@ class _DesktopCustomerNav extends StatelessWidget {
             onTap: onNotif,
           ),
           const SizedBox(width: 16),
-        ],
-
-        _IconCircleBtn(
-          icon: Icons.shopping_cart_outlined,
-          badge: isGuest ? 0 : cartCount,
-          onTap: () => _handleCartTap(context),
-        ),
-        const SizedBox(width: 16),
-
-        if (!isGuest) ...[
+          _IconCircleBtn(
+            icon: Icons.shopping_cart_outlined,
+            badge: cartCount,
+            onTap: () => _handleCartTap(context),
+          ),
+          const SizedBox(width: 16),
           _IconCircleBtn(
             icon: Icons.person_outline_rounded,
             onTap: () {
@@ -682,7 +684,14 @@ class _DesktopCustomerNav extends StatelessWidget {
           ),
         ],
 
+        // ── Guest actions ─────────────────────────────────────────────────
         if (isGuest) ...[
+          _IconCircleBtn(
+            icon: Icons.shopping_cart_outlined,
+            badge: 0,
+            onTap: () => _handleCartTap(context),
+          ),
+          const SizedBox(width: 16),
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: onLoginRequired,
@@ -805,7 +814,16 @@ class _MobileCustomerNav extends StatelessWidget {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(children: [
-        _LogoImg(),
+        // Tapping logo goes home
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            if (activeRoute != '/home') {
+              Navigator.pushReplacementNamed(context, '/home');
+            }
+          },
+          child: _LogoImg(),
+        ),
         const Spacer(),
 
         if (!isGuest) ...[

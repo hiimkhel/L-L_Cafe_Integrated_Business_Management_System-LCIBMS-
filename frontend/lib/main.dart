@@ -116,22 +116,61 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
             case '/':
               return _fade(_buildScreen());
 
+            // ── HOME ──────────────────────────────────────────────────────
             case AppRoutes.home:
+              // Guests navigating to /home go back to landing
+              if (currentUser == null) {
+                return _fade(Builder(
+                  builder: (ctx) => LandingScreen(
+                    onLogin: setUser,
+                    onRegister: setUser,
+                  ),
+                ));
+              }
               return _fade(CustomerHomeScreen(onLogout: logout));
 
+            // ── MENU ──────────────────────────────────────────────────────
             case AppRoutes.menu:
-              return _fade(const MenuScreen());
+              // Logged-in customer → full menu with cart enabled
+              if (currentUser != null) {
+                return _fade(Builder(
+                  builder: (ctx) => MenuScreen(
+                    isGuest: false,
+                    onLoginRequired: null,
+                  ),
+                ));
+              }
+              // Guest → menu in read-only / lock mode
+              return _fade(Builder(
+                builder: (ctx) => MenuScreen(
+                  isGuest: true,
+                  onLoginRequired: () => _goLogin(ctx),
+                ),
+              ));
 
+            // ── CART ──────────────────────────────────────────────────────
             case AppRoutes.cart:
+              if (currentUser == null) {
+                return _fade(Builder(
+                  builder: (ctx) => LandingScreen(
+                    onLogin: setUser,
+                    onRegister: setUser,
+                  ),
+                ));
+              }
               return _fade(const CartScreen());
 
-            // ✅ FIX: Changed to CustomerOrderScreen from CartScreen
+            // ── ORDERS ────────────────────────────────────────────────────
             case AppRoutes.orders:
               if (currentUser == null) {
-                return _fade(LandingScreen(onLogin: setUser, onRegister: setUser));
+                return _fade(LandingScreen(
+                  onLogin: setUser,
+                  onRegister: setUser,
+                ));
               }
               return _fade(const CustomerOrderScreen());
 
+            // ── ABOUT ─────────────────────────────────────────────────────
             case AppRoutes.about:
               return _fade(Builder(
                 builder: (ctx) => AboutScreen(
@@ -140,6 +179,7 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
                 ),
               ));
 
+            // ── CONTACT ───────────────────────────────────────────────────
             case AppRoutes.contact:
               return _fade(Builder(
                 builder: (ctx) => ContactScreen(
@@ -148,11 +188,14 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
                 ),
               ));
 
+            // ── PROFILE ───────────────────────────────────────────────────
             case AppRoutes.profile:
               if (currentUser == null) {
-                return _fade(LandingScreen(onLogin: setUser, onRegister: setUser));
+                return _fade(LandingScreen(
+                  onLogin: setUser,
+                  onRegister: setUser,
+                ));
               }
-
               return _fade(ProfileScreen(
                 userId: currentUser!.id,
                 email: currentUser!.email,
@@ -193,8 +236,6 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
           activeIndex: 0,
           onLogout: logout,
         );
-      
-      // ✅ FIX: Added a default fallback to satisfy the compiler
       default:
         return LandingScreen(onLogin: setUser, onRegister: setUser);
     }

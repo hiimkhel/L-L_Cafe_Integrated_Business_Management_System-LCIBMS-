@@ -35,7 +35,7 @@ class MenuScreen extends StatefulWidget {
   /// redirects to login instead of adding items.
   final bool isGuest;
 
-  /// Called when a guest taps add-to-cart — show the login screen here.
+  /// Called when a guest taps add-to-cart or any auth-required action.
   final VoidCallback? onLoginRequired;
 
   const MenuScreen({
@@ -49,7 +49,7 @@ class MenuScreen extends StatefulWidget {
 }
 
 class _MenuScreenState extends State<MenuScreen> {
-  String _selectedLabel      = 'ALL';
+  String _selectedLabel       = 'ALL';
   String _activeCategoryValue = '';
   List<MenuItem> _allRemoteItems = [];
   Timer? _debounce;
@@ -108,7 +108,7 @@ class _MenuScreenState extends State<MenuScreen> {
   // ── Add to cart ──────────────────────────────────────────────────────────
 
   void _addToCart(MenuItem menuItem) {
-    // ✅ Guest taps add-to-cart → redirect to login instead
+    // Guest taps add-to-cart → redirect to login
     if (widget.isGuest) {
       widget.onLoginRequired?.call();
       return;
@@ -154,18 +154,25 @@ class _MenuScreenState extends State<MenuScreen> {
   Widget build(BuildContext context) {
     final cart = widget.isGuest ? null : CartProvider.of(context);
 
+    // ── Guests get GuestNavbar; logged-in users get CustomerNavbar ──────────
+    final PreferredSizeWidget navbar = widget.isGuest
+        ? GuestNavbar(
+            activeRoute: '/menu',
+            onLogin: widget.onLoginRequired,
+            onJoinNow: widget.onLoginRequired,
+            onBrowseMenu: null, // already on the menu screen
+          )
+        : CustomerNavbar(
+            activeRoute: '/menu',
+            cartCount: cart?.totalCount ?? 0,
+            notifCount: 1,
+            isGuest: false,
+            onLoginRequired: null,
+          );
+
     return Scaffold(
       backgroundColor: _bgBeige,
-      appBar: CustomerNavbar(
-        activeRoute: '/menu',
-        cartCount: cart?.totalCount ?? 0,
-        notifCount: widget.isGuest ? 0 : 1,
-        userName: widget.isGuest ? null : 'JANE DOE',
-        userClientId: widget.isGuest ? null : 'CLIENT #LL-00124',
-        // ✅ Pass guest state so the navbar cart button also redirects to login
-        isGuest: widget.isGuest,
-        onLoginRequired: widget.onLoginRequired,
-      ),
+      appBar: navbar,
       body: Stack(
         children: [
           const Positioned.fill(child: _BambooBackground()),
@@ -241,7 +248,7 @@ class _MenuScreenState extends State<MenuScreen> {
               child: CircularProgressIndicator(color: _primary),
             ),
           )
-        else if (items.isEmpty)
+        else if (_filteredItems.isEmpty)
           _buildEmptyState()
         else
           _buildGrid(items, crossAxisCount: 4),
@@ -527,7 +534,6 @@ class _MenuCardState extends State<_MenuCard>
   }
 
   Future<void> _handleAddToCart() async {
-    // Skip bounce animation for guests — they'll be redirected
     if (!widget.isGuest) {
       await _bounceCtrl.forward();
       await _bounceCtrl.reverse();
@@ -668,16 +674,11 @@ class _MenuCardState extends State<_MenuCard>
                             decoration: BoxDecoration(
                               color: isOut
                                   ? Colors.grey.shade200
-                                  // ✅ Guests see a slightly different tint
-                                  // on the button to hint login is needed,
-                                  // but the button still shows — it just
-                                  // redirects to login on tap.
                                   : _secondary.withOpacity(
                                       widget.isGuest ? 0.08 : 0.15),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
-                              // ✅ Show lock icon for guests so it's clear
                               widget.isGuest && !isOut
                                   ? Icons.lock_outline_rounded
                                   : Icons.shopping_cart_outlined,
