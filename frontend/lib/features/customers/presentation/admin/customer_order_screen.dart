@@ -7,6 +7,7 @@ import 'package:frontend/core/constants/cart_item.dart';
 import 'package:frontend/features/customers/presentation/admin/cart_screen.dart';
 import 'package:frontend/core/widgets/bamboo_background.dart';
 import 'package:frontend/core/constants/cart_provider.dart';
+import 'package:frontend/core/widgets/bamboo_background.dart';
 
 const double _kMobile = 768;
 const double _kDesktopMaxWidth = 1280;
