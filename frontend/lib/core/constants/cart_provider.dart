@@ -1,28 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/constants/cart_item.dart';
  
 // ─────────────────────────────────────────────────────────────────────────────
 // CART ITEM MODEL
 // ─────────────────────────────────────────────────────────────────────────────
- 
-class CartItem {
-  final String id;
-  final String name;
-  final String category;
-  final double price;
-  final double originalPrice;
-  final String imageUrl;
-  int quantity;
- 
-  CartItem({
-    required this.id,
-    required this.name,
-    required this.category,
-    required this.price,
-    required this.originalPrice,
-    this.imageUrl = '',
-    this.quantity = 1,
-  });
-}
+
  
 // ─────────────────────────────────────────────────────────────────────────────
 // CART NOTIFIER

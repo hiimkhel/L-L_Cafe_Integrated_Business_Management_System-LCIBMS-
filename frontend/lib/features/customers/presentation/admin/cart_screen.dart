@@ -705,6 +705,7 @@ class _CartSummary extends StatelessWidget {
                       price: c.price,
                       originalPrice: c.originalPrice,
                       quantity: c.quantity,
+                      imageUrl: c.imageUrl
                     )).toList(),
                   ),
                 ),

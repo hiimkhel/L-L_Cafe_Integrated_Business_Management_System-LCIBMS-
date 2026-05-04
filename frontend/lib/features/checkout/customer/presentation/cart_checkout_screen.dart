@@ -12,6 +12,8 @@ import 'package:frontend/core/widgets/bamboo_background.dart';
 import 'package:frontend/core/models/user.dart';
 import 'package:frontend/core/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:frontend/core/constants/cart_provider.dart';
+
 
 const double _kMobile = 768;
 
@@ -52,72 +54,95 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
 
 
   Future<void> _createOrder() async {
-    // 1. Validation logic
-    if (_nameController.text.isEmpty || _phoneController.text.isEmpty) {
-      _showErrorSnackBar("Please fill in contact details");
-      return;
+    try{
+      // 1. Validation logic
+      if (_nameController.text.isEmpty || _phoneController.text.isEmpty) {
+        _showErrorSnackBar("Please fill in contact details");
+        return;
+      }
+
+      // Ensure address is provided if delivery is selected
+      if (_isDelivery && _addressController.text.trim().isEmpty) {
+        _showErrorSnackBar("Please provide a delivery address");
+        return;
+      }
+
+      setState(() => _isLoading = true);
+
+      // 2. Financial Calculations
+      const double deliveryFee = 45.0;
+      final subtotal = _items.fold<double>(
+        0,
+        (sum, item) => sum + (item.price * item.quantity),
+      );
+      final currentDeliveryFee = _isDelivery ? deliveryFee : 0.0;
+      final total = subtotal + currentDeliveryFee;
+    
+
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+
+      final int? currentUserId = auth.user != null 
+        ? int.tryParse(auth.user!.id) 
+        : null;
+
+      // 3. Map to OrderRequest 
+      // Make sure your OrderRequest class has the 'deliveryAddress' field!
+      final order = OrderRequest(
+        source: "online",
+        orderType: _isDelivery ? "delivery" : "pickup",
+        userId: currentUserId, 
+        subtotal: subtotal,
+        deliveryFee: currentDeliveryFee,
+        deliveryAddress: _isDelivery ? _addressController.text : "STORE PICKUP", 
+        total: total,
+        paymentMethod: _isCash ? "cash" : "e-wallet",
+        paymentStatus: "unpaid",
+        customerName: _nameController.text,
+        customerPhone: _phoneController.text,
+        notes: _notesController.text, // Now just the notes, clean and separate
+        items: _items.map((item) {
+          return {
+            "menu_item_id": item.id,
+            "name": item.name,
+            "quantity": item.quantity ?? 1,
+            "unit_price": item.price,
+            "subtotal": item.price * (item.quantity ?? 1)
+          };
+        }).toList(),
+      );
+
+      // 4. API Call
+      final success = await _orderService.createOrder(order);
+
+      setState(() => _isLoading = false);
+
+      if (success) {
+        final cart = CartProvider.of(context);
+        cart.clear();
+
+         ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Order placed successfully! 🎉"),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        await Future.delayed(const Duration(milliseconds: 800));
+
+        Navigator.pushReplacementNamed(context, '/success');
+      } else {
+        if (mounted) setState(() => _isLoading = false);
+        _showErrorSnackBar("Failed to place order");
+      }
+    }catch(err){
+     if (mounted) {
+      setState(() => _isLoading = false);
+      _showErrorSnackBar("A connection error occurred: $err");
+
+     }
     }
-
-    // Ensure address is provided if delivery is selected
-    if (_isDelivery && _addressController.text.trim().isEmpty) {
-      _showErrorSnackBar("Please provide a delivery address");
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    // 2. Financial Calculations
-    const double deliveryFee = 45.0;
-    final subtotal = _items.fold<double>(
-      0,
-      (sum, item) => sum + (item.price * item.quantity),
-    );
-    final currentDeliveryFee = _isDelivery ? deliveryFee : 0.0;
-    final total = subtotal + currentDeliveryFee;
-  
-
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-
-    final int? currentUserId = auth.user != null 
-      ? int.tryParse(auth.user!.id) 
-      : null;
-
-    // 3. Map to OrderRequest 
-    // Make sure your OrderRequest class has the 'deliveryAddress' field!
-    final order = OrderRequest(
-      source: "online",
-      orderType: _isDelivery ? "delivery" : "pickup",
-      userId: currentUserId, 
-      subtotal: subtotal,
-      deliveryFee: currentDeliveryFee,
-      deliveryAddress: _isDelivery ? _addressController.text : "STORE PICKUP", 
-      total: total,
-      paymentMethod: _isCash ? "cash" : "e-wallet",
-      paymentStatus: "unpaid",
-      customerName: _nameController.text,
-      customerPhone: _phoneController.text,
-      notes: _notesController.text, // Now just the notes, clean and separate
-      items: _items.map((item) {
-        return {
-          "menu_item_id": item.id,
-          "name": item.name,
-          "quantity": item.quantity ?? 1,
-          "unit_price": item.price,
-          "subtotal": item.price * (item.quantity ?? 1)
-        };
-      }).toList(),
-    );
-
-    // 4. API Call
-    final success = await _orderService.createOrder(order);
-
-    setState(() => _isLoading = false);
-
-    if (success) {
-      Navigator.pushReplacementNamed(context, '/success');
-    } else {
-      _showErrorSnackBar("Failed to place order");
-    }
+    
   }
 
 // Helper to keep code clean
@@ -136,6 +161,41 @@ void _showErrorSnackBar(String message) {
     _notesController.dispose();
     super.dispose();
   }
+
+  Widget _buildLoadingOverlay() {
+  return Container(
+    color: Colors.black.withOpacity(0.6), // Dim the background
+    width: double.infinity,
+    height: double.infinity,
+    child: Center(
+      child: Container(
+        padding: const EdgeInsets.all(30),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min, // Only take up needed space
+          children: [
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.secondary),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "Cooking up your order...",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+                fontSize: 16,
+              ),
+            ),
+            const Text("Please don't close the app"),
+          ],
+        ),
+      ),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -183,6 +243,8 @@ void _showErrorSnackBar(String message) {
                   ),
                 ),
               ),
+
+              if(_isLoading) _buildLoadingOverlay(),
             ],
           ),
         ],
