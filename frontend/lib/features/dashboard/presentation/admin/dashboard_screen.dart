@@ -215,7 +215,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _beige,
+      backgroundColor: const Color.fromARGB(255, 255, 254, 251),
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
