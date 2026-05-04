@@ -5,7 +5,6 @@ import 'package:frontend/features/auth/presentation/screens/forgot_password_scre
 import 'package:frontend/features/auth/presentation/screens/register_screen.dart';
 import 'package:frontend/core/services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import 'package:frontend/core/widgets/bamboo_background.dart';
 
 const double _kMobile = 700;
@@ -16,7 +15,17 @@ const Color _secondary = Color(0xFFA98258);
 
 class LoginScreen extends StatefulWidget {
   final Function(User) onLogin;
-  const LoginScreen({super.key, required this.onLogin});
+
+  /// When true, a successful login clears the whole stack back to '/'.
+  /// Always set this when LoginScreen is pushed via pushReplacement from
+  /// a guest MenuScreen so the menu is never left orphaned on the stack.
+  final bool popToRootOnSuccess;
+
+  const LoginScreen({
+    super.key,
+    required this.onLogin,
+    this.popToRootOnSuccess = false,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -38,13 +47,46 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  //------------------------------------------------helper---------------------------------------------------
+  // ── Safe back ─────────────────────────────────────────────────────────────
+
+  void _goBack() {
+    if (!mounted) return;
+    final nav = Navigator.of(context);
+    if (widget.popToRootOnSuccess) {
+      nav.pushNamedAndRemoveUntil('/', (route) => false);
+    } else if (nav.canPop()) {
+      nav.pop();
+    } else {
+      nav.pushNamedAndRemoveUntil('/', (route) => false);
+    }
+  }
+
+  // ── Login success ─────────────────────────────────────────────────────────
+
+  void _handleSuccess(User user) {
+    widget.onLogin(user);
+    if (!mounted) return;
+    if (widget.popToRootOnSuccess) {
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+    } else {
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      } else {
+        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+      }
+    }
+  }
+
+  // ── Session helper ────────────────────────────────────────────────────────
+
   Future<void> _saveUserSession(User user) async {
     final prefs = await SharedPreferences.getInstance();
     final id = int.tryParse(user.id ?? '');
     if (id != null) await prefs.setInt('user_id', id);
     await prefs.setString('token', user.token ?? '');
   }
+
+  // ── Actions ───────────────────────────────────────────────────────────────
 
   Future<void> _login() async {
     setState(() {
@@ -56,23 +98,10 @@ class _LoginScreenState extends State<LoginScreen> {
         _emailCtrl.text.trim(),
         _passwordCtrl.text.trim(),
       );
-
-      final prefs = await SharedPreferences.getInstance();
-
-      // Instead of int.parse (throws on failure):---------------------------------------------------------------------------
-      final id = int.tryParse(user.id ?? '');
-      if (id != null) await prefs.setInt('user_id', id);
-
-      await prefs.setInt(
-        'user_id',
-        int.parse(user.id),
-      ); //--------------------------  -------------------------
-      await prefs.setString('token', user.token ?? '');
-
-      widget.onLogin(user);
-      if (mounted) Navigator.pop(context);
+      await _saveUserSession(user);
+      _handleSuccess(user);
     } catch (e) {
-      setState(() => error = e.toString().replaceAll('Exception: ', ''));
+      if (mounted) setState(() => error = e.toString().replaceAll('Exception: ', ''));
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
@@ -85,11 +114,10 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     try {
       final user = await _authService.signInWithGoogle();
-      await _saveUserSession(user);//--------------------------------------------------------------------
-      widget.onLogin(user);
-      if (mounted) Navigator.pop(context);
+      await _saveUserSession(user);
+      _handleSuccess(user);
     } catch (e) {
-      setState(() => error = e.toString().replaceAll('Exception: ', ''));
+      if (mounted) setState(() => error = e.toString().replaceAll('Exception: ', ''));
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
@@ -102,43 +130,47 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     try {
       final user = await _authService.signInWithFacebook();
-      await _saveUserSession(user);//---------------------------------------------------------------------------
-      widget.onLogin(user);
-      if (mounted) Navigator.pop(context);
+      await _saveUserSession(user);
+      _handleSuccess(user);
     } catch (e) {
-      setState(() => error = e.toString().replaceAll('Exception: ', ''));
+      if (mounted) setState(() => error = e.toString().replaceAll('Exception: ', ''));
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
   }
 
   void _goForgotPassword() => Navigator.push(
-    context,
-    MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
-  );
+        context,
+        MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+      );
 
   void _goRegister() => Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(
-      builder: (_) => RegisterScreen(onRegister: widget.onLogin),
-    ),
-  );
+        context,
+        MaterialPageRoute(
+          builder: (_) => RegisterScreen(onRegister: widget.onLogin),
+        ),
+      );
 
-  // ✅ Back to landing — pop since landing pushed us here
-  void _goBack() => Navigator.pop(context);
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _bgBeige,
-      body: Stack(
-        children: [
-          const BambooBackground(),
-          LayoutBuilder(builder: (context, c) {
-            final isMobile = c.maxWidth < _kMobile;
-            return isMobile ? _buildMobile(context) : _buildDesktop();
-          }),
-        ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _goBack();
+      },
+      child: Scaffold(
+        backgroundColor: _bgBeige,
+        body: Stack(
+          children: [
+            const BambooBackground(),
+            LayoutBuilder(builder: (context, c) {
+              final isMobile = c.maxWidth < _kMobile;
+              return isMobile ? _buildMobile(context) : _buildDesktop();
+            }),
+          ],
+        ),
       ),
     );
   }
@@ -165,7 +197,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           child: Column(
             children: [
-              // ── Back button ──────────────────────────────────────────────
               Align(
                 alignment: Alignment.centerLeft,
                 child: GestureDetector(
@@ -214,14 +245,13 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── Green header ─────────────────────────────────────────────────
+          // Green header
           Container(
             color: _primary,
             padding: const EdgeInsets.fromLTRB(24, 56, 24, 32),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ── Back button ────────────────────────────────────────────
                 Align(
                   alignment: Alignment.centerLeft,
                   child: GestureDetector(
@@ -250,7 +280,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-
                 ClipRRect(
                   borderRadius: BorderRadius.circular(18),
                   child: Image.asset(
@@ -258,25 +287,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: 64,
                     height: 64,
                     fit: BoxFit.cover,
-                    errorBuilder:
-                        (_, __, ___) => Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.25),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'L&L',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 14,
-                              ),
-                            ),
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'L&L',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
                           ),
                         ),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -305,7 +333,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-          // ── White body ───────────────────────────────────────────────────
+          // White body
           ConstrainedBox(
             constraints: BoxConstraints(minHeight: bodyMinH),
             child: Container(
@@ -319,7 +347,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ── Shared form content ───────────────────────────────────────────────────
+  // ── Form ──────────────────────────────────────────────────────────────────
 
   Widget _buildFormContent({required bool isMobile}) {
     return Column(
@@ -339,17 +367,16 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Image.asset(
                 'assets/images/lnl.jpg',
                 fit: BoxFit.cover,
-                errorBuilder:
-                    (_, __, ___) => const Center(
-                      child: Text(
-                        'L&L',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 11,
-                        ),
-                      ),
+                errorBuilder: (_, __, ___) => const Center(
+                  child: Text(
+                    'L&L',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 11,
                     ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -513,19 +540,21 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
   Widget _buildLabel(String text) => Align(
-    alignment: Alignment.centerLeft,
-    child: Text(
-      text,
-      style: const TextStyle(
-        fontFamily: 'Urbanist',
-        fontWeight: FontWeight.w700,
-        fontSize: 9,
-        letterSpacing: 1.5,
-        color: _bgDark,
-      ),
-    ),
-  );
+        alignment: Alignment.centerLeft,
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontFamily: 'Urbanist',
+            fontWeight: FontWeight.w700,
+            fontSize: 9,
+            letterSpacing: 1.5,
+            color: _bgDark,
+          ),
+        ),
+      );
 
   Widget _buildTextField({
     required TextEditingController controller,
@@ -553,13 +582,12 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         filled: true,
         fillColor: const Color(0xFFFAF7F3),
-        suffixIcon:
-            suffixIcon != null
-                ? Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: suffixIcon,
-                )
-                : null,
+        suffixIcon: suffixIcon != null
+            ? Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: suffixIcon,
+              )
+            : null,
         suffixIconConstraints: const BoxConstraints(
           minWidth: 40,
           minHeight: 40,
@@ -600,52 +628,51 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ],
         ),
-        child:
-            isLoading
-                ? const Center(
-                  child: SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2.5,
-                    ),
-                  ),
-                )
-                : Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                    letterSpacing: 2.5,
+        child: isLoading
+            ? const Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
                     color: Colors.white,
+                    strokeWidth: 2.5,
                   ),
                 ),
+              )
+            : Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
+                  letterSpacing: 2.5,
+                  color: Colors.white,
+                ),
+              ),
       ),
     );
   }
 
   Widget _buildDivider(String label) => Row(
-    children: [
-      Expanded(child: Divider(color: _secondary.withOpacity(0.2))),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Urbanist',
-            fontWeight: FontWeight.w700,
-            fontSize: 9,
-            letterSpacing: 1.5,
-            color: _secondary.withOpacity(0.6),
+        children: [
+          Expanded(child: Divider(color: _secondary.withOpacity(0.2))),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Urbanist',
+                fontWeight: FontWeight.w700,
+                fontSize: 9,
+                letterSpacing: 1.5,
+                color: _secondary.withOpacity(0.6),
+              ),
+            ),
           ),
-        ),
-      ),
-      Expanded(child: Divider(color: _secondary.withOpacity(0.2))),
-    ],
-  );
+          Expanded(child: Divider(color: _secondary.withOpacity(0.2))),
+        ],
+      );
 
   Widget _buildSocialBtn({
     required String label,
@@ -690,13 +717,15 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
+// ── Google Icon ───────────────────────────────────────────────────────────────
+
 class _GoogleIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SizedBox(
-    width: 20,
-    height: 20,
-    child: CustomPaint(painter: _GooglePainter()),
-  );
+        width: 20,
+        height: 20,
+        child: CustomPaint(painter: _GooglePainter()),
+      );
 }
 
 class _GooglePainter extends CustomPainter {

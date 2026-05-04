@@ -1,50 +1,71 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/core/widgets/admin_sidebar.dart';
-//import 'package:frontend/core/constants/menu_controller.dart';
 import 'package:frontend/core/services/admin/menu_service.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+const _kRadius = 12.0;
+const _kBorder = Color(0xFFE8DDD0);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCREEN
+// ─────────────────────────────────────────────────────────────────────────────
 
 class MenuManagementScreen extends StatefulWidget {
   final int activeIndex;
   final VoidCallback onLogout;
-  const MenuManagementScreen({super.key, this.activeIndex = 2, required this.onLogout});
+
+  const MenuManagementScreen({
+    super.key,
+    this.activeIndex = 2,
+    required this.onLogout,
+  });
 
   @override
   State<MenuManagementScreen> createState() => _MenuManagementScreenState();
 }
 
 class _MenuManagementScreenState extends State<MenuManagementScreen> {
-  //--------------------------------------------------State---------------------------------------------------------------------
-  String selectedCategory = 'Foods';
-  String? selectedItemName = 'Chicken Burger';
+  // ── State ────────────────────────────────────────────────────────────────
+  String _globalSearch  = '';
+  String _itemSearch    = '';
+  bool   isAvailable    = true;
+  bool   isLoadingItem  = false;
 
-  // State for UI loading
-  bool isAvailable = true;
-  bool isLoadingItem = false;
-
-  // Handle current item selected on the right panel
+  String? selectedItemName;
   dynamic selectedItem;
 
-  // Handle the incoming data from the API
-  List<dynamic> categories = [];
-  List<dynamic> items = [];
-  int? selectedCategoryId;
+  List<dynamic> categories        = [];
+  List<dynamic> items             = [];
+  List<dynamic> _filteredItems    = [];
+  int?          selectedCategoryId;
 
+  // Image / file
+  String?  _pickedFileName;
+  Uint8List? _pickedFileBytes;   // web
+  String?  _pickedFilePath;      // native
 
-  late TextEditingController _nameCtrl;
-  late TextEditingController _priceCtrl;
-  late TextEditingController _descCtrl;
+  late final TextEditingController _nameCtrl;
+  late final TextEditingController _priceCtrl;
+  late final TextEditingController _descCtrl;
+  late final TextEditingController _globalSearchCtrl;
+  late final TextEditingController _itemSearchCtrl;
 
   @override
   void initState() {
     super.initState();
-
-    _nameCtrl = TextEditingController();
-    _priceCtrl = TextEditingController();
-    _descCtrl = TextEditingController();
-
+    _nameCtrl        = TextEditingController();
+    _priceCtrl       = TextEditingController();
+    _descCtrl        = TextEditingController();
+    _globalSearchCtrl = TextEditingController();
+    _itemSearchCtrl  = TextEditingController();
     _loadCategories();
   }
 
@@ -53,100 +74,205 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     _nameCtrl.dispose();
     _priceCtrl.dispose();
     _descCtrl.dispose();
+    _globalSearchCtrl.dispose();
+    _itemSearchCtrl.dispose();
     super.dispose();
   }
 
+  // ── Data helpers ─────────────────────────────────────────────────────────
 
-
-  void _onSelectItem(dynamic item) async {
-    setState(() => isLoadingItem = true);
-    try{
-      final freshItem = await MenuService.fetchMenuItemById(item['id']);
-    
+  Future<void> _loadCategories() async {
+    try {
+      final data = await MenuService.fetchCategories();
       setState(() {
-        selectedItem = freshItem;
-        selectedItemName = freshItem['name'];
-
-        _nameCtrl.text = freshItem['name'] ?? '';
-        _priceCtrl.text = freshItem['price'].toString();
-        _descCtrl.text = freshItem['description'] ?? '';
-        isAvailable = freshItem['is_available'] == 1;
+        categories = data;
+        if (categories.isNotEmpty) {
+          selectedCategoryId = categories[0]['id'];
+        }
       });
-    }catch(err){
-      print("Failed to fetch item: $err");
-    }finally{
-      setState(() => isLoadingItem = false);
+      if (selectedCategoryId != null) _loadItems(selectedCategoryId!);
+    } catch (e) {
+      _showError('Failed to load categories');
     }
-    
+  }
+
+  Future<void> _loadItems(int categoryId) async {
+    try {
+      final data = await MenuService.fetchMenuItems(categoryId);
+      setState(() {
+        items          = data;
+        _filteredItems = _applyItemSearch(data, _itemSearch);
+      });
+    } catch (e) {
+      _showError('Failed to load items');
+    }
+  }
+
+  List<dynamic> _applyItemSearch(List<dynamic> src, String q) {
+    if (q.trim().isEmpty) return List.from(src);
+    final lower = q.toLowerCase();
+    return src.where((i) =>
+        (i['name'] ?? '').toString().toLowerCase().contains(lower)).toList();
+  }
+
+  void _onItemSearchChanged(String q) {
+    setState(() {
+      _itemSearch    = q;
+      _filteredItems = _applyItemSearch(items, q);
+    });
   }
 
   void _onSelectCategory(dynamic category) {
     setState(() {
       selectedCategoryId = category['id'];
-      selectedItem = null; // 
-      selectedItemName = null;
-      
+      selectedItem       = null;
+      selectedItemName   = null;
+      _itemSearch        = '';
+      _itemSearchCtrl.clear();
     });
-
-    _loadItems(category['id']); // FETCH ITEMS BY CATEGORY
+    _loadItems(category['id']);
   }
 
-  Future<void> _loadCategories() async {
-    final data = await MenuService.fetchCategories();
-
-    setState(() {
-      categories = data;
-
-      if (categories.isNotEmpty) {
-        selectedCategoryId = categories[0]['id'];
-      }
-    });
-
-    _loadItems(selectedCategoryId!);
+  void _onSelectItem(dynamic item) async {
+    setState(() => isLoadingItem = true);
+    try {
+      final fresh = await MenuService.fetchMenuItemById(item['id']);
+      setState(() {
+        selectedItem     = fresh;
+        selectedItemName = fresh['name'];
+        _nameCtrl.text   = fresh['name']  ?? '';
+        _priceCtrl.text  = fresh['price'].toString();
+        _descCtrl.text   = fresh['description'] ?? '';
+        isAvailable      = fresh['is_available'] == 1;
+        _pickedFileName  = null;
+        _pickedFileBytes = null;
+        _pickedFilePath  = null;
+      });
+    } catch (_) {
+      _showError('Failed to load item details');
+    } finally {
+      setState(() => isLoadingItem = false);
+    }
   }
 
-  Future<void> _loadItems(int categoryId) async {
-    final data = await MenuService.fetchMenuItems(categoryId);
-
-    setState(() {
-      items = data;
-    });
+  Future<void> _saveItem() async {
+    if (selectedItem == null) return;
+    try {
+      await MenuService.updateMenuItem(selectedItem['id'], {
+        'name':         _nameCtrl.text.trim(),
+        'price':        double.tryParse(_priceCtrl.text) ?? 0,
+        'description':  _descCtrl.text.trim(),
+        'is_available': isAvailable ? 1 : 0,
+      });
+      _loadItems(selectedCategoryId!);
+      _showSuccess('Item updated successfully');
+    } catch (e) {
+      _showError('Failed to save changes');
+    }
   }
 
-  Future<void> _deleteItem(int id) async {
+  Future<void> _deleteItem(dynamic item) async {
+    if (item == null) return;
+    try {
+      await MenuService.deleteMenuItem(item['id']);
+      setState(() {
+        items.removeWhere((i) => i['id'] == item['id']);
+        _filteredItems = _applyItemSearch(items, _itemSearch);
+        if (selectedItem?['id'] == item['id']) {
+          selectedItem     = null;
+          selectedItemName = null;
+        }
+      });
+      _showSuccess('Item deleted');
+    } catch (e) {
+      _showError('Delete failed');
+    }
+  }
+
+  // ── File picker ───────────────────────────────────────────────────────────
+
+Future<void> _pickFile() async {
   try {
-    
-    await MenuService.deleteMenuItem(id);
+    // FIXED: Removed '.platform' 
+    final result = await FilePicker.pickFiles(
+      type: FileType.image,
+      withData: kIsWeb,
+    );
+
+    if (result == null || result.files.isEmpty) return;
+
+    final file = result.files.first;
 
     setState(() {
-      items.removeWhere((item) => item['id'] == id);
-
-      if (selectedItemName != null &&
-          items.any((i) => i['id'] == id)) {
-        selectedItemName = null;
+      _pickedFileName = file.name;
+      if (kIsWeb) {
+        _pickedFileBytes = file.bytes;
+        _pickedFilePath = null;
+      } else {
+        _pickedFilePath = file.path;
+        _pickedFileBytes = null;
       }
     });
-
   } catch (e) {
-    print("Delete error: $e");
+    debugPrint("Picker Error: $e");
   }
 }
-  //-----------------------------------------------------------Build--------------------------------------------------------------------
+
+
+
+  // ── Feedback ──────────────────────────────────────────────────────────────
+
+  void _showSuccess(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Row(children: [
+        const Icon(Icons.check_circle_outline, color: Colors.white, size: 16),
+        const SizedBox(width: 8),
+        Text(msg, style: const TextStyle(fontWeight: FontWeight.w600)),
+      ]),
+      backgroundColor: AppColors.primary,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      duration: const Duration(seconds: 2),
+    ));
+  }
+
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Row(children: [
+        const Icon(Icons.error_outline, color: Colors.white, size: 16),
+        const SizedBox(width: 8),
+        Text(msg, style: const TextStyle(fontWeight: FontWeight.w600)),
+      ]),
+      backgroundColor: Colors.redAccent,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      duration: const Duration(seconds: 3),
+    ));
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // BUILD
+  // ─────────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.background,
       body: Row(
         children: [
-          Sidebar(activeIndex: widget.activeIndex,  onLogout: widget.onLogout),
+          Sidebar(activeIndex: widget.activeIndex, onLogout: widget.onLogout),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                AdminHeader(title: "MENU MANAGEMENT",  onLogout: widget.onLogout),
-                _buildFilterRow(),
-                Expanded(child: _buildThreePanels()),
+                AdminHeader(title: 'MENU MANAGEMENT', onLogout: widget.onLogout),
+                _buildTopBar(),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                    child: _buildPanels(),
+                  ),
+                ),
               ],
             ),
           ),
@@ -155,788 +281,769 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     );
   }
 
-  //---------------------------------------------------FilterRow------------------------------------------------------------------------
+  // ── Top bar ───────────────────────────────────────────────────────────────
 
-  Widget _buildFilterRow() {
+  Widget _buildTopBar() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(.8),
-
-                  offset: Offset(0, 4),
-                  blurRadius: 4,
-                  spreadRadius: 0,
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Text(
-                  "ALL ITEMS",
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: .8,
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Icon(
-                  Icons.keyboard_arrow_down,
-                  color: AppColors.primary,
-                  size: 16,
-                ),
-              ],
+          // Global search
+          SizedBox(
+            width: 260,
+            height: 38,
+            child: TextField(
+              controller: _globalSearchCtrl,
+              onChanged: (v) => setState(() => _globalSearch = v),
+              style: TextStyle(fontSize: 13, color: AppColors.primary),
+              decoration: _searchDeco('Search all items...'),
             ),
           ),
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 210,
-            height: 36,
-            child: Container(
-              decoration: BoxDecoration(
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(1.0),
-                    offset: Offset(0, 4),
-                    blurRadius: 9,
-                    spreadRadius: 0,
-                  ),
-                ],
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: TextField(
-                style: TextStyle(fontSize: 15, color: AppColors.primary),
-                decoration: InputDecoration(
-                  hintText: "SEARCH ITEM...",
-                  hintStyle: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 12,
-                    letterSpacing: .8,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  suffixIcon: Icon(
-                    Icons.search,
-                    color: AppColors.primary,
-                    size: 16,
-                  ),
-                  filled: true,
-                  fillColor: AppColors.white,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 14,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide(color: AppColors.white),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide(color: AppColors.primary, width: .9),
-                  ),
-                ),
-              ),
-            ),
+          const Spacer(),
+          // Add category
+          _OutlineBtn(
+            label: '+ Add Category',
+            icon: Icons.category_outlined,
+            onTap: () => _showAddDialog(type: 'category'),
+          ),
+          const SizedBox(width: 10),
+          // Add item
+          _FilledBtn(
+            label: '+ Add Item',
+            icon: Icons.add_circle_outline,
+            onTap: () => _showAddDialog(type: 'item'),
           ),
         ],
       ),
     );
   }
 
-  //-------------------------------------------------------------ThreePanels-----------------------------------------------------------------------------
+  // ── Three panels ──────────────────────────────────────────────────────────
 
-  Widget _buildThreePanels() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 5, 24, 24),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.primary),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(width: 190, child: _buildCategoryPanel()),
-            VerticalDivider(width: 1, color: AppColors.primary),
-            SizedBox(width: 230, child: _buildItemsPanel()),
-            VerticalDivider(width: 1, color: AppColors.primary),
-            Expanded(child: _buildDetailsPanel()),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _panelHeader(String title) {
+  Widget _buildPanels() {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.primary)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(_kRadius),
+        border: Border.all(color: _kBorder),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: Text(
-        title,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: AppColors.primary,
-        ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Panel 1 — Categories
+          SizedBox(width: 200, child: _buildCategoryPanel()),
+          _divider(),
+          // Panel 2 — Items
+          SizedBox(width: 250, child: _buildItemsPanel()),
+          _divider(),
+          // Panel 3 — Details
+          Expanded(child: _buildDetailsPanel()),
+        ],
       ),
     );
   }
 
-  Widget _greenBtn(String label, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: AppColors.secondary,
-          border: Border.all(color: AppColors.primary),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppColors.white,
-            fontSize: 12,
-            fontWeight: FontWeight.normal,
-          ),
-        ),
-      ),
-    );
-  }
+  Widget _divider() => VerticalDivider(width: 1, thickness: 1, color: _kBorder);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PANEL 1 — CATEGORIES
+  // ─────────────────────────────────────────────────────────────────────────
 
   Widget _buildCategoryPanel() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        _panelHeader('Category'),
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: SizedBox(
-            height: 32,
-            width: 165,
-            child: _greenBtn('+ Add Category', (){
-              _showAddDialog(type: "category");
-            }),
-          ),
-        ),
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-            children: categories.map((cat) => _buildCategoryTitle(cat)).toList(),
-          ),
-        ),
-      ],
-    );
+    return Column(children: [
+      _PanelHeader(title: 'CATEGORIES'),
+      Expanded(
+        child: categories.isEmpty
+            ? _emptyHint('No categories yet')
+            : ListView.separated(
+                padding: const EdgeInsets.all(12),
+                itemCount: categories.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 4),
+                itemBuilder: (_, i) => _buildCategoryTile(categories[i]),
+              ),
+      ),
+    ]);
   }
 
-  Widget _buildCategoryTitle(dynamic cat) {
+  Widget _buildCategoryTile(dynamic cat) {
     final selected = selectedCategoryId == cat['id'];
-
     return GestureDetector(
       onTap: () => _onSelectCategory(cat),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
-          color: selected ? AppColors.background : Colors.white,
+          color: selected ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(9),
-        ),
-        child: Text(
-          (cat?['name'] ?? 'Unknown'),
-          style: TextStyle(
-            color: AppColors.primary,
-            fontSize: 13,
+          border: Border.all(
+            color: selected ? AppColors.primary.withOpacity(0.4) : Colors.transparent,
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildItemsPanel() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _panelHeader('Items'),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
-          child: SizedBox(
-            height: 34,
-            child: TextField(
-              style: TextStyle(fontSize: 12, color: AppColors.primary),
-              decoration: InputDecoration(
-                hintText: 'Search...',
-                hintStyle: TextStyle(color: AppColors.primary, fontSize: 12),
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: AppColors.primary,
-                  size: 16,
-                ),
-                filled: true,
-                fillColor: AppColors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppColors.primary),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppColors.primary),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: AppColors.primary, width: 1.4),
-                ),
+        child: Row(children: [
+          Container(
+            width: 6, height: 6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: selected ? AppColors.primary : AppColors.primary.withOpacity(0.3),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              cat['name'] ?? 'Unknown',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected ? AppColors.primary : AppColors.primary.withOpacity(0.7),
               ),
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: _greenBtn('+  Add Item', () {
-              _showAddDialog(type: "item");
-            }),
-          ),
-        ),
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-            children: items.map((item) => _buildItemTile(item)).toList()
-          ),
-        ),
-      ],
+        ]),
+      ),
     );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PANEL 2 — ITEMS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  Widget _buildItemsPanel() {
+    return Column(children: [
+      _PanelHeader(title: 'ITEMS'),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+        child: SizedBox(
+          height: 36,
+          child: TextField(
+            controller: _itemSearchCtrl,
+            onChanged: _onItemSearchChanged,
+            style: TextStyle(fontSize: 12, color: AppColors.primary),
+            decoration: _searchDeco('Search items...'),
+          ),
+        ),
+      ),
+      Expanded(
+        child: _filteredItems.isEmpty
+            ? _emptyHint(_itemSearch.isNotEmpty ? 'No results for "$_itemSearch"' : 'No items in this category')
+            : ListView.separated(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                itemCount: _filteredItems.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 4),
+                itemBuilder: (_, i) => _buildItemTile(_filteredItems[i]),
+              ),
+      ),
+    ]);
   }
 
   Widget _buildItemTile(dynamic item) {
     final selected = selectedItemName == item['name'];
+    final available = item['is_available'] == 1;
 
     return GestureDetector(
       onTap: () => _onSelectItem(item),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? AppColors.background : Colors.white,
+          color: selected ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(9),
+          border: Border.all(
+            color: selected ? AppColors.primary.withOpacity(0.4) : Colors.transparent,
+          ),
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                item['name'],
-                style: TextStyle(color: AppColors.primary),
+        child: Row(children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(
+                item['name'] ?? '',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: AppColors.primary,
+                ),
               ),
+              const SizedBox(height: 2),
+              Text(
+                '₱${item['price']}',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.tertiary,
+                ),
+              ),
+            ]),
+          ),
+          Container(
+            width: 6, height: 6,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: available ? const Color(0xFF4CAF50) : Colors.redAccent,
             ),
-            Text("₱${item['price']}",
-            style: TextStyle(color: AppColors.tertiary)),
-          ],
-        ),
+          ),
+        ]),
       ),
     );
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PANEL 3 — DETAILS
+  // ─────────────────────────────────────────────────────────────────────────
 
   Widget _buildDetailsPanel() {
     if (selectedItemName == null) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _panelHeader('Details'),
-          Expanded(
-            child: Center(
-              child: Text(
-                'Select an item to view details',
-                style: TextStyle(color: AppColors.primary, fontSize: 13),
-              ),
-            ),
-          ),
-        ],
-      );
+      return Column(children: [
+        _PanelHeader(title: 'DETAILS'),
+        Expanded(child: _emptyHint('Select an item to view and edit details')),
+      ]);
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _panelHeader('Details'),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: AppColors.background,
-                      child: Icon(
-                        Icons.fastfood_rounded,
-                        color: AppColors.primary,
-                        size: 26,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            selectedItemName!,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                          Text(
-                            'Item Name',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.background,
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            'Available',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.normal,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Transform.scale(
-                            scale: .7,
-                            child: Switch(
-                              value: isAvailable,
-                              onChanged: (v) => setState(() => isAvailable = v),
-                              activeColor: Colors.green,
-                              inactiveThumbColor: Colors.red,
-                              inactiveTrackColor: AppColors.background,
-                              materialTapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+    if (isLoadingItem) {
+      return Column(children: [
+        _PanelHeader(title: 'DETAILS'),
+        const Expanded(child: Center(child: CircularProgressIndicator())),
+      ]);
+    }
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      _PanelHeader(title: 'DETAILS'),
+      Expanded(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+            // ── Item header row ──────────────────────────────────────────
+            Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+              Container(
+                width: 52, height: 52,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                const SizedBox(height: 20),
-                _fieldLabel('Name'),
-                _inputField(_nameCtrl, 'Item Name'),
-                const SizedBox(height: 14),
-                _fieldLabel('Price'),
-                _inputField(
-                  _priceCtrl,
-                  'Item price',
-                  suffix: const Icon(
-                    Icons.unfold_more,
-                    size: 18,
-                    color: AppColors.primary,
+                child: Icon(Icons.fastfood_rounded, color: AppColors.primary, size: 26),
+              ),
+              const SizedBox(width: 14),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(
+                  selectedItemName!,
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.primary),
+                ),
+                Text(
+                  categories.firstWhere(
+                    (c) => c['id'] == selectedCategoryId, orElse: () => {'name': ''})['name'] ?? '',
+                  style: TextStyle(fontSize: 11, color: AppColors.primary.withOpacity(0.5)),
+                ),
+              ])),
+              // Availability toggle
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _kBorder),
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Text(
+                    isAvailable ? 'Available' : 'Unavailable',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isAvailable ? const Color(0xFF4CAF50) : Colors.redAccent,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  SizedBox(
+                    width: 36, height: 20,
+                    child: Switch(
+                      value: isAvailable,
+                      onChanged: (v) => setState(() => isAvailable = v),
+                      activeColor: const Color(0xFF4CAF50),
+                      inactiveThumbColor: Colors.redAccent,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                ]),
+              ),
+            ]),
+
+            const SizedBox(height: 24),
+            Divider(color: _kBorder, height: 1),
+            const SizedBox(height: 24),
+
+            // ── Fields grid ───────────────────────────────────────────────
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                _FieldLabel('Item Name'),
+                const SizedBox(height: 6),
+                _StyledField(ctrl: _nameCtrl, hint: 'e.g. Chicken Burger'),
+              ])),
+              const SizedBox(width: 16),
+              SizedBox(width: 140, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                _FieldLabel('Price (₱)'),
+                const SizedBox(height: 6),
+                _StyledField(
+                  ctrl: _priceCtrl,
+                  hint: '0.00',
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                ),
+              ])),
+            ]),
+
+            const SizedBox(height: 16),
+            _FieldLabel('Description'),
+            const SizedBox(height: 6),
+            _StyledField(ctrl: _descCtrl, hint: 'Describe the item...', maxLines: 3),
+
+            const SizedBox(height: 20),
+
+            // ── Image upload ──────────────────────────────────────────────
+            _FieldLabel('Item Photo'),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: _pickFile,
+              child: Container(
+                width: double.infinity,
+                height: 110,
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: _pickedFileName != null
+                        ? AppColors.primary.withOpacity(0.6)
+                        : _kBorder,
+                    style: BorderStyle.solid,
                   ),
                 ),
-                const SizedBox(height: 14),
-                _fieldLabel('Description'),
-                _inputField(_descCtrl, 'Item Description...', maxLines: 4),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.image_outlined,
-                      color: AppColors.primary,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Item Photo',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.normal,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  width: double.infinity,
-                  height: 110,
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.primary),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.cloud_upload_outlined,
-                        color: AppColors.primary,
-                        size: 38,
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        'Choose a file or drag & drop it here',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 11,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.primary),
-                        ),
-                        child: Text(
-                          'Browse file',
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    ElevatedButton(
-                      onPressed: () async {
-                        if (selectedItem == null) return;
-
-                        try {
-                          await MenuService.updateMenuItem(
-                            selectedItem['id'],
-                            {
-                              "name": _nameCtrl.text,
-                              "price": double.parse(_priceCtrl.text),
-                              "description": _descCtrl.text,
-                              "is_available": isAvailable ? 1 : 0,
-                            },
-                          );
-
-                          // Refresh list
-                          _loadItems(selectedCategoryId!);
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Item updated successfully")),
-                          );
-
-                        } catch (e) {
-                          print("Update error: $e");
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 10,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'Save Changes',
-                        style: TextStyle(
-                          fontWeight: FontWeight.normal,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed: () {
-                         if (selectedItem == null) return;
-
-                        _confirmDeleteItem(selectedItem);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.withOpacity(0.2),
-                        foregroundColor: Colors.red,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 10,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'Delete',
-                        style: TextStyle(
-                          fontWeight: FontWeight.normal,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                child: _pickedFileName != null
+                    ? _buildFilePreview()
+                    : _buildUploadPlaceholder(),
+              ),
             ),
-          ),
+
+            const SizedBox(height: 28),
+
+            // ── Action buttons ────────────────────────────────────────────
+            Row(children: [
+              _FilledBtn(
+                label: 'Save Changes',
+                icon: Icons.save_outlined,
+                onTap: _saveItem,
+              ),
+              const SizedBox(width: 10),
+              _OutlineBtn(
+                label: 'Delete Item',
+                icon: Icons.delete_outline,
+                onTap: () => _confirmDelete(selectedItem),
+                danger: true,
+              ),
+            ]),
+
+          ]),
         ),
-      ],
-    );
+      ),
+    ]);
   }
 
-  Widget _fieldLabel(String label) {
+  Widget _buildFilePreview() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: AppColors.primary,
-          fontWeight: FontWeight.normal,
-          fontSize: 15,
+      padding: const EdgeInsets.all(12),
+      child: Row(children: [
+        // Thumbnail — native only; web shows icon
+        if (!kIsWeb && _pickedFilePath != null)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.file(
+              File(_pickedFilePath!),
+              width: 72, height: 72, fit: BoxFit.cover,
+            ),
+          )
+        else
+          Container(
+            width: 72, height: 72,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.image_outlined, color: AppColors.primary, size: 30),
+          ),
+        const SizedBox(width: 14),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+          Text(
+            _pickedFileName!,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primary),
+          ),
+          const SizedBox(height: 6),
+          GestureDetector(
+            onTap: _pickFile,
+            child: Text('Change file', style: TextStyle(fontSize: 11, color: AppColors.tertiary, decoration: TextDecoration.underline)),
+          ),
+        ])),
+        GestureDetector(
+          onTap: () => setState(() { _pickedFileName = null; _pickedFileBytes = null; _pickedFilePath = null; }),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Icon(Icons.close_rounded, size: 16, color: AppColors.primary.withOpacity(0.5)),
+          ),
         ),
-      ),
+      ]),
     );
   }
 
-  Widget _inputField(
-    TextEditingController ctrl,
-    String hint, {
-    int maxLines = 1,
-    Widget? suffix,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            offset: Offset(0, 3),
-            blurRadius: 6,
-          ),
-        ],
-        borderRadius: BorderRadius.circular(8),
+  Widget _buildUploadPlaceholder() {
+    return Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      Icon(Icons.cloud_upload_outlined, color: AppColors.primary.withOpacity(0.4), size: 32),
+      const SizedBox(height: 6),
+      Text(
+        'Click to choose a file or drag & drop',
+        style: TextStyle(fontSize: 11, color: AppColors.primary.withOpacity(0.5)),
       ),
-      child: TextField(
-        controller: ctrl,
-        maxLines: maxLines,
-        style: TextStyle(color: AppColors.primary, fontSize: 13),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(color: AppColors.primary, fontSize: 12),
-          suffixIcon: suffix,
-          filled: true,
-          fillColor: AppColors.white,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 10,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: AppColors.primary),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: AppColors.primary),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: AppColors.primary, width: 1.8),
-          ),
+      const SizedBox(height: 8),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: _kBorder),
         ),
+        child: Text('Browse file', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primary)),
       ),
-    );
+    ]);
   }
 
-  // Dynamic Add dialog for adding category/item
+  // ─────────────────────────────────────────────────────────────────────────
+  // DIALOGS
+  // ─────────────────────────────────────────────────────────────────────────
+
   void _showAddDialog({required String type}) {
-    final TextEditingController nameCtrl = TextEditingController();
-    final TextEditingController priceCtrl = TextEditingController();
-    final TextEditingController descCtrl = TextEditingController();
-
-    final isItem = type == "item";
+    final isItem = type == 'item';
+    final nameCtrl  = TextEditingController();
+    final priceCtrl = TextEditingController();
+    final descCtrl  = TextEditingController();
 
     showDialog(
       context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Container(
-            width: 380,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isItem ? "Add Item" : "Add Category",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          width: 400,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+            // Dialog header
+            Row(children: [
+              Container(
+                width: 36, height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                const SizedBox(height: 15),
-
-                // NAME
-                TextField(
-                  controller: nameCtrl,
-                  decoration: InputDecoration(
-                    hintText: isItem ? "Item name" : "Category name",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                child: Icon(isItem ? Icons.fastfood_outlined : Icons.category_outlined,
+                    color: AppColors.primary, size: 18),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                isItem ? 'Add New Item' : 'Add Category',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.primary),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => Navigator.pop(ctx),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    shape: BoxShape.circle,
                   ),
+                  child: Icon(Icons.close_rounded, size: 14, color: AppColors.primary),
                 ),
+              ),
+            ]),
 
-                if (isItem) ...[
-                  const SizedBox(height: 12),
+            const SizedBox(height: 20),
+            Divider(color: _kBorder, height: 1),
+            const SizedBox(height: 20),
 
-                  // PRICE
-                  TextField(
-                    controller: priceCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: "Price",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
+            // Name field
+            _FieldLabel(isItem ? 'Item Name' : 'Category Name'),
+            const SizedBox(height: 6),
+            _StyledField(ctrl: nameCtrl, hint: isItem ? 'e.g. Chicken Burger' : 'e.g. Waffles'),
 
-                  const SizedBox(height: 12),
+            if (isItem) ...[
+              const SizedBox(height: 14),
+              _FieldLabel('Price (₱)'),
+              const SizedBox(height: 6),
+              _StyledField(
+                ctrl: priceCtrl,
+                hint: '0.00',
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              ),
+              const SizedBox(height: 14),
+              _FieldLabel('Description'),
+              const SizedBox(height: 6),
+              _StyledField(ctrl: descCtrl, hint: 'Describe the item...', maxLines: 3),
+            ],
 
-                  // DESCRIPTION
-                  TextField(
-                    controller: descCtrl,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      hintText: "Description",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 24),
 
-                const SizedBox(height: 20),
-
-                // BUTTONS
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text("Cancel"),
-                    ),
-                    const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed: () async {
-                        final name = nameCtrl.text.trim();
-
-                        if (name.isEmpty) return;
-
-                        try {
-                          if (isItem) {
-                            await MenuService.addItem({
-                              "name": name,
-                              "price": double.parse(priceCtrl.text),
-                              "description": descCtrl.text,
-                              "category_id": selectedCategoryId,
-                            });
-
-                            _loadItems(selectedCategoryId!);
-                          } else {
-                            await MenuService.addCategory(name);
-                            _loadCategories();
-                          }
-
-                          Navigator.pop(context);
-                        } catch (e) {
-                          print(e);
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                      ),
-                      child: const Text("Save"),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+              _OutlineBtn(label: 'Cancel', onTap: () => Navigator.pop(ctx)),
+              const SizedBox(width: 10),
+              _FilledBtn(
+                label: 'Save',
+                icon: Icons.check_rounded,
+                onTap: () async {
+                  final name = nameCtrl.text.trim();
+                  if (name.isEmpty) return;
+                  try {
+                    if (isItem) {
+                      await MenuService.addItem({
+                        'name':        name,
+                        'price':       double.tryParse(priceCtrl.text) ?? 0,
+                        'description': descCtrl.text.trim(),
+                        'category_id': selectedCategoryId,
+                      });
+                      _loadItems(selectedCategoryId!);
+                    } else {
+                      await MenuService.addCategory(name);
+                      _loadCategories();
+                    }
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    _showSuccess(isItem ? 'Item added' : 'Category added');
+                  } catch (e) {
+                    _showError('Failed to save');
+                  }
+                },
+              ),
+            ]),
+          ]),
+        ),
+      ),
     );
   }
 
-  void _confirmDeleteItem(dynamic item) {
-    // Error handling
+  void _confirmDelete(dynamic item) {
     if (item == null) return;
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Delete Item"),
-          content: Text("Are you sure you want to delete ${item['name']}?"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          width: 360,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              width: 52, height: 52,
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 24),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              onPressed: () async {
-                Navigator.pop(context);
-                await _deleteItem(item['id']);
-              },
-              child: const Text("Delete Permanently"),
+            const SizedBox(height: 14),
+            Text('Delete Item', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.primary)),
+            const SizedBox(height: 8),
+            Text(
+              'Are you sure you want to permanently delete "${item['name']}"? This cannot be undone.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, height: 1.5, color: AppColors.primary.withOpacity(0.6)),
             ),
+            const SizedBox(height: 20),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              _OutlineBtn(label: 'Cancel', onTap: () => Navigator.pop(ctx)),
+              const SizedBox(width: 10),
+              GestureDetector(
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await _deleteItem(item);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text('Delete Permanently',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
+                ),
+              ),
+            ]),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SHARED UTILS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  InputDecoration _searchDeco(String hint) => InputDecoration(
+    hintText: hint,
+    hintStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w500,
+        color: AppColors.primary.withOpacity(0.4)),
+    prefixIcon: Icon(Icons.search_rounded, size: 16, color: AppColors.primary.withOpacity(0.5)),
+    filled: true,
+    fillColor: Colors.white,
+    contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 14),
+    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: _kBorder)),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: AppColors.primary, width: 1.4)),
+  );
+
+  Widget _emptyHint(String msg) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Text(msg,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 13, color: AppColors.primary.withOpacity(0.35))),
+    ),
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REUSABLE SMALL WIDGETS
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PanelHeader extends StatelessWidget {
+  final String title;
+  const _PanelHeader({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: _kBorder)),
+      ),
+      child: Text(title,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.4,
+            color: AppColors.primary,
+          )),
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  final String label;
+  const _FieldLabel(this.label);
+
+  @override
+  Widget build(BuildContext context) => Text(label,
+      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary.withOpacity(0.7)));
+}
+
+class _StyledField extends StatelessWidget {
+  final TextEditingController ctrl;
+  final String hint;
+  final int maxLines;
+  final TextInputType? keyboardType;
+
+  const _StyledField({
+    required this.ctrl,
+    required this.hint,
+    this.maxLines = 1,
+    this.keyboardType,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: ctrl,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      style: TextStyle(fontSize: 13, color: AppColors.primary),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(fontSize: 12, color: AppColors.primary.withOpacity(0.3)),
+        filled: true,
+        fillColor: AppColors.background,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(9),
+            borderSide: const BorderSide(color: _kBorder)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(9),
+            borderSide: BorderSide(color: AppColors.primary, width: 1.5)),
+      ),
+    );
+  }
+}
+
+class _FilledBtn extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final VoidCallback? onTap;
+
+  const _FilledBtn({required this.label, this.icon, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(9),
+          boxShadow: [
+            BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 8, offset: const Offset(0, 3)),
           ],
-        );
-      },
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (icon != null) ...[
+            Icon(icon, size: 14, color: Colors.white),
+            const SizedBox(width: 6),
+          ],
+          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+        ]),
+      ),
+    );
+  }
+}
+
+class _OutlineBtn extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final VoidCallback? onTap;
+  final bool danger;
+
+  const _OutlineBtn({required this.label, this.icon, this.onTap, this.danger = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = danger ? Colors.redAccent : AppColors.primary;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: danger ? Colors.red.withOpacity(0.05) : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
+          border: Border.all(color: color.withOpacity(0.4)),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (icon != null) ...[
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 6),
+          ],
+          Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
+        ]),
+      ),
     );
   }
 }
