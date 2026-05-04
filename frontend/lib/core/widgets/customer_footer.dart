@@ -367,7 +367,7 @@ class CustomerFooter extends StatelessWidget {
                       fontWeight: FontWeight.w900,
                       fontSize: 13,
                       color: Color(0xFF2D2A26))),
-              Text('MAKING GOOD FOOD FOR PEOPLE\'S HAPPINESS',
+              Text('MAKING GOOD FOOD FOR PEOPLE\'S \nHAPPINESS',
                   style: TextStyle(
                       fontFamily: 'Urbanist',
                       fontWeight: FontWeight.w600,

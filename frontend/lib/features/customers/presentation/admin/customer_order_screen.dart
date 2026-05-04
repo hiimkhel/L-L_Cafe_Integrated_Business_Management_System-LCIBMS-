@@ -1,43 +1,35 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
-import 'package:frontend/core/constants/cart_item.dart';
-import 'package:frontend/features/customers/presentation/admin/cart_screen.dart';
 import 'package:frontend/core/widgets/bamboo_background.dart';
 import 'package:frontend/core/constants/cart_provider.dart';
-import 'package:frontend/core/widgets/bamboo_background.dart';
 
 const double _kMobile = 768;
-const double _kDesktopMaxWidth = 1280;
-const Color _primary = Color(0xFF758C6D);
-
-//-------------------------------------------screen------------------------------------------------------------
+const Color _primary   = Color(0xFF758C6D);
 const Color _secondary = Color(0xFFA98258);
-const Color _bgBeige = Color(0xFFEFE2C9);
-const Color _bgDark = Color(0xFF2D2A26);
+const Color _bgBeige   = Color(0xFFEFE2C9);
+const Color _bgDark    = Color(0xFF2D2A26);
 
-
-// ─────────────────────────── Status helpers ─────────────────────────────────
+// ─────────────────────────── Status helpers ──────────────────────────────────
 
 Color _statusColor(OrderStatus status) {
   switch (status) {
-    case OrderStatus.pending:    return const Color(0xFF9E7145);
-    case OrderStatus.inProgress: return const Color(0xFFE6A817);
-    case OrderStatus.archived:   return const Color(0xFF4CAF50);
+    case OrderStatus.pending:     return const Color(0xFF9E7145);
+    case OrderStatus.inProgress:  return const Color(0xFFE6A817);
+    case OrderStatus.archived:    return const Color(0xFF4CAF50);
   }
 }
 
 String _statusLabel(OrderStatus status) {
   switch (status) {
-    case OrderStatus.pending:    return 'PENDING';
-    case OrderStatus.inProgress: return 'PREPARING';
-    case OrderStatus.archived:   return 'COMPLETED';
+    case OrderStatus.pending:     return 'PENDING';
+    case OrderStatus.inProgress:  return 'PREPARING';
+    case OrderStatus.archived:    return 'COMPLETED';
   }
 }
 
-// ─────────────────────────── Enums & Models ─────────────────────────────────
+// ─────────────────────────── Enums & Models ──────────────────────────────────
 
 enum OrderStatus { pending, inProgress, archived }
 
@@ -61,7 +53,7 @@ class Order {
   });
 }
 
-// ─────────────────────────── Demo data ──────────────────────────────────────
+// ─────────────────────────── Demo data ───────────────────────────────────────
 
 final List<Order> _demoOrders = [
   Order(
@@ -100,7 +92,7 @@ final List<Order> _demoOrders = [
   ),
 ];
 
-// ─────────────────────────── Screen ─────────────────────────────────────────
+// ─────────────────────────── Screen ──────────────────────────────────────────
 
 class CustomerOrderScreen extends StatefulWidget {
   final List<Order> orders;
@@ -115,7 +107,8 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   String _searchQuery = '';
 
-  List<Order> get _source => widget.orders.isEmpty ? _demoOrders : widget.orders;
+  List<Order> get _source =>
+      widget.orders.isEmpty ? _demoOrders : widget.orders;
 
   List<Order> get _filtered {
     final all = _source.where((o) {
@@ -126,10 +119,12 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
 
     if (_searchQuery.isEmpty || _selectedIndex != 2) return all;
     final q = _searchQuery.toLowerCase();
-    return all.where((o) =>
-        o.id.toLowerCase().contains(q) ||
-        (o.timestamp?.toLowerCase().contains(q) ?? false) ||
-        o.items.any((i) => i.toLowerCase().contains(q))).toList();
+    return all
+        .where((o) =>
+            o.id.toLowerCase().contains(q) ||
+            (o.timestamp?.toLowerCase().contains(q) ?? false) ||
+            o.items.any((i) => i.toLowerCase().contains(q)))
+        .toList();
   }
 
   int get _archiveCount =>
@@ -147,19 +142,24 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
     super.dispose();
   }
 
+  // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final cart = CartProvider.of(context);
+    final cart     = CartProvider.of(context);
     final isMobile = MediaQuery.of(context).size.width < _kMobile;
 
     return Scaffold(
       backgroundColor: _bgBeige,
       body: Stack(
         children: [
-          const BambooBackground(),
+          // Bamboo stays purely decorative in the background
+          const Positioned.fill(child: BambooBackground()),
+
+          // Foreground: navbar + scrollable content + footer
           Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Navbar at top
+              // ── Navbar ────────────────────────────────────────────────
               CustomerNavbar(
                 activeRoute: '/orders',
                 cartCount: cart.totalCount,
@@ -167,41 +167,37 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
                 onCart: () => Navigator.pushNamed(context, '/cart'),
                 onNotif: () {},
                 onProfile: () => Navigator.pushNamed(context, '/profile'),
-                onLogout: () =>
-                    Navigator.pushNamedAndRemoveUntil(context, '/', (r) => false),
+                onLogout: () => Navigator.pushNamedAndRemoveUntil(
+                    context, '/', (r) => false),
               ),
 
-              // Body fills remaining space; footer always at bottom
+              // ── Scrollable body ────────────────────────────────────────
+              // SingleChildScrollView inside Expanded = content scrolls,
+              // footer is the last item so it's always below the cards.
+              // LayoutBuilder gives us the exact available height so we can
+              // enforce minHeight and keep the footer pinned to the bottom
+              // even when there are only one or two order cards.
               Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // ── Main content ────────────────────────────────
-                      isMobile
-                          ? _MobileBody(
-                              selectedIndex: _selectedIndex,
-                              onTabChanged: _onTabChanged,
-                              archiveCount: _archiveCount,
-                              filtered: _filtered,
-                              searchCtrl: _searchCtrl,
-                              searchQuery: _searchQuery,
-                              onSearchChanged: (v) =>
-                                  setState(() => _searchQuery = v),
-                            )
-                          : _DesktopBody(
-                              selectedIndex: _selectedIndex,
-                              onTabChanged: _onTabChanged,
-                              archiveCount: _archiveCount,
-                              filtered: _filtered,
-                              searchCtrl: _searchCtrl,
-                              searchQuery: _searchQuery,
-                              onSearchChanged: (v) =>
-                                  setState(() => _searchQuery = v),
-                            ),
-                      // ── Footer always below content ──────────────────
-                      const CustomerFooter(),
-                    ],
+                child: LayoutBuilder(
+                  builder: (_, constraints) => SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Page content
+                          isMobile
+                              ? _buildMobileContent()
+                              : _buildDesktopContent(),
+
+                          // Footer pinned to bottom
+                          const CustomerFooter(),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -211,206 +207,99 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
       ),
     );
   }
-}
 
-// ─────────────────────────── Desktop body ───────────────────────────────────
-
-class _DesktopBody extends StatelessWidget {
-  final int selectedIndex;
-  final ValueChanged<int> onTabChanged;
-  final int archiveCount;
-  final List<Order> filtered;
-  final TextEditingController searchCtrl;
-  final String searchQuery;
-  final ValueChanged<String> onSearchChanged;
-
-  const _DesktopBody({
-    required this.selectedIndex,
-    required this.onTabChanged,
-    required this.archiveCount,
-    required this.filtered,
-    required this.searchCtrl,
-    required this.searchQuery,
-    required this.onSearchChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  // ─────────────────────────────
+  // DESKTOP CONTENT
+  // ─────────────────────────────
+  Widget _buildDesktopContent() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 60),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Header ───────────────────────────────────────────────────
-          const SizedBox(height: 20),
-          RichText(
-            text: const TextSpan(
-              style: TextStyle(
-                  fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 1.2),
-              children: [
-                TextSpan(
-                    text: 'ORDER STATUS: ',
-                    style: TextStyle(color: _bgDark)),
-                TextSpan(
-                    text: 'ORDERS',
-                    style: TextStyle(color: _secondary)),
-              ],
-            ),
-          ),
+          const SizedBox(height: 24),
+          _customerOrderHeader(isMobile: false),
           const SizedBox(height: 12),
           Divider(thickness: 1.2, color: _primary.withOpacity(0.4)),
           const SizedBox(height: 12),
-
-          // ── Tab row ───────────────────────────────────────────────────
-          _TabRow(
-            selectedIndex: selectedIndex,
-            archiveCount: archiveCount,
-            onTabChanged: onTabChanged,
-            isMobile: false,
-          ),
+          _customerOderCategory(isMobile: false),
           const SizedBox(height: 16),
-
-          // ── Archive search bar (no export button) ────────────────────
-          if (selectedIndex == 2) ...[
-            _SearchBar(controller: searchCtrl, onChanged: onSearchChanged),
+          if (_selectedIndex == 2) ...[
+            _SearchBar(
+                controller: _searchCtrl,
+                onChanged: (v) => setState(() => _searchQuery = v)),
             const SizedBox(height: 16),
           ],
-
-          // ── Order cards ──────────────────────────────────────────────
-          if (filtered.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 60),
-              child: Center(
-                child: Column(
-                  children: [
-                    Icon(Icons.receipt_long_outlined,
-                        size: 56, color: _primary.withOpacity(0.3)),
-                    const SizedBox(height: 12),
-                    Text('No orders found.',
-                        style: TextStyle(
-                            fontSize: 16, color: _primary.withOpacity(0.5))),
-                  ],
-                ),
-              ),
-            )
-          else
-            ...filtered.map((o) => _DesktopOrderCard(order: o)),
-
+          _buildOrderList(isMobile: false),
           const SizedBox(height: 32),
         ],
       ),
     );
   }
-}
 
-// ─────────────────────────── Mobile body ────────────────────────────────────
-
-class _MobileBody extends StatelessWidget {
-  final int selectedIndex;
-  final ValueChanged<int> onTabChanged;
-  final int archiveCount;
-  final List<Order> filtered;
-  final TextEditingController searchCtrl;
-  final String searchQuery;
-  final ValueChanged<String> onSearchChanged;
-
-  const _MobileBody({
-    required this.selectedIndex,
-    required this.onTabChanged,
-    required this.archiveCount,
-    required this.filtered,
-    required this.searchCtrl,
-    required this.searchQuery,
-    required this.onSearchChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  // ─────────────────────────────
+  // MOBILE CONTENT
+  // ─────────────────────────────
+  Widget _buildMobileContent() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 20),
-          const Text('ORDERS',
-              style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: _bgDark,
-                  letterSpacing: 1.5)),
-          const SizedBox(height: 16),
-
-          // ── Tab row ───────────────────────────────────────────────────
-          _TabRow(
-            selectedIndex: selectedIndex,
-            archiveCount: archiveCount,
-            onTabChanged: onTabChanged,
-            isMobile: true,
-          ),
+          _customerOrderHeader(isMobile: true),
+          const SizedBox(height: 10),
+          Divider(thickness: 1.2, color: _primary.withOpacity(0.5)),
+          const SizedBox(height: 10),
+          _customerOderCategory(isMobile: true),
           const SizedBox(height: 14),
-
-          // ── Archive search bar ────────────────────────────────────────
-          if (selectedIndex == 2) ...[
-            _SearchBar(controller: searchCtrl, onChanged: onSearchChanged),
+          if (_selectedIndex == 2) ...[
+            _SearchBar(
+                controller: _searchCtrl,
+                onChanged: (v) => setState(() => _searchQuery = v)),
             const SizedBox(height: 14),
           ],
-
-          // ── Order cards ──────────────────────────────────────────────
-          if (filtered.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: Center(
-                child: Column(
-                  children: [
-                    Icon(Icons.receipt_long_outlined,
-                        size: 48, color: _primary.withOpacity(0.3)),
-                    const SizedBox(height: 10),
-                    Text('No orders yet.',
-                        style: TextStyle(
-                            fontSize: 15, color: _primary.withOpacity(0.5))),
-                  ],
-                ),
-              ),
-            )
-          else
-            ...filtered.map((o) => _MobileOrderCard(order: o)),
-
+          _buildOrderList(isMobile: true),
           const SizedBox(height: 24),
         ],
       ),
     );
   }
-}
 
-// ─────────────────────────── Shared tab row ──────────────────────────────────
+  // ─────────────────────────────
+  // HEADER
+  // ─────────────────────────────
+  Widget _customerOrderHeader({required bool isMobile}) {
+    return RichText(
+      text: TextSpan(
+        style: TextStyle(
+          fontSize: isMobile ? 24 : 32,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
+          fontFamily: 'Urbanist',
+        ),
+        children: const [
+          TextSpan(text: 'ORDER STATUS: ', style: TextStyle(color: _bgDark)),
+          TextSpan(text: 'ORDERS',        style: TextStyle(color: _secondary)),
+        ],
+      ),
+    );
+  }
 
-class _TabRow extends StatelessWidget {
-  final int selectedIndex;
-  final int archiveCount;
-  final ValueChanged<int> onTabChanged;
-  final bool isMobile;
-
-  const _TabRow({
-    required this.selectedIndex,
-    required this.archiveCount,
-    required this.onTabChanged,
-    required this.isMobile,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final labels = ['PENDING', 'IN PROGRESS', 'ARCHIVE ($archiveCount)'];
+  // ─────────────────────────────
+  // TABS
+  // ─────────────────────────────
+  Widget _customerOderCategory({required bool isMobile}) {
+    final labels = ['PENDING', 'IN PROGRESS', 'ARCHIVE ($_archiveCount)'];
 
     Widget row = Row(
       mainAxisSize: isMobile ? MainAxisSize.min : MainAxisSize.max,
       children: List.generate(labels.length, (i) {
-        final isActive = i == selectedIndex;
+        final isActive = i == _selectedIndex;
         return Padding(
           padding: EdgeInsets.only(right: i < labels.length - 1 ? 12 : 0),
           child: GestureDetector(
-            onTap: () => onTabChanged(i),
+            onTap: () => _onTabChanged(i),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: EdgeInsets.symmetric(
@@ -422,9 +311,10 @@ class _TabRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2)),
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
                 ],
               ),
               child: Text(
@@ -446,6 +336,43 @@ class _TabRow extends StatelessWidget {
         ? SingleChildScrollView(scrollDirection: Axis.horizontal, child: row)
         : row;
   }
+
+  // ─────────────────────────────
+  // ORDER LIST
+  // ─────────────────────────────
+  Widget _buildOrderList({required bool isMobile}) {
+    final orders = _filtered;
+
+    if (orders.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.symmetric(vertical: isMobile ? 40 : 60),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(Icons.receipt_long_outlined,
+                  size: isMobile ? 48 : 56,
+                  color: _primary.withOpacity(0.3)),
+              const SizedBox(height: 12),
+              Text(
+                'No orders found.',
+                style: TextStyle(
+                    fontSize: isMobile ? 15 : 16,
+                    color: _primary.withOpacity(0.5)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: orders
+          .map((o) => isMobile
+              ? _MobileOrderCard(order: o)
+              : _DesktopOrderCard(order: o))
+          .toList(),
+    );
+  }
 }
 
 // ─────────────────────────── Desktop order card ──────────────────────────────
@@ -462,7 +389,7 @@ class _DesktopOrderCard extends StatelessWidget {
         : _statusColor(order.status);
 
     const maxVisible = 5;
-    final visible = order.items.take(maxVisible).toList();
+    final visible  = order.items.take(maxVisible).toList();
     final overflow = order.items.length - maxVisible;
 
     return Container(
@@ -481,7 +408,6 @@ class _DesktopOrderCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Row 1 — ref code | badge | total
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -505,7 +431,8 @@ class _DesktopOrderCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 7),
                 decoration: BoxDecoration(
                     color: badgeColor,
                     borderRadius: BorderRadius.circular(20)),
@@ -524,10 +451,7 @@ class _DesktopOrderCard extends StatelessWidget {
                       color: _secondary)),
             ],
           ),
-
           const SizedBox(height: 14),
-
-          // Row 2 — timestamp | method
           Row(
             children: [
               if (order.timestamp != null) ...[
@@ -573,7 +497,6 @@ class _DesktopOrderCard extends StatelessWidget {
               ],
             ],
           ),
-
           if (order.items.isNotEmpty) ...[
             const SizedBox(height: 14),
             Text('LAST ITEMS',
@@ -612,7 +535,7 @@ class _MobileOrderCard extends StatelessWidget {
         : _statusColor(order.status);
 
     const maxVisible = 3;
-    final visible = order.items.take(maxVisible).toList();
+    final visible  = order.items.take(maxVisible).toList();
     final overflow = order.items.length - maxVisible;
 
     return Container(
@@ -631,7 +554,6 @@ class _MobileOrderCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Ref code + badge
           Row(
             children: [
               Expanded(
@@ -668,15 +590,11 @@ class _MobileOrderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-
-          // Timestamp
           if (order.timestamp != null)
             _InfoRow(
                 icon: Icons.access_time_rounded,
                 label: 'TIMESTAMP',
                 value: order.timestamp!),
-
-          // Method
           if (order.method != null) ...[
             const SizedBox(height: 8),
             _InfoRow(
@@ -684,8 +602,6 @@ class _MobileOrderCard extends StatelessWidget {
                 label: 'METHOD',
                 value: order.method!),
           ],
-
-          // Items
           if (order.items.isNotEmpty) ...[
             const SizedBox(height: 12),
             Text('ITEMS',
@@ -704,10 +620,7 @@ class _MobileOrderCard extends StatelessWidget {
               ],
             ),
           ],
-
           const SizedBox(height: 12),
-
-          // Total — no VIEW button
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -729,7 +642,7 @@ class _MobileOrderCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────── Shared small widgets ───────────────────────────
+// ─────────────────────────── Shared small widgets ────────────────────────────
 
 class _InfoRow extends StatelessWidget {
   final IconData icon;
@@ -777,7 +690,8 @@ class _SearchBar extends StatelessWidget {
       style: const TextStyle(fontSize: 13, color: _bgDark),
       decoration: InputDecoration(
         hintText: 'Search by order ID, date or item…',
-        hintStyle: TextStyle(color: _primary.withOpacity(0.45), fontSize: 13),
+        hintStyle:
+            TextStyle(color: _primary.withOpacity(0.45), fontSize: 13),
         prefixIcon: Icon(Icons.search_rounded,
             color: _primary.withOpacity(0.55), size: 20),
         suffixIcon: controller.text.isNotEmpty
@@ -829,9 +743,7 @@ class _ItemChip extends StatelessWidget {
             fontSize: 11,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.5,
-            color: faded
-                ? _primary.withOpacity(0.45)
-                : _primary),
+            color: faded ? _primary.withOpacity(0.45) : _primary),
       ),
     );
   }
