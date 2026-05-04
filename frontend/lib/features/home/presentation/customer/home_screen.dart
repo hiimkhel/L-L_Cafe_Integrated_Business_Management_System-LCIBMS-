@@ -339,7 +339,7 @@ class _MainHero extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'ARCHITECTING THE PERFECT BREW.',
+                'MAKING GOOD FOOD FOR PEOPLE\'S HAPPINESS.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Urbanist',

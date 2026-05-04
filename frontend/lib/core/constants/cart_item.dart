@@ -13,7 +13,7 @@ class CartItem {
     required this.category,
     required this.price,
     required this.originalPrice,
-    required this.imageUrl,
+    this.imageUrl = '', // <-- Added this!
     this.quantity = 1,
   });
 }
@@ -26,4 +26,3 @@ class Order {
 }
 
 enum OrderStatus { pending, inProgress, archived }
-

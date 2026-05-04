@@ -1285,7 +1285,7 @@ class _Newsletter extends StatelessWidget {
                   color: Colors.white)),
           const SizedBox(height: 10),
           Text(
-              'SUBSCRIBE TO GET NOTIFIED ABOUT SECRET MENU ITEMS AND ARCHITECT-LED COFFEE WORKSHOPS.',
+              'SUBSCRIBE TO GET NOTIFIED ABOUT SECRET MENU ITEMS AND COFFEE WORKSHOPS.',
               textAlign: TextAlign.center,
               style: TextStyle(
                   fontFamily: 'Urbanist',

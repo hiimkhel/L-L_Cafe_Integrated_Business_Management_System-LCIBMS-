@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/core/constants/cart_item.dart';
- 
-// ─────────────────────────────────────────────────────────────────────────────
-// CART ITEM MODEL
-// ─────────────────────────────────────────────────────────────────────────────
-
+ import 'package:frontend/core/constants/cart_item.dart';
  
 // ─────────────────────────────────────────────────────────────────────────────
 // CART NOTIFIER
