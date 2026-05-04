@@ -4,6 +4,7 @@ class CartItem {
   final String category;
   final double price;
   final double originalPrice;
+  final String imageUrl; // <-- Added this so CartProvider works perfectly!
   int quantity;
 
   CartItem({
@@ -12,6 +13,7 @@ class CartItem {
     required this.category,
     required this.price,
     required this.originalPrice,
+    this.imageUrl = '', // <-- Added this!
     this.quantity = 1,
   });
 }
@@ -25,4 +27,3 @@ class Order {
 }
 
 enum OrderStatus { pending, inProgress, archived }
-
