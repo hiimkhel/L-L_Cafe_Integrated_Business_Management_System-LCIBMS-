@@ -3,6 +3,149 @@ import 'package:frontend/core/widgets/admin_sidebar.dart';
 import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PALETTE
+// ─────────────────────────────────────────────────────────────────────────────
+
+const Color _beige   = Color(0xFFEFE2C9);
+const Color _card    = Color(0xFFF7F0E4);
+const Color _green1  = Color(0xFF3D5A45);
+const Color _green2  = Color(0xFF758C6D);
+const Color _gold    = Color(0xFFA98258);
+const Color _dark    = Color(0xFF2D2A26);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODEL
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum ReviewStatus { pending, published, archived }
+
+class ReviewModel {
+  final String id;
+  final String customerId;
+  final String customerName;
+  final DateTime submittedAt;
+  final String content;
+  final double rating;
+  ReviewStatus status;
+  final String? avatarUrl;
+
+  ReviewModel({
+    required this.id,
+    required this.customerId,
+    required this.customerName,
+    required this.submittedAt,
+    required this.content,
+    required this.rating,
+    this.status = ReviewStatus.pending,
+    this.avatarUrl,
+  });
+
+  /// Deep copy for safe state mutation
+  ReviewModel copyWith({ReviewStatus? status}) => ReviewModel(
+        id: id,
+        customerId: customerId,
+        customerName: customerName,
+        submittedAt: submittedAt,
+        content: content,
+        rating: rating,
+        status: status ?? this.status,
+        avatarUrl: avatarUrl,
+      );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SERVICE  (swap bodies with real API calls)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class ReviewService {
+  /// TODO: replace with real fetch, e.g.:
+  /// final res = await http.get(Uri.parse('$baseUrl/reviews'));
+  /// return (jsonDecode(res.body) as List).map(ReviewModel.fromJson).toList();
+  static Future<List<ReviewModel>> fetchAll() async {
+    await Future.delayed(const Duration(milliseconds: 400));
+    return _mock;
+  }
+
+  /// TODO: PATCH /reviews/:id  { status: 'published' }
+  static Future<void> publish(String id) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+  }
+
+  /// TODO: PATCH /reviews/:id  { status: 'archived' }
+  static Future<void> archive(String id) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+  }
+
+  /// TODO: DELETE /reviews/:id
+  static Future<void> delete(String id) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+  }
+
+  // ── Mock data ──────────────────────────────────────────────────────────────
+
+  static final List<ReviewModel> _mock = [
+    ReviewModel(
+      id: 'r1',
+      customerId: '#1001',
+      customerName: 'MARIA SANTOS',
+      submittedAt: DateTime(2026, 2, 7, 13, 20),
+      content: 'The coffee here is absolutely amazing. The ambiance is cozy and the staff is so friendly. Will definitely come back!',
+      rating: 5.0,
+      status: ReviewStatus.published,
+    ),
+    ReviewModel(
+      id: 'r2',
+      customerId: '#1002',
+      customerName: 'JOSE REYES',
+      submittedAt: DateTime(2026, 2, 6, 10, 15),
+      content: 'Great place to work from. Free WiFi is stable and the drinks are reasonably priced. The Nutella Frappe is my go-to.',
+      rating: 4.0,
+      status: ReviewStatus.pending,
+    ),
+    ReviewModel(
+      id: 'r3',
+      customerId: '#1003',
+      customerName: 'ANA DE LEON',
+      submittedAt: DateTime(2026, 2, 5, 16, 45),
+      content: 'Quality coffee perfect for any kind of event. Highly recommended for group orders and party trays!',
+      rating: 5.0,
+      status: ReviewStatus.pending,
+    ),
+    ReviewModel(
+      id: 'r4',
+      customerId: '#1004',
+      customerName: 'CARLO BAUTISTA',
+      submittedAt: DateTime(2026, 2, 4, 9, 30),
+      content: 'Good food but the wait time was a bit long during peak hours. The waffle is worth it though.',
+      rating: 3.0,
+      status: ReviewStatus.archived,
+    ),
+    ReviewModel(
+      id: 'r5',
+      customerId: '#1005',
+      customerName: 'LIZA MERCADO',
+      submittedAt: DateTime(2026, 2, 3, 14, 10),
+      content: 'Biscoff frappe is literally the best thing I have ever tasted. The Korean BBQ Wings are also a must try!',
+      rating: 5.0,
+      status: ReviewStatus.published,
+    ),
+    ReviewModel(
+      id: 'r6',
+      customerId: '#1006',
+      customerName: 'RICO BAUTISTA',
+      submittedAt: DateTime(2026, 2, 2, 11, 0),
+      content: 'Decent cafe. The food is good but I expected more variety. Service was quick and polite.',
+      rating: 3.5,
+      status: ReviewStatus.pending,
+    ),
+  ];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCREEN
+// ─────────────────────────────────────────────────────────────────────────────
+
 class ReviewsScreen extends StatefulWidget {
   final int activeIndex;
   final VoidCallback onLogout;
@@ -13,293 +156,706 @@ class ReviewsScreen extends StatefulWidget {
 }
 
 class _ReviewsScreenState extends State<ReviewsScreen> {
-  late int activeIndex;
-  String activeSegment = "ALL REVIEWS";
-  String sortBy = "Newest";
+  // ── State ─────────────────────────────────────────────────────────────────
+  List<ReviewModel> _all = [];
+  bool _isLoading = true;
+  String _error   = '';
 
-  // Dummy data
-  final reviews = List.generate(6, (index) => {
-        "customerId": "#1234",
-        "customerName": "JUAN DELA CRUZ",
-        "submittedAt": "09/09/0909 09:09 PM",
-        "reviewContent":
-            "YOU HAVE A WAY OF MAKING THINGS FEEL LIGHTER AND MORE INTERESTING JUST BY BEING AROUND—PEOPLE GENUINELY ENJOY YOUR PRESENCE.",
-        "rating": 5.0,
-        "isPublished": false,
-        "avatarUrl": null,
-      });
+  String _segment = 'ALL';    // ALL | PUBLISHED | ARCHIVED | PENDING
+  String _sortBy  = 'Newest'; // Newest | Oldest | Highest | Lowest
 
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
-    activeIndex = widget.activeIndex;
+    _load();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Row(
-          children: [
-            Sidebar(activeIndex: activeIndex, onLogout: widget.onLogout),
+  Future<void> _load() async {
+    setState(() { _isLoading = true; _error = ''; });
+    try {
+      final data = await ReviewService.fetchAll();
+      setState(() { _all = data; _isLoading = false; });
+    } catch (e) {
+      setState(() { _error = e.toString(); _isLoading = false; });
+    }
+  }
 
-            Expanded(child: _MainSection()),
-          ],
+  // ── Filtering + sorting ───────────────────────────────────────────────────
+  List<ReviewModel> get _visible {
+    List<ReviewModel> list = List.from(_all);
+
+    // Segment filter
+    switch (_segment) {
+      case 'PUBLISHED': list = list.where((r) => r.status == ReviewStatus.published).toList(); break;
+      case 'ARCHIVED':  list = list.where((r) => r.status == ReviewStatus.archived).toList();  break;
+      case 'PENDING':   list = list.where((r) => r.status == ReviewStatus.pending).toList();   break;
+    }
+
+    // Sort
+    switch (_sortBy) {
+      case 'Newest':  list.sort((a, b) => b.submittedAt.compareTo(a.submittedAt)); break;
+      case 'Oldest':  list.sort((a, b) => a.submittedAt.compareTo(b.submittedAt)); break;
+      case 'Highest': list.sort((a, b) => b.rating.compareTo(a.rating));           break;
+      case 'Lowest':  list.sort((a, b) => a.rating.compareTo(b.rating));           break;
+    }
+
+    return list;
+  }
+
+  // ── Summary counts ────────────────────────────────────────────────────────
+  int get _totalCount     => _all.length;
+  int get _publishedCount => _all.where((r) => r.status == ReviewStatus.published).length;
+  int get _pendingCount   => _all.where((r) => r.status == ReviewStatus.pending).length;
+  int get _archivedCount  => _all.where((r) => r.status == ReviewStatus.archived).length;
+  double get _avgRating   => _all.isEmpty ? 0 : _all.map((r) => r.rating).reduce((a, b) => a + b) / _all.length;
+
+  // ── Actions ───────────────────────────────────────────────────────────────
+  Future<void> _publish(ReviewModel r) async {
+    await ReviewService.publish(r.id);
+    setState(() {
+      final i = _all.indexWhere((x) => x.id == r.id);
+      if (i != -1) _all[i] = _all[i].copyWith(status: ReviewStatus.published);
+    });
+    _showSnack('Review published', Icons.check_circle_outline_rounded, _green1);
+  }
+
+  Future<void> _archive(ReviewModel r) async {
+    await ReviewService.archive(r.id);
+    setState(() {
+      final i = _all.indexWhere((x) => x.id == r.id);
+      if (i != -1) _all[i] = _all[i].copyWith(status: ReviewStatus.archived);
+    });
+    _showSnack('Review archived', Icons.archive_outlined, _gold);
+  }
+
+  Future<void> _confirmDelete(ReviewModel r) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: Colors.white,
+        title: const Text('Delete Review',
+            style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                fontSize: 16, color: _dark)),
+        content: Text(
+          'Are you sure you want to permanently delete this review from ${r.customerName}? This cannot be undone.',
+          style: TextStyle(fontFamily: 'Urbanist', fontSize: 13, color: _dark.withOpacity(0.7)),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('CANCEL', style: TextStyle(fontFamily: 'Urbanist',
+                fontWeight: FontWeight.w700, color: _green2)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                elevation: 0),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('DELETE', style: TextStyle(fontFamily: 'Urbanist',
+                fontWeight: FontWeight.w800, fontSize: 12)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await ReviewService.delete(r.id);
+      setState(() => _all.removeWhere((x) => x.id == r.id));
+      _showSnack('Review deleted', Icons.delete_outline_rounded, const Color(0xFFDC2626));
+    }
+  }
+
+  void _showSnack(String msg, IconData icon, Color color) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(children: [
+          Icon(icon, color: Colors.white, size: 16),
+          const SizedBox(width: 8),
+          Text(msg, style: const TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w600)),
+        ]),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 
-  
-  Widget _MainSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  // ── Build ─────────────────────────────────────────────────────────────────
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: _beige,
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Sidebar(activeIndex: widget.activeIndex, onLogout: widget.onLogout),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AdminHeader(title: 'REVIEWS', onLogout: widget.onLogout),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Summary row
+                        _buildSummaryRow(),
+                        const SizedBox(height: 20),
+                        // Toolbar
+                        _buildToolbar(),
+                        const SizedBox(height: 16),
+                        // List
+                        Expanded(child: _buildList()),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Summary row ───────────────────────────────────────────────────────────
+
+  Widget _buildSummaryRow() {
+    return Row(
       children: [
-        AdminHeader(title: "REVIEWS", onLogout: widget.onLogout), // optional if you want header
-
-        const SizedBox(height: 16),
-
-        _HeaderSection(),
-
-        const SizedBox(height: 24),
-
-        Expanded(child: _ReviewsList()),
+        _StatChip(label: 'TOTAL',     value: '$_totalCount',                      color: _green2),
+        const SizedBox(width: 10),
+        _StatChip(label: 'PUBLISHED', value: '$_publishedCount',                  color: _green1),
+        const SizedBox(width: 10),
+        _StatChip(label: 'PENDING',   value: '$_pendingCount',                    color: _gold),
+        const SizedBox(width: 10),
+        _StatChip(label: 'ARCHIVED',  value: '$_archivedCount',                   color: const Color(0xFF8A8070)),
+        const SizedBox(width: 10),
+        _StatChip(label: 'AVG RATING',value: _avgRating.toStringAsFixed(1),       color: Colors.amber.shade700,
+            icon: Icons.star_rounded),
       ],
     );
   }
 
-  Widget _HeaderSection() {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Left: Segmented buttons
-          Row(
-            children: ["ALL REVIEWS", "POSTED", "ARCHIVED"]
-                .map((segment) => Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            activeSegment = segment;
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: activeSegment == segment
-                                ? AppColors.secondary
-                                : AppColors.background,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: activeSegment == segment
-                              ? [
-                                  BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.85),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ]
-                              : [],
-                          ),
-                          child: Text(
-                            segment,
-                            style: TextStyle(
-                              color: activeSegment == segment
-                                  ? AppColors.background
-                                  : AppColors.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          
-                        ),
-                      ),
-                    ))
-                .toList(),
-          ),
+  // ── Toolbar ───────────────────────────────────────────────────────────────
 
-          // Right: Dropdowns
-          Row(
-            children: [
-              const SizedBox(width: 12),
-              _buildDropdownButton(sortBy, ["Newest", "Oldest"], (val) {
-                setState(() => sortBy = val!);
-              }),
-            ],
-          )
+  Widget _buildToolbar() {
+    const segments = ['ALL', 'PENDING', 'PUBLISHED', 'ARCHIVED'];
+
+    return Row(
+      children: [
+        // Segment filter
+        ...segments.map((s) {
+          final active = _segment == s;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () => setState(() => _segment = s),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+                decoration: BoxDecoration(
+                  color: active ? _green1 : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: active ? _green1 : _green2.withOpacity(0.3)),
+                  boxShadow: active
+                      ? [BoxShadow(color: _green1.withOpacity(0.25),
+                            blurRadius: 8, offset: const Offset(0, 3))]
+                      : [],
+                ),
+                child: Text(s,
+                    style: TextStyle(
+                        fontFamily: 'Urbanist',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                        letterSpacing: 0.5,
+                        color: active ? Colors.white : _green1)),
+              ),
+            ),
+          );
+        }),
+
+        const Spacer(),
+
+        // Refresh
+        _ToolbarBtn(icon: Icons.refresh_rounded, onTap: _load, tooltip: 'Refresh'),
+        const SizedBox(width: 10),
+
+        // Sort dropdown
+        _SortDropdown(
+          value: _sortBy,
+          options: const ['Newest', 'Oldest', 'Highest', 'Lowest'],
+          onChanged: (v) => setState(() => _sortBy = v),
+        ),
+      ],
+    );
+  }
+
+  // ── List ──────────────────────────────────────────────────────────────────
+
+  Widget _buildList() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error.isNotEmpty) {
+      return Center(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.error_outline_rounded, size: 40, color: _green2.withOpacity(0.4)),
+          const SizedBox(height: 10),
+          Text('Failed to load reviews',
+              style: TextStyle(fontFamily: 'Urbanist', color: _dark.withOpacity(0.5))),
+          const SizedBox(height: 8),
+          TextButton(onPressed: _load, child: const Text('Retry')),
+        ]),
+      );
+    }
+
+    final items = _visible;
+    if (items.isEmpty) {
+      return Center(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.rate_review_outlined, size: 48, color: _green2.withOpacity(0.25)),
+          const SizedBox(height: 12),
+          Text('No reviews in this category',
+              style: TextStyle(fontFamily: 'Urbanist', fontSize: 13,
+                  color: _dark.withOpacity(0.45))),
+        ]),
+      );
+    }
+
+    return ListView.separated(
+      itemCount: items.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (_, i) => _ReviewCard(
+        review: items[i],
+        onPublish: () => _publish(items[i]),
+        onArchive: () => _archive(items[i]),
+        onDelete:  () => _confirmDelete(items[i]),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REVIEW CARD
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ReviewCard extends StatelessWidget {
+  final ReviewModel review;
+  final VoidCallback onPublish;
+  final VoidCallback onArchive;
+  final VoidCallback onDelete;
+
+  const _ReviewCard({
+    required this.review,
+    required this.onPublish,
+    required this.onArchive,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final d = review.submittedAt;
+    final dateStr =
+        '${_p(d.month)}/${_p(d.day)}/${d.year}  ${_p(d.hour % 12 == 0 ? 12 : d.hour % 12)}:${_p(d.minute)} ${d.hour >= 12 ? 'PM' : 'AM'}';
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _statusBorderColor.withOpacity(0.35)),
+        boxShadow: [
+          BoxShadow(
+              color: _dark.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4))
         ],
       ),
-    );
-  }
-
-  Widget _ReviewsList() {
-
-    List reviewsData = List.from(
-      reviews
-    );
-
-    if (sortBy == "NEWEST") {
-      reviewsData.sort((a, b) =>
-          (b["submittedAt"] as String)
-              .compareTo(a["submittedAt"] as String));
-    } else if (sortBy == "OLDEST") {
-      reviewsData.sort((a, b) =>
-          (a["submittedAt"] as String)
-              .compareTo(b["submittedAt"] as String));
-    }
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical : 4, horizontal: 24),
-      child: ListView.builder(
-        itemCount: reviewsData.length,
-        itemBuilder: (context, index) {
-          final review = reviewsData[index];
-          return _ReviewCard(review);
-        },
-      ),
-    );
-  }
-
-  Widget _ReviewCard(Map<String, dynamic> review) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF4EBDD),
-        borderRadius: BorderRadius.circular(16),
-      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔹 Avatar
-          CircleAvatar(
-            radius: 28,
-            backgroundImage: review["avatarUrl"] != null
-                ? NetworkImage(review["avatarUrl"])
-                : null,
-            child: review["avatarUrl"] == null
-                ? const Icon(Icons.person, size: 28)
-                : null,
+          // ── Avatar ───────────────────────────────────────────────────────
+          Column(
+            children: [
+              CircleAvatar(
+                radius: 26,
+                backgroundColor: _green2.withOpacity(0.15),
+                backgroundImage: review.avatarUrl != null
+                    ? NetworkImage(review.avatarUrl!)
+                    : null,
+                child: review.avatarUrl == null
+                    ? Text(
+                        review.customerName.isNotEmpty
+                            ? review.customerName[0]
+                            : '?',
+                        style: const TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                            color: _green1))
+                    : null,
+              ),
+              const SizedBox(height: 8),
+              _StatusBadge(status: review.status),
+            ],
           ),
 
           const SizedBox(width: 16),
 
-          // 🔹 Customer Info (LEFT COLUMN)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                review["customerId"],
-                style: const TextStyle(
-                  color: AppColors.primary,
-                    fontWeight: FontWeight.w100, fontSize: 14),
-              ),
-              Text(
-                review["customerName"],
-                style: const TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold, fontSize: 14),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                review["submittedAt"],
-                style: TextStyle(
-                    fontSize: 12, 
-                    color: AppColors.primary.withOpacity(0.4)
-                    ),
-              ),
-            ],
-          ),
-
-          const SizedBox(width: 32),
-
-          // Review Content (CENTER - EXPANDED)
-          Expanded(
-            child: Text(
-              review["reviewContent"],
-              style: TextStyle(
-                  fontSize: 12, color: AppColors.primary.withOpacity(0.8),
-                  fontWeight: FontWeight.w100,
-                  ),
+          // ── Customer info ────────────────────────────────────────────────
+          SizedBox(
+            width: 160,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(review.customerId,
+                    style: TextStyle(
+                        fontFamily: 'Urbanist',
+                        fontSize: 11,
+                        color: _green2.withOpacity(0.8))),
+                const SizedBox(height: 2),
+                Text(review.customerName,
+                    style: const TextStyle(
+                        fontFamily: 'Urbanist',
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        color: _dark)),
+                const SizedBox(height: 6),
+                Row(children: [
+                  Icon(Icons.access_time_rounded, size: 11,
+                      color: _green2.withOpacity(0.55)),
+                  const SizedBox(width: 4),
+                  Text(dateStr,
+                      style: TextStyle(
+                          fontFamily: 'Urbanist',
+                          fontSize: 10,
+                          color: _dark.withOpacity(0.45))),
+                ]),
+                const SizedBox(height: 10),
+                // Star rating
+                Row(children: [
+                  ...List.generate(5, (i) => Icon(
+                    i < review.rating.floor()
+                        ? Icons.star_rounded
+                        : (i < review.rating
+                            ? Icons.star_half_rounded
+                            : Icons.star_border_rounded),
+                    color: Colors.amber.shade600,
+                    size: 16,
+                  )),
+                  const SizedBox(width: 6),
+                  Text(review.rating.toStringAsFixed(1),
+                      style: const TextStyle(
+                          fontFamily: 'Urbanist',
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                          color: _dark)),
+                ]),
+              ],
             ),
           ),
 
-          const SizedBox(width: 24),
+          const SizedBox(width: 20),
 
-          // 🔹 Rating + Publish (RIGHT)
+          // ── Review content ───────────────────────────────────────────────
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.6),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _green2.withOpacity(0.1)),
+              ),
+              child: Text(
+                review.content,
+                style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontSize: 13,
+                    height: 1.6,
+                    color: _dark.withOpacity(0.75)),
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 20),
+
+          // ── Action buttons ───────────────────────────────────────────────
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                (review["rating"] as double).toStringAsFixed(1),
-                style: const TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w800, fontSize: 14),
-              ),
-              Row(
-                children: List.generate(
-                  5,
-                  (i) => Icon(
-                    i < (review["rating"] as double).floor()
-                        ? Icons.star
-                        : Icons.star_border,
-                    color: Colors.amber,
-                    size: 16,
-                  ),
+              // Publish button — only for pending/archived
+              if (review.status != ReviewStatus.published)
+                _ActionBtn(
+                  label: 'PUBLISH',
+                  icon: Icons.check_circle_outline_rounded,
+                  color: _green1,
+                  onTap: onPublish,
                 ),
-              ),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: review["isPublished"]
-                    ? null
-                    : () {
-                        setState(() {
-                          review["isPublished"] = true;
-                        });
-                      },
-                child: Text(
-                  review["isPublished"] ? "PUBLISHED" : "PUBLISH",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color:AppColors.primary,
-                    fontSize: 12,
-                  ),
+              if (review.status != ReviewStatus.published)
+                const SizedBox(height: 8),
+
+              // Archive button — only for pending/published
+              if (review.status != ReviewStatus.archived)
+                _ActionBtn(
+                  label: 'ARCHIVE',
+                  icon: Icons.archive_outlined,
+                  color: _gold,
+                  onTap: onArchive,
                 ),
-              )
+              if (review.status != ReviewStatus.archived)
+                const SizedBox(height: 8),
+
+              // Delete — always available
+              _ActionBtn(
+                label: 'DELETE',
+                icon: Icons.delete_outline_rounded,
+                color: const Color(0xFFDC2626),
+                onTap: onDelete,
+              ),
             ],
           ),
         ],
       ),
     );
   }
-  Widget _buildDropdownButton(
-      String current, List<String> options, ValueChanged<String?> onChanged) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.primary),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: DropdownButton<String>(
-        value: current,
-        underline: const SizedBox(),
-        icon: Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: AppColors.primary,
-        ),
 
-        style: TextStyle(
-          color: AppColors.primary,
-          fontSize: 14,
+  Color get _statusBorderColor {
+    switch (review.status) {
+      case ReviewStatus.published: return _green1;
+      case ReviewStatus.archived:  return const Color(0xFF8A8070);
+      case ReviewStatus.pending:   return _gold;
+    }
+  }
+
+  String _p(int n) => n.toString().padLeft(2, '0');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATUS BADGE
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _StatusBadge extends StatelessWidget {
+  final ReviewStatus status;
+  const _StatusBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final Color color;
+    final String label;
+    final IconData icon;
+
+    switch (status) {
+      case ReviewStatus.published:
+        color = _green1; label = 'PUBLISHED'; icon = Icons.check_circle_rounded; break;
+      case ReviewStatus.archived:
+        color = const Color(0xFF8A8070); label = 'ARCHIVED'; icon = Icons.archive_rounded; break;
+      case ReviewStatus.pending:
+        color = _gold; label = 'PENDING'; icon = Icons.hourglass_empty_rounded; break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.35)),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 10, color: color),
+        const SizedBox(width: 4),
+        Text(label,
+            style: TextStyle(
+                fontFamily: 'Urbanist',
+                fontWeight: FontWeight.w800,
+                fontSize: 8,
+                letterSpacing: 0.5,
+                color: color)),
+      ]),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ACTION BUTTON
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ActionBtn extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ActionBtn({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.3)),
         ),
-        
-        dropdownColor: Colors.white,
-        items: options
-            .map((opt) => DropdownMenuItem(
-                  value: opt,
-                  child: Text(opt),
-                ))
-            .toList(),
-        onChanged: onChanged,
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 6),
+          Text(label,
+              style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                  letterSpacing: 0.5,
+                  color: color)),
+        ]),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STAT CHIP
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _StatChip extends StatelessWidget {
+  final String label, value;
+  final Color color;
+  final IconData? icon;
+
+  const _StatChip({
+    required this.label,
+    required this.value,
+    required this.color,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(color: color.withOpacity(0.08), blurRadius: 8, offset: const Offset(0, 3))
+        ],
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        if (icon != null) ...[
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
+        ],
+        Text(value,
+            style: TextStyle(
+                fontFamily: 'Urbanist',
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
+                color: color)),
+        const SizedBox(width: 6),
+        Text(label,
+            style: TextStyle(
+                fontFamily: 'Urbanist',
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+                color: color.withOpacity(0.65))),
+      ]),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SORT DROPDOWN
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SortDropdown extends StatelessWidget {
+  final String value;
+  final List<String> options;
+  final ValueChanged<String> onChanged;
+
+  const _SortDropdown({
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _green2.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(color: _dark.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 2))
+        ],
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.sort_rounded, size: 14, color: _green2.withOpacity(0.7)),
+        const SizedBox(width: 6),
+        DropdownButton<String>(
+          value: value,
+          underline: const SizedBox(),
+          isDense: true,
+          icon: Icon(Icons.keyboard_arrow_down_rounded, color: _green2, size: 16),
+          style: const TextStyle(fontFamily: 'Urbanist', fontSize: 12,
+              fontWeight: FontWeight.w700, color: _dark),
+          dropdownColor: Colors.white,
+          items: options.map((o) => DropdownMenuItem(
+            value: o,
+            child: Text(o, style: const TextStyle(fontFamily: 'Urbanist', fontSize: 12)),
+          )).toList(),
+          onChanged: (v) { if (v != null) onChanged(v); },
+        ),
+      ]),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOOLBAR BUTTON
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ToolbarBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final String tooltip;
+
+  const _ToolbarBtn({required this.icon, required this.onTap, required this.tooltip});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 36, height: 36,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: _green2.withOpacity(0.25)),
+          ),
+          child: Icon(icon, size: 16, color: _green2),
+        ),
       ),
     );
   }
