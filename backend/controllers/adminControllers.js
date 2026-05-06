@@ -279,11 +279,12 @@ const getCustomerReviews = async (req, res) => {
             SELECT 
                 r.id,
                 r.user_id,
-                u.name AS customer_name,
+                u.full_name AS customer_name,
                 r.review_text,
                 r.rating,
                 r.status,
-                r.created_at
+                r.created_at,
+                u.profile_picture
             FROM reviews r
             JOIN users u ON r.user_id = u.id
             ORDER BY r.created_at DESC
