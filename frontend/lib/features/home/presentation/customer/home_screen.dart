@@ -11,7 +11,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/core/services/customer/cms_service.dart';
 import 'package:frontend/core/widgets/bamboo_background.dart';
 
-
 const double _kMobile = 768;
 const double _kDesktopMaxWidth = 1280;
 
@@ -41,17 +40,17 @@ class HomeMenuItem {
 
 const _featuredBeverages = <HomeMenuItem>[
   HomeMenuItem(
-    id: 100, 
-    name: 'Nutella Frappe', 
-    price: 120.00, 
+    id: 100,
+    name: 'Nutella Frappe',
+    price: 120.00,
     imageAsset: null,
-    ),
+  ),
   HomeMenuItem(
-    id: 101, 
-    name: 'Red Velvet Frappe', 
-    price: 150.00, 
+    id: 101,
+    name: 'Red Velvet Frappe',
+    price: 150.00,
     imageAsset: null,
-    ),
+  ),
   HomeMenuItem(id: 102, name: 'S\'more', price: 110.00, imageAsset: null),
   HomeMenuItem(id: 103, name: 'Biscoff', price: 180.00, imageAsset: null),
 ];
@@ -61,7 +60,6 @@ const _featuredBeverages = <HomeMenuItem>[
 // ─────────────────────────────────────────────────────────────────────────────
 
 class CustomerHomeScreen extends StatefulWidget {
-  
   final VoidCallback? onLogout;
 
   const CustomerHomeScreen({super.key, this.onLogout});
@@ -83,14 +81,13 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   void _logout(BuildContext ctx) {
-
     if (widget.onLogout != null) {
       widget.onLogout!();
     }
     Navigator.of(ctx).pushNamedAndRemoveUntil('/', (route) => false);
   }
 
-   Future<void> submitReview(int stars, String reviewText) async {
+  Future<void> submitReview(int stars, String reviewText) async {
     try {
       final prefs = await SharedPreferences.getInstance();
 
@@ -153,6 +150,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       setState(() => _msg = "Error: $e");
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final cart = CartProvider.of(context);
@@ -164,9 +162,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         notifCount: 1,
         onLogout: () => _logout(context),
         onCart: () => Navigator.pushNamed(context, '/cart'),
-        onNotif: () { ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text("Notifications clicked")),
-  );},
+        onNotif: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Notifications clicked")),
+          );
+        },
         onProfile: () {},
       ),
       body: Stack(
@@ -306,13 +306,11 @@ class _ImgSlot extends StatelessWidget {
   }
 }
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // HERO SECTION
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _MainHero extends StatelessWidget {
-  
   const _MainHero();
   @override
   Widget build(BuildContext context) {
@@ -320,7 +318,7 @@ class _MainHero extends StatelessWidget {
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < _kMobile;
 
-      return Padding(
+        return Padding(
           padding: EdgeInsets.symmetric(vertical: isMobile ? 32 : 64),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -393,23 +391,23 @@ class _MainHero extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // PROMO BANNERS
 // ─────────────────────────────────────────────────────────────────────────────
-  String? getImageUrl(dynamic data) {
-    try {
-      final image = data['image'];
-      if (image == null) return null;
+String? getImageUrl(dynamic data) {
+  try {
+    final image = data['image'];
+    if (image == null) return null;
 
-      // Strapi v5 flattened structure
-      final String? path = image['url'];
+    // Strapi v5 flattened structure
+    final String? path = image['url'];
 
-      if (path == null) return null;
+    if (path == null) return null;
 
-      // Always ensure the path starts with /
-      return path.startsWith('http') ? path : "http://localhost:1337$path";
-    } catch (e) {
-      debugPrint("Error parsing image URL: $e");
-      return null;
-    }
+    // Always ensure the path starts with /
+    return path.startsWith('http') ? path : "http://localhost:1337$path";
+  } catch (e) {
+    debugPrint("Error parsing image URL: $e");
+    return null;
   }
+}
 
 class _PromoSection extends StatelessWidget {
   const _PromoSection();
@@ -435,47 +433,52 @@ class _PromoSection extends StatelessWidget {
           orElse: () => null,
         );
 
-        return LayoutBuilder(builder: (_, c) {
-          final isMobile = c.maxWidth < 768;
+        return LayoutBuilder(
+          builder: (_, c) {
+            final isMobile = c.maxWidth < 768;
 
-          return Padding(
-            padding: EdgeInsets.all(isMobile ? 24 : 75),
-            child: isMobile
-                ? Column(
-                    children: [
-                      if (primary != null)
-                        PromoCard(data: primary, isPrimary: true),
-                      const SizedBox(height: 20),
-                      if (secondary != null)
-                        PromoCard(data: secondary, isPrimary: false),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      if (primary != null)
-                        Expanded(child: PromoCard(data: primary, isPrimary: true)),
-                      const SizedBox(width: 20),
-                      if (secondary != null)
-                        Expanded(child: PromoCard(data: secondary, isPrimary: false)),
-                    ],
-                  ),
-          );
-        });
+            return Padding(
+              padding: EdgeInsets.all(isMobile ? 24 : 75),
+              child:
+                  isMobile
+                      ? Column(
+                        children: [
+                          if (primary != null)
+                            PromoCard(data: primary, isPrimary: true),
+                          const SizedBox(height: 20),
+                          if (secondary != null)
+                            PromoCard(data: secondary, isPrimary: false),
+                        ],
+                      )
+                      : Row(
+                        children: [
+                          if (primary != null)
+                            Expanded(
+                              child: PromoCard(data: primary, isPrimary: true),
+                            ),
+                          const SizedBox(width: 20),
+                          if (secondary != null)
+                            Expanded(
+                              child: PromoCard(
+                                data: secondary,
+                                isPrimary: false,
+                              ),
+                            ),
+                        ],
+                      ),
+            );
+          },
+        );
       },
     );
   }
 }
 
-
 class PromoCard extends StatelessWidget {
   final dynamic data;
   final bool isPrimary;
 
-  const PromoCard({
-    super.key,
-    required this.data,
-    required this.isPrimary,
-  });
+  const PromoCard({super.key, required this.data, required this.isPrimary});
 
   String extractText(dynamic desc) {
     try {
@@ -494,22 +497,22 @@ class PromoCard extends StatelessWidget {
     final buttonText = data['buttonText'] ?? '';
     final imageUrl = getImageUrl(data);
 
-
     return Container(
       height: 260,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(32),
-        image: imageUrl != null
-            ? DecorationImage(
-                image: NetworkImage(imageUrl),
-                fit: BoxFit.cover,
-                colorFilter: ColorFilter.mode(
-                  Colors.white.withOpacity(0.4), 
-                  BlendMode.dstIn,
-                ),
-              )
-            : null,
+        image:
+            imageUrl != null
+                ? DecorationImage(
+                  image: NetworkImage(imageUrl),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                    Colors.white.withOpacity(0.4),
+                    BlendMode.dstIn,
+                  ),
+                )
+                : null,
         color: Colors.grey,
       ),
       child: Container(
@@ -519,10 +522,7 @@ class PromoCard extends StatelessWidget {
           gradient: const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.black54,
-              Colors.black26,
-            ],
+            colors: [Colors.black54, Colors.black26],
           ),
         ),
         child: Column(
@@ -537,43 +537,40 @@ class PromoCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            Text(
-              description,
-              style: const TextStyle(color: Colors.white70),
-            ),
+            Text(description, style: const TextStyle(color: Colors.white70)),
             const Spacer(),
             GestureDetector(
-  onTap: () {
-    final route = isPrimary ? '/contact' : '/menu';
-    Navigator.pushNamed(context, route);
-  },
-  child: Container(
-    width: 160,
-    padding: const EdgeInsets.symmetric(
-      vertical: 12,
-      horizontal: 16,
-    ),
-    decoration: BoxDecoration(
-      color: isPrimary ? Colors.white : AppColors.primary,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: isPrimary ? _primary : Colors.white,
-        width: 1.5,
-      ),
-    ),
-    child: Text(
-      buttonText,
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontFamily: 'Urbanist',
-        fontWeight: FontWeight.w900,
-        fontSize: 12,
-        letterSpacing: 1.5,
-        color: isPrimary ? _primary : Colors.white,
-      ),
-    ),
-  ),
-)
+              onTap: () {
+                final route = isPrimary ? '/contact' : '/menu';
+                Navigator.pushNamed(context, route);
+              },
+              child: Container(
+                width: 160,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: isPrimary ? Colors.white : AppColors.primary,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isPrimary ? _primary : Colors.white,
+                    width: 1.5,
+                  ),
+                ),
+                child: Text(
+                  buttonText,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                    letterSpacing: 1.5,
+                    color: isPrimary ? _primary : Colors.white,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -592,9 +589,9 @@ class _FeaturedBeveragesSection extends StatelessWidget {
     return LayoutBuilder(
       builder: (_, c) {
         final isMobile = c.maxWidth < _kMobile;
-        final ph = isMobile ? 24.0 : 75.0; 
+        final ph = isMobile ? 24.0 : 75.0;
 
-              return Padding(
+        return Padding(
           padding: EdgeInsets.fromLTRB(ph, isMobile ? 40 : 80, ph, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
