@@ -270,6 +270,31 @@ const updateMenuItem = async (req, res) => {
         });
     }
 }
+
+const getCustomerReviews = async (req, res) => {
+    try{
+
+        // Retrieve all the necessary data uby joining reviews and users table
+       const [rows] = await db.query(`
+            SELECT 
+                r.id,
+                r.user_id,
+                u.name AS customer_name,
+                r.review_text,
+                r.rating,
+                r.status,
+                r.created_at
+            FROM reviews r
+            JOIN users u ON r.user_id = u.id
+            ORDER BY r.created_at DESC
+        `);
+
+        res.json(rows);
+
+    }catch(err){
+        res.status(500).json({error: err.message})
+    }
+}
 module.exports = { fetchAllCustomer, 
     fetchMenuItems,
     fetchMenuCategories,
