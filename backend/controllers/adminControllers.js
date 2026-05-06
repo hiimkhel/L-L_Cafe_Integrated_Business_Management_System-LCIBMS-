@@ -297,7 +297,7 @@ const getCustomerReviews = async (req, res) => {
     }
 }
 
-const publishReviews = async (req, res) => {
+const publishReview = async (req, res) => {
     try{
         // Retrieve review id
         const {id} = req.params;
@@ -313,7 +313,7 @@ const publishReviews = async (req, res) => {
         `, [id]);
 
         if(!rows.length){
-            return res.status(400).json({message: "Customer Review not found!"})
+            return res.status(404).json({message: "Customer Review not found!"})
         }
 
         // Check if published
@@ -333,6 +333,35 @@ const publishReviews = async (req, res) => {
     }
 }
 
+const archiveReview = async (req, res) => {
+    try{
+        // Retrieve review id
+        const {id} = req.params;
+
+        // Error Handling
+        if(!id) return res.status(400).json({error: "Id parameter is required!"})
+
+        // Store review data
+        const [row] = await db.query("SELECT status FROM reviews WHERE id = ?", [id]);
+
+        // Check existence
+        if(!row.length) return res.status(404).json({message: "Customer Review not found!"})
+
+        // Check status if valid for archiving
+        if(row[0].status == 'archived'){
+            return res.status(400).json({message: "Customer Review already archived!" });
+        }
+
+        // Execute query
+        await db. query("UPDATE reviews SET status = 'archived' WHERE id = ?", [id])
+
+        res.status(200).json({message: "Status updated successfully!"})
+
+    }catch(err){
+        res.status(500).json({error: err.message})
+    }
+}
+
 
 module.exports = { fetchAllCustomer, 
     fetchMenuItems,
@@ -343,5 +372,6 @@ module.exports = { fetchAllCustomer,
     getItemById,
     updateMenuItem,
     getCustomerReviews,
-    publishReviews
+    publishReview,
+    archiveReview
  };
