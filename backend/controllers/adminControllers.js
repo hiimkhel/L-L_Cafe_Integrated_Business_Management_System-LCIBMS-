@@ -296,6 +296,44 @@ const getCustomerReviews = async (req, res) => {
         res.status(500).json({error: err.message})
     }
 }
+
+const publishReviews = async (req, res) => {
+    try{
+        // Retrieve review id
+        const {id} = req.params;
+
+        // Error handling   
+        if(!id){
+            return res.status(400).json({message: "Id field is required!"});
+        }
+
+        // Check review id existence
+        const [rows] = await db.query(`
+            SELECT status FROM reviews WHERE id = ?
+        `, [id]);
+
+        if(!rows.length){
+            return res.status(400).json({message: "Customer Review not found!"})
+        }
+
+        // Check if published
+        if(rows[0].status == 'published'){
+            return res.status(400).json({message: "Customer Review already published!"})
+        }
+
+        // Execute query
+        await db.query(`
+            UPDATE reviews SET status = "published" WHERE id = ?    
+        `, [id]);
+
+        res.json({message: "Status updated successfully!"})
+
+    }catch(err){
+        res.status(500).json({error: err.message})
+    }
+}
+
+
 module.exports = { fetchAllCustomer, 
     fetchMenuItems,
     fetchMenuCategories,
@@ -304,5 +342,6 @@ module.exports = { fetchAllCustomer,
     deleteMenuItem,
     getItemById,
     updateMenuItem,
-    getCustomerReviews
+    getCustomerReviews,
+    publishReviews
  };
