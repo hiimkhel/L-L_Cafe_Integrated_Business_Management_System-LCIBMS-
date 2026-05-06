@@ -467,29 +467,37 @@ class _ReviewCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              // Publish button — only for pending/archived
-              if (review.status != ReviewStatus.published)
+
+              // PENDING → Publish
+              if (review.status == ReviewStatus.pending)
                 _ActionBtn(
                   label: 'PUBLISH',
                   icon: Icons.check_circle_outline_rounded,
                   color: _green1,
                   onTap: onPublish,
                 ),
-              if (review.status != ReviewStatus.published)
-                const SizedBox(height: 8),
 
-              // Archive button — only for pending/published
-              if (review.status != ReviewStatus.archived)
+              // PUBLISHED → Archive
+              if (review.status == ReviewStatus.published)
                 _ActionBtn(
                   label: 'ARCHIVE',
                   icon: Icons.archive_outlined,
                   color: _gold,
                   onTap: onArchive,
                 ),
-              if (review.status != ReviewStatus.archived)
-                const SizedBox(height: 8),
 
-              // Delete — always available
+              // ARCHIVED → Re-publish
+              if (review.status == ReviewStatus.archived)
+                _ActionBtn(
+                  label: 'RE-PUBLISH',
+                  icon: Icons.refresh_rounded,
+                  color: _green1,
+                  onTap: onPublish,
+                ),
+
+              const SizedBox(height: 8),
+
+              // DELETE (always available)
               _ActionBtn(
                 label: 'DELETE',
                 icon: Icons.delete_outline_rounded,
@@ -497,7 +505,7 @@ class _ReviewCard extends StatelessWidget {
                 onTap: onDelete,
               ),
             ],
-          ),
+          )
         ],
       ),
     );
