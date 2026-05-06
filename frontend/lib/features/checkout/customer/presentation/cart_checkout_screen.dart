@@ -8,17 +8,137 @@ import 'package:frontend/core/constants/cart_item.dart';
 import 'package:frontend/core/constants/cart_provider.dart';
 import 'package:frontend/core/services/customer/order_service.dart';
 import 'package:frontend/core/models/order_request.dart';
-import 'package:frontend/core/widgets/bamboo_background.dart';
-import 'package:frontend/core/models/user.dart';
-import 'package:frontend/core/providers/auth_provider.dart';
-import 'package:provider/provider.dart';
-import 'package:frontend/core/constants/cart_provider.dart';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────────
 
-const double _kMobile = 768;
+const double _kMobile    = 768;
+const Color  _kPrimary   = Color(0xFF758C6D);
+const Color  _kSecondary = Color(0xFFA98258);
+const Color  _kDark      = Color(0xFF2D2A26);
+const Color  _kBg        = Color(0xFFEFE2C9);
+const Color  _kWhite     = Colors.white;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// BAMBOO BACKGROUND
+// ─────────────────────────────────────────────────────────────────────────────
 
-//--------------------------CartCheckoutScreenState------------------------------------------------
+class _BambooBackground extends StatefulWidget {
+  const _BambooBackground();
+  @override
+  State<_BambooBackground> createState() => _BambooBackgroundState();
+}
+
+class _BambooBackgroundState extends State<_BambooBackground>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(seconds: 30))..repeat();
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < _kMobile;
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, __) => CustomPaint(
+        painter: _BambooPainter(animationValue: _ctrl.value, isMobile: isMobile),
+        size: Size.infinite,
+      ),
+    );
+  }
+}
+
+class _BambooPainter extends CustomPainter {
+  final double animationValue;
+  final bool isMobile;
+
+  _BambooPainter({required this.animationValue, required this.isMobile});
+
+  static const _bamboos = [
+    [0.040, 13.0, 0.12, 1.53],  [0.095, 7.0,  0.10, -1.84],
+    [0.133, 14.0, 0.13, 1.45],  [0.190, 9.0,  0.10, -0.72],
+    [0.236, 9.5,  0.10, -0.71], [0.283, 13.0, 0.12, -1.53],
+    [0.321, 13.0, 0.11,  1.24], [0.374, 1.9,  0.08,  0.29],
+    [0.423, 2.2,  0.08,  0.35], [0.469, 2.6,  0.08, -0.34],
+    [0.503, 20.0, 0.13,  2.00], [0.560, 4.1,  0.09,  1.06],
+    [0.598, 17.6, 0.12,  1.82], [0.656, 8.9,  0.10, -0.98],
+    [0.693, 15.5, 0.11,  1.72], [0.739, 17.9, 0.12,  1.99],
+    [0.783, 18.8, 0.12,  1.81], [0.839, 8.9,  0.10,  0.66],
+    [0.890, 5.2,  0.08, -1.98], [0.936, 16.6, 0.11, -1.89],
+  ];
+
+  void _drawLeaf(Canvas c, Offset o, double angle, double len, double w, Paint p) {
+    c.save(); c.translate(o.dx, o.dy); c.rotate(angle);
+    final path = Path()
+      ..moveTo(0, 0)
+      ..quadraticBezierTo(len * 0.4, -w, len, 0)
+      ..quadraticBezierTo(len * 0.6, w, 0, 0)
+      ..close();
+    c.drawPath(path, p); c.restore();
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = _kPrimary;
+    int index = 0;
+    for (final b in _bamboos) {
+      index++;
+      if (isMobile && index % 3 != 0) continue;
+      final baseX  = size.width * (b[0] as double);
+      final w      = b[1] as double;
+      final deg    = b[3] as double;
+      final h      = size.height;
+      final baseOp = b[2] as double;
+      final op     = isMobile ? baseOp * 0.4 : baseOp;
+      final x      = (baseX + animationValue * size.width * (op * 8)) % size.width;
+      final sway   = math.sin((animationValue * math.pi * 4) + (x * 0.01)) * 0.015;
+      final rad    = (deg * math.pi / 180) + sway;
+      paint.color  = _kPrimary.withOpacity(op);
+      canvas.save();
+      canvas.translate(x + w / 2, h / 2);
+      canvas.rotate(rad);
+      canvas.drawRect(Rect.fromLTWH(-w / 2, -h / 2 - 20, w, h + 40), paint);
+      final segs = (h / (w * 10 + 60)).ceil().clamp(3, 10);
+      final segH = (h + 40) / segs;
+      for (int i = 1; i < segs; i++) {
+        final jY = (-h / 2 - 20) + (i * segH);
+        canvas.drawRect(Rect.fromLTWH(-w / 2 - 1.5, jY - 1, w + 3, 2.5), paint);
+        if ((index + i) % 4 != 0) {
+          final isLeft = (index + i) % 2 == 0;
+          final ll = w * 2.5 + 20.0;
+          final lw = ll * 0.25;
+          _drawLeaf(canvas, Offset(isLeft ? -w / 2 : w / 2, jY),
+              isLeft ? math.pi * 0.8 : math.pi * 0.2, ll, lw, paint);
+          if (i % 2 == 0) {
+            _drawLeaf(canvas, Offset(isLeft ? -w / 2 : w / 2, jY),
+                isLeft ? math.pi * 1.1 : -math.pi * 0.1,
+                ll * 0.8, lw * 0.8, paint);
+          }
+        }
+      }
+      canvas.translate(0, h * 0.2);
+      canvas.rotate(math.pi / 4);
+      canvas.drawRect(Rect.fromLTWH(-w * 0.6, -w * 0.6, w * 1.2, w * 1.2), paint);
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BambooPainter old) =>
+      old.animationValue != animationValue || old.isMobile != isMobile;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHECKOUT SCREEN
+// ─────────────────────────────────────────────────────────────────────────────
 
 class CartCheckoutScreen extends StatefulWidget {
   final List<CartItem> items;
@@ -77,76 +197,42 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
       _snack('Your cart is empty.', error: true); return;
     }
 
-  Future<void> _createOrder() async {
-    try{
-      // 1. Validation logic
-      if (_nameController.text.isEmpty || _phoneController.text.isEmpty) {
-        _showErrorSnackBar("Please fill in contact details");
-        return;
-      }
+    setState(() => _isLoading = true);
 
-      // Ensure address is provided if delivery is selected
-      if (_isDelivery && _addressController.text.trim().isEmpty) {
-        _showErrorSnackBar("Please provide a delivery address");
-        return;
-      }
-
-      setState(() => _isLoading = true);
-
-      // 2. Financial Calculations
-      const double deliveryFee = 45.0;
-      final subtotal = _items.fold<double>(
-        0,
-        (sum, item) => sum + (item.price * item.quantity),
-      );
-      final currentDeliveryFee = _isDelivery ? deliveryFee : 0.0;
-      final total = subtotal + currentDeliveryFee;
-    
-
-      final auth = Provider.of<AuthProvider>(context, listen: false);
-
-      final int? currentUserId = auth.user != null 
-        ? int.tryParse(auth.user!.id) 
-        : null;
-
-      // 3. Map to OrderRequest 
-      // Make sure your OrderRequest class has the 'deliveryAddress' field!
-      final order = OrderRequest(
-        source: "online",
-        orderType: _isDelivery ? "delivery" : "pickup",
-        userId: currentUserId, 
-        subtotal: subtotal,
-        deliveryFee: currentDeliveryFee,
-        deliveryAddress: _isDelivery ? _addressController.text : "STORE PICKUP", 
-        total: total,
-        paymentMethod: _isCash ? "cash" : "e-wallet",
-        paymentStatus: "unpaid",
-        customerName: _nameController.text,
-        customerPhone: _phoneController.text,
-        notes: _notesController.text, // Now just the notes, clean and separate
-        items: _items.map((item) {
-          return {
-            "menu_item_id": item.id,
-            "name": item.name,
-            "quantity": item.quantity ?? 1,
-            "unit_price": item.price,
-            "subtotal": item.price * (item.quantity ?? 1)
-          };
-        }).toList(),
-      );
+    final order = OrderRequest(
+      source:          'online',
+      orderType:       _isDelivery ? 'delivery' : 'pickup',
+      subtotal:        _subtotal,
+      deliveryFee:     _fee,
+      deliveryAddress: _isDelivery ? _addressCtrl.text.trim() : 'STORE PICKUP',
+      total:           _total,
+      paymentMethod:   _isCash ? 'cash' : 'e-wallet',
+      paymentStatus:   'unpaid',
+      customerName:    _nameCtrl.text.trim(),
+      customerPhone:   _phoneCtrl.text.trim(),
+      notes:           _notesCtrl.text.trim(),
+      items: _items.map((i) => {
+        'menu_item_id': i.id,
+        'name':         i.name,
+        'quantity':     i.quantity,
+        'unit_price':   i.price,
+        'subtotal':     i.price * i.quantity,
+      }).toList(),
+    );
 
     final ok = await _orderService.createOrder(order);
     if (!mounted) return;
     setState(() => _isLoading = false);
 
     if (ok) {
-      // ✅ Clear cart FIRST so badge resets to 0 everywhere immediately
+
       CartProvider.of(context).clear();
-      // ✅ Then show success popup
+
       _showSuccessDialog();
     } else {
       _snack('Failed to place order. Please try again.', error: true);
     }
+    
   }
 
   void _snack(String msg, {bool error = false}) {
@@ -159,7 +245,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
     ));
   }
 
-  // ── ✅ Success popup — shown immediately after cart is cleared ────────────
+
   void _showSuccessDialog() {
     showDialog(
       context: context,
@@ -197,7 +283,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
             children: [
               CustomerNavbar(
                 activeRoute: '/cart',
-                // ✅ Live count — will show 0 after cart is cleared
+
                 cartCount: cart.totalCount,
                 notifCount: 1,
                 onCart:    () {},
@@ -731,7 +817,7 @@ class _SuccessDialog extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                     decoration: BoxDecoration(
-                      // ✅ Uses primary green for the summary block
+                  
                       color: _kPrimary,
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -741,7 +827,7 @@ class _SuccessDialog extends StatelessWidget {
                             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700,
                                 letterSpacing: 1, color: _kWhite.withOpacity(0.7))),
                         Text('₱${total.toStringAsFixed(2)}',
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: _kSecondary)),
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: _kWhite)),
                       ]),
                       const SizedBox(height: 8),
                       Divider(color: _kWhite.withOpacity(0.15), height: 1),
@@ -753,13 +839,13 @@ class _SuccessDialog extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: _kSecondary,
+                            color: _kWhite,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             isDelivery ? 'DELIVERY' : 'PICKUP',
                             style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800,
-                                color: _kWhite, letterSpacing: 0.8),
+                                color: _kPrimary, letterSpacing: 0.8),
                           ),
                         ),
                       ]),
@@ -800,7 +886,10 @@ class _SuccessDialog extends StatelessWidget {
                   GestureDetector(
                     onTap: onContinue,
                     child: Text('Continue Shopping',
-                        style: TextStyle(fontSize: 12, color: _kDark.withOpacity(0.4), fontWeight: FontWeight.w600)),
+                        style: TextStyle(fontSize: 12, color: _kDark.withOpacity(0.4), 
+                          fontWeight: FontWeight.w600, 
+                          decoration: TextDecoration.underline,
+                          decorationColor: _kDark.withOpacity(0.4),)),
                   ),
                 ]),
               ),
