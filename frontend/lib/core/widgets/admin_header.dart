@@ -57,15 +57,6 @@ class AdminState extends ChangeNotifier {
       isUnread: true,
     ),
     AdminNotif(
-      id: '4',
-      icon: Icons.inventory_2_outlined,
-      color: _kBrown,
-      title: 'Low Stock Alert',
-      body: 'Nutella Frappe syrup running low',
-      time: '3 hrs ago',
-      isUnread: false,
-    ),
-    AdminNotif(
       id: '5',
       icon: Icons.check_circle_outline_rounded,
       color: _kGreen,
