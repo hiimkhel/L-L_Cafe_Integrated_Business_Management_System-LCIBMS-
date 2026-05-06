@@ -3,7 +3,7 @@ import 'package:frontend/core/widgets/admin_sidebar.dart';
 import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/models/review_model.dart';
-import 'package:frontend/core/services/admin/reviews_screen.dart';
+import 'package:frontend/core/services/admin/reviews_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PALETTE
