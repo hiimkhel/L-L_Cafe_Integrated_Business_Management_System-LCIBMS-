@@ -718,7 +718,7 @@ class _OrderScreenState extends State<OrderScreen> {
                 decoration: BoxDecoration(
                   color: active
                       ? (statusEnum?.color ?? AppColors.tertiary).withOpacity(0.12)
-                      : Colors.transparent,
+                      : AppColors.receiptBg,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: active
