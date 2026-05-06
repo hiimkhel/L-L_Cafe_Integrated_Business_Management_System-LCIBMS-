@@ -303,5 +303,6 @@ module.exports = { fetchAllCustomer,
     addMenuItem,
     deleteMenuItem,
     getItemById,
-    updateMenuItem
+    updateMenuItem,
+    getCustomerReviews
  };
