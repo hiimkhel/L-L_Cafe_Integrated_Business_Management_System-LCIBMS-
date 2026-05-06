@@ -153,7 +153,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ]),
         ),
         const SizedBox(height: 6),
-        Text('ARCHITECTING YOUR PATH BACK',
+        Text('MAKING GOOD FOOD FOR PEOPLE\'S HAPPINESS',
           textAlign: TextAlign.center,
           style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w600,
             fontSize: 9, letterSpacing: 2.0, color: _secondary.withOpacity(0.7))),

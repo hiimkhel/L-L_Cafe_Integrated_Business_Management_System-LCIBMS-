@@ -140,7 +140,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                       style: TextStyle(color: AppColors.primary),
                     ),
                     TextSpan(
-                      text: "\nARCHITECTING THE PERFECT BREW",
+                      text: "\nMAKING GOOD FOOD FOR PEOPLE\'S HAPPINESS",
                       style: TextStyle(
                         fontSize: 10,
                         //fontWeight: FontWeight.normal,

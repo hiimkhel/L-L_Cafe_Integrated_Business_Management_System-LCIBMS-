@@ -9,7 +9,8 @@ class BusinessPerformanceCard extends StatefulWidget {
   const BusinessPerformanceCard({super.key});
 
   @override
-  State<BusinessPerformanceCard> createState() => _BusinessPerformanceCardState();
+  State<BusinessPerformanceCard> createState() =>
+      _BusinessPerformanceCardState();
 }
 
 class _BusinessPerformanceCardState extends State<BusinessPerformanceCard> {
@@ -27,12 +28,12 @@ class _BusinessPerformanceCardState extends State<BusinessPerformanceCard> {
         ),
         borderRadius: BorderRadius.circular(20),
       ),
+      // ✅ Column fills all available height — no mainAxisSize.min
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
           const Text(
-            "BUSINESS PERFORMANCE",
+            'BUSINESS PERFORMANCE',
             style: TextStyle(
               color: Colors.white70,
               fontSize: 12,
@@ -42,12 +43,15 @@ class _BusinessPerformanceCardState extends State<BusinessPerformanceCard> {
           ),
           const SizedBox(height: 14),
           _buildTabBar(),
-          const SizedBox(height: 20),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: KeyedSubtree(
-              key: ValueKey(_activeTab),
-              child: _buildTabContent(),
+          const SizedBox(height: 16),
+          // ✅ Expanded so the tab content fills all remaining vertical space
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: KeyedSubtree(
+                key: ValueKey(_activeTab),
+                child: _buildTabContent(),
+              ),
             ),
           ),
         ],
@@ -64,9 +68,9 @@ class _BusinessPerformanceCardState extends State<BusinessPerformanceCard> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _tabButton("REVENUE", BusinessTab.revenue),
-          _tabButton("ORDERS", BusinessTab.orders),
-          _tabButton("AVG ORDER", BusinessTab.avgOrder),
+          _tabButton('REVENUE',   BusinessTab.revenue),
+          _tabButton('ORDERS',    BusinessTab.orders),
+          _tabButton('AVG ORDER', BusinessTab.avgOrder),
         ],
       ),
     );
@@ -82,7 +86,9 @@ class _BusinessPerformanceCardState extends State<BusinessPerformanceCard> {
         decoration: BoxDecoration(
           color: isActive ? const Color(0xFF2E5E3A) : Colors.transparent,
           borderRadius: BorderRadius.circular(7),
-          border: isActive ? Border.all(color: Colors.white24, width: 0.5) : null,
+          border: isActive
+              ? Border.all(color: Colors.white24, width: 0.5)
+              : null,
         ),
         child: Text(
           label,
