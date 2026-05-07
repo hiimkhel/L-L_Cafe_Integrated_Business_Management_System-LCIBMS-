@@ -27,4 +27,14 @@ class ReviewService {
   static Future<void> delete(String id) async {
     await http.delete(Uri.parse('$baseUrl/reviews/$id'));
   }
+
+  static Future<void> republish(String id) async {
+    final res = await http.patch(
+      Uri.parse('$baseUrl/reviews/$id/republish'),
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception('Failed to republish review');
+    }
+  }
 }

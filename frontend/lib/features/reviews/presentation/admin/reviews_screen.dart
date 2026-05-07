@@ -55,6 +55,8 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
     }
   }
 
+
+
   // ── Filtering + sorting ───────────────────────────────────────────────────
   List<ReviewModel> get _visible {
     List<ReviewModel> list = List.from(_all);
@@ -92,6 +94,26 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
       if (i != -1) _all[i] = _all[i].copyWith(status: ReviewStatus.published);
     });
     _showSnack('Review published', Icons.check_circle_outline_rounded, _green1);
+  }
+
+  Future<void> _republish(ReviewModel r) async {
+    await ReviewService.republish(r.id);
+
+    setState(() {
+      final i = _all.indexWhere((x) => x.id == r.id);
+
+      if (i != -1) {
+        _all[i] = _all[i].copyWith(
+          status: ReviewStatus.published,
+        );
+      }
+    });
+
+    _showSnack(
+      'Review re-published',
+      Icons.refresh_rounded,
+      _green1,
+    );
   }
 
   Future<void> _archive(ReviewModel r) async {
@@ -314,6 +336,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
         onPublish: () => _publish(items[i]),
         onArchive: () => _archive(items[i]),
         onDelete:  () => _confirmDelete(items[i]),
+        onRepublish: () => _republish(items[i])
       ),
     );
   }
@@ -328,12 +351,14 @@ class _ReviewCard extends StatelessWidget {
   final VoidCallback onPublish;
   final VoidCallback onArchive;
   final VoidCallback onDelete;
+  final VoidCallback onRepublish;
 
   const _ReviewCard({
     required this.review,
     required this.onPublish,
     required this.onArchive,
     required this.onDelete,
+    required this.onRepublish
   });
 
   @override
