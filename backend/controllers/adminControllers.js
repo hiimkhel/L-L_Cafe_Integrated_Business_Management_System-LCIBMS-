@@ -386,6 +386,58 @@ const deleteReview = async (req, res) => {
     }
 }
 
+const republishReview = async (req, res) => {
+  try {
+    // Retrieve review ID
+    const { id } = req.params;
+
+    // Validate ID
+    if (!id) {
+      return res.status(400).json({
+        error: "Id parameter is required!"
+      });
+    }
+
+    // Check if review exists
+    const [rows] = await db.query(
+      "SELECT status FROM reviews WHERE id = ?",
+      [id]
+    );
+
+    // Review not found
+    if (!rows.length) {
+      return res.status(404).json({
+        message: "Customer review not found!"
+      });
+    }
+
+    const currentStatus = rows[0].status;
+
+    // Only archived reviews can be re-published
+    if (currentStatus !== 'archived') {
+      return res.status(400).json({
+        message: "Only archived reviews can be re-published"
+      });
+    }
+
+    // Update status
+    await db.query(
+      "UPDATE reviews SET status = ? WHERE id = ?",
+      ['published', id]
+    );
+
+    return res.status(200).json({
+      message: "Review re-published successfully!",
+      status: "published"
+    });
+
+  } catch (err) {
+    return res.status(500).json({
+      error: err.message
+    });
+  }
+};
+
 module.exports = { fetchAllCustomer, 
     fetchMenuItems,
     fetchMenuCategories,
@@ -397,5 +449,6 @@ module.exports = { fetchAllCustomer,
     getCustomerReviews,
     publishReview,
     archiveReview, 
-    deleteReview
+    deleteReview,
+    republishReview
  };

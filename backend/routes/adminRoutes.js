@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { fetchAllCustomer, fetchMenuItems, fetchMenuCategories,
-    addMenuCategory, addMenuItem, deleteMenuItem, getItemById, updateMenuItem, getCustomerReviews, publishReview, archiveReview, deleteReview
+    addMenuCategory, addMenuItem, deleteMenuItem, getItemById, updateMenuItem, getCustomerReviews, publishReview, archiveReview, deleteReview, republishReview
  } = require("../controllers/adminControllers.js");
 
 router.get("/customers", fetchAllCustomer);
@@ -25,6 +25,7 @@ router.get("/reviews", getCustomerReviews);
 router.patch("/reviews/:id/publish", publishReview);
 router.patch("/reviews/:id/archive", archiveReview);
 router.delete("/reviews/:id", deleteReview);
+router.patch("/reviews/:id/republish", republishReview);
 
 
 module.exports = router;
