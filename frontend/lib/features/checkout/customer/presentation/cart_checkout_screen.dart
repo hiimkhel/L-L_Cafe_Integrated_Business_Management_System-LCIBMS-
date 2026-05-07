@@ -225,13 +225,14 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
     setState(() => _isLoading = false);
 
     if (ok) {
-      // ✅ Clear cart FIRST so badge resets to 0 everywhere immediately
+
       CartProvider.of(context).clear();
-      // ✅ Then show success popup
+
       _showSuccessDialog();
     } else {
       _snack('Failed to place order. Please try again.', error: true);
     }
+    
   }
 
   void _snack(String msg, {bool error = false}) {
@@ -244,7 +245,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
     ));
   }
 
-  // ── ✅ Success popup — shown immediately after cart is cleared ────────────
+
   void _showSuccessDialog() {
     showDialog(
       context: context,
@@ -282,7 +283,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
             children: [
               CustomerNavbar(
                 activeRoute: '/cart',
-                // ✅ Live count — will show 0 after cart is cleared
+
                 cartCount: cart.totalCount,
                 notifCount: 1,
                 onCart:    () {},
@@ -816,7 +817,7 @@ class _SuccessDialog extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                     decoration: BoxDecoration(
-                      // ✅ Uses primary green for the summary block
+                  
                       color: _kPrimary,
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -826,7 +827,7 @@ class _SuccessDialog extends StatelessWidget {
                             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700,
                                 letterSpacing: 1, color: _kWhite.withOpacity(0.7))),
                         Text('₱${total.toStringAsFixed(2)}',
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: _kSecondary)),
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: _kWhite)),
                       ]),
                       const SizedBox(height: 8),
                       Divider(color: _kWhite.withOpacity(0.15), height: 1),
@@ -838,13 +839,13 @@ class _SuccessDialog extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: _kSecondary,
+                            color: _kWhite,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             isDelivery ? 'DELIVERY' : 'PICKUP',
                             style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800,
-                                color: _kWhite, letterSpacing: 0.8),
+                                color: _kPrimary, letterSpacing: 0.8),
                           ),
                         ),
                       ]),
@@ -885,7 +886,10 @@ class _SuccessDialog extends StatelessWidget {
                   GestureDetector(
                     onTap: onContinue,
                     child: Text('Continue Shopping',
-                        style: TextStyle(fontSize: 12, color: _kDark.withOpacity(0.4), fontWeight: FontWeight.w600)),
+                        style: TextStyle(fontSize: 12, color: _kDark.withOpacity(0.4), 
+                          fontWeight: FontWeight.w600, 
+                          decoration: TextDecoration.underline,
+                          decorationColor: _kDark.withOpacity(0.4),)),
                   ),
                 ]),
               ),

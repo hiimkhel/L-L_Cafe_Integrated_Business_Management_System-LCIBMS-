@@ -4,7 +4,7 @@ class CartItem {
   final String category;
   final double price;
   final double originalPrice;
-  final String imageUrl; // <-- Added this so CartProvider works perfectly!
+  final String imageUrl;
   int quantity;
 
   CartItem({
@@ -17,7 +17,6 @@ class CartItem {
     this.quantity = 1,
   });
 }
-
 class Order {
   final String id;
   final List<CartItem> items;

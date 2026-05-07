@@ -6,6 +6,7 @@ import 'package:frontend/core/widgets/customer_footer.dart';
 import 'package:frontend/core/constants/cart_provider.dart';
 import 'package:frontend/core/services/customer/menu_service.dart';
 import 'package:frontend/core/models/menu_item.dart';
+import 'package:frontend/core/constants/cart_item.dart';
 import 'package:frontend/core/widgets/bamboo_background.dart';
 import 'package:frontend/core/constants/cart_item.dart';
 
