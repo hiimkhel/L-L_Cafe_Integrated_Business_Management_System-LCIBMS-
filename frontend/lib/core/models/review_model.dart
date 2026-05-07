@@ -9,6 +9,7 @@ class ReviewModel {
   final double rating;
   final ReviewStatus status;
   final String? avatarUrl;
+  
 
   ReviewModel({
     required this.id,
@@ -34,14 +35,17 @@ class ReviewModel {
 
   factory ReviewModel.fromJson(Map<String, dynamic> e) {
     return ReviewModel(
-      id: e['id'].toString(),
-      customerId: '#${e['user_id']}',
-      customerName: e['customer_name'],
-      submittedAt: DateTime.parse(e['created_at']),
-      content: e['review_text'],
-      rating: (e['rating'] as num).toDouble(),
-      status: _mapStatus(e['status']),
-      avatarUrl: e['profile_picture'],
+      id: e['id']?.toString() ?? '',
+      customerId: e['user_id']?.toString() ?? '',
+      customerName: e['customer_name']?.toString() ?? 'Anonymous',
+      submittedAt: DateTime.tryParse(
+            e['submitted_at']?.toString() ?? '',
+          ) ??
+          DateTime.now(),
+      content: e['content']?.toString() ?? '',
+      rating: (e['rating'] as num?)?.toDouble() ?? 0.0,
+      status: ReviewStatus.published,
+      avatarUrl: e['profile_picture']?.toString(),
     );
   }
 
