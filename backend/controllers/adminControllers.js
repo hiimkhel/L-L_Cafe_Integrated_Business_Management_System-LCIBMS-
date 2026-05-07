@@ -362,6 +362,29 @@ const archiveReview = async (req, res) => {
     }
 }
 
+const deleteReview = async (req, res) => {
+    try{
+        // Retrieve review id
+        const {id} = req.params;
+
+        // Error Handling
+        if(!id) return res.status(400).json({error: "Id parameter is required!"})
+
+        // Store review data
+        const [row] = await db.query("SELECT status FROM reviews WHERE id = ?", [id]);
+
+        // Check existence
+        if(!row.length) return res.status(404).json({message: "Customer Review not found!"})
+        
+        // Check status if valid for republishing   
+        await db.query("DELETE FROM reviews WHERE id = ?", [id])
+
+        return res.status(200).json({message: "Review deleted successfully!"})
+        
+    }catch(err){
+        return res.status(500).json({error: err.message})
+    }
+}
 
 module.exports = { fetchAllCustomer, 
     fetchMenuItems,
@@ -373,5 +396,6 @@ module.exports = { fetchAllCustomer,
     updateMenuItem,
     getCustomerReviews,
     publishReview,
-    archiveReview
+    archiveReview, 
+    deleteReview
  };
