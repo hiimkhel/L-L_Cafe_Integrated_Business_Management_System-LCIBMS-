@@ -699,7 +699,6 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
 
         const SizedBox(height: 18),
 
-        // ✅ Confirm Order button — gold on green, validates then shows success popup
         SizedBox(
           width: double.infinity,
           height: 52,

@@ -33,25 +33,82 @@ class LandingMenuItem {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DATA
+// DATA  — asset paths match EXACTLY what is in assets/images/
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Hero collage: left card = pasta dish, right card = kitkat waffle
+// These match your actual files: hero_pasta.png + hero_kitkat_waffle.png
+const _heroImageAssets = <String>[
+  'assets/images/hero_pasta.png',
+  'assets/images/hero_nutella_frappe.png',
+];
+
+// Gallery carousel: exterior → notes wall → neon sign
+const _gallerySlots = <String>[
+  'assets/images/gallery_exterior.png',
+  'assets/images/gallery_notes_wall.png',
+  'assets/images/gallery_neon_sign.png',
+];
+
+// Best sellers (last 4 images you sent — images 10-13)
 const _bestSellers = <LandingMenuItem>[
-  LandingMenuItem(id: 'ms-1', name: 'Nutella Frappe',       price: '₱120.00'),
-  LandingMenuItem(id: 'ms-2', name: 'Red Velvet Frappe',    price: '₱150.00'),
-  LandingMenuItem(id: 'ms-3', name: "S'mores",              price: '₱110.00'),
-  LandingMenuItem(id: 'ms-4', name: 'Biscoff (non-coffee)', price: '₱180.00'),
+  LandingMenuItem(
+    id: 'ms-1',
+    name: 'Nutella Frappe',
+    price: '₱120.00',
+    imageAsset: 'assets/images/best_nutella_frappe.png',
+  ),
+  LandingMenuItem(
+    id: 'ms-2',
+    name: 'Red Velvet Frappe',
+    price: '₱150.00',
+    imageAsset: 'assets/images/best_redvelvet_frappe.png',
+  ),
+  LandingMenuItem(
+    id: 'ms-3',
+    name: "S'mores Waffle",
+    price: '₱110.00',
+    imageAsset: 'assets/images/best_waffle.png',
+  ),
+  LandingMenuItem(
+    id: 'ms-4',
+    name: 'Biscoff Frappe',
+    price: '₱180.00',
+    imageAsset: 'assets/images/best_biscoff_frappe.png',
+  ),
 ];
 
+// Seasonal favorites (images 6-9)
 const _seasonal = <LandingMenuItem>[
-  LandingMenuItem(id: 'sf-1', name: 'Hot Garlic Butter Chicken', price: '₱180.00', badge: 'SEASONAL'),
-  LandingMenuItem(id: 'sf-2', name: 'Korean BBQ Wings',          price: '₱180.00', badge: 'SEASONAL'),
-  LandingMenuItem(id: 'sf-3', name: 'Dick Waffle',               price: '₱180.00', badge: 'SEASONAL'),
-  LandingMenuItem(id: 'sf-4', name: 'Habanero Mango',            price: '₱180.00', badge: 'SEASONAL'),
+  LandingMenuItem(
+    id: 'sf-1',
+    name: 'Hot Garlic Butter Chicken',
+    price: '₱180.00',
+    badge: 'SEASONAL',
+    imageAsset: 'assets/images/seasonal_garlic_wings.png',
+  ),
+  LandingMenuItem(
+    id: 'sf-2',
+    name: 'Korean BBQ Wings',
+    price: '₱180.00',
+    badge: 'SEASONAL',
+    imageAsset: 'assets/images/seasonal_korean_bbq.png',
+  ),
+  LandingMenuItem(
+    id: 'sf-3',
+    name: 'Dick Waffle',
+    price: '₱180.00',
+    badge: 'SEASONAL',
+    imageAsset: 'assets/images/seasonal_dick_waffle.png',
+  ),
+  LandingMenuItem(
+    id: 'sf-4',
+    name: 'Habanero Mango',
+    price: '₱180.00',
+    badge: 'SEASONAL',
+    imageAsset: 'assets/images/seasonal_habanero_mango.png',
+  ),
 ];
-
-const _gallerySlots = <String?>[null, null, null];
-const _heroImageAssets = <String?>[null, null];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SCREEN
@@ -111,7 +168,6 @@ Future<void> _loadReviews() async {
 
   @override
   Widget build(BuildContext context) {
-    // ── Navigate to login screen ─────────────────────────────────────────
     void goLogin() => Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => LoginScreen(onLogin: widget.onLogin)));
@@ -121,19 +177,12 @@ Future<void> _loadReviews() async {
         MaterialPageRoute(
             builder: (_) => RegisterScreen(onRegister: widget.onRegister)));
 
-    // ✅ FIX: BROWSE MENU → open MenuScreen in guest mode.
-    // onLoginRequired uses pushReplacement INSIDE MenuScreen's own context
-    // (passed via the builder) so we never touch the potentially-stale
-    // landing context after the route transition. This avoids the
-    // "_elements.contains(element) is not true" assertion.
     void goGuestMenu() => Navigator.push(
         context,
         MaterialPageRoute(
           builder: (menuContext) => MenuScreen(
             isGuest: true,
             onLoginRequired: () {
-              // pushReplacement swaps MenuScreen → LoginScreen in one step.
-              // No pop() needed — no stale context touched.
               Navigator.of(menuContext).pushReplacement(
                 MaterialPageRoute(
                   builder: (_) => LoginScreen(
@@ -174,31 +223,24 @@ Future<void> _loadReviews() async {
       ),
       body: Stack(
         children: [
-          // ── Full-page animated bamboo stripe background ──────────────────
           const BambooBackground(),
-
-          // ── Scrollable content ───────────────────────────────────────────
           SingleChildScrollView(
             child: Column(
               children: [
                 Center(
                   child: ConstrainedBox(
-                    constraints:
-                        const BoxConstraints(maxWidth: _kDesktopMaxWidth),
+                    constraints: const BoxConstraints(maxWidth: _kDesktopMaxWidth),
                     child: Column(children: [
-                      // Hero "BROWSE MENU" → guest MenuScreen
                       _HeroSection(onBrowse: goGuestMenu),
                       _HighlightsBar(),
                       _GalleryCarousel(slots: _gallerySlots),
                       _WhyUsSection(),
-                      // "SEE ALL" → guest MenuScreen (browsing is free)
                       _MenuGrid(
                         title: 'BEST SELLERS',
                         cta: 'SEE ALL',
                         items: _bestSellers,
                         onCtaTap: goGuestMenu,
                       ),
-                      // "REGISTER TO ORDER" → register screen
                       _MenuGrid(
                         title: 'SEASONAL FAVORITES',
                         cta: 'REGISTER TO ORDER',
@@ -230,7 +272,6 @@ Future<void> _loadReviews() async {
   }
 }
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // HERO SECTION
 // ─────────────────────────────────────────────────────────────────────────────
@@ -246,8 +287,7 @@ class _HeroSection extends StatelessWidget {
       final ph = isMobile ? 20.0 : 75.0;
       return Container(
         width: double.infinity,
-        padding: EdgeInsets.fromLTRB(
-            ph, isMobile ? 32 : 64, ph, isMobile ? 32 : 72),
+        padding: EdgeInsets.fromLTRB(ph, isMobile ? 32 : 64, ph, isMobile ? 32 : 72),
         child: isMobile
             ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 _HeroText(onBrowse: onBrowse, isMobile: true),
@@ -282,12 +322,10 @@ class _HeroText extends StatelessWidget {
       children: [
         if (!isMobile) ...[
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 22, vertical: 11),
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 11),
             decoration: BoxDecoration(
               color: AppColors.primary.withOpacity(0.45),
-              border:
-                  Border.all(color: AppColors.primary.withOpacity(0.35)),
+              border: Border.all(color: AppColors.primary.withOpacity(0.35)),
               borderRadius: BorderRadius.circular(100),
             ),
             child: const Text('ESTABLISHED 2020',
@@ -333,8 +371,7 @@ class _HeroText extends StatelessWidget {
           onTap: onBrowse,
           child: Container(
             padding: EdgeInsets.symmetric(
-                horizontal: isMobile ? 28 : 40,
-                vertical: isMobile ? 14 : 22),
+                horizontal: isMobile ? 28 : 40, vertical: isMobile ? 14 : 22),
             decoration: BoxDecoration(
               color: AppColors.secondary,
               borderRadius: BorderRadius.circular(20),
@@ -357,7 +394,7 @@ class _HeroText extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HERO COLLAGE
+// HERO COLLAGE  — semi-transparent green highlight tabs + real food images
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _HeroCollage extends StatelessWidget {
@@ -372,16 +409,11 @@ class _HeroCollage extends StatelessWidget {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _HeroCard(
-                w: w, h: w * 1.3, isTabRight: true, asset: _heroImageAssets[0]),
+            _HeroCard(w: w, h: w * 1.3, isTabRight: true,  asset: _heroImageAssets[0]),
             const SizedBox(width: 16),
             Padding(
               padding: const EdgeInsets.only(top: 40),
-              child: _HeroCard(
-                  w: w,
-                  h: w * 1.3,
-                  isTabRight: false,
-                  asset: _heroImageAssets[1]),
+              child: _HeroCard(w: w, h: w * 1.3, isTabRight: false, asset: _heroImageAssets[1]),
             ),
           ],
         );
@@ -392,16 +424,12 @@ class _HeroCollage extends StatelessWidget {
       height: 440,
       child: Stack(clipBehavior: Clip.none, children: [
         Positioned(
-          left: 0,
-          top: 0,
-          child: _HeroCard(
-              w: 230, h: 360, isTabRight: true, asset: _heroImageAssets[0]),
+          left: 0, top: 0,
+          child: _HeroCard(w: 230, h: 360, isTabRight: true,  asset: _heroImageAssets[0]),
         ),
         Positioned(
-          right: 0,
-          top: 80,
-          child: _HeroCard(
-              w: 230, h: 360, isTabRight: false, asset: _heroImageAssets[1]),
+          right: 0, top: 80,
+          child: _HeroCard(w: 230, h: 360, isTabRight: false, asset: _heroImageAssets[1]),
         ),
       ]),
     );
@@ -411,51 +439,80 @@ class _HeroCollage extends StatelessWidget {
 class _HeroCard extends StatelessWidget {
   final double w, h;
   final bool isTabRight;
-  final String? asset;
+  final String asset;
 
-  const _HeroCard(
-      {required this.w,
-      required this.h,
-      required this.isTabRight,
-      this.asset});
+  const _HeroCard({
+    required this.w,
+    required this.h,
+    required this.isTabRight,
+    required this.asset,
+  });
 
   @override
   Widget build(BuildContext context) {
     final tabWidth = w * 0.20;
     final imgWidth = w - tabWidth;
+
     return Container(
       width: w,
       height: h,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         boxShadow: const [
-          BoxShadow(
-              color: Color(0x14000000),
-              blurRadius: 20,
-              offset: Offset(0, 10))
+          BoxShadow(color: Color(0x22000000), blurRadius: 24, offset: Offset(0, 12))
         ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),
         child: Row(
           children: [
+            // ── Left green accent tab (semi-transparent) ──
             if (!isTabRight)
               Container(
-                  width: tabWidth, height: h, color: AppColors.secondary),
-            Container(
+                width: tabWidth,
+                height: h,
+                color: AppColors.secondary.withOpacity(0.72),
+              ),
+
+            // ── Photo area with subtle green tint ──
+            SizedBox(
               width: imgWidth,
               height: h,
-              color: AppColors.primary.withOpacity(0.08),
-              child: asset != null
-                  ? Image.asset(asset!, fit: BoxFit.cover)
-                  : Center(
-                      child: Icon(Icons.image_outlined,
-                          color: AppColors.primary.withOpacity(0.2),
-                          size: 40)),
+              child: Stack(fit: StackFit.expand, children: [
+                Image.asset(
+                  asset,
+                  fit: BoxFit.cover,
+                  // Graceful fallback if path is wrong during dev
+                  errorBuilder: (_, __, ___) => Container(
+                    color: AppColors.primary.withOpacity(0.1),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.image_outlined,
+                              color: AppColors.primary.withOpacity(0.3), size: 36),
+                          const SizedBox(height: 6),
+                          Text(asset.split('/').last,
+                              style: TextStyle(
+                                  fontSize: 9,
+                                  color: AppColors.primary.withOpacity(0.4))),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // Very subtle warm green tint so photo doesn't look raw
+                Container(color: AppColors.secondary.withOpacity(0.08)),
+              ]),
             ),
+
+            // ── Right green accent tab (semi-transparent) ──
             if (isTabRight)
               Container(
-                  width: tabWidth, height: h, color: AppColors.secondary),
+                width: tabWidth,
+                height: h,
+                color: AppColors.secondary.withOpacity(0.72),
+              ),
           ],
         ),
       ),
@@ -468,12 +525,7 @@ class _HeroCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _HighlightsBar extends StatelessWidget {
-  static const _items = [
-    'Open Daily',
-    'Free Wifi',
-    'Made with Love',
-    'Cozy Atmosphere'
-  ];
+  static const _items = ['Open Daily', 'Free Wifi', 'Made with Love', 'Cozy Atmosphere'];
 
   @override
   Widget build(BuildContext context) {
@@ -481,8 +533,7 @@ class _HighlightsBar extends StatelessWidget {
       final isMobile = c.maxWidth < _kMobile;
       return Container(
         margin: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 75),
-        padding: EdgeInsets.symmetric(
-            horizontal: 16, vertical: isMobile ? 8 : 10),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: isMobile ? 8 : 10),
         decoration: BoxDecoration(
           color: AppColors.background,
           border: Border.all(color: AppColors.primary),
@@ -492,29 +543,24 @@ class _HighlightsBar extends StatelessWidget {
           alignment: WrapAlignment.center,
           spacing: isMobile ? 8 : 14,
           runSpacing: 4,
-          children: _items
-              .asMap()
-              .entries
-              .map((e) => Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (e.key > 0) ...[
-                        Container(
-                            width: isMobile ? 5 : 7,
-                            height: isMobile ? 5 : 7,
-                            decoration: BoxDecoration(
-                                color: AppColors.primary,
-                                shape: BoxShape.circle)),
-                        SizedBox(width: isMobile ? 6 : 12),
-                      ],
-                      Text(e.value,
-                          style: TextStyle(
-                              fontFamily: 'Urbanist',
-                              fontSize: isMobile ? 11 : 15,
-                              color: AppColors.primary)),
-                    ],
-                  ))
-              .toList(),
+          children: _items.asMap().entries.map((e) => Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (e.key > 0) ...[
+                Container(
+                    width: isMobile ? 5 : 7,
+                    height: isMobile ? 5 : 7,
+                    decoration: BoxDecoration(
+                        color: AppColors.primary, shape: BoxShape.circle)),
+                SizedBox(width: isMobile ? 6 : 12),
+              ],
+              Text(e.value,
+                  style: TextStyle(
+                      fontFamily: 'Urbanist',
+                      fontSize: isMobile ? 11 : 15,
+                      color: AppColors.primary)),
+            ],
+          )).toList(),
         ),
       );
     });
@@ -522,11 +568,11 @@ class _HighlightsBar extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GALLERY CAROUSEL
+// GALLERY CAROUSEL  — real cafe photos
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _GalleryCarousel extends StatefulWidget {
-  final List<String?> slots;
+  final List<String> slots;
   const _GalleryCarousel({required this.slots});
 
   @override
@@ -541,11 +587,11 @@ class _GalleryCarouselState extends State<_GalleryCarousel> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 3), (_) {
+    _timer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted) return;
       final next = (_current + 1) % widget.slots.length;
       _ctrl.animateToPage(next,
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeInOut);
+          duration: const Duration(milliseconds: 600), curve: Curves.easeInOut);
     });
   }
 
@@ -563,14 +609,13 @@ class _GalleryCarouselState extends State<_GalleryCarousel> {
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (_, c) {
       final isMobile = c.maxWidth < _kMobile;
-      final imgH = isMobile ? 220.0 : 485.0;
+      final imgH = isMobile ? 240.0 : 520.0;
 
       return Padding(
         padding: EdgeInsets.only(top: isMobile ? 28 : 64),
         child: Column(children: [
           Padding(
-            padding:
-                EdgeInsets.symmetric(horizontal: isMobile ? 20 : 75),
+            padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 75),
             child: RichText(
               textAlign: TextAlign.center,
               text: TextSpan(children: [
@@ -600,47 +645,42 @@ class _GalleryCarouselState extends State<_GalleryCarousel> {
                 itemCount: widget.slots.length,
                 onPageChanged: (i) => setState(() => _current = i),
                 itemBuilder: (_, i) {
-                  final asset = widget.slots[i];
                   return Padding(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: isMobile ? 20 : 75),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                            color: Colors.white.withOpacity(0.6),
-                            width: 6),
-                        boxShadow: const [
-                          BoxShadow(
-                              color: Color(0x26000000),
-                              blurRadius: 50,
-                              offset: Offset(0, 25))
-                        ],
-                      ),
-                      child: asset != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(14),
-                              child:
-                                  Image.asset(asset, fit: BoxFit.cover))
-                          : Center(
+                    padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 75),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Stack(fit: StackFit.expand, children: [
+                        Image.asset(
+                          widget.slots[i],
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: AppColors.primary.withOpacity(0.1),
+                            child: Center(
                               child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                    Icons.add_photo_alternate_outlined,
-                                    color: AppColors.primary
-                                        .withOpacity(0.28),
-                                    size: 48),
-                                const SizedBox(height: 8),
-                                Text('Gallery Image ${i + 1}',
-                                    style: TextStyle(
-                                        fontFamily: 'Urbanist',
-                                        fontSize: 13,
-                                        color: AppColors.primary
-                                            .withOpacity(0.4))),
-                              ],
-                            )),
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.add_photo_alternate_outlined,
+                                      color: AppColors.primary.withOpacity(0.3),
+                                      size: 48),
+                                  const SizedBox(height: 8),
+                                  Text(widget.slots[i].split('/').last,
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppColors.primary.withOpacity(0.4))),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        // White border frame overlay
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                                color: Colors.white.withOpacity(0.5), width: 5),
+                          ),
+                        ),
+                      ]),
                     ),
                   );
                 },
@@ -658,15 +698,13 @@ class _GalleryCarouselState extends State<_GalleryCarousel> {
                 top: imgH / 2 - 22,
                 child: _ChevronBtn(
                     icon: Icons.chevron_right,
-                    onTap: () => _go(
-                        (_current + 1) % widget.slots.length)),
+                    onTap: () => _go((_current + 1) % widget.slots.length)),
               ),
             ]),
           ),
           const SizedBox(height: 16),
           Padding(
-            padding: EdgeInsets.symmetric(
-                horizontal: isMobile ? 20 : 120),
+            padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 120),
             child: Text(
                 'From handcrafted beverages to freshly prepared meals, every corner of L&L Cafe is designed to bring comfort, flavor, and connection.',
                 textAlign: TextAlign.center,
@@ -719,10 +757,7 @@ class _ChevronBtn extends StatelessWidget {
           color: Colors.white.withOpacity(0.85),
           shape: BoxShape.circle,
           boxShadow: const [
-            BoxShadow(
-                color: Color(0x1A000000),
-                blurRadius: 8,
-                offset: Offset(0, 4))
+            BoxShadow(color: Color(0x1A000000), blurRadius: 8, offset: Offset(0, 4))
           ],
         ),
         child: Icon(icon, color: AppColors.primary, size: 22),
@@ -763,16 +798,10 @@ class _WhyUsSection extends StatelessWidget {
                 final cardW = (cc.maxWidth - 40) / 3;
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: _cards
-                      .asMap()
-                      .entries
-                      .map((e) => Row(children: [
-                            if (e.key > 0) const SizedBox(width: 20),
-                            SizedBox(
-                                width: cardW,
-                                child: _WhyCard(data: e.value)),
-                          ]))
-                      .toList(),
+                  children: _cards.asMap().entries.map((e) => Row(children: [
+                    if (e.key > 0) const SizedBox(width: 20),
+                    SizedBox(width: cardW, child: _WhyCard(data: e.value)),
+                  ])).toList(),
                 );
               }),
       );
@@ -798,10 +827,7 @@ class _WhyCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppColors.primary.withOpacity(0.06)),
         boxShadow: const [
-          BoxShadow(
-              color: Color(0x0A000000),
-              blurRadius: 15,
-              offset: Offset(0, 8))
+          BoxShadow(color: Color(0x0A000000), blurRadius: 15, offset: Offset(0, 8))
         ],
       ),
       child: Column(
@@ -811,8 +837,7 @@ class _WhyCard extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-                color: AppColors.secondary,
-                borderRadius: BorderRadius.circular(12)),
+                color: AppColors.secondary, borderRadius: BorderRadius.circular(12)),
             child: Center(
                 child: Text(data.number,
                     style: const TextStyle(
@@ -913,8 +938,7 @@ class _MenuGrid extends StatelessWidget {
                               letterSpacing: 2.5,
                               color: AppColors.primary)),
                       const SizedBox(width: 4),
-                      Icon(Icons.chevron_right,
-                          size: 16, color: AppColors.primary),
+                      Icon(Icons.chevron_right, size: 16, color: AppColors.primary),
                     ]),
                   ),
                 ],
@@ -928,9 +952,7 @@ class _MenuGrid extends StatelessWidget {
               return Wrap(
                   spacing: gap,
                   runSpacing: gap,
-                  children: items
-                      .map((i) => _MenuTile(item: i, width: cardW))
-                      .toList());
+                  children: items.map((i) => _MenuTile(item: i, width: cardW)).toList());
             }),
           ],
         ),
@@ -953,19 +975,27 @@ class _MenuTile extends StatelessWidget {
         children: [
           AspectRatio(
             aspectRatio: 1,
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(22),
-              ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(22),
               child: item.imageAsset != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(22),
-                      child: Image.asset(item.imageAsset!, fit: BoxFit.cover))
-                  : Center(
-                      child: Icon(Icons.add_photo_alternate_outlined,
-                          color: AppColors.primary.withOpacity(0.22),
-                          size: 28)),
+                  ? Image.asset(
+                      item.imageAsset!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: AppColors.primary.withOpacity(0.08),
+                        child: Center(
+                          child: Icon(Icons.add_photo_alternate_outlined,
+                              color: AppColors.primary.withOpacity(0.22), size: 28),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      color: AppColors.primary.withOpacity(0.08),
+                      child: Center(
+                        child: Icon(Icons.add_photo_alternate_outlined,
+                            color: AppColors.primary.withOpacity(0.22), size: 28),
+                      ),
+                    ),
             ),
           ),
           const SizedBox(height: 10),
@@ -1065,8 +1095,7 @@ class _ReviewsSectionState extends State<_ReviewsSection> {
                           left: true,
                           disabled: _current == 0,
                           onTap: () {
-                            setState(() =>
-                                _current = math.max(0, _current - 1));
+                            setState(() => _current = math.max(0, _current - 1));
                             _ctrl.animateToPage(_current,
                                 duration: const Duration(milliseconds: 400),
                                 curve: Curves.easeInOut);
@@ -1074,11 +1103,10 @@ class _ReviewsSectionState extends State<_ReviewsSection> {
                       const SizedBox(width: 10),
                       _Arr(
                           left: false,
-                          disabled:
-                              _current == widget.reviews.length - 1,
+                          disabled: _current == widget.reviews.length - 1,
                           onTap: () {
-                            setState(() => _current = math.min(
-                                widget.reviews.length - 1, _current + 1));
+                            setState(() => _current =
+                                math.min(widget.reviews.length - 1, _current + 1));
                             _ctrl.animateToPage(_current,
                                 duration: const Duration(milliseconds: 400),
                                 curve: Curves.easeInOut);
@@ -1094,8 +1122,7 @@ class _ReviewsSectionState extends State<_ReviewsSection> {
                     child: PageView.builder(
                       controller: _ctrl,
                       itemCount: widget.reviews.length,
-                      onPageChanged: (i) =>
-                          setState(() => _current = i),
+                      onPageChanged: (i) => setState(() => _current = i),
                       itemBuilder: (_, i) => Padding(
                           padding: const EdgeInsets.only(right: 12),
                           child: _RevCard(r: widget.reviews[i])),
@@ -1104,8 +1131,7 @@ class _ReviewsSectionState extends State<_ReviewsSection> {
                 : LayoutBuilder(builder: (_, cc) {
                     final cols = cc.maxWidth > 700 ? 3 : 1;
                     const gap = 20.0;
-                    final cardW =
-                        (cc.maxWidth - gap * (cols - 1)) / cols;
+                    final cardW = (cc.maxWidth - gap * (cols - 1)) / cols;
                     return Wrap(
                         spacing: gap,
                         runSpacing: gap,
@@ -1155,17 +1181,12 @@ class _Arr extends StatelessWidget {
           border: Border.all(color: AppColors.primary.withOpacity(0.2)),
           borderRadius: BorderRadius.circular(14),
           boxShadow: const [
-            BoxShadow(
-                color: Color(0x12000000),
-                blurRadius: 5,
-                offset: Offset(0, 3))
+            BoxShadow(color: Color(0x12000000), blurRadius: 5, offset: Offset(0, 3))
           ],
         ),
         child: Icon(
             left ? Icons.chevron_left : Icons.chevron_right,
-            color: disabled
-                ? AppColors.primary.withOpacity(0.3)
-                : AppColors.primary,
+            color: disabled ? AppColors.primary.withOpacity(0.3) : AppColors.primary,
             size: 20),
       ),
     );
@@ -1187,10 +1208,7 @@ class _RevCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: AppColors.primary.withOpacity(0.05)),
         boxShadow: const [
-          BoxShadow(
-              color: Color(0x12000000),
-              blurRadius: 10,
-              offset: Offset(0, 5))
+          BoxShadow(color: Color(0x12000000), blurRadius: 10, offset: Offset(0, 5))
         ],
       ),
       child: Column(
@@ -1228,8 +1246,7 @@ class _RevCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
                 border: Border(
-                    top: BorderSide(
-                        color: AppColors.primary.withOpacity(0.1)))),
+                    top: BorderSide(color: AppColors.primary.withOpacity(0.1)))),
             child: Row(children: [
               Container(
                 width: 34,
@@ -1303,11 +1320,9 @@ class _Newsletter extends StatelessWidget {
       final isMobile = c.maxWidth < _kMobile;
       final ph = isMobile ? 20.0 : 75.0;
       return Container(
-        margin: EdgeInsets.fromLTRB(
-            ph, isMobile ? 32 : 72, ph, isMobile ? 32 : 72),
+        margin: EdgeInsets.fromLTRB(ph, isMobile ? 32 : 72, ph, isMobile ? 32 : 72),
         padding: EdgeInsets.symmetric(
-            horizontal: isMobile ? 24 : 64,
-            vertical: isMobile ? 40 : 64),
+            horizontal: isMobile ? 24 : 64, vertical: isMobile ? 40 : 64),
         decoration: BoxDecoration(
           color: AppColors.secondary,
           borderRadius: BorderRadius.circular(28),
@@ -1344,16 +1359,13 @@ class _Newsletter extends StatelessWidget {
             Expanded(
               child: Container(
                 height: 52,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.15),
-                    border: Border.all(
-                        color: Colors.white.withOpacity(0.3)),
+                    border: Border.all(color: Colors.white.withOpacity(0.3)),
                     borderRadius: BorderRadius.circular(14)),
                 child: const TextField(
-                  style:
-                      TextStyle(color: Colors.white, fontSize: 13),
+                  style: TextStyle(color: Colors.white, fontSize: 13),
                   decoration: InputDecoration(
                     hintText: 'ENTER EMAIL ADDRESS',
                     hintStyle: TextStyle(
@@ -1364,8 +1376,7 @@ class _Newsletter extends StatelessWidget {
                         letterSpacing: 1),
                     border: InputBorder.none,
                     isDense: true,
-                    contentPadding:
-                        EdgeInsets.symmetric(vertical: 14),
+                    contentPadding: EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
               ),
@@ -1373,14 +1384,12 @@ class _Newsletter extends StatelessWidget {
             const SizedBox(width: 12),
             Container(
               height: 52,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: const [
-                    BoxShadow(
-                        color: Color(0x1A000000), blurRadius: 10)
+                    BoxShadow(color: Color(0x1A000000), blurRadius: 10)
                   ]),
               child: Center(
                   child: Text('JOIN NOW',
