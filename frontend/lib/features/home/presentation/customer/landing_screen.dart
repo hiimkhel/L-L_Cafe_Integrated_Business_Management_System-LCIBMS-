@@ -110,9 +110,6 @@ const _seasonal = <LandingMenuItem>[
   ),
 ];
 
-const _gallerySlots = <String?>[null, null, null];
-const _heroImageAssets = <String?>[null, null];
-
 // ─────────────────────────────────────────────────────────────────────────────
 // SCREEN
 // ─────────────────────────────────────────────────────────────────────────────

@@ -638,9 +638,7 @@ class _ContactScreenState extends State<ContactScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          _buildHoursRow('MONDAY – FRIDAY', '07:00 – 22:00'),
-          Divider(color: _secondary.withOpacity(0.1), height: 24),
-          _buildHoursRow('SATURDAY – SUNDAY', '08:00 – 23:00'),
+          _buildHoursRow('MONDAY – SUNDAY', '08:00 – 22:00'),
         ],
       ),
     );
