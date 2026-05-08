@@ -7,31 +7,58 @@ const db = require("../config/dbConnection.js");
 
 // [1] Customers API
 const fetchAllCustomer = async (req, res) => {
-     try {
+    try {
         const { search = "" } = req.query;
 
         let params = [];
 
         let query = `
             SELECT 
-                id,
-                firebase_uid,
-                full_name,
-                email,
-                provider,
-                role,
-                created_at
-            FROM users
-            WHERE role = 'customer'
+                u.id,
+                u.firebase_uid,
+                u.full_name,
+                u.email,
+                u.provider,
+                u.role,
+                u.created_at,
+
+                COUNT(o.id) AS total_orders,
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN o.status = 'completed'
+                            THEN o.total
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ) AS total_spent
+
+            FROM users u
+
+            LEFT JOIN orders o
+                ON u.id = o.user_id
+
+            WHERE u.role = 'customer'
         `;
 
         // SEARCH FILTER
         if (search) {
-            query += ` AND (full_name LIKE ? OR email LIKE ?)`;
+            query += `
+                AND (
+                    u.full_name LIKE ?
+                    OR u.email LIKE ?
+                )
+            `;
+
             params.push(`%${search}%`, `%${search}%`);
         }
 
-        query += ` ORDER BY created_at DESC`;
+        query += `
+            GROUP BY u.id
+            ORDER BY u.created_at DESC
+        `;
 
         const [rows] = await db.query(query, params);
 
@@ -50,7 +77,6 @@ const fetchAllCustomer = async (req, res) => {
         });
     }
 };
-
 
 // [2] Menu APIs
 // Fetch all items by category
