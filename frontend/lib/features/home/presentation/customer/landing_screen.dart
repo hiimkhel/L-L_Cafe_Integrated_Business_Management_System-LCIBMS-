@@ -9,6 +9,8 @@ import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/bamboo_background.dart';
+import 'package:frontend/core/services/customer/reviews_service.dart';
+import 'package:frontend/core/models/review_model.dart';
 
 const double _kMobile = 768;
 const double _kDesktopMaxWidth = 1280;
@@ -29,20 +31,6 @@ class LandingMenuItem {
   });
 }
 
-class LandingReview {
-  final String id, reviewer, initials, timeAgo, headline;
-  final int stars;
-  final bool isVerified;
-  const LandingReview({
-    required this.id,
-    required this.reviewer,
-    required this.initials,
-    required this.timeAgo,
-    required this.headline,
-    required this.stars,
-    this.isVerified = false,
-  });
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DATA  — asset paths match EXACTLY what is in assets/images/
@@ -122,39 +110,14 @@ const _seasonal = <LandingMenuItem>[
   ),
 ];
 
-const _reviews = <LandingReview>[
-  LandingReview(
-    id: 'r-1',
-    reviewer: 'Maria Santos',
-    initials: 'M',
-    stars: 5,
-    timeAgo: '9 months ago',
-    headline: 'Quality, design, shipping 10/10',
-  ),
-  LandingReview(
-    id: 'r-2',
-    reviewer: 'Jose Reyes',
-    initials: 'J',
-    stars: 5,
-    timeAgo: '9 months ago',
-    headline: '10/10',
-  ),
-  LandingReview(
-    id: 'r-3',
-    reviewer: 'Ana de Leon',
-    initials: 'A',
-    stars: 5,
-    timeAgo: '10 months ago',
-    headline: 'Quality coffee perfect for any kind of event, highly recommended',
-    isVerified: true,
-  ),
-];
+const _gallerySlots = <String?>[null, null, null];
+const _heroImageAssets = <String?>[null, null];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
 
-class LandingScreen extends StatelessWidget {
+class LandingScreen extends StatefulWidget {
   final Function(User) onLogin;
   final Function(User) onRegister;
 
@@ -165,13 +128,57 @@ class LandingScreen extends StatelessWidget {
   });
 
   @override
+  State<LandingScreen> createState() => _LandingScreenState();
+
+}
+
+class _LandingScreenState extends State<LandingScreen> {
+
+  List<ReviewModel> _reviews = [];
+  bool _loadingReviews = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReviews();
+  }
+
+Future<void> _loadReviews() async {
+  try {
+    print('FETCHING REVIEWS...');
+
+    final data = await ReviewService.fetchPublicReviews();
+
+    print('API SUCCESS');
+    print('REVIEWS LENGTH: ${data.length}');
+    print(data);
+
+    setState(() {
+      _reviews = data;
+      _loadingReviews = false;
+    });
+  } catch (e, stackTrace) {
+    print('API ERROR: $e');
+    print(stackTrace);
+
+    setState(() {
+      _loadingReviews = false;
+    });
+  }
+}
+
+
+
+  @override
   Widget build(BuildContext context) {
     void goLogin() => Navigator.push(
-        context, MaterialPageRoute(builder: (_) => LoginScreen(onLogin: onLogin)));
+        context,
+        MaterialPageRoute(builder: (_) => LoginScreen(onLogin: widget.onLogin)));
 
     void goRegister() => Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => RegisterScreen(onRegister: onRegister)));
+        MaterialPageRoute(
+            builder: (_) => RegisterScreen(onRegister: widget.onRegister)));
 
     void goGuestMenu() => Navigator.push(
         context,
@@ -182,7 +189,7 @@ class LandingScreen extends StatelessWidget {
               Navigator.of(menuContext).pushReplacement(
                 MaterialPageRoute(
                   builder: (_) => LoginScreen(
-                    onLogin: onLogin,
+                    onLogin: widget.onLogin,
                     popToRootOnSuccess: true,
                   ),
                 ),
@@ -190,6 +197,24 @@ class LandingScreen extends StatelessWidget {
             },
           ),
         ));
+
+    Widget _buildReviewsSection() {
+      if (_loadingReviews) {
+        return const Padding(
+          padding: EdgeInsets.all(40),
+          child: CircularProgressIndicator(),
+        );
+      }
+
+      if (_reviews.isEmpty) {
+        return const Padding(
+          padding: EdgeInsets.all(40),
+          child: Text('No reviews available'),
+        );
+      }
+
+      return _ReviewsSection(reviews: _reviews);
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -225,7 +250,17 @@ class LandingScreen extends StatelessWidget {
                         items: _seasonal,
                         onCtaTap: goRegister,
                       ),
-                      _ReviewsSection(reviews: _reviews),
+                      _loadingReviews
+                        ? const Padding(
+                            padding: EdgeInsets.all(40),
+                            child: CircularProgressIndicator(),
+                          )
+                        : _reviews.isEmpty
+                            ? const Padding(
+                                padding: EdgeInsets.all(40),
+                                child: Text('No reviews available'),
+                              )
+                            : _buildReviewsSection(),
                       _Newsletter(),
                     ]),
                   ),
@@ -1002,7 +1037,7 @@ class _MenuTile extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _ReviewsSection extends StatefulWidget {
-  final List<LandingReview> reviews;
+  final List<ReviewModel> reviews;
   const _ReviewsSection({required this.reviews});
 
   @override
@@ -1162,7 +1197,7 @@ class _Arr extends StatelessWidget {
 }
 
 class _RevCard extends StatelessWidget {
-  final LandingReview r;
+  final ReviewModel r;
   final double? width;
   const _RevCard({required this.r, this.width});
 
@@ -1187,10 +1222,12 @@ class _RevCard extends StatelessWidget {
                   5,
                   (i) => Padding(
                       padding: const EdgeInsets.only(right: 3),
-                      child: Icon(i < r.stars ? Icons.star : Icons.star_border,
-                          color: AppColors.primary, size: 16)))),
+                      child: Icon(
+                          i < r.rating ? Icons.star : Icons.star_border,
+                          color: AppColors.primary,
+                          size: 16)))),
           const SizedBox(height: 6),
-          Text(r.timeAgo.toUpperCase(),
+          Text(timeAgo,
               style: TextStyle(
                   fontFamily: 'Urbanist',
                   fontWeight: FontWeight.w900,
@@ -1198,7 +1235,7 @@ class _RevCard extends StatelessWidget {
                   letterSpacing: 0.9,
                   color: AppColors.primary.withOpacity(0.55))),
           const SizedBox(height: 6),
-          Text(r.headline,
+          Text(r.content,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
@@ -1221,7 +1258,7 @@ class _RevCard extends StatelessWidget {
                     color: AppColors.secondary,
                     borderRadius: BorderRadius.circular(10)),
                 child: Center(
-                    child: Text(r.initials,
+                    child: Text(initials,
                         style: const TextStyle(
                             fontFamily: 'Urbanist',
                             fontWeight: FontWeight.w900,
@@ -1232,23 +1269,12 @@ class _RevCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(r.reviewer.toUpperCase(),
+                  Text(r.customerName.toUpperCase(),
                       style: const TextStyle(
                           fontFamily: 'Urbanist',
                           fontWeight: FontWeight.w900,
                           fontSize: 12,
                           color: Color(0xFF2D2A26))),
-                  if (r.isVerified)
-                    Row(children: [
-                      Icon(Icons.verified, color: AppColors.secondary, size: 11),
-                      const SizedBox(width: 3),
-                      Text('VERIFIED',
-                          style: TextStyle(
-                              fontFamily: 'Urbanist',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 8,
-                              color: AppColors.secondary)),
-                    ]),
                 ],
               ),
             ]),
@@ -1257,7 +1283,34 @@ class _RevCard extends StatelessWidget {
       ),
     );
   }
+  String get initials {
+    final parts = r.customerName.trim().split(' ');
+    if (parts.length == 1) {
+      return parts.first[0].toUpperCase();
+    }
+
+    return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
+
+  String get timeAgo {
+    final difference = DateTime.now().difference(r.submittedAt);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays}D AGO';
+    }
+
+    if (difference.inHours > 0) {
+      return '${difference.inHours}H AGO';
+    }
+
+    if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}M AGO';
+    }
+
+    return 'JUST NOW';
+  }
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NEWSLETTER

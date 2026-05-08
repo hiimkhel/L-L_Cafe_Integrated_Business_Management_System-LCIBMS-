@@ -215,7 +215,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _beige,
+      backgroundColor: const Color.fromARGB(255, 255, 254, 251),
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1114,20 +1114,25 @@ class _OrderTableRow extends StatelessWidget {
                 Text(order.payment, style: base),
               ])),
           Expanded(
-              flex: 16,
+            flex: 16,
+            child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 9, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                    color: _statusBg,
-                    borderRadius: BorderRadius.circular(20)),
-                child: Text(order.status,
-                    overflow: TextOverflow.ellipsis,
-                    style: base.copyWith(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: _statusColor)),
-              )),
+                  color: _statusBg,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  order.status,
+                  style: base.copyWith(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: _statusColor,
+                  ),
+                ),
+              ),
+            ),
+          ),
           Expanded(
               flex: 22,
               child: Padding(

@@ -270,6 +270,174 @@ const updateMenuItem = async (req, res) => {
         });
     }
 }
+
+const getCustomerReviews = async (req, res) => {
+    try{
+
+        // Retrieve all the necessary data uby joining reviews and users table
+       const [rows] = await db.query(`
+            SELECT 
+                r.id,
+                r.user_id,
+                u.full_name AS customer_name,
+                r.review_text,
+                r.rating,
+                r.status,
+                r.created_at,
+                u.profile_picture
+            FROM reviews r
+            JOIN users u ON r.user_id = u.id
+            ORDER BY r.created_at DESC
+        `);
+
+        res.json(rows);
+
+    }catch(err){
+        res.status(500).json({error: err.message})
+    }
+}
+
+const publishReview = async (req, res) => {
+    try{
+        // Retrieve review id
+        const {id} = req.params;
+
+        // Error handling   
+        if(!id){
+            return res.status(400).json({message: "Id field is required!"});
+        }
+
+        // Check review id existence
+        const [rows] = await db.query(`
+            SELECT status FROM reviews WHERE id = ?
+        `, [id]);
+
+        if(!rows.length){
+            return res.status(404).json({message: "Customer Review not found!"})
+        }
+
+        // Check if published
+        if(rows[0].status == 'published'){
+            return res.status(400).json({message: "Customer Review already published!"})
+        }
+
+        // Execute query
+        await db.query(`
+            UPDATE reviews SET status = "published" WHERE id = ?    
+        `, [id]);
+
+        res.json({message: "Status updated successfully!"})
+
+    }catch(err){
+        res.status(500).json({error: err.message})
+    }
+}
+
+const archiveReview = async (req, res) => {
+    try{
+        // Retrieve review id
+        const {id} = req.params;
+
+        // Error Handling
+        if(!id) return res.status(400).json({error: "Id parameter is required!"})
+
+        // Store review data
+        const [row] = await db.query("SELECT status FROM reviews WHERE id = ?", [id]);
+
+        // Check existence
+        if(!row.length) return res.status(404).json({message: "Customer Review not found!"})
+
+        // Check status if valid for archiving
+        if(row[0].status == 'archived'){
+            return res.status(400).json({message: "Customer Review already archived!" });
+        }
+
+        // Execute query
+        await db. query("UPDATE reviews SET status = 'archived' WHERE id = ?", [id])
+
+        res.status(200).json({message: "Status updated successfully!"})
+
+    }catch(err){
+        res.status(500).json({error: err.message})
+    }
+}
+
+const deleteReview = async (req, res) => {
+    try{
+        // Retrieve review id
+        const {id} = req.params;
+
+        // Error Handling
+        if(!id) return res.status(400).json({error: "Id parameter is required!"})
+
+        // Store review data
+        const [row] = await db.query("SELECT status FROM reviews WHERE id = ?", [id]);
+
+        // Check existence
+        if(!row.length) return res.status(404).json({message: "Customer Review not found!"})
+        
+        // Check status if valid for republishing   
+        await db.query("DELETE FROM reviews WHERE id = ?", [id])
+
+        return res.status(200).json({message: "Review deleted successfully!"})
+        
+    }catch(err){
+        return res.status(500).json({error: err.message})
+    }
+}
+
+const republishReview = async (req, res) => {
+  try {
+    // Retrieve review ID
+    const { id } = req.params;
+
+    // Validate ID
+    if (!id) {
+      return res.status(400).json({
+        error: "Id parameter is required!"
+      });
+    }
+
+    // Check if review exists
+    const [rows] = await db.query(
+      "SELECT status FROM reviews WHERE id = ?",
+      [id]
+    );
+
+    // Review not found
+    if (!rows.length) {
+      return res.status(404).json({
+        message: "Customer review not found!"
+      });
+    }
+
+    const currentStatus = rows[0].status;
+
+    // Only archived reviews can be re-published
+    if (currentStatus !== 'archived') {
+      return res.status(400).json({
+        message: "Only archived reviews can be re-published"
+      });
+    }
+
+    // Update status
+    await db.query(
+      "UPDATE reviews SET status = ? WHERE id = ?",
+      ['published', id]
+    );
+
+    return res.status(200).json({
+      message: "Review re-published successfully!",
+      status: "published"
+    });
+
+  } catch (err) {
+    return res.status(500).json({
+      error: err.message
+    });
+  }
+};
+
 module.exports = { fetchAllCustomer, 
     fetchMenuItems,
     fetchMenuCategories,
@@ -277,5 +445,10 @@ module.exports = { fetchAllCustomer,
     addMenuItem,
     deleteMenuItem,
     getItemById,
-    updateMenuItem
+    updateMenuItem,
+    getCustomerReviews,
+    publishReview,
+    archiveReview, 
+    deleteReview,
+    republishReview
  };

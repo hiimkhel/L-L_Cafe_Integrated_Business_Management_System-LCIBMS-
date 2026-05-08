@@ -36,7 +36,7 @@ class AuthService {
     final data = jsonDecode(response.body);
 
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception(data['message'] ?? 'Authentication failed');
+      throw Exception('Authentication failed');
     }
 
     return User(

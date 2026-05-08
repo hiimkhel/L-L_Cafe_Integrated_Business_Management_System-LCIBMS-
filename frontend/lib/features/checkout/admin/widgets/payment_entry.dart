@@ -202,37 +202,6 @@ class _PaymentEntryState extends State<PaymentEntry> {
                           }).toList(),
                         ),
 
-                          const SizedBox(height: 10),
-                          Container(
-                            width: double.infinity,
-                            
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              border: Border.all(
-                                color: AppColors.tertiary.withOpacity(0.3),
-                                width: 1.5,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                side: BorderSide.none, // remove default border
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  cashGiven = widget.total;
-                                  widget.onCashChanged(cashGiven);
-                                });
-                              },
-                              child: Text(
-                                "Exact Amount (₱${widget.total.toStringAsFixed(2)})",
-                                style: AppTextStyles.subtitle.copyWith(
-                                  color: AppColors.white,
-                                ),
-                              ),
-                            ),
-                          ),
 
                           const SizedBox(height: 10),
                           Container(
