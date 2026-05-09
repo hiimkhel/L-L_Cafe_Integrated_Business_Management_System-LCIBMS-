@@ -4,7 +4,8 @@ import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
 import 'package:frontend/core/widgets/bamboo_background.dart';
 import 'package:frontend/core/constants/cart_provider.dart';
-
+import 'package:frontend/core/services/auth_service.dart';
+import 'package:frontend/core/services/customer/order_service.dart';
 const double _kMobile = 768;
 const Color _primary   = Color(0xFF758C6D);
 const Color _secondary = Color(0xFFA98258);
@@ -42,7 +43,7 @@ class Order {
   final String? method;
   final List<String> items;
 
-  const Order({
+  Order({
     required this.id,
     required this.status,
     this.subStatus,
@@ -51,64 +52,102 @@ class Order {
     this.method,
     this.items = const [],
   });
+
+  factory Order.fromJson(Map<String, dynamic> json) {
+    OrderStatus mapStatus(String status) {
+      switch (status) {
+        case 'pending':
+          return OrderStatus.pending;
+        case 'confirmed':
+        case 'preparing':
+        case 'ready':
+        case 'out_for_delivery':
+          return OrderStatus.inProgress;
+        default:
+          return OrderStatus.archived;
+      }
+    }
+
+    return Order(
+      id: json['order_number']?.toString() ?? '',
+      status: mapStatus(json['status'] ?? ''),
+      subStatus: json['status']?.toString().toUpperCase(),
+      total: json['total'] == null 
+          ? 0.0 
+          : double.parse(json['total'].toString()),
+      timestamp: json['created_at'],
+      method: json['order_type']?.toString().toUpperCase(),
+      items: (json['items'] as List?)
+              ?.map((e) => e['item_name'].toString())
+              .toList() ??
+          [],
+    );
+  }
 }
-
-// ─────────────────────────── Demo data ───────────────────────────────────────
-
-final List<Order> _demoOrders = [
-  Order(
-    id: 'LL-9482', status: OrderStatus.pending,
-    total: 1105.00, timestamp: 'FEB 07, 2026 • 10:30 AM', method: 'DELIVERY',
-    items: ['1X HARAMBE MANGO', '2X NUTELLA FRAPPE', '2X KITKAT WAFFLE',
-            '1X OREO WAFFLE', '1X RED VELVET FRAPPE', '1X O MORE',
-            '1X CRISPY CHICKEN BURGER'],
-  ),
-  Order(
-    id: 'LL-1023', status: OrderStatus.pending,
-    total: 180.00, timestamp: 'FEB 07, 2026 • 11:15 AM', method: 'DELIVERY',
-    items: ['1X O MORE'],
-  ),
-  Order(
-    id: 'LL-9482', status: OrderStatus.inProgress, subStatus: 'PREPARING',
-    total: 1105.00, timestamp: 'FEB 07, 2026 • 10:30 AM', method: 'DELIVERY',
-    items: ['1X HARAMBE MANGO', '2X NUTELLA FRAPPE', '2X KITKAT WAFFLE',
-            '1X OREO WAFFLE', '1X RED VELVET FRAPPE', '1X O MORE',
-            '1X CRISPY CHICKEN BURGER'],
-  ),
-  Order(
-    id: 'LL-1023', status: OrderStatus.inProgress, subStatus: 'OUT FOR DELIVERY',
-    total: 180.00, timestamp: 'FEB 07, 2026 • 11:15 AM', method: 'DELIVERY',
-    items: ['1X ICED AMERICANO'],
-  ),
-  Order(
-    id: 'LL-8271', status: OrderStatus.archived,
-    total: 520.00, timestamp: 'FEB 05, 2026', method: 'PICKUP',
-    items: ['2X CARAMEL MACCHIATO', '3X CHOCOLATE MUFFIN'],
-  ),
-  Order(
-    id: 'LL-7162', status: OrderStatus.archived,
-    total: 150.00, timestamp: 'FEB 01, 2026', method: 'PICKUP',
-    items: ['1X BREWED COFFEE'],
-  ),
-];
 
 // ─────────────────────────── Screen ──────────────────────────────────────────
 
 class CustomerOrderScreen extends StatefulWidget {
-  final List<Order> orders;
-  const CustomerOrderScreen({super.key, this.orders = const []});
+
+  const CustomerOrderScreen({super.key});
 
   @override
   State<CustomerOrderScreen> createState() => _CustomerOrderScreenState();
 }
 
 class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
+
+  final OrderService _service = OrderService();
+
+  List<Order> _orders = [];
+  bool _loading = true;
+  String? _error;
   int _selectedIndex = 0;
   final TextEditingController _searchCtrl = TextEditingController();
   String _searchQuery = '';
 
-  List<Order> get _source =>
-      widget.orders.isEmpty ? _demoOrders : widget.orders;
+  // Handle calling of services to call backend
+  Future<void> _loadOrders() async {
+    try {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+
+      final auth = AuthService();
+      final uid = await auth.getUid();
+
+      if (uid == null) {
+        throw Exception("User not logged in");
+      }
+
+      print("🔥 Firebase UID: $uid");
+
+     final token = await AuthService().getIdToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception("Missing auth token");
+    }
+
+    final data = await _service.getCustomerOrders(token);
+    print("🔥 Firebase Token: $token");
+      setState(() {
+        _orders = data.map((e) => Order.fromJson(e)).toList();
+      });
+
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+      });
+    } finally {
+      setState(() {
+        _loading = false;
+      });
+    }
+  }
+
+
+  List<Order> get _source => _orders;
 
   List<Order> get _filtered {
     final all = _source.where((o) {
@@ -141,7 +180,11 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
     _searchCtrl.dispose();
     super.dispose();
   }
-
+  @override
+  void initState() {
+    super.initState();
+    _loadOrders();
+  }
   // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
@@ -342,24 +385,17 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
   Widget _buildOrderList({required bool isMobile}) {
     final orders = _filtered;
 
-    if (orders.isEmpty) {
-      return Padding(
-        padding: EdgeInsets.symmetric(vertical: isMobile ? 40 : 60),
-        child: Center(
-          child: Column(
-            children: [
-              Icon(Icons.receipt_long_outlined,
-                  size: isMobile ? 48 : 56,
-                  color: _primary.withOpacity(0.3)),
-              const SizedBox(height: 12),
-              Text(
-                'No orders found.',
-                style: TextStyle(
-                    fontSize: isMobile ? 15 : 16,
-                    color: _primary.withOpacity(0.5)),
-              ),
-            ],
-          ),
+    if (_loading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Text(
+          _error!,
+          style: const TextStyle(color: Colors.red),
         ),
       );
     }
