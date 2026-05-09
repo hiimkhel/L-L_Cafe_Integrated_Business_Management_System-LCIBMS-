@@ -1,4 +1,5 @@
 class OrderRequest {
+  final String orderNumber;
   final String source;
   final int? userId;
   final String orderType;
@@ -18,6 +19,7 @@ class OrderRequest {
 
   final String? notes;
   OrderRequest({
+    required this.orderNumber,
     required this.source,
     this.userId,
     required this.orderType,
@@ -35,9 +37,10 @@ class OrderRequest {
 
   Map<String, dynamic> toJson() {
     return {
+      "orderNumber": orderNumber,
       "source": source.toLowerCase(),
       "user_id": userId, 
-      "order_type": orderType.toLowerCase().replaceAll(' ', '-'),
+      "order_type": _formatOrderType(orderType),
       "subtotal": subtotal,
       "delivery_fee": deliveryFee,
       "delivery_address": deliveryAddress,
@@ -56,4 +59,11 @@ String _mapPaymentMethod(String method) {
   String m = method.toLowerCase();
   if (m == 'gcash' || m == 'maya' || m == 'e-wallet') return 'e-wallet';
   return m; // returns 'cash' or 'card'
+}
+// Helper to match your DB Enum exactly
+String _formatOrderType(String type) {
+  String t = type.toLowerCase().trim();
+  if (t == 'take out' || t == 'take-out' || t == 'takeout') return 'takeout';
+  if (t == 'dine in' || t == 'dine-in') return 'dine-in';
+  return t; // returns 'delivery' or 'pickup'
 }
