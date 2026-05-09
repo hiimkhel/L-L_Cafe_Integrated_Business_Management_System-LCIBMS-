@@ -9,11 +9,12 @@ import 'package:frontend/core/models/order_request.dart';
 import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 
 class CheckoutConfirmationScreen extends StatefulWidget {
-  const CheckoutConfirmationScreen({super.key, required this.orderType, required this.orderItems});
+  const CheckoutConfirmationScreen({super.key, required this.orderType, required this.orderItems, required this.orderOrderId});
 
   // Expected data from order_entry.dart screen
   final List<Map<String, dynamic>> orderItems;
   final String orderType;
+  final int orderOrderId;
 
   @override
   State<CheckoutConfirmationScreen> createState() => _CheckoutConfirmationScreenState();
