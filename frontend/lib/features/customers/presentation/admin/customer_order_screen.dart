@@ -279,8 +279,7 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
           fontFamily: 'Urbanist',
         ),
         children: const [
-          TextSpan(text: 'ORDER STATUS: ', style: TextStyle(color: _bgDark)),
-          TextSpan(text: 'ORDERS',        style: TextStyle(color: _secondary)),
+          TextSpan(text: 'MY ORDERS', style: TextStyle(color: _secondary)),
         ],
       ),
     );

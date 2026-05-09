@@ -162,7 +162,6 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
           },
         ));
 
-      // ✅ /orders was missing — this is why the cart/orders button did nothing
       case AppRoutes.orders:
         if (user == null) return _fade(_buildRootScreen(auth));
         return _fade(const CustomerOrderScreen());
