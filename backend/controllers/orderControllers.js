@@ -89,5 +89,23 @@ const createOrder = async (req, res) => {
   }
 }
 
+const fetchCurrentOrderNumber = async (req, res) => {
+  try{
+    // Query the database for the max ID currently in the orders table
+    const [rows] = await db.query("SELECT MAX(id) as lastId FROM orders");
+    
+    // If no orders exist yet, start at 1. Otherwise, increment lastId.
+    const nextId = (rows[0].lastId || 0) + 1;
 
-module.exports = {createOrder}
+    res.json({ 
+      success: true, 
+      nextId: nextId 
+    });
+
+  }catch(err){  
+    res.status(500).json({error: err.message})
+  }
+}
+
+
+module.exports = {createOrder, fetchCurrentOrderNumber}
