@@ -165,7 +165,7 @@ const getCustomerOrders = async (req, res) => {
         });
 
     } catch (err) {
-        console.error("🔥 Global Catch Error:", err);
+        console.error("Global Catch Error:", err);
         return res.status(500).json({
             success: false,
             message: "Internal server error",

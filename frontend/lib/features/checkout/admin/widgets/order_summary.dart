@@ -5,7 +5,6 @@ import 'package:frontend/config/theme/app_colors.dart';
 class OrderSummary extends StatelessWidget {
   final List<Map<String, dynamic>> orderItems;
   final double subtotal;
-  final double tax;
   final double total;
   final String orderType;
 
@@ -13,7 +12,6 @@ class OrderSummary extends StatelessWidget {
     super.key,
     required this.orderItems,
     required this.subtotal,
-    required this.tax,
     required this.total,
     required this.orderType
   });
@@ -160,8 +158,6 @@ class OrderSummary extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   _priceRow("Subtotal", subtotal),
-                  const SizedBox(height: 8),
-                  _priceRow("Tax (20%)", tax),
                   const SizedBox(height: 8),
 
                   Container(
