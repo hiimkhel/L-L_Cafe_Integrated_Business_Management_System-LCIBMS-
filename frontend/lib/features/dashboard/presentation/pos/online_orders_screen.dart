@@ -9,13 +9,14 @@ class OnlineOrdersScreen extends StatefulWidget {
 }
 
 class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
+  // Theme Colors
   static const _bg = Color(0xFFEFE2C9);
   static const _brown = Color(0xFFa98258);
   static const _darkBrown = Color(0xFF4a3520);
   static const _green = Color(0xFF4a6741);
   static const _red = Color(0xFFc0392b);
 
-  String _selectedFilter = 'ALL';
+  String _selectedFilter = 'PENDING';
   String? _selectedOrderId;
   final TextEditingController _searchController = TextEditingController();
   final OrderService _orderService = OrderService();
@@ -23,106 +24,55 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
   List<Map<String, dynamic>> _orders = [];
   bool _isLoading = true;
 
-  List<Map<String, dynamic>> get _filteredOrders {
+  // Logic Helpers
+ List<Map<String, dynamic>> get _filteredOrders {
+    // Filter by status
     List<Map<String, dynamic>> result = _selectedFilter == 'ALL'
         ? _orders
         : _orders.where((o) => o['status'] == _selectedFilter).toList();
 
+    // Apply Search
     final query = _searchController.text.trim().toLowerCase();
     if (query.isNotEmpty) {
-      result = result
-          .where((o) =>
-              o['id'].toString().toLowerCase().contains(query) ||
-              o['customer'].toString().toLowerCase().contains(query) ||
-              o['phone'].toString().toLowerCase().contains(query))
-          .toList();
+      result = result.where((o) =>
+          o['id'].toString().toLowerCase().contains(query) ||
+          o['customer'].toString().toLowerCase().contains(query)).toList();
     }
+
+    // FIFO SORTING: Oldest orders first (Assumes your data has a 'timestamp' or 'created_at' field)
+    // If your API provides 'db_id' as an auto-incrementing integer, you can use that too.
+    result.sort((a, b) => (a['created_at'] ?? 0).compareTo(b['created_at'] ?? 0));
+
     return result;
   }
 
   Map<String, dynamic>? get _selectedOrder => _selectedOrderId == null
       ? null
-      : _orders.firstWhere(
-          (o) => o['id'] == _selectedOrderId,
-          orElse: () => {},
-        );
+      : _orders.firstWhere((o) => o['id'] == _selectedOrderId, orElse: () => {});
 
-  int _countByStatus(String status) =>
-      _orders.where((o) => o['status'] == status).length;
-
-  double _subtotal(Map<String, dynamic> order) {
-    return (order['items'] as List)
-        .fold(0.0, (sum, item) => sum + (item['qty'] * item['price']));
-  }
-
-  double _total(Map<String, dynamic> order) {
-    final fee = 45.00;
-    final sub = _subtotal(order);
-    return sub + fee;
-  }
-
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'PENDING':
-        return _brown;
-      case 'ACCEPTED':
-        return _green;
-      case 'REJECTED':
-        return _red;
-      default:
-        return _brown;
-    }
-  }
-
-  IconData _statusIcon(String status) {
-    switch (status) {
-      case 'PENDING':
-        return Icons.access_time_rounded;
-      case 'ACCEPTED':
-        return Icons.check_circle_outline_rounded;
-      case 'REJECTED':
-        return Icons.cancel_outlined;
-      default:
-        return Icons.access_time_rounded;
-    }
-  }
-
-  Future<void> _acceptOrder(String id) async {
-    final order = _orders.firstWhere((o) => o['id'] == id);
-
-    final success = await _orderService.acceptOrder(order['db_id']);
-
-    if (success) {
-      await fetchOnlineOrders(); 
-    } else {
-      debugPrint("Failed to accept order");
-    }
-  }
-
- Future<void> _rejectOrder(String id) async {
-    final order = _orders.firstWhere((o) => o['id'] == id);
-
-    final success = await _orderService.rejectOrder(order['db_id']);
-
-    if (success) {
-      await fetchOnlineOrders(); // refresh from backend
-    } else {
-      debugPrint("Failed to reject order");
-    }
-  }
-
-  // Call services for data
+  // API Methods
   Future<void> fetchOnlineOrders() async {
+    setState(() => _isLoading = true);
     try {
       final orders = await _orderService.fetchOnlineOrders();
-
       setState(() {
         _orders = orders;
         _isLoading = false;
       });
     } catch (e) {
-      print(e);
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _processOrder(String id, bool accept) async {
+    final order = _orders.firstWhere((o) => o['id'] == id);
+    final success = accept 
+      ? await _orderService.acceptOrder(order['db_id'])
+      : await _orderService.rejectOrder(order['db_id']);
+
+    if (success) {
+      await fetchOnlineOrders();
+      if (_selectedOrderId == id) _selectedOrderId = null;
     }
   }
 
@@ -138,11 +88,12 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(24),
       child: Container(
-        width: 1100,
-        height: 780,
+        width: 1400, 
+        height: 850,
         decoration: BoxDecoration(
-          color: _bg,
+          color: _bg, 
           borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 20, spreadRadius: 5)]
         ),
         child: Column(
           children: [
@@ -150,8 +101,8 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
             Expanded(
               child: Row(
                 children: [
-                  Expanded(child: _buildLeftPanel()),
-                  _buildRightPanel(),
+                  Expanded(flex: 3, child: _buildDecisionLayer()),
+                  _buildVerificationLayer(),
                 ],
               ),
             ),
@@ -161,60 +112,40 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
     );
   }
 
+  // --- HEADER SECTION ---
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
       decoration: BoxDecoration(
-        color: _bg,
+        color: Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-        border: Border(bottom: BorderSide(color: _brown.withValues(alpha: .2))),
+        border: Border(bottom: BorderSide(color: _brown.withOpacity(0.1))),
       ),
       child: Row(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: _brown.withValues(alpha: .15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(Icons.shopping_bag_outlined, color: _green, size: 22),
-          ),
+          const Icon(Icons.fact_check_rounded, color: _green, size: 28),
           const SizedBox(width: 14),
-          Column(
+          const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'ONLINE ORDERS',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: _green,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              Text(
-                'DIGITAL ORDER MANAGEMENT',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: _brown.withValues(alpha: .7),
-                  letterSpacing: 1.2,
-                ),
-              ),
+              Text('ORDER VERIFICATION CONSOLE', 
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: _darkBrown, letterSpacing: 1.2)),
+              Text('MANUAL PAYMENT & FRAUD CHECK', 
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _brown, letterSpacing: 1.1)),
             ],
           ),
           const Spacer(),
+          IconButton(
+            onPressed: fetchOnlineOrders,
+            icon: const Icon(Icons.refresh, color: _brown),
+            tooltip: 'Refresh Queue',
+          ),
+          const SizedBox(width: 10),
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(color: _brown.withValues(alpha: .2)),
-              ),
+            child: const CircleAvatar(
+              radius: 18,
+              backgroundColor: _bg,
               child: Icon(Icons.close, size: 18, color: _darkBrown),
             ),
           ),
@@ -223,751 +154,434 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
     );
   }
 
-  Widget _buildLeftPanel() {
+  // --- LEFT SIDE: DECISION LAYER (The Queue) ---
+  Widget _buildDecisionLayer() {
     return Container(
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          _buildFilterBar(),
+          _buildFilterRow(),
           const SizedBox(height: 16),
-          _buildSummaryCards(),
-          const SizedBox(height: 16),
-          Expanded(child: _buildOrderGrid()),
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _brown.withOpacity(0.15)),
+              ),
+              child: _isLoading 
+                ? const Center(child: CircularProgressIndicator(color: _brown)) 
+                : _buildOrderTable(),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildFilterBar() {
+  // Update the Filter Row to include count badges
+  Widget _buildFilterRow() {
     final filters = ['ALL', 'PENDING', 'ACCEPTED', 'REJECTED'];
-    final counts = {
-      'ALL': _orders.length,
-      'PENDING': _countByStatus('PENDING'),
-      'ACCEPTED': _countByStatus('ACCEPTED'),
-      'REJECTED': _countByStatus('REJECTED'),
+    
+    // Get counts for each status
+    final Map<String, int> counts = {
+      'PENDING': _orders.where((o) => o['status'] == 'PENDING').length,
+      'ACCEPTED': _orders.where((o) => o['status'] == 'ACCEPTED').length,
+      'REJECTED': _orders.where((o) => o['status'] == 'REJECTED').length,
     };
 
     return Row(
       children: [
+        // Search Bar
         Expanded(
-          child: Container(
-            height: 38,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _brown.withValues(alpha: .2)),
-            ),
-            child: TextField(
-              controller: _searchController,
-              onChanged: (_) => setState(() {}),
-              style: TextStyle(fontSize: 12, color: _darkBrown),
-              decoration: InputDecoration(
-                hintText: 'Search by order #, name, or phone...',
-                hintStyle: TextStyle(
-                  fontSize: 11,
-                  color: _brown.withValues(alpha: .5),
-                ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  size: 16,
-                  color: _brown.withValues(alpha: .5),
-                ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (_) => setState(() {}),
+            style: const TextStyle(fontSize: 13),
+            decoration: InputDecoration(
+              hintText: 'Search order or customer...',
+              prefixIcon: const Icon(Icons.search, size: 18, color: _brown),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: _brown.withValues(alpha: 0.2)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: _brown, width: 1.5),
               ),
             ),
           ),
         ),
-        const SizedBox(width: 10),
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: _brown.withValues(alpha: .2)),
-          ),
-          child: Icon(Icons.tune_rounded, size: 16, color: _brown),
-        ),
-        const SizedBox(width: 10),
-        ...filters.map((f) {
-          final isActive = _selectedFilter == f;
-          final color = f == 'ALL'
-              ? _darkBrown
-              : f == 'PENDING'
-                  ? _brown
-                  : f == 'ACCEPTED'
-                      ? _green
-                      : _red;
-          return GestureDetector(
-            onTap: () => setState(() => _selectedFilter = f),
-            child: Container(
-              margin: const EdgeInsets.only(left: 6),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              decoration: BoxDecoration(
-                color: isActive ? color : Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isActive ? color : color.withValues(alpha: .4),
-                ),
-              ),
-              child: Row(
+        const SizedBox(width: 20),
+        
+        // Chips with Badge Overlays
+        Row(
+          children: filters.map((f) {
+            final isSelected = _selectedFilter == f;
+            final count = counts[f] ?? 0;
+
+            return Padding(
+              padding: const EdgeInsets.only(left: 12),
+              child: Stack(
+                clipBehavior: Clip.none, // Allows badge to sit above
                 children: [
-                  if (f != 'ALL')
-                    Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: Icon(
-                        _statusIcon(f),
-                        size: 12,
-                        color: isActive ? Colors.white : color,
+                  ChoiceChip(
+                    label: Text(f, style: const TextStyle(fontSize: 11)),
+                    selected: isSelected,
+                    onSelected: (val) => setState(() => _selectedFilter = f),
+                    selectedColor: _darkBrown,
+                    backgroundColor: Colors.white,
+                    showCheckmark: false,
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : _darkBrown,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: BorderSide(
+                        color: isSelected ? _darkBrown : _brown.withValues(alpha: 0.3),
                       ),
                     ),
-                  Text(
-                    '$f (${counts[f]})',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: isActive ? Colors.white : color,
-                      letterSpacing: 0.4,
-                    ),
                   ),
+                  
+                  // The Badge (only show if count > 0)
+                  if (count > 0)
+                    Positioned(
+                      top: -5,
+                      right: -5,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: f == 'REJECTED' ? _red : (f == 'PENDING' ? _brown : _green),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: _bg, width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 2,
+                              offset: const Offset(0, 1),
+                            )
+                          ],
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 18,
+                          minHeight: 18,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$count',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
-            ),
-          );
-        }),
+            );
+          }).toList(),
+        ),
       ],
     );
   }
 
-  Widget _buildSummaryCards() {
-    final cards = [
-      {
-        'label': 'Pending',
-        'count': _countByStatus('PENDING'),
-        'color': _brown,
-        'icon': Icons.access_time_rounded
-      },
-      {
-        'label': 'Accepted',
-        'count': _countByStatus('ACCEPTED'),
-        'color': _green,
-        'icon': Icons.check_circle_outline_rounded
-      },
-      {
-        'label': 'Rejected',
-        'count': _countByStatus('REJECTED'),
-        'color': _red,
-        'icon': Icons.cancel_outlined
-      },
-    ];
+  Widget _buildOrderTable() {
+    final orders = _filteredOrders;
+    if (orders.isEmpty) return const Center(child: Text("No orders found."));
 
-    return Row(
-      children: cards.asMap().entries.map((entry) {
-        final i = entry.key;
-        final c = entry.value;
-        final color = c['color'] as Color;
-        return Expanded(
-          child: Container(
-            margin: EdgeInsets.only(right: i < cards.length - 1 ? 12 : 0),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _brown.withValues(alpha: .1)),
-            ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: SingleChildScrollView(
+        child: DataTable(
+          showCheckboxColumn: false,
+          headingRowHeight: 50,
+          dataRowMaxHeight: 60,
+          headingRowColor: WidgetStateProperty.all(_bg.withOpacity(0.3)),
+          columns: const [
+            DataColumn(label: Text('ORDER #')),
+            DataColumn(label: Text('CUSTOMER')),
+            DataColumn(label: Text('TOTAL')),
+            DataColumn(label: Text('PAYMENT')),
+            DataColumn(label: Text('STATUS')),
+            DataColumn(label: Text('QUICK ACTION')),
+          ],
+          rows: orders.map((order) {
+            final isSelected = _selectedOrderId == order['id'];
+            final isPending = order['status'] == 'PENDING';
+            return DataRow(
+              selected: isSelected,
+              onSelectChanged: (_) => setState(() => _selectedOrderId = order['id']),
+              cells: [
+                DataCell(Text(order['id'], style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataCell(Text(order['customer'])),
+                DataCell(Text('₱${order['total']?.toStringAsFixed(2) ?? '0.00'}')),
+                DataCell(_paymentBadge(order['payment'] ?? 'CASH')),
+                DataCell(_statusChip(order['status'])),
+                DataCell(
+                  isPending 
+                  ? Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.check_circle_outline, color: _green, size: 22),
+                          onPressed: () => _processOrder(order['id'], true),
+                          tooltip: 'Quick Approve',
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.highlight_off_rounded, color: _red, size: 22),
+                          onPressed: () => _processOrder(order['id'], false),
+                          tooltip: 'Quick Reject',
+                        ),
+                      ],
+                    )
+                  : const Icon(Icons.visibility_outlined, color: Colors.grey, size: 18),
+                ),
+              ],
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  // --- RIGHT SIDE: VERIFICATION LAYER ---
+  Widget _buildVerificationLayer() {
+    final order = _selectedOrder;
+    return Container(
+      width: 420,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(left: BorderSide(color: _brown.withOpacity(0.15))),
+      ),
+      child: order == null || order.isEmpty
+          ? _buildEmptyState()
+          : _buildVerificationDetail(order),
+    );
+  }
+
+  Widget _buildVerificationDetail(Map<String, dynamic> order) {
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: .15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(c['icon'] as IconData, color: color, size: 18),
-                ),
+                _workspaceHeader(order),
+                const SizedBox(height: 24),
+                
+                // CRITICAL: PAYMENT SECTION
+                _sectionLabel("PAYMENT VERIFICATION"),
+                const SizedBox(height: 12),
+                _buildReceiptWorkspace(order),
+                
+                const SizedBox(height: 24),
+                _sectionLabel("ORDER ITEMS"),
                 const SizedBox(height: 10),
-                Text(
-                  '${c['count']}',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: _darkBrown,
-                  ),
-                ),
-                Text(
-                  (c['label'] as String).toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: _brown.withValues(alpha: .7),
-                    letterSpacing: 0.8,
-                  ),
-                ),
+                ... (order['items'] as List).map((item) => _itemRow(item)),
+                
+                const Divider(height: 40),
+                _summaryRow("Subtotal", "₱${(order['total'] - 45).toStringAsFixed(2)}"),
+                _summaryRow("Delivery Fee", "₱45.00"),
+                const SizedBox(height: 8),
+                _summaryRow("GRAND TOTAL", "₱${order['total']?.toStringAsFixed(2)}", isTotal: true),
               ],
             ),
           ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildOrderGrid() {
-    final orders = _filteredOrders;
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (orders.isEmpty) {
-      return Center(
-        child: Text(
-          'No orders found.',
-          style: TextStyle(
-              color: _brown.withValues(alpha: .5), fontSize: 13),
         ),
-      );
-    }
-
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.35,
-      ),
-      itemCount: orders.length,
-      itemBuilder: (context, index) => _buildOrderCard(orders[index]),
-    );
-  }
-
-  Widget _buildOrderCard(Map<String, dynamic> order) {
-    final status = order['status'] as String;
-    final color = _statusColor(status);
-    final isSelected = _selectedOrderId == order['id'];
-    final items = order['items'] as List;
-    final displayItems = items.take(2).toList();
-    final extra = items.length - 2;
-
-    return GestureDetector(
-      onTap: () => setState(() => _selectedOrderId = order['id']),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? color : _brown.withValues(alpha: .15),
-            width: isSelected ? 2 : 0.5,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  order['id'],
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    color: _darkBrown,
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: .15),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(_statusIcon(status), size: 11, color: color),
-                      const SizedBox(width: 4),
-                      Text(
-                        status,
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          color: color,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              order['time'],
-              style: TextStyle(
-                  fontSize: 11, color: _brown.withValues(alpha: .6)),
-            ),
-            const SizedBox(height: 8),
-            _infoRow(Icons.person_outline, order['customer'], bold: true),
-            const SizedBox(height: 3),
-            _infoRow(Icons.phone_outlined, order['phone']),
-            const SizedBox(height: 3),
-            _infoRow(Icons.delivery_dining_outlined, order['delivery_address']),
-            const SizedBox(height: 10),
-            ...displayItems.map((item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 2),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${item['qty']}x ${item['name']}',
-                          style:
-                              TextStyle(fontSize: 11, color: _darkBrown),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Text(
-                        '₱${(item['qty'] * item['price'] as double).toStringAsFixed(2)}',
-                        style: TextStyle(fontSize: 11, color: _brown),
-                      ),
-                    ],
-                  ),
-                )),
-            if (extra > 0)
-              Text(
-                '+$extra more items',
-                style: TextStyle(
-                    fontSize: 10, color: _brown.withValues(alpha: .6)),
-              ),
-            const Spacer(),
-            Row(
-              children: [
-                Text(
-                  'TOTAL',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: _brown.withValues(alpha: .6),
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '₱${_total(order).toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: _darkBrown,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _infoRow(IconData icon, String text, {bool bold = false}) {
-    return Row(
-      children: [
-        Icon(icon, size: 12, color: _brown.withValues(alpha: .6)),
-        const SizedBox(width: 5),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-              color: bold ? _darkBrown : _brown.withValues(alpha: .7),
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
+        if (order['status'] == 'PENDING') _buildActionFooter(order['id']),
       ],
     );
   }
 
-  Widget _buildRightPanel() {
-    final order = _selectedOrder;
-
+  Widget _buildReceiptWorkspace(Map<String, dynamic> order) {
+    final isElectronic = order['payment'].toString().toUpperCase() != 'CASH';
+    
     return Container(
-      width: 320,
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          bottomRight: Radius.circular(16),
-        ),
-        border:
-            Border(left: BorderSide(color: _brown.withValues(alpha: .15))),
+        color: _bg.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _brown.withOpacity(0.1)),
       ),
-      child: order == null || order.isEmpty
-          ? _buildEmptyDetail()
-          : _buildOrderDetail(order),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(isElectronic ? Icons.qr_code_scanner : Icons.money, color: _brown),
+              const SizedBox(width: 8),
+              Text(order['payment'], style: const TextStyle(fontWeight: FontWeight.bold, color: _darkBrown)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (isElectronic) ...[
+            Container(
+              height: 200,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: _brown.withOpacity(0.2)),
+              ),
+              child: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.image_search, size: 40, color: Colors.grey),
+                    SizedBox(height: 8),
+                    Text("Receipt Image Here", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton.icon(
+                onPressed: () {}, 
+                icon: const Icon(Icons.zoom_in),
+                label: const Text("View Full-Screen Receipt"),
+              ),
+            )
+          ] else 
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: Text("CASH PAYMENT\nVerify amount on arrival", 
+                  textAlign: TextAlign.center, style: TextStyle(color: _brown, fontSize: 12)),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
-  Widget _buildEmptyDetail() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+  // --- UI ATOMS ---
+
+  Widget _workspaceHeader(Map<String, dynamic> order) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(order['id'], style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: _darkBrown)),
+            Text(order['customer'], style: const TextStyle(color: _brown, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        _statusChip(order['status']),
+      ],
+    );
+  }
+
+  Widget _sectionLabel(String label) {
+    return Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: _brown, letterSpacing: 1.2));
+  }
+
+  Widget _itemRow(Map<String, dynamic> item) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
         children: [
-          Icon(Icons.shopping_bag_outlined,
-              size: 56, color: _brown.withValues(alpha: .2)),
-          const SizedBox(height: 12),
-          Text(
-            'SELECT AN ORDER TO VIEW DETAILS',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: _brown.withValues(alpha: .4),
-              letterSpacing: 0.8,
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(color: _bg, borderRadius: BorderRadius.circular(6)),
+            child: Text("${item['qty']}x", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Text(item['name'], style: const TextStyle(fontSize: 13))),
+          Text("₱${(item['price'] * item['qty']).toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryRow(String label, String value, {bool isTotal = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: TextStyle(fontWeight: isTotal ? FontWeight.w900 : FontWeight.normal, fontSize: isTotal ? 16 : 13)),
+        Text(value, style: TextStyle(fontWeight: isTotal ? FontWeight.w900 : FontWeight.bold, fontSize: isTotal ? 18 : 14, color: isTotal ? _green : _darkBrown)),
+      ],
+    );
+  }
+
+  Widget _statusChip(String status) {
+    Color color = status == 'PENDING' ? _brown : (status == 'ACCEPTED' ? _green : _red);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: color)),
+      child: Text(status, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _paymentBadge(String type) {
+    bool isGcash = type.toUpperCase().contains('GCASH');
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(color: isGcash ? Colors.blue.withOpacity(0.1) : Colors.orange.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+      child: Text(type, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isGcash ? Colors.blue : Colors.orange[800])),
+    );
+  }
+
+  Widget _buildActionFooter(String id) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: const Offset(0, -5))],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => _processOrder(id, false),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _red, 
+                side: const BorderSide(color: _red),
+                padding: const EdgeInsets.symmetric(vertical: 18),
+              ),
+              child: const Text("REJECT ORDER", style: TextStyle(fontWeight: FontWeight.bold)),
             ),
-            textAlign: TextAlign.center,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () => _processOrder(id, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _green, 
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                elevation: 0,
+              ),
+              child: const Text("APPROVE ORDER", style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildOrderDetail(Map<String, dynamic> order) {
-    final status = order['status'] as String;
-    final color = _statusColor(status);
-    final items = order['items'] as List;
-    final sub = _subtotal(order);
-    final fee = 45.00;
-    final total = sub + fee;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: _brown.withValues(alpha: .1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.shopping_bag_outlined,
-                    color: _green, size: 18),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    order['id'],
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w900,
-                      color: _darkBrown,
-                    ),
-                  ),
-                  Text(
-                    'ORDER DETAILS',
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      color: _brown.withValues(alpha: .5),
-                      letterSpacing: 1,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(_statusIcon(status), size: 14, color: Colors.white),
-                const SizedBox(width: 6),
-                Text(
-                  status,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 14),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _sectionLabel('CUSTOMER INFORMATION'),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: _bg.withValues(alpha: .5),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    children: [
-                      _detailRow(Icons.person_outline, order['customer'],
-                          bold: true),
-                      const SizedBox(height: 6),
-                      _detailRow(Icons.phone_outlined, order['phone']),
-                      const SizedBox(height: 6),
-                      _detailRow(
-                          Icons.delivery_dining_outlined, order['delivery_address']),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-                _sectionLabel('ORDER ITEMS'),
-                const SizedBox(height: 8),
-                ...items.map((item) => Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: _bg.withValues(alpha: .5),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  item['name'],
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: _darkBrown,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                '₱${(item['qty'] * item['price'] as double).toStringAsFixed(2)}',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: _darkBrown,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Quantity: ${item['qty']}',
-                            style: TextStyle(
-                                fontSize: 10,
-                                color: _brown.withValues(alpha: .6)),
-                          ),
-                          Text(
-                            '₱${(item['price'] as double).toStringAsFixed(2)} each',
-                            style: TextStyle(
-                                fontSize: 10,
-                                color: _brown.withValues(alpha: .6)),
-                          ),
-                        ],
-                      ),
-                    )),
-                if (order['specialInstructions'] != null) ...[
-                  const SizedBox(height: 6),
-                  _sectionLabel('SPECIAL INSTRUCTIONS'),
-                  const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _bg.withValues(alpha: .5),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      order['specialInstructions'],
-                      style: TextStyle(fontSize: 12, color: _darkBrown),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 14),
-                _totalRow('SUBTOTAL', '₱${sub.toStringAsFixed(2)}'),
-                const SizedBox(height: 4),
-                _totalRow('DELIVERY FEE', '₱${fee.toStringAsFixed(2)}'),
-                const Divider(height: 20),
-                Row(
-                  children: [
-                    Text(
-                      'TOTAL',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                        color: _darkBrown,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '₱${total.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: _darkBrown,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    color: _bg.withValues(alpha: .5),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                        color: _brown.withValues(alpha: .15)),
-                  ),
-                  child: Text(
-                    order['payment'],
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: _brown.withValues(alpha: .7),
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            border: Border(
-                top: BorderSide(color: _brown.withValues(alpha: .15))),
-          ),
-          child: status == 'PENDING'
-              ? Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => _acceptOrder(order['id']),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _green,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: const Text(
-                          'ACCEPT ORDER',
-                          style: TextStyle(
-                              fontSize: 11, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => _rejectOrder(order['id']),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _red,
-                          side: BorderSide(color: _red),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: const Text(
-                          'REJECT ORDER',
-                          style: TextStyle(
-                              fontSize: 11, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(_statusIcon(status), size: 16, color: color),
-                    const SizedBox(width: 6),
-                    Text(
-                      'ORDER $status',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ],
-                ),
-        ),
-      ],
-    );
-  }
-
-  Widget _sectionLabel(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontSize: 9,
-        fontWeight: FontWeight.bold,
-        color: _brown.withValues(alpha: .5),
-        letterSpacing: 1.2,
+  Widget _buildEmptyState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.mouse_outlined, size: 60, color: _bg),
+          SizedBox(height: 16),
+          Text("SELECT AN ORDER\nTO START VERIFICATION", textAlign: TextAlign.center,
+            style: TextStyle(color: _brown, fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.2)),
+        ],
       ),
-    );
-  }
-
-  Widget _detailRow(IconData icon, String text, {bool bold = false}) {
-    return Row(
-      children: [
-        Icon(icon, size: 13, color: _brown.withValues(alpha: .6)),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-              color: bold ? _darkBrown : _brown.withValues(alpha: .7),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _totalRow(String label, String value) {
-    return Row(
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-              fontSize: 11, color: _brown.withValues(alpha: .6)),
-        ),
-        const Spacer(),
-        Text(
-          value,
-          style: TextStyle(
-              fontSize: 11, color: _brown.withValues(alpha: .8)),
-        ),
-      ],
     );
   }
 }
