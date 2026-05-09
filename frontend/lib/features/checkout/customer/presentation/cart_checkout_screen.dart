@@ -8,6 +8,8 @@ import 'package:frontend/core/constants/cart_item.dart';
 import 'package:frontend/core/constants/cart_provider.dart';
 import 'package:frontend/core/services/customer/order_service.dart';
 import 'package:frontend/core/models/order_request.dart';
+import 'package:frontend/core/services/menu_service.dart';
+import 'package:frontend/core/utils/order_num_utils.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
@@ -198,9 +200,18 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
     }
 
     setState(() => _isLoading = true);
+    try{
 
-    final order = OrderRequest(
-      orderNumber: "",
+      final nextId = await MenuService.fetchNextOrderNumber(); 
+    
+
+      final String formattedOrderNumber = OrderNumberUtils.formatOrderNumber(
+        nextId, 
+        'ONLINE'
+      );
+
+      final order = OrderRequest(
+      orderNumber: formattedOrderNumber,
       source:          'online',
       orderType:       _isDelivery ? 'delivery' : 'pickup',
       subtotal:        _subtotal,
@@ -221,19 +232,23 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
       }).toList(),
     );
 
-    final ok = await _orderService.createOrder(order);
-    if (!mounted) return;
+     final ok = await _orderService.createOrder(order);
+
+     if (!mounted) return;
     setState(() => _isLoading = false);
 
     if (ok) {
-
       CartProvider.of(context).clear();
 
       _showSuccessDialog();
     } else {
       _snack('Failed to place order. Please try again.', error: true);
     }
-    
+
+    }catch(err){
+      setState(() => _isLoading = false);
+      _snack('Error connecting to server.', error: true);
+    }
   }
 
   void _snack(String msg, {bool error = false}) {
