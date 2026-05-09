@@ -6,8 +6,6 @@ const db = require('../config/dbConnection.js');
 router.post('/add-review', (req, res) => {
   const { user_id, review_text, rating } = req.body;
 
-  console.log("Calling db.query now...");
-
   db.query(
     'INSERT INTO reviews (user_id, review_text, rating) VALUES (?, ?, ?)',
     [user_id, review_text, rating],
