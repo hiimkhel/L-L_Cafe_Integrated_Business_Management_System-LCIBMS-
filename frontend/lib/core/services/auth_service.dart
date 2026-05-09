@@ -116,6 +116,15 @@ class AuthService {
     }
   }
 
+  // Get user Id 
+  Future<String?> getUid() async {
+    final user = _auth.currentUser;
+    return user?.uid;
+  }
+
+  Future<String?> getIdToken() async {
+    return await _auth.currentUser?.getIdToken();
+  }
   ///  Logout
   Future<void> logout() async {
     await _auth.signOut();
