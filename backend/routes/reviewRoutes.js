@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const {getPublicReviews} = require("../controllers/reviewControllers.js");
 const db = require('../config/dbConnection.js'); 
 
 router.post('/add-review', (req, res) => {
   const { user_id, review_text, rating } = req.body;
-
-  console.log("Calling db.query now...");
 
   db.query(
     'INSERT INTO reviews (user_id, review_text, rating) VALUES (?, ?, ?)',
@@ -21,5 +20,7 @@ router.post('/add-review', (req, res) => {
     }
   );
 });
+
+router.get("/public", getPublicReviews);
 
 module.exports = router;

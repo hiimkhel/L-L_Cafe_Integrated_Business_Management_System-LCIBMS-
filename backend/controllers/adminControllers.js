@@ -7,31 +7,58 @@ const db = require("../config/dbConnection.js");
 
 // [1] Customers API
 const fetchAllCustomer = async (req, res) => {
-     try {
+    try {
         const { search = "" } = req.query;
 
         let params = [];
 
         let query = `
             SELECT 
-                id,
-                firebase_uid,
-                full_name,
-                email,
-                provider,
-                role,
-                created_at
-            FROM users
-            WHERE role = 'customer'
+                u.id,
+                u.firebase_uid,
+                u.full_name,
+                u.email,
+                u.provider,
+                u.role,
+                u.created_at,
+
+                COUNT(o.id) AS total_orders,
+
+                COALESCE(
+                    SUM(
+                        CASE
+                            WHEN o.status = 'completed'
+                            THEN o.total
+                            ELSE 0
+                        END
+                    ),
+                    0
+                ) AS total_spent
+
+            FROM users u
+
+            LEFT JOIN orders o
+                ON u.id = o.user_id
+
+            WHERE u.role = 'customer'
         `;
 
         // SEARCH FILTER
         if (search) {
-            query += ` AND (full_name LIKE ? OR email LIKE ?)`;
+            query += `
+                AND (
+                    u.full_name LIKE ?
+                    OR u.email LIKE ?
+                )
+            `;
+
             params.push(`%${search}%`, `%${search}%`);
         }
 
-        query += ` ORDER BY created_at DESC`;
+        query += `
+            GROUP BY u.id
+            ORDER BY u.created_at DESC
+        `;
 
         const [rows] = await db.query(query, params);
 
@@ -50,7 +77,6 @@ const fetchAllCustomer = async (req, res) => {
         });
     }
 };
-
 
 // [2] Menu APIs
 // Fetch all items by category
@@ -270,6 +296,174 @@ const updateMenuItem = async (req, res) => {
         });
     }
 }
+
+const getCustomerReviews = async (req, res) => {
+    try{
+
+        // Retrieve all the necessary data uby joining reviews and users table
+       const [rows] = await db.query(`
+            SELECT 
+                r.id,
+                r.user_id,
+                u.full_name AS customer_name,
+                r.review_text,
+                r.rating,
+                r.status,
+                r.created_at,
+                u.profile_picture
+            FROM reviews r
+            JOIN users u ON r.user_id = u.id
+            ORDER BY r.created_at DESC
+        `);
+
+        res.json(rows);
+
+    }catch(err){
+        res.status(500).json({error: err.message})
+    }
+}
+
+const publishReview = async (req, res) => {
+    try{
+        // Retrieve review id
+        const {id} = req.params;
+
+        // Error handling   
+        if(!id){
+            return res.status(400).json({message: "Id field is required!"});
+        }
+
+        // Check review id existence
+        const [rows] = await db.query(`
+            SELECT status FROM reviews WHERE id = ?
+        `, [id]);
+
+        if(!rows.length){
+            return res.status(404).json({message: "Customer Review not found!"})
+        }
+
+        // Check if published
+        if(rows[0].status == 'published'){
+            return res.status(400).json({message: "Customer Review already published!"})
+        }
+
+        // Execute query
+        await db.query(`
+            UPDATE reviews SET status = "published" WHERE id = ?    
+        `, [id]);
+
+        res.json({message: "Status updated successfully!"})
+
+    }catch(err){
+        res.status(500).json({error: err.message})
+    }
+}
+
+const archiveReview = async (req, res) => {
+    try{
+        // Retrieve review id
+        const {id} = req.params;
+
+        // Error Handling
+        if(!id) return res.status(400).json({error: "Id parameter is required!"})
+
+        // Store review data
+        const [row] = await db.query("SELECT status FROM reviews WHERE id = ?", [id]);
+
+        // Check existence
+        if(!row.length) return res.status(404).json({message: "Customer Review not found!"})
+
+        // Check status if valid for archiving
+        if(row[0].status == 'archived'){
+            return res.status(400).json({message: "Customer Review already archived!" });
+        }
+
+        // Execute query
+        await db. query("UPDATE reviews SET status = 'archived' WHERE id = ?", [id])
+
+        res.status(200).json({message: "Status updated successfully!"})
+
+    }catch(err){
+        res.status(500).json({error: err.message})
+    }
+}
+
+const deleteReview = async (req, res) => {
+    try{
+        // Retrieve review id
+        const {id} = req.params;
+
+        // Error Handling
+        if(!id) return res.status(400).json({error: "Id parameter is required!"})
+
+        // Store review data
+        const [row] = await db.query("SELECT status FROM reviews WHERE id = ?", [id]);
+
+        // Check existence
+        if(!row.length) return res.status(404).json({message: "Customer Review not found!"})
+        
+        // Check status if valid for republishing   
+        await db.query("DELETE FROM reviews WHERE id = ?", [id])
+
+        return res.status(200).json({message: "Review deleted successfully!"})
+        
+    }catch(err){
+        return res.status(500).json({error: err.message})
+    }
+}
+
+const republishReview = async (req, res) => {
+  try {
+    // Retrieve review ID
+    const { id } = req.params;
+
+    // Validate ID
+    if (!id) {
+      return res.status(400).json({
+        error: "Id parameter is required!"
+      });
+    }
+
+    // Check if review exists
+    const [rows] = await db.query(
+      "SELECT status FROM reviews WHERE id = ?",
+      [id]
+    );
+
+    // Review not found
+    if (!rows.length) {
+      return res.status(404).json({
+        message: "Customer review not found!"
+      });
+    }
+
+    const currentStatus = rows[0].status;
+
+    // Only archived reviews can be re-published
+    if (currentStatus !== 'archived') {
+      return res.status(400).json({
+        message: "Only archived reviews can be re-published"
+      });
+    }
+
+    // Update status
+    await db.query(
+      "UPDATE reviews SET status = ? WHERE id = ?",
+      ['published', id]
+    );
+
+    return res.status(200).json({
+      message: "Review re-published successfully!",
+      status: "published"
+    });
+
+  } catch (err) {
+    return res.status(500).json({
+      error: err.message
+    });
+  }
+};
+
 module.exports = { fetchAllCustomer, 
     fetchMenuItems,
     fetchMenuCategories,
@@ -277,5 +471,10 @@ module.exports = { fetchAllCustomer,
     addMenuItem,
     deleteMenuItem,
     getItemById,
-    updateMenuItem
+    updateMenuItem,
+    getCustomerReviews,
+    publishReview,
+    archiveReview, 
+    deleteReview,
+    republishReview
  };

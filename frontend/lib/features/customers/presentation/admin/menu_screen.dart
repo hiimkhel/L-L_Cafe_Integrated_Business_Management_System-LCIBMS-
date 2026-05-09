@@ -8,6 +8,8 @@ import 'package:frontend/core/services/customer/menu_service.dart';
 import 'package:frontend/core/models/menu_item.dart';
 import 'package:frontend/core/widgets/bamboo_breeze_background.dart'; // ← updated
 import 'package:frontend/core/constants/cart_item.dart';
+import 'package:frontend/core/widgets/bamboo_background.dart';
+import 'package:frontend/core/constants/cart_item.dart';
 
 const double _kMobile = 900;
 const double _kDesktopMaxWidth = 1400;

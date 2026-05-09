@@ -9,6 +9,8 @@ import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/bamboo_background.dart';
+import 'package:frontend/core/services/customer/reviews_service.dart';
+import 'package:frontend/core/models/review_model.dart';
 
 const double _kMobile = 768;
 const double _kDesktopMaxWidth = 1280;
@@ -29,20 +31,6 @@ class LandingMenuItem {
   });
 }
 
-class LandingReview {
-  final String id, reviewer, initials, timeAgo, headline;
-  final int stars;
-  final bool isVerified;
-  const LandingReview({
-    required this.id,
-    required this.reviewer,
-    required this.initials,
-    required this.timeAgo,
-    required this.headline,
-    required this.stars,
-    this.isVerified = false,
-  });
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DATA
@@ -73,41 +61,103 @@ const _seasonal = <LandingMenuItem>[
   LandingMenuItem(id: 'sf-4', name: 'Habanero Mango',            price: '₱180.00', badge: 'SEASONAL', imageAsset: 'assets/images/seasonal_habanero_mango.png'),
 ];
 
-const _reviews = <LandingReview>[
-  LandingReview(id: 'r-1', reviewer: 'Maria Santos', initials: 'M', stars: 5, timeAgo: '9 months ago',  headline: 'Quality, design, shipping 10/10'),
-  LandingReview(id: 'r-2', reviewer: 'Jose Reyes',   initials: 'J', stars: 5, timeAgo: '9 months ago',  headline: '10/10'),
-  LandingReview(id: 'r-3', reviewer: 'Ana de Leon',  initials: 'A', stars: 5, timeAgo: '10 months ago', headline: 'Quality coffee perfect for any kind of event, highly recommended', isVerified: true),
-];
-
 // ─────────────────────────────────────────────────────────────────────────────
 // SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
 
-class LandingScreen extends StatelessWidget {
+class LandingScreen extends StatefulWidget {
   final Function(User) onLogin;
   final Function(User) onRegister;
 
   const LandingScreen({super.key, required this.onLogin, required this.onRegister});
 
   @override
-  Widget build(BuildContext context) {
-    void goLogin() => Navigator.push(context,
-        MaterialPageRoute(builder: (_) => LoginScreen(onLogin: onLogin)));
+  State<LandingScreen> createState() => _LandingScreenState();
 
-    void goRegister() => Navigator.push(context,
-        MaterialPageRoute(builder: (_) => RegisterScreen(onRegister: onRegister)));
+}
+
+class _LandingScreenState extends State<LandingScreen> {
+
+  List<ReviewModel> _reviews = [];
+  bool _loadingReviews = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReviews();
+  }
+
+Future<void> _loadReviews() async {
+  try {
+    print('FETCHING REVIEWS...');
+
+    final data = await ReviewService.fetchPublicReviews();
+
+    print('API SUCCESS');
+    print('REVIEWS LENGTH: ${data.length}');
+    print(data);
+
+    setState(() {
+      _reviews = data;
+      _loadingReviews = false;
+    });
+  } catch (e, stackTrace) {
+    print('API ERROR: $e');
+    print(stackTrace);
+
+    setState(() {
+      _loadingReviews = false;
+    });
+  }
+}
+
+
+
+  @override
+  Widget build(BuildContext context) {
+    void goLogin() => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => LoginScreen(onLogin: widget.onLogin)));
+
+    void goRegister() => Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => RegisterScreen(onRegister: widget.onRegister)));
 
     void goGuestMenu() => Navigator.push(context,
         MaterialPageRoute(
           builder: (menuContext) => MenuScreen(
             isGuest: true,
-            onLoginRequired: () => Navigator.of(menuContext).pushReplacement(
-              MaterialPageRoute(
-                builder: (_) => LoginScreen(onLogin: onLogin, popToRootOnSuccess: true),
-              ),
-            ),
+            onLoginRequired: () {
+              Navigator.of(menuContext).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => LoginScreen(
+                    onLogin: widget.onLogin,
+                    popToRootOnSuccess: true,
+                  ),
+                ),
+              );
+            },
           ),
         ));
+
+    Widget _buildReviewsSection() {
+      if (_loadingReviews) {
+        return const Padding(
+          padding: EdgeInsets.all(40),
+          child: CircularProgressIndicator(),
+        );
+      }
+
+      if (_reviews.isEmpty) {
+        return const Padding(
+          padding: EdgeInsets.all(40),
+          child: Text('No reviews available'),
+        );
+      }
+
+      return _ReviewsSection(reviews: _reviews);
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -131,9 +181,29 @@ class LandingScreen extends StatelessWidget {
                       _HighlightsBar(),
                       _GalleryCarousel(slots: _gallerySlots),
                       _WhyUsSection(),
-                      _MenuGrid(title: 'BEST SELLERS',      cta: 'SEE ALL',           items: _bestSellers, onCtaTap: goGuestMenu),
-                      _MenuGrid(title: 'SEASONAL FAVORITES', cta: 'REGISTER TO ORDER', items: _seasonal,    onCtaTap: goRegister),
-                      _ReviewsSection(reviews: _reviews),
+                      _MenuGrid(
+                        title: 'BEST SELLERS',
+                        cta: 'SEE ALL',
+                        items: _bestSellers,
+                        onCtaTap: goGuestMenu,
+                      ),
+                      _MenuGrid(
+                        title: 'SEASONAL FAVORITES',
+                        cta: 'REGISTER TO ORDER',
+                        items: _seasonal,
+                        onCtaTap: goRegister,
+                      ),
+                      _loadingReviews
+                        ? const Padding(
+                            padding: EdgeInsets.all(40),
+                            child: CircularProgressIndicator(),
+                          )
+                        : _reviews.isEmpty
+                            ? const Padding(
+                                padding: EdgeInsets.all(40),
+                                child: Text('No reviews available'),
+                              )
+                            : _buildReviewsSection(),
                       _Newsletter(),
                     ]),
                   ),
@@ -749,7 +819,7 @@ class _MenuTile extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _ReviewsSection extends StatefulWidget {
-  final List<LandingReview> reviews;
+  final List<ReviewModel> reviews;
   const _ReviewsSection({required this.reviews});
   @override
   State<_ReviewsSection> createState() => _ReviewsSectionState();
@@ -870,7 +940,7 @@ class _Arr extends StatelessWidget {
 }
 
 class _RevCard extends StatelessWidget {
-  final LandingReview r;
+  final ReviewModel r;
   final double? width;
   const _RevCard({required this.r, this.width});
 
@@ -885,53 +955,103 @@ class _RevCard extends StatelessWidget {
         border: Border.all(color: AppColors.primary.withOpacity(0.05)),
         boxShadow: const [BoxShadow(color: Color(0x12000000), blurRadius: 10, offset: Offset(0, 5))],
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-        Row(children: List.generate(5, (i) => Padding(
-            padding: const EdgeInsets.only(right: 3),
-            child: Icon(i < r.stars ? Icons.star : Icons.star_border,
-                color: AppColors.primary, size: 16)))),
-        const SizedBox(height: 6),
-        Text(r.timeAgo.toUpperCase(),
-            style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                fontSize: 9, letterSpacing: 0.9, color: AppColors.primary.withOpacity(0.55))),
-        const SizedBox(height: 6),
-        // ✅ No maxLines limit — let text expand fully on mobile
-        Text(r.headline,
-            style: const TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w700,
-                fontSize: 14, height: 1.5, color: Color(0xFF2D2A26))),
-        const SizedBox(height: 14),
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: AppColors.primary.withOpacity(0.1)))),
-          child: Row(children: [
-            Container(
-              width: 34, height: 34,
-              decoration: BoxDecoration(color: AppColors.secondary, borderRadius: BorderRadius.circular(10)),
-              child: Center(child: Text(r.initials,
-                  style: const TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                      fontSize: 12, color: Colors.white))),
-            ),
-            const SizedBox(width: 10),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(r.reviewer.toUpperCase(),
-                  style: const TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                      fontSize: 12, color: Color(0xFF2D2A26))),
-              if (r.isVerified)
-                Row(children: [
-                  Icon(Icons.verified, color: AppColors.secondary, size: 11),
-                  const SizedBox(width: 3),
-                  Text('VERIFIED',
-                      style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w700,
-                          fontSize: 8, color: AppColors.secondary)),
-                ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+              children: List.generate(
+                  5,
+                  (i) => Padding(
+                      padding: const EdgeInsets.only(right: 3),
+                      child: Icon(
+                          i < r.rating ? Icons.star : Icons.star_border,
+                          color: AppColors.primary,
+                          size: 16)))),
+          const SizedBox(height: 6),
+          Text(timeAgo,
+              style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 9,
+                  letterSpacing: 0.9,
+                  color: AppColors.primary.withOpacity(0.55))),
+          const SizedBox(height: 6),
+          Text(r.content,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  height: 1.5,
+                  color: Color(0xFF2D2A26))),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+                border: Border(
+                    top: BorderSide(color: AppColors.primary.withOpacity(0.1)))),
+            child: Row(children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                    color: AppColors.secondary,
+                    borderRadius: BorderRadius.circular(10)),
+                child: Center(
+                    child: Text(initials,
+                        style: const TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w900,
+                            fontSize: 12,
+                            color: Colors.white))),
+              ),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(r.customerName.toUpperCase(),
+                      style: const TextStyle(
+                          fontFamily: 'Urbanist',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                          color: Color(0xFF2D2A26))),
+                ],
+              ),
             ]),
           ]),
         ),
       ]),
     );
   }
+  String get initials {
+    final parts = r.customerName.trim().split(' ');
+    if (parts.length == 1) {
+      return parts.first[0].toUpperCase();
+    }
+
+    return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
+
+  String get timeAgo {
+    final difference = DateTime.now().difference(r.submittedAt);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays}D AGO';
+    }
+
+    if (difference.inHours > 0) {
+      return '${difference.inHours}H AGO';
+    }
+
+    if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}M AGO';
+    }
+
+    return 'JUST NOW';
+  }
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NEWSLETTER
