@@ -83,13 +83,9 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     return subtotal;
   }
 
-  // Fixed tax for VAT
-  double getTax() {
-    return 20.0;
-  }
 
   double getTotal() {
-    return getSubtotal() + getTax();
+    return getSubtotal();
   }
 
 
@@ -652,27 +648,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                     ),
                                       ],
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'VAT',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(
-                      '₱${getTax().toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
+
                 const SizedBox(height: 8),
                 const Divider(
                   height: 1,

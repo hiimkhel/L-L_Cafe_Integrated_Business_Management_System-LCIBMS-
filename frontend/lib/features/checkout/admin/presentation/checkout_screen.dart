@@ -30,9 +30,8 @@ class CheckoutConfirmationScreen extends StatefulWidget {
       (sum, item) => sum + (item["price"] * item["qty"]),
     );
 
-    double get tax => 20.0;
 
-    double get total => subtotal + tax;
+    double get total => subtotal;
 
     double get change => cashGiven - total;
 
@@ -51,7 +50,6 @@ class CheckoutConfirmationScreen extends StatefulWidget {
                 Expanded(flex: 4, child: OrderSummary(
                   orderItems: widget.orderItems,
                   subtotal: subtotal,
-                  tax: tax,
                   total: total,
                   orderType: widget.orderType
                 )),

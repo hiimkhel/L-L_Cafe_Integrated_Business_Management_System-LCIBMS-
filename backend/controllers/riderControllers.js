@@ -111,7 +111,7 @@ const getDeliveryOrderDetails = async (req, res) => {
                 notes: orderInfo.notes,
                 status: orderInfo.status.toUpperCase(),
                 time: orderInfo.created_at,
-                subtotal: orderInfo.subtotal,        // 👈 ADD THIS
+                subtotal: orderInfo.subtotal,       
                 delivery_fee: orderInfo.delivery_fee,
                 total: orderInfo.total,
                 items: formattedItems   
