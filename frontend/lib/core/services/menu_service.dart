@@ -31,4 +31,19 @@ class MenuService {
     final List data = jsonDecode(res.body);
     return data.map((e) => MenuItem.fromJson(e)).toList();
   }
+
+  static Future<int> fetchNextOrderNumber() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/orders/current-order-num'));
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['nextId'] as int;
+      }
+      return 1; // Fallback to 1
+    } catch (e) {
+      print("Error fetching order number: $e");
+      return 1; 
+    }
+  }
 }
