@@ -4,137 +4,13 @@ import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
 import 'package:frontend/core/constants/cart_provider.dart';
+import 'package:frontend/core/widgets/bamboo_breeze_background.dart'; // ← shared widget
 import 'package:frontend/features/checkout/customer/presentation/cart_checkout_screen.dart';
 import 'package:frontend/core/constants/cart_item.dart' as legacy;
 
 const double _kMobile = 768;
 const double _kDesktopMaxWidth = 1280;
 const Color _primary = Color(0xFF758C6D);
-
-// ─────────────────────────────────────────────────────────────────────────────
-// BAMBOO BACKGROUND (retained)
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _BambooBackground extends StatefulWidget {
-  const _BambooBackground();
-  @override
-  State<_BambooBackground> createState() => _BambooBackgroundState();
-}
-
-class _BambooBackgroundState extends State<_BambooBackground>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-        vsync: this, duration: const Duration(seconds: 30))
-      ..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < _kMobile;
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (_, __) => CustomPaint(
-        painter: _BambooPainter(
-            animationValue: _controller.value, isMobile: isMobile),
-        size: Size.infinite,
-      ),
-    );
-  }
-}
-
-class _BambooPainter extends CustomPainter {
-  final double animationValue;
-  final bool isMobile;
-
-  _BambooPainter({required this.animationValue, required this.isMobile});
-
-  static const _bamboos = [
-    [0.040, 13.0, 0.12, 1.53], [0.095, 7.0, 0.10, -1.84],
-    [0.133, 14.0, 0.13, 1.45], [0.190, 9.0, 0.10, -0.72],
-    [0.236, 9.5, 0.10, -0.71], [0.283, 13.0, 0.12, -1.53],
-    [0.321, 13.0, 0.11, 1.24], [0.374, 1.9, 0.08, 0.29],
-    [0.423, 2.2, 0.08, 0.35], [0.469, 2.6, 0.08, -0.34],
-    [0.503, 20.0, 0.13, 2.00], [0.560, 4.1, 0.09, 1.06],
-    [0.598, 17.6, 0.12, 1.82], [0.656, 8.9, 0.10, -0.98],
-    [0.693, 15.5, 0.11, 1.72], [0.739, 17.9, 0.12, 1.99],
-    [0.783, 18.8, 0.12, 1.81], [0.839, 8.9, 0.10, 0.66],
-    [0.890, 5.2, 0.08, -1.98], [0.936, 16.6, 0.11, -1.89],
-  ];
-
-  void _drawLeaf(Canvas c, Offset o, double angle, double len, double w,
-      Paint p) {
-    c.save(); c.translate(o.dx, o.dy); c.rotate(angle);
-    final path = Path()
-      ..moveTo(0, 0)
-      ..quadraticBezierTo(len * 0.4, -w, len, 0)
-      ..quadraticBezierTo(len * 0.6, w, 0, 0)
-      ..close();
-    c.drawPath(path, p); c.restore();
-  }
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = _primary;
-    int index = 0;
-    for (final b in _bamboos) {
-      index++;
-      if (isMobile && index % 3 != 0) continue;
-      final baseX = size.width * (b[0] as double);
-      final w = b[1] as double;
-      final deg = b[3] as double;
-      final h = size.height;
-      final double baseOp = b[2] as double;
-      final op = isMobile ? baseOp * 0.4 : baseOp;
-      final x =
-          ((baseX + animationValue * size.width * (op * 8)) % size.width);
-      final sway =
-          math.sin((animationValue * math.pi * 4) + (x * 0.01)) * 0.015;
-      final rad = (deg * math.pi / 180) + sway;
-      paint.color = _primary.withOpacity(op);
-      canvas.save();
-      canvas.translate(x + w / 2, h / 2);
-      canvas.rotate(rad);
-      canvas.drawRect(Rect.fromLTWH(-w / 2, -h / 2 - 20, w, h + 40), paint);
-      int segments = (h / (w * 10 + 60)).ceil().clamp(3, 10);
-      double segH = (h + 40) / segments;
-      for (int i = 1; i < segments; i++) {
-        double jY = (-h / 2 - 20) + (i * segH);
-        canvas.drawRect(
-            Rect.fromLTWH(-w / 2 - 1.5, jY - 1, w + 3, 2.5), paint);
-        if ((index + i) % 4 != 0) {
-          bool isLeft = (index + i) % 2 == 0;
-          double ll = w * 2.5 + 20.0, lw = ll * 0.25;
-          _drawLeaf(canvas, Offset(isLeft ? -w / 2 : w / 2, jY),
-              isLeft ? math.pi * 0.8 : math.pi * 0.2, ll, lw, paint);
-          if (i % 2 == 0) {
-            _drawLeaf(canvas, Offset(isLeft ? -w / 2 : w / 2, jY),
-                isLeft ? math.pi * 1.1 : -math.pi * 0.1, ll * 0.8, lw * 0.8,
-                paint);
-          }
-        }
-      }
-      canvas.translate(0, h * 0.2);
-      canvas.rotate(math.pi / 4);
-      canvas.drawRect(
-          Rect.fromLTWH(-w * 0.6, -w * 0.6, w * 1.2, w * 1.2), paint);
-      canvas.restore();
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _BambooPainter old) =>
-      old.animationValue != animationValue || old.isMobile != isMobile;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CART SCREEN
@@ -145,7 +21,6 @@ class CartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Subscribe to CartProvider — rebuilds automatically on any cart change
     final cart = CartProvider.of(context);
     final isMobile = MediaQuery.of(context).size.width < _kMobile;
 
@@ -153,10 +28,9 @@ class CartScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          const Positioned.fill(child: _BambooBackground()),
+          const Positioned.fill(child: BreezeBambooBackground()), // ← updated
           Column(
             children: [
-              // Navbar — cart badge live-updates from CartProvider
               CustomerNavbar(
                 activeRoute: '/cart',
                 cartCount: cart.totalCount,
@@ -181,7 +55,6 @@ class CartScreen extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // ── Content ───────────────────────────────
                             if (cart.isEmpty)
                               _EmptyCart(isMobile: isMobile)
                             else if (isMobile)
@@ -189,7 +62,6 @@ class CartScreen extends StatelessWidget {
                             else
                               _DesktopLayout(cart: cart),
 
-                            // ── Footer always at bottom ────────────────
                             const CustomerFooter(),
                           ],
                         ),
@@ -250,8 +122,7 @@ class _EmptyCart extends StatelessWidget {
             ),
             const SizedBox(height: 36),
             GestureDetector(
-              onTap: () =>
-                  Navigator.pushReplacementNamed(context, '/menu'),
+              onTap: () => Navigator.pushReplacementNamed(context, '/menu'),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 36, vertical: 18),
@@ -308,8 +179,7 @@ class _DesktopLayout extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 30),
                   child: Divider(
-                      height: 1,
-                      thickness: 1,
+                      height: 1, thickness: 1,
                       color: AppColors.primary.withOpacity(0.3)),
                 ),
                 const SizedBox(height: 15),
@@ -348,8 +218,7 @@ class _MobileLayout extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Divider(
-              height: 1,
-              thickness: 1,
+              height: 1, thickness: 1,
               color: AppColors.primary.withOpacity(0.3)),
         ),
         const SizedBox(height: 10),
@@ -470,7 +339,6 @@ class _CartItemList extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
-              // Item image
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: item.imageUrl.isNotEmpty
@@ -478,14 +346,12 @@ class _CartItemList extends StatelessWidget {
                         item.imageUrl,
                         width: 72, height: 72,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            _placeholderImage(),
+                        errorBuilder: (_, __, ___) => _placeholderImage(),
                       )
                     : _placeholderImage(),
               ),
               const SizedBox(width: 14),
 
-              // Name, category, qty controls
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -508,7 +374,6 @@ class _CartItemList extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
 
-                    // Qty stepper
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 2, vertical: 4),
@@ -521,8 +386,7 @@ class _CartItemList extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          _QtyBtn(Icons.remove, () =>
-                              cart.decrement(item.id)),
+                          _QtyBtn(Icons.remove, () => cart.decrement(item.id)),
                           SizedBox(
                             width: 28,
                             child: Text(
@@ -532,8 +396,7 @@ class _CartItemList extends StatelessWidget {
                                   fontSize: 11, fontWeight: FontWeight.w600),
                             ),
                           ),
-                          _QtyBtn(Icons.add, () =>
-                              cart.increment(item.id)),
+                          _QtyBtn(Icons.add, () => cart.increment(item.id)),
                         ],
                       ),
                     ),
@@ -541,7 +404,6 @@ class _CartItemList extends StatelessWidget {
                 ),
               ),
 
-              // Price + delete
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -698,7 +560,6 @@ class _CartSummary extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             children: [
               Container(
@@ -723,7 +584,6 @@ class _CartSummary extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // Line items
           ...items.map(
             (item) => Padding(
               padding: const EdgeInsets.only(bottom: 14),
@@ -768,7 +628,6 @@ class _CartSummary extends StatelessWidget {
           Divider(color: Colors.white.withOpacity(0.1), thickness: 1),
           const SizedBox(height: 10),
 
-          // Subtotal
           Row(
             children: [
               Text(
@@ -790,7 +649,6 @@ class _CartSummary extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Order total
           Row(
             children: [
               const Text(
@@ -812,7 +670,6 @@ class _CartSummary extends StatelessWidget {
           ),
           const SizedBox(height: 18),
 
-          // Checkout button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -820,7 +677,6 @@ class _CartSummary extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (_) => CartCheckoutScreen(
-                    // Pass a plain List<CartItem> copy to the checkout screen
                     items: cart.items.map((c) => legacy.CartItem(
                       id: c.id,
                       name: c.name,
