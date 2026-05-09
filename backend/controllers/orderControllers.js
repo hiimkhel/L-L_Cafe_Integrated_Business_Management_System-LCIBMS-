@@ -7,6 +7,7 @@ const createOrder = async (req, res) => {
     await conn.beginTransaction();
 
     const {
+      orderNumber,
       source,
       order_type,
       user_id,
@@ -22,8 +23,6 @@ const createOrder = async (req, res) => {
       notes
     } = req.body;
 
-    // 1. Create order number
-    const orderNumber = Date.now().toString();
 
     // Handle status dependent on source of order (pos / online )
     const initialStatus = source.toLowerCase() === 'pos' ? 'preparing' : 'pending';
