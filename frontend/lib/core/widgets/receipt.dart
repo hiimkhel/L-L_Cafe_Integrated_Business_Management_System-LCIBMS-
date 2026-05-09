@@ -261,7 +261,7 @@ class LLCafeReceipt extends StatelessWidget {
         Expanded(child: Container(height: 2, color: _cream)),
         const SizedBox(width: 8),
         Text(
-          '${data.orderType.label}: # LL-${data.orderNumber}',
+          '${data.orderType.label}: #${data.orderNumber}',
           style: const TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 10,

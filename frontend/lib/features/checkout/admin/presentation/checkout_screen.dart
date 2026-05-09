@@ -41,6 +41,8 @@ class CheckoutConfirmationScreen extends StatefulWidget {
 
     @override
     Widget build(BuildContext context) {
+
+      final String formattedOrderNumber = "WALK-${widget.orderOrderId.toString().padLeft(5, '0')}";
       return Scaffold(
         backgroundColor: AppColors.background,
           body: Column(children: [
@@ -72,6 +74,7 @@ class CheckoutConfirmationScreen extends StatefulWidget {
                     }).toList();
                     // 1. Prepare the OrderRequest for the Database/API
                     final orderRequest = OrderRequest(
+                      orderNumber: formattedOrderNumber,
                       source: "POS",
                       orderType: widget.orderType,
                       subtotal: subtotal,
@@ -91,7 +94,7 @@ class CheckoutConfirmationScreen extends StatefulWidget {
                     if (success) {
                       // 3. Prepare data for the Visual Receipt
                       final receiptData = ReceiptData(
-                        orderNumber: DateTime.now().millisecondsSinceEpoch.toString(),
+                        orderNumber: formattedOrderNumber,
                         clientName: "WALK-IN CUSTOMER",
                         dateTime: DateTime.now(),
                         orderType: OrderType.walkIn,

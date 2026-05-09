@@ -200,6 +200,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
     setState(() => _isLoading = true);
 
     final order = OrderRequest(
+      orderNumber: "",
       source:          'online',
       orderType:       _isDelivery ? 'delivery' : 'pickup',
       subtotal:        _subtotal,
