@@ -82,6 +82,7 @@ const getOnlineOrders = async (req, res ) => {
             o.payment_status,
             o.payment_method,
             o.notes,
+            DATE_FORMAT(o.created_at, '%Y-%m-%dT%H:%i:%sZ') AS created_at,
             o.payment_proof_url,
             oi.id AS item_id,
             oi.item_name,
@@ -112,6 +113,7 @@ const getOnlineOrders = async (req, res ) => {
             payment_method: row.payment_method,
             notes: row.notes,
             payment_proof_url: row.payment_proof_url,
+            created_at: row.created_at,
             items: []
             };
         }
