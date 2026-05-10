@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/constants/menu_data.dart';
@@ -9,6 +10,7 @@ import 'package:frontend/core/services/menu_service.dart';
 import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 import 'package:frontend/core/models/menu_category.dart';
 import 'package:frontend/core/utils/order_num_utils.dart';
+import 'package:frontend/core/services/pos/order_service.dart';
 
 class POSOrderScreen extends StatefulWidget {
   POSOrderScreen({super.key});
@@ -21,6 +23,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   List<MenuItem> menuItems = [];
   List<MenuCategory> categories = [];
   int _nextOrderId = 1;
+  Timer? _countTimer;
 
   // Cart State Handler
   List<Map<String, dynamic>> orderItems = [];
@@ -31,10 +34,18 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
 
   String _orderType = 'DINE IN';
 
+  int _pendingOnlineCount = 0;
+  bool _loadingCount = false;
+
   @override
   void initState() {
     super.initState();
     loadMenu();
+    _fetchPendingOnlineCount();
+
+    _countTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      _fetchPendingOnlineCount();
+    });
   }
 
   Future<void> loadMenu() async {
@@ -44,9 +55,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
         MenuService.fetchCategories(),
         MenuService.fetchNextOrderNumber(),
       ]);
-
-      print("RAW RESULT FROM API: ${results[2]}");
-    print("TYPE OF RESULT: ${results[2].runtimeType}");
 
       final items = results[0] as List<MenuItem>;
       final cats = results[1] as List<MenuCategory>;
@@ -65,6 +73,25 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     }
   }
 
+    Future<void> _fetchPendingOnlineCount() async {
+      setState(() => _loadingCount = true);
+
+      try {
+        final count = await OrderService().getPendingCount();
+
+        if (!mounted) return;
+
+        setState(() {
+          _pendingOnlineCount = count;
+          _loadingCount = false;
+        });
+      } catch (e) {
+        if (!mounted) return;
+
+        setState(() => _loadingCount = false);
+      }
+    }
+  
   String getCategoryName(int id) {
     return categories
         .firstWhere(
@@ -88,6 +115,12 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     return getSubtotal();
   }
 
+  @override
+  void dispose() {
+    _countTimer?.cancel();
+    super.dispose();
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -120,6 +153,8 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
 
   //----------------------------------------Order Header-----------------------------------------------------------
   Widget _orderHeader() {
+   
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 17),
@@ -166,7 +201,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const OrderQueueScreen(),
+                  builder: (context) => OrderQueueScreen(),
                 ),
               );
             },
@@ -189,6 +224,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
               size: 13,
             ),
             label: 'ONLINE ORDERS',
+            badgeCount: _pendingOnlineCount,
             onTap: () {
               showDialog(
                 context: context,
@@ -243,39 +279,85 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   }
 
   //---------------------------------------HeadBtn-----------------------------------------------------------
+ //--------------------------------------- Header Button -----------------------------------------------------------
   Widget _headerBtns({
     Icon? icon,
-    required label,
+    required String label,
     required VoidCallback onTap,
+    int? badgeCount, // optional notification badge
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          border: Border.all(color: AppColors.primary),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) icon,
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 9,
-                color: AppColors.primary,
-                fontWeight: FontWeight.bold,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              border: Border.all(color: AppColors.primary),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  icon,
+                  const SizedBox(width: 4),
+                ],
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Notification badge
+          if (badgeCount != null && badgeCount > 0)
+            Positioned(
+              top: -6,
+              right: -6,
+              child: Container(
+                constraints: const BoxConstraints(
+                  minWidth: 18,
+                  minHeight: 18,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 5),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: AppColors.white,
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.red.withOpacity(0.25),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  badgeCount > 99 ? "99+" : badgeCount.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
-
   //----------------------------------------Search Bar-----------------------------------------------------------
   Widget _searchBar() {
     return Container(

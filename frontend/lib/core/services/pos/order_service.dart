@@ -126,4 +126,30 @@ class OrderService {
   Future<bool> rejectOrder(int id) async {
     return await updateOrderStatus(id, 'rejected');
   }
+
+  Future<int> getPreparingCount() async {
+    final response = await http.get(
+      Uri.parse("$baseUrl/pos/orders/preparing-count"),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['count'];
+    } else {
+      throw Exception('Failed to fetch count');
+    }
+  }
+
+  Future<int> getPendingCount() async {
+    final response = await http.get(
+      Uri.parse("$baseUrl/pos/orders/online-pending-count"),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['count'];
+    } else {
+      throw Exception('Failed to fetch count');
+    }
+  }
 }
