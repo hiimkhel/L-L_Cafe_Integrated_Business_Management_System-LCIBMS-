@@ -177,7 +177,7 @@ const fetchPreparingOrders = async (req, res) => {
         const [rows] = await db.query(`
             SELECT COUNT(*) AS count
             FROM orders
-            WHERE status = 'pending'
+            WHERE status = 'preparing'
         `);
 
         res.json({
