@@ -4,10 +4,36 @@ import 'package:frontend/features/orders/presentation/pos/widgets/header_bar.dar
 import 'package:frontend/features/orders/presentation/pos/widgets/order_table.dart';
 import 'package:frontend/core/services/pos/order_service.dart';
 
-class OrderQueueScreen extends StatelessWidget {
-  OrderQueueScreen({super.key});
+class OrderQueueScreen extends StatefulWidget {
+  const OrderQueueScreen({super.key});
 
+  @override
+  State<OrderQueueScreen> createState() => _OrderQueueScreenState();
+}
+
+class _OrderQueueScreenState extends State<OrderQueueScreen> {
+  int preparingCount = 0;
   final OrderService _orderService = OrderService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreparingCount();
+  }
+
+  Future<void> _loadPreparingCount() async {
+    try {
+      final count = await _orderService.getPreparingCount();
+
+      if (!mounted) return;
+
+      setState(() {
+        preparingCount = count;
+      });
+    } catch (e) {
+      debugPrint("Failed to load preparing count: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +53,7 @@ class OrderQueueScreen extends StatelessWidget {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
-                  child: OrderTable(),
+                  child: OrderTable(onOrderUpdated: _loadPreparingCount),
                 ),
               ),
             ],

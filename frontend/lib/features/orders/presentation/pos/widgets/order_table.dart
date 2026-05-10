@@ -4,7 +4,9 @@ import 'package:frontend/features/orders/presentation/pos/widgets/order_row.dart
 import 'package:frontend/core/services/pos/order_service.dart';
 
 class OrderTable extends StatefulWidget {
-  const OrderTable({super.key});
+  final VoidCallback? onOrderUpdated;
+
+  const OrderTable({super.key, required this.onOrderUpdated});
 
   @override
   State<OrderTable> createState() => _OrderTableState();
@@ -34,9 +36,14 @@ class _OrderTableState extends State<OrderTable> {
 
   Future<void> _markAsReady(int id) async {
     final success = await _orderService.updateOrderStatus(id, 'ready');
+
+    if (!mounted) return;
+  
     if (success) {
       // Refresh list: the order will disappear because status is no longer 'preparing'
-      _fetchOrders();
+      await _fetchOrders();
+      widget.onOrderUpdated?.call();
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Order marked as Ready!")),
       );
@@ -107,7 +114,7 @@ class _OrderTableState extends State<OrderTable> {
             child: _HeaderText("CUSTOMER"),
           ),
           Expanded(
-            flex:5,
+            flex:4,
             child: _HeaderText("ITEMS"),
           ),
           Expanded(
@@ -115,7 +122,7 @@ class _OrderTableState extends State<OrderTable> {
             child: _HeaderText("TIME"),
           ),
           Expanded(
-            flex: 3,
+            flex: 2,
             child: _HeaderText("ACTION"),
           ),
         ],
@@ -135,9 +142,9 @@ class _HeaderText extends StatelessWidget {
     return Text(
       text,
       style: const TextStyle(
-        fontSize: 12,
+        fontSize: 16,
         fontWeight: FontWeight.w800,
-        color: AppColors.primary,
+        color: AppColors.secondary,
         letterSpacing: 1.2,
       ),
     );

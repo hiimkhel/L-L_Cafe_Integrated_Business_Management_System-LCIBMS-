@@ -54,12 +54,32 @@ class _OrderRowState extends State<OrderRow> {
       child: Row(
         children: [
           Expanded(flex: 3, child: _orderId()),
-          Expanded(flex: 3, child: Text(widget.customer, style: AppTextStyles.body)),
-          Expanded(flex: 5, child: _items()),
+          Expanded(flex: 3, child: _customer()),
+          Expanded(flex: 4, child: _items()),
           Expanded(flex: 3, child: _time()),
-          Expanded(flex: 3, child: _actions()),
+          Expanded(flex: 2, child: _actions()),
         ],
       ),
+    );
+  }
+
+  Widget _customer() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          widget.customer,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textDark,
+          ),
+        ),
+        const SizedBox(height: 2),
+      ],
     );
   }
 
@@ -103,44 +123,119 @@ class _OrderRowState extends State<OrderRow> {
     const int maxVisible = 2;
 
     final items = widget.items;
-    final visibleItems =
-        _expanded ? items : items.take(maxVisible).toList();
+    final visibleItems = _expanded
+        ? items
+        : items.take(maxVisible).toList();
 
     final remaining = items.length - maxVisible;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        ...visibleItems.map(
-          (item) => Text(
-            item,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.body,
-          ),
-        ),
+    return Padding(
+      
+      padding: const EdgeInsets.only(right: 52),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ...visibleItems.map((item) {
+  
+            final parts = item.split(' x');
+            final itemName = parts.first;
+            final quantity = parts.length > 1 ? parts.last : null;
 
-        if (remaining > 0)
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _expanded = !_expanded;
-              });
-            },
-            child: Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                _expanded ? "Show less" : "+$remaining more",
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Item name
+                  Expanded(
+                    child: Text(
+                      itemName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                  ),
+
+                  // Quantity badge
+                  if (quantity != null) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                      ),
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.10),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.20),
+                        ),
+                      ),
+                      child: Text(
+                        "x$quantity",
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }),
+
+          // Expand / Collapse
+          if (remaining > 0)
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _expanded = !_expanded;
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(top: 4, left: 14),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _expanded ? "Show less" : "+$remaining more",
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -162,7 +257,7 @@ class _OrderRowState extends State<OrderRow> {
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.secondary,
+              color: AppColors.textDark,
             ),
           ),
         ),
@@ -170,7 +265,7 @@ class _OrderRowState extends State<OrderRow> {
     );
   }
 
-  Widget _actions() {
+    Widget _actions() {
     if (widget.status == "ready") {
       return ActionButton(
         label: "HAND OVER",
@@ -181,9 +276,49 @@ class _OrderRowState extends State<OrderRow> {
       );
     }
 
-    return ActionButton(
-      label: "MARK AS READY",
-      onPressed: widget.onActionPressed,
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SizedBox(
+        height: 40,
+        child: ElevatedButton(
+          onPressed: widget.onActionPressed,
+          style: ElevatedButton.styleFrom(
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            elevation: 4,
+            shadowColor: AppColors.secondary.withOpacity(0.35),
+            backgroundColor: AppColors.secondary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 0,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.check_circle,
+                size: 15,
+                color: Colors.white,
+              ),
+              SizedBox(width: 5),
+              Text(
+                "MARK AS READY",
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.4,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
