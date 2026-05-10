@@ -895,7 +895,9 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
                       borderRadius: BorderRadius.circular(14),
                       child: InkWell(
                         onTap: () {
-                          print('selected order proof: ${order['payment_proof_url']}');
+                          print(
+                            'selected order proof: ${order['payment_proof_url']}',
+                          );
                           final proofUrl = order['payment_proof_url'];
                           if (proofUrl == null || proofUrl.toString().isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -1020,7 +1022,7 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
                                       ),
                                     ),
                                     SizedBox(height: 2),
-                                    Text(
+                                    Text( 
                                       'Tap to open and verify receipt/screenshot',
                                       style: TextStyle(
                                         color: AppColors.primary,
