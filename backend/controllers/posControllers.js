@@ -171,4 +171,25 @@ const rejectOrder = async (req, res) => {
     }
 }
 
-module.exports = {getOrdersByStatus, updateOrderStatus, getOnlineOrders, acceptOrder, rejectOrder}
+
+const fetchPreparingOrders = async (req, res) => {
+    try{
+        const [rows] = await db.query(`
+            SELECT COUNT(*) AS count
+            FROM orders
+            WHERE status = 'pending'
+        `);
+
+        res.json({
+        success: true,
+        count: rows[0].count,
+        });
+    }catch(err){
+        console.error('Error fetching in-progress count:', error);
+        res.status(500).json({
+        success: false,
+        message: 'Failed to fetch in-progress count',
+        });
+    }
+}
+module.exports = {getOrdersByStatus, updateOrderStatus, getOnlineOrders, acceptOrder, rejectOrder, fetchPreparingOrders}

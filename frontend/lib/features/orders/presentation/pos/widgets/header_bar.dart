@@ -56,7 +56,7 @@ class HeaderBar extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: const [
-              Text("IN PROGRESS", style: AppTextStyles.small),
+              Text("PREPARING", style: AppTextStyles.small),
               SizedBox(height: 4),
               Text("3", style: AppTextStyles.title),
             ],
