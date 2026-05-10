@@ -13,7 +13,7 @@ import 'package:frontend/core/widgets/bamboo_breeze_background.dart'; // shared 
 import 'dart:convert'; // jsonDecode
 import 'package:http/http.dart' as http; // http.MultipartRequest
 import 'package:image_picker/image_picker.dart'; // ImagePicker, ImageSource
-
+import 'package:frontend/core/services/auth_service.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -107,10 +107,15 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
         'ONLINE',
       );
 
+      final auth = AuthService();
+      final userId = auth.getMySqlUserId();
+
+
       final order = OrderRequest(
         orderNumber: formattedOrderNumber,
         source: 'online',
         orderType: _isDelivery ? 'delivery' : 'pickup',
+        userId: userId,
         subtotal: _subtotal,
         deliveryFee: _fee,
         deliveryAddress:
