@@ -18,8 +18,12 @@ class AuthService {
   AuthService._internal();
 
   User? currentUser;
-  Future<User> _authenticateWithBackend(String endpoint) async {
+  Future<User> _authenticateWithBackend(String endpoint, {String? fullName} ) async {
     final fb.User? firebaseUser = _auth.currentUser;
+
+    final body = {
+      "fullName": fullName,
+    };
 
     if (firebaseUser == null) {
       throw Exception("No authenticated Firebase user");
@@ -36,6 +40,7 @@ class AuthService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $idToken',
       },
+      body: jsonEncode(body),
     );
 
     final data = jsonDecode(response.body);
@@ -51,7 +56,7 @@ class AuthService {
       data['token'] ?? '',
     );
 
-    currentUser = user; // 🔥 IMPORTANT
+    currentUser = user;
     return user;
   }
 
@@ -71,7 +76,7 @@ class AuthService {
 
     await credential.user?.updateDisplayName(fullName);
 
-    return _authenticateWithBackend("authSync");
+    return _authenticateWithBackend("authSync", fullName: fullName);
   }
 
   ///  Google Sign-In

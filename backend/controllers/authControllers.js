@@ -14,7 +14,7 @@ const register = async (req, res) => {
 
     try{
         const [existing] = await db.query(
-            'SELECT * FROM user WHERE firebase_uid = ? OR email = ?',
+            'SELECT * FROM users WHERE firebase_uid = ? OR email = ?',
             [firebase_uid, email]
         )
 
@@ -25,7 +25,7 @@ const register = async (req, res) => {
         }
 
         await db.query(
-            `INSERT INTO user (firebase_uid, full_name, email, role) VALUES (?, ?, ?, ?)`, 
+            `INSERT INTO users (firebase_uid, full_name, email, role) VALUES (?, ?, ?, ?)`, 
             [firebase_uid, full_name, email , role]
         );
 
@@ -46,7 +46,7 @@ const login = async (req, res) => {
 
   try {
     const [rows] = await db.execute(
-      'SELECT * FROM user WHERE firebase_uid = ?',
+      'SELECT * FROM users WHERE firebase_uid = ?',
       [firebase_uid]
     );
 
@@ -76,6 +76,8 @@ const authSync = async (req, res) => {
       return res.status(401).json({ message: "No token provided" });
     }
 
+    const fullNameFromBody = req.body.fullName;
+
     const idToken = authHeader.split(" ")[1];
     //  Verify Firebase token
     const decoded = await admin.auth().verifyIdToken(idToken);
@@ -83,7 +85,11 @@ const authSync = async (req, res) => {
 
     const uid = decoded.uid;
     const email = decoded.email || "";
-    const name = decoded.name || "User";
+    const name =
+      fullNameFromBody ||
+      decoded.name ||
+      decoded.email?.split("@")[0] ||
+      "User";
     const picture = decoded.picture || "";
     const provider = decoded.firebase?.sign_in_provider || "unknown";
 
@@ -91,16 +97,27 @@ const authSync = async (req, res) => {
     let user = await findUserByFirebaseUID(uid);
 
     // Create user if not exists
-    if (!user) {
-      user = await createUser({
-        firebase_uid: uid,
-        email,
-        full_name: name,
-        profile_picture: picture,
-        provider,
-        role: "customer", 
-      });
-    }
+   if (!user) {
+    user = await createUser({
+      firebase_uid: uid,
+      email,
+      full_name: name,
+      profile_picture: picture,
+      provider,
+      role: "customer",
+    });
+  } else {
+    await db.query(
+      `UPDATE users
+      SET full_name = ?, email = ?, profile_picture = ?
+      WHERE firebase_uid = ?`,
+      [name, email, picture, uid]
+    );
+
+    user.full_name = name;
+    user.email = email;
+    user.profile_picture = picture;
+  }
 
     // ALWAYS return DB as source of truth
     return res.status(200).json({
