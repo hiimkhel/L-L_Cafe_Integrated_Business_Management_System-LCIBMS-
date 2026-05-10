@@ -4,7 +4,7 @@ import 'package:frontend/config/theme/app_text_styles.dart';
 import 'status_chip.dart';
 import 'action_button.dart';
 
-class OrderRow extends StatelessWidget {
+class OrderRow extends StatefulWidget {
   final String id;
   final String customer;
   final List<String> items;
@@ -19,26 +19,27 @@ class OrderRow extends StatelessWidget {
     required this.items,
     required this.status,
     required this.time,
-    required this.onActionPressed
+    required this.onActionPressed,
   });
+
+  @override
+  State<OrderRow> createState() => _OrderRowState();
+}
+
+class _OrderRowState extends State<OrderRow> {
+  bool _expanded = false;
 
   String getTimeAgo(String updatedAt) {
     final updatedTime = DateTime.parse(updatedAt).toLocal();
     final now = DateTime.now();
-
     final diff = now.difference(updatedTime);
 
-    if (diff.inMinutes < 1) {
-      return "Just now";
-    } else if (diff.inMinutes < 60) {
-      return "${diff.inMinutes} min ago";
-    } else if (diff.inHours < 24) {
-      return "${diff.inHours} hr ago";
-    } else {
-      return "${diff.inDays} day(s) ago";
-    }
+    if (diff.inMinutes < 1) return "Just now";
+    if (diff.inMinutes < 60) return "${diff.inMinutes} min ago";
+    if (diff.inHours < 24) return "${diff.inHours} hr ago";
+    return "${diff.inDays} day(s) ago";
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -52,14 +53,8 @@ class OrderRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(
-            flex: 3,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: _orderId(),
-              ),
-            ),
-          Expanded(flex: 3, child: Text(customer, style: AppTextStyles.body)),
+          Expanded(flex: 3, child: _orderId()),
+          Expanded(flex: 3, child: Text(widget.customer, style: AppTextStyles.body)),
           Expanded(flex: 5, child: _items()),
           Expanded(flex: 3, child: _time()),
           Expanded(flex: 3, child: _actions()),
@@ -91,7 +86,7 @@ class OrderRow extends StatelessWidget {
             const Icon(Icons.receipt_long, size: 16, color: AppColors.primary),
             const SizedBox(width: 6),
             Text(
-              id,
+              widget.id,
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -104,12 +99,14 @@ class OrderRow extends StatelessWidget {
     );
   }
 
-
   Widget _items() {
     const int maxVisible = 2;
 
-    final visibleItems = items.take(maxVisible).toList();
-    final remainingCount = items.length - maxVisible;
+    final items = widget.items;
+    final visibleItems =
+        _expanded ? items : items.take(maxVisible).toList();
+
+    final remaining = items.length - maxVisible;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,29 +121,31 @@ class OrderRow extends StatelessWidget {
           ),
         ),
 
-        if (remainingCount > 0)
-        GestureDetector(
-          onTap: () {
-            // open bottom sheet or dialog
-          },
-          child: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              "+$remainingCount more",
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
+        if (remaining > 0)
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _expanded = !_expanded;
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                _expanded ? "Show less" : "+$remaining more",
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
               ),
             ),
           ),
-        ),
-            ],
+      ],
     );
   }
 
   Widget _time() {
-    final elapsed = getTimeAgo(time);
+    final elapsed = getTimeAgo(widget.time);
 
     return Row(
       children: [
@@ -172,13 +171,19 @@ class OrderRow extends StatelessWidget {
   }
 
   Widget _actions() {
-    if (status == "ready") {
-      return ActionButton(label: "HAND OVER", isPrimary: true, onPressed: () {
-        // You can handle "Completed" status here later
-        print("Handing over...");
-      },
-    );
+    if (widget.status == "ready") {
+      return ActionButton(
+        label: "HAND OVER",
+        isPrimary: true,
+        onPressed: () {
+          print("Handing over...");
+        },
+      );
     }
-    return ActionButton(label: "MARK AS READY", onPressed: onActionPressed,);
+
+    return ActionButton(
+      label: "MARK AS READY",
+      onPressed: widget.onActionPressed,
+    );
   }
 }
