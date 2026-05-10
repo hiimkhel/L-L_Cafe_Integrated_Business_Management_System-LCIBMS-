@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/constants/menu_data.dart';
@@ -25,6 +26,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   List<MenuItem> menuItems = [];
   List<MenuCategory> categories = [];
   int _nextOrderId = 1;
+  Timer? _countTimer;
 
   // Cart State Handler
   List<Map<String, dynamic>> orderItems = [];
@@ -43,6 +45,10 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     super.initState();
     loadMenu();
     _fetchPendingOnlineCount();
+
+    _countTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      _fetchPendingOnlineCount();
+    });
   }
 
   Future<void> loadMenu() async {
@@ -110,7 +116,12 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     return getSubtotal();
   }
 
-
+  @override
+  void dispose() {
+    _countTimer?.cancel();
+    super.dispose();
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
