@@ -107,15 +107,11 @@ class _OrderTableState extends State<OrderTable> {
             child: _HeaderText("CUSTOMER"),
           ),
           Expanded(
-            flex: 4,
+            flex:5,
             child: _HeaderText("ITEMS"),
           ),
           Expanded(
             flex: 3,
-            child: _HeaderText("STATUS"),
-          ),
-          Expanded(
-            flex: 2,
             child: _HeaderText("TIME"),
           ),
           Expanded(

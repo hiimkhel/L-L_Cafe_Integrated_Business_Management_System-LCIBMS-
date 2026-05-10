@@ -60,14 +60,7 @@ class OrderRow extends StatelessWidget {
               ),
             ),
           Expanded(flex: 3, child: Text(customer, style: AppTextStyles.body)),
-          Expanded(flex: 4, child: _items()),
-          Expanded(
-            flex: 3, 
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child:StatusChip(status: status)
-              ),
-            ),
+          Expanded(flex: 5, child: _items()),
           Expanded(flex: 3, child: _time()),
           Expanded(flex: 3, child: _actions()),
         ],
@@ -75,52 +68,80 @@ class OrderRow extends StatelessWidget {
     );
   }
 
- Widget _orderId() {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        colors: [
-          AppColors.primary.withOpacity(0.15),
-          AppColors.secondary.withOpacity(0.10),
-        ],
-      ),
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(
-        color: AppColors.primary.withOpacity(0.3),
-        width: 1,
-      ),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Icon(
-          Icons.receipt_long,
-          size: 16,
-          color: AppColors.primary,
-        ),
-        const SizedBox(width: 6),
-        Text(
-          id,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: AppColors.primary,
-            letterSpacing: 0.5,
+  Widget _orderId() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primary.withOpacity(0.15),
+              AppColors.secondary.withOpacity(0.10),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: AppColors.primary.withOpacity(0.3),
           ),
         ),
-      ],
-    ),
-  );
-}
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.receipt_long, size: 16, color: AppColors.primary),
+            const SizedBox(width: 6),
+            Text(
+              id,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
 
   Widget _items() {
+    const int maxVisible = 2;
+
+    final visibleItems = items.take(maxVisible).toList();
+    final remainingCount = items.length - maxVisible;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: items
-          .map((item) => Text(item, style: AppTextStyles.body))
-          .toList(),
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        ...visibleItems.map(
+          (item) => Text(
+            item,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.body,
+          ),
+        ),
+
+        if (remainingCount > 0)
+        GestureDetector(
+          onTap: () {
+            // open bottom sheet or dialog
+          },
+          child: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              "+$remainingCount more",
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ),
+            ],
     );
   }
 
