@@ -164,7 +164,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const OrderQueueScreen(),
+                  builder: (context) => OrderQueueScreen(),
                 ),
               );
             },

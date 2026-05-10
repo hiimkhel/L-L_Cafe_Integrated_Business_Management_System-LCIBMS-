@@ -129,7 +129,7 @@ class OrderService {
 
   Future<int> getPreparingCount() async {
     final response = await http.get(
-      Uri.parse("$baseUrl/orders/preparing-count"),
+      Uri.parse("$baseUrl/pos/orders/preparing-count"),
     );
 
     if (response.statusCode == 200) {

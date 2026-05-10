@@ -7,10 +7,14 @@ import 'package:frontend/features/dashboard/presentation/pos/order_entry.dart';
 class HeaderBar extends StatelessWidget {
   final String title;
 
+ final int preparingCount;
+
   const HeaderBar({
     super.key,
     required this.title,
+    required this.preparingCount,
   });
+  
 
   @override
   Widget build(BuildContext context) {
@@ -55,10 +59,10 @@ class HeaderBar extends StatelessWidget {
           /// COUNTER
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
-            children: const [
+            children: [
               Text("PREPARING", style: AppTextStyles.small),
               SizedBox(height: 4),
-              Text("3", style: AppTextStyles.title),
+              Text(preparingCount.toString(), style: AppTextStyles.title),
             ],
           ),
 
