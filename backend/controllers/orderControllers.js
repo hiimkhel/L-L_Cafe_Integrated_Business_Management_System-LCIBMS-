@@ -20,7 +20,8 @@ const createOrder = async (req, res) => {
       payment_method,
       payment_status,
       items,
-      notes
+      notes,
+      payment_proof_url,
     } = req.body;
 
 
@@ -32,8 +33,8 @@ const createOrder = async (req, res) => {
       `INSERT INTO orders 
       (order_number, source, user_id, customer_name, customer_phone,
        order_type, status, subtotal, delivery_fee, delivery_address, total,
-       payment_status, payment_method, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       payment_status, payment_method, notes, payment_proof_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         orderNumber,
         source,
@@ -48,7 +49,8 @@ const createOrder = async (req, res) => {
         total,
         payment_status,
         payment_method,
-        notes
+        notes,
+        payment_proof_url
       ]
     );
 

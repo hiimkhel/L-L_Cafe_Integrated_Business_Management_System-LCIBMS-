@@ -6,7 +6,7 @@ const getOrdersByStatus = async (req, res) => {
     try {
         const sql = `
             SELECT 
-                o.id, o.order_number, o.customer_name, o.status, o.total, o.created_at,
+                o.id, o.order_number, o.customer_name, o.status, o.total, o.created_at, o.updated_at,
                 oi.item_name, oi.quantity, oi.unit_price
             FROM orders o 
             LEFT JOIN order_items oi ON o.id = oi.order_id
@@ -26,6 +26,7 @@ const getOrdersByStatus = async (req, res) => {
                     status: row.status,
                     total: row.total,
                     created_at: row.created_at,
+                    updated_at: row.updated_at,
                     items: []
                 };
             }
@@ -81,6 +82,7 @@ const getOnlineOrders = async (req, res ) => {
             o.payment_status,
             o.payment_method,
             o.notes,
+            o.payment_proof_url,
             oi.id AS item_id,
             oi.item_name,
             oi.quantity,
@@ -109,6 +111,7 @@ const getOnlineOrders = async (req, res ) => {
             payment_status: row.payment_status,
             payment_method: row.payment_method,
             notes: row.notes,
+            payment_proof_url: row.payment_proof_url,
             items: []
             };
         }
@@ -171,4 +174,40 @@ const rejectOrder = async (req, res) => {
     }
 }
 
-module.exports = {getOrdersByStatus, updateOrderStatus, getOnlineOrders, acceptOrder, rejectOrder}
+
+const fetchPreparingOrders = async (req, res) => {
+    try{
+        const [rows] = await db.query(`
+            SELECT COUNT(*) AS count
+            FROM orders
+            WHERE status = 'preparing'
+        `);
+
+        res.json({
+        success: true,
+        count: rows[0].count,
+        });
+    }catch(err){
+        console.error('Error fetching in-progress count:', error);
+        res.status(500).json({
+        success: false,
+        message: 'Failed to fetch in-progress count',
+        });
+    }
+}
+
+const fetchPendingOrdersCount = async (req, res) => {
+    try {
+    const [rows] = await db.query(
+      `SELECT COUNT(*) AS count 
+       FROM orders 
+       WHERE status = 'pending' 
+       AND source = 'online'`
+    );
+
+    res.json({ count: rows[0].count });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch count" });
+  }
+}
+module.exports = {getOrdersByStatus, updateOrderStatus, getOnlineOrders, acceptOrder, rejectOrder, fetchPreparingOrders, fetchPendingOrdersCount}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/constants/menu_data.dart';
@@ -9,13 +10,11 @@ import 'package:frontend/core/services/menu_service.dart';
 import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 import 'package:frontend/core/models/menu_category.dart';
 import 'package:frontend/core/utils/order_num_utils.dart';
+import 'package:frontend/core/services/pos/order_service.dart';
 
 class POSOrderScreen extends StatefulWidget {
-
-
   POSOrderScreen({super.key});
 
- 
   @override
   State<POSOrderScreen> createState() => _POSOrderScreenState();
 }
@@ -24,6 +23,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   List<MenuItem> menuItems = [];
   List<MenuCategory> categories = [];
   int _nextOrderId = 1;
+  Timer? _countTimer;
 
   // Cart State Handler
   List<Map<String, dynamic>> orderItems = [];
@@ -34,10 +34,18 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
 
   String _orderType = 'DINE IN';
 
+  int _pendingOnlineCount = 0;
+  bool _loadingCount = false;
+
   @override
-  void initState(){
+  void initState() {
     super.initState();
     loadMenu();
+    _fetchPendingOnlineCount();
+
+    _countTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      _fetchPendingOnlineCount();
+    });
   }
 
   Future<void> loadMenu() async {
@@ -47,9 +55,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
         MenuService.fetchCategories(),
         MenuService.fetchNextOrderNumber(),
       ]);
-
-      print("RAW RESULT FROM API: ${results[2]}");
-    print("TYPE OF RESULT: ${results[2].runtimeType}");
 
       final items = results[0] as List<MenuItem>;
       final cats = results[1] as List<MenuCategory>;
@@ -67,11 +72,33 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
       print("Error loading menu: $e");
     }
   }
+
+    Future<void> _fetchPendingOnlineCount() async {
+      setState(() => _loadingCount = true);
+
+      try {
+        final count = await OrderService().getPendingCount();
+
+        if (!mounted) return;
+
+        setState(() {
+          _pendingOnlineCount = count;
+          _loadingCount = false;
+        });
+      } catch (e) {
+        if (!mounted) return;
+
+        setState(() => _loadingCount = false);
+      }
+    }
+  
   String getCategoryName(int id) {
-    return categories.firstWhere(
-      (c) => c.id == id,
-      orElse: () => MenuCategory(id: 0, name: "Unknown"),
-    ).name;
+    return categories
+        .firstWhere(
+          (c) => c.id == id,
+          orElse: () => MenuCategory(id: 0, name: "Unknown"),
+        )
+        .name;
   }
 
   // Handle calculation of subtotal price from cart items
@@ -88,7 +115,12 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     return getSubtotal();
   }
 
-
+  @override
+  void dispose() {
+    _countTimer?.cancel();
+    super.dispose();
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,6 +153,8 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
 
   //----------------------------------------Order Header-----------------------------------------------------------
   Widget _orderHeader() {
+   
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 17),
@@ -167,7 +201,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const OrderQueueScreen(),
+                  builder: (context) => OrderQueueScreen(),
                 ),
               );
             },
@@ -190,6 +224,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
               size: 13,
             ),
             label: 'ONLINE ORDERS',
+            badgeCount: _pendingOnlineCount,
             onTap: () {
               showDialog(
                 context: context,
@@ -244,39 +279,85 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   }
 
   //---------------------------------------HeadBtn-----------------------------------------------------------
+ //--------------------------------------- Header Button -----------------------------------------------------------
   Widget _headerBtns({
     Icon? icon,
-    required label,
+    required String label,
     required VoidCallback onTap,
+    int? badgeCount, // optional notification badge
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          border: Border.all(color: AppColors.primary),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) icon,
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 9,
-                color: AppColors.primary,
-                fontWeight: FontWeight.bold,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              border: Border.all(color: AppColors.primary),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  icon,
+                  const SizedBox(width: 4),
+                ],
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Notification badge
+          if (badgeCount != null && badgeCount > 0)
+            Positioned(
+              top: -6,
+              right: -6,
+              child: Container(
+                constraints: const BoxConstraints(
+                  minWidth: 18,
+                  minHeight: 18,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 5),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: AppColors.white,
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.red.withOpacity(0.25),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  badgeCount > 99 ? "99+" : badgeCount.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
-
   //----------------------------------------Search Bar-----------------------------------------------------------
   Widget _searchBar() {
     return Container(
@@ -337,7 +418,10 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
               onTap: () => setState(() => _selectedCategory = label),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 25,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected ? AppColors.primary : AppColors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -356,9 +440,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: isSelected
-                          ? AppColors.white
-                          : AppColors.primary,
+                      color: isSelected ? AppColors.white : AppColors.primary,
                     ),
                   ),
                 ),
@@ -376,19 +458,20 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-      final filteredItems = menuItems.where((item) {
-      final matchesCategory = _selectedCategory == 'All'
-          ? true
-          : categories
-              .firstWhere((c) => c.id == item.categoryId)
-              .name == _selectedCategory;
+    final filteredItems =
+        menuItems.where((item) {
+          final matchesCategory =
+              _selectedCategory == 'All'
+                  ? true
+                  : categories
+                          .firstWhere((c) => c.id == item.categoryId)
+                          .name ==
+                      _selectedCategory;
 
-      final matchesSearch = item.name
-          .toLowerCase()
-          .contains(_searchQuery);
+          final matchesSearch = item.name.toLowerCase().contains(_searchQuery);
 
-      return matchesCategory && matchesSearch;
-    }).toList();
+          return matchesCategory && matchesSearch;
+        }).toList();
 
     return GridView.builder(
       padding: const EdgeInsets.all(24),
@@ -396,7 +479,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
         crossAxisCount: 4,
         crossAxisSpacing: 20,
         mainAxisSpacing: 20,
-        childAspectRatio: 1.1,  
+        childAspectRatio: 1.1,
       ),
       itemCount: filteredItems.length,
       itemBuilder: (context, index) {
@@ -459,7 +542,9 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
               GestureDetector(
                 onTap: () {
                   setState(() {
-                    final index = orderItems.indexWhere((e) => e['id'] == item.id);
+                    final index = orderItems.indexWhere(
+                      (e) => e['id'] == item.id,
+                    );
 
                     if (index >= 0) {
                       orderItems[index]['qty'] += 1;
@@ -560,7 +645,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                 final item = orderItems[index];
 
                 return _orderItem(
-                  index:index,
+                  index: index,
                   name: item['name'],
                   price: "₱${item['price'] * item['qty']}",
                   qty: item['qty'],
@@ -646,7 +731,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                                      ],
+                  ],
                 ),
 
                 const SizedBox(height: 8),
@@ -685,46 +770,49 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
             child: Row(
               children: [
                 GestureDetector(
-                    onTap: () {
-                      if (orderItems.isEmpty) return;
+                  onTap: () {
+                    if (orderItems.isEmpty) return;
 
-                      showDialog(
-                        context: context,
-                        builder: (_) => AlertDialog(
-                          title: const Text('Clear Order'),
-                          content: const Text('Are you sure you want to remove all items?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('Cancel'),
+                    showDialog(
+                      context: context,
+                      builder:
+                          (_) => AlertDialog(
+                            title: const Text('Clear Order'),
+                            content: const Text(
+                              'Are you sure you want to remove all items?',
                             ),
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  orderItems.clear();
-                                });
-                                Navigator.pop(context);
-                              },
-                              child: const Text('Clear'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.delete_outline,
-                        color: Colors.white,
-                        size: 22,
-                      ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    orderItems.clear();
+                                  });
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Clear'),
+                              ),
+                            ],
+                          ),
+                    );
+                  },
+                  child: Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.white,
+                      size: 22,
                     ),
                   ),
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: GestureDetector(
@@ -783,7 +871,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     required String name,
     required String price,
     required int qty,
-    required int index
+    required int index,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -860,7 +948,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                       ),
                     ),
                     _qtyBtn(Icons.add, () {
-                        setState(() {
+                      setState(() {
                         orderItems[index]['qty']++;
                       });
                     }),
@@ -903,7 +991,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   }) {
     return GestureDetector(
       onTap: onTap,
-        child: Container(
+      child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color:
@@ -934,7 +1022,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
             ),
           ],
         ),
-      )
+      ),
     );
   }
 }
@@ -945,7 +1033,10 @@ class _NoGlowScrollBehavior extends ScrollBehavior {
 
   @override
   Widget buildOverscrollIndicator(
-      BuildContext context, Widget child, ScrollableDetails details) {
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
     return child;
   }
 }

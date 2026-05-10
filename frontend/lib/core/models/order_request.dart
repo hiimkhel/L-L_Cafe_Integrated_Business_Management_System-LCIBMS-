@@ -18,6 +18,7 @@ class OrderRequest {
   final List<Map<String, dynamic>> items;
 
   final String? notes;
+  final String? paymentProofUrl;
   OrderRequest({
     required this.orderNumber,
     required this.source,
@@ -33,6 +34,7 @@ class OrderRequest {
     this.customerPhone,
     required this.items,
     this.notes,
+    this.paymentProofUrl,
   });
 
   Map<String, dynamic> toJson() {
@@ -50,7 +52,8 @@ class OrderRequest {
       "customer_name": customerName,
       "customer_phone": customerPhone,
       "items": items,
-      "notes": notes
+      "notes": notes,
+      'payment_proof_url': paymentProofUrl,
     };
   }
 }

@@ -28,7 +28,8 @@ final List<NotificationItem> _mockNotifications = [
     id: 'n1',
     sender: 'L&L ADMIN',
     time: 'JUST NOW',
-    body: 'WELCOME TO L&L CAFE! WE ARE SO EXCITED TO SERVE YOU THE BEST FOOD IN TOWN.',
+    body:
+        'WELCOME TO L&L CAFE! WE ARE SO EXCITED TO SERVE YOU THE BEST FOOD IN TOWN.',
     isPriority: true,
   ),
 ];
@@ -54,7 +55,9 @@ class NotificationPanel extends StatelessWidget {
         height: MediaQuery.of(context).size.height,
         decoration: const BoxDecoration(
           color: Color(0xFFEFE2C9),
-          border: Border(left: BorderSide(color: Color(0x1AA98258), width: 1.0)),
+          border: Border(
+            left: BorderSide(color: Color(0x1AA98258), width: 1.0),
+          ),
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(40),
             bottomLeft: Radius.circular(40),
@@ -101,7 +104,9 @@ class NotificationPanel extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(24, isMobileHeader ? 12 : 32, 24, 24),
       decoration: const BoxDecoration(
         color: Colors.transparent,
-        border: Border(bottom: BorderSide(color: Color(0x1AA98258), width: 1.0)),
+        border: Border(
+          bottom: BorderSide(color: Color(0x1AA98258), width: 1.0),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -109,24 +114,42 @@ class NotificationPanel extends StatelessWidget {
           Container(
             width: 48, height: 48,
             decoration: BoxDecoration(
-                color: const Color(0xFF758C6D), borderRadius: BorderRadius.circular(8)),
-            child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 24),
+              color: const Color(0xFF758C6D),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.notifications_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 16),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('L&L CHANNEL',
-                    style: TextStyle(
-                        fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                        fontSize: 20, height: 1.1, letterSpacing: -0.5,
-                        color: Color(0xFF2D2A26))),
+                Text(
+                  'L&L CHANNEL',
+                  style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 20,
+                    height: 1.1,
+                    letterSpacing: -0.5,
+                    color: Color(0xFF2D2A26),
+                  ),
+                ),
                 SizedBox(height: 4),
-                Text('ORDER NOTIFICATION',
-                    style: TextStyle(
-                        fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                        fontSize: 10, letterSpacing: 1.0, color: Color(0xFFA98258))),
+                Text(
+                  'ORDER NOTIFICATION',
+                  style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 10,
+                    letterSpacing: 1.0,
+                    color: Color(0xFFA98258),
+                  ),
+                ),
               ],
             ),
           ),
@@ -135,10 +158,19 @@ class NotificationPanel extends StatelessWidget {
               behavior: HitTestBehavior.opaque,
               onTap: () => Navigator.pop(context),
               child: Container(
-                width: 40, height: 40,
-                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
                 child: const Center(
-                    child: Icon(Icons.close_rounded, color: Color(0xFFA98258), size: 20)),
+                  child: Icon(
+                    Icons.close_rounded,
+                    color: Color(0xFFA98258),
+                    size: 20,
+                  ),
+                ),
               ),
             ),
         ],
@@ -159,12 +191,28 @@ class NotificationPanel extends StatelessWidget {
             color: Colors.white.withOpacity(item.isPriority ? 1.0 : 0.8),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: item.isPriority ? const Color(0x4D758C6D) : const Color(0x0DA98258),
+              color:
+                  item.isPriority
+                      ? const Color(0x4D758C6D)
+                      : const Color(0x0DA98258),
               width: 1.0,
             ),
-            boxShadow: item.isPriority
-                ? const [BoxShadow(color: Color(0x26000000), blurRadius: 20, offset: Offset(0, 10))]
-                : const [BoxShadow(color: Color(0x0D000000), blurRadius: 10, offset: Offset(0, 4))],
+            boxShadow:
+                item.isPriority
+                    ? const [
+                      BoxShadow(
+                        color: Color(0x26000000),
+                        blurRadius: 20,
+                        offset: Offset(0, 10),
+                      ),
+                    ]
+                    : const [
+                      BoxShadow(
+                        color: Color(0x0D000000),
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,38 +220,65 @@ class NotificationPanel extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(children: [
-                    Container(
-                      width: 10, height: 10,
-                      decoration: BoxDecoration(
-                        color: item.isPriority
-                            ? const Color(0xFF758C6D)
-                            : const Color(0x33A98258),
-                        shape: BoxShape.circle,
+                  Row(
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color:
+                              item.isPriority
+                                  ? const Color(0xFF758C6D)
+                                  : const Color(0x33A98258),
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(item.sender,
+                      const SizedBox(width: 10),
+                      Text(
+                        item.sender,
                         style: const TextStyle(
-                            fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                            fontSize: 10, letterSpacing: 1.5, color: Color(0xFF2D2A26))),
-                  ]),
-                  Row(children: [
-                    const Icon(Icons.access_time_rounded, size: 12, color: Color(0x66A98258)),
-                    const SizedBox(width: 6),
-                    Text(item.time,
+                          fontFamily: 'Urbanist',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 10,
+                          letterSpacing: 1.5,
+                          color: Color(0xFF2D2A26),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.access_time_rounded,
+                        size: 12,
+                        color: Color(0x66A98258),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        item.time,
                         style: const TextStyle(
-                            fontFamily: 'Urbanist', fontWeight: FontWeight.w800,
-                            fontSize: 10, color: Color(0x66A98258))),
-                  ]),
+                          fontFamily: 'Urbanist',
+                          fontWeight: FontWeight.w800,
+                          fontSize: 10,
+                          color: Color(0x66A98258),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
-              Text(item.body,
-                  style: const TextStyle(
-                      fontFamily: 'Urbanist', fontWeight: FontWeight.w700,
-                      fontSize: 13, height: 1.5, letterSpacing: 0.5,
-                      color: Color(0xFFA98258))),
+              Text(
+                item.body,
+                style: const TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  height: 1.5,
+                  letterSpacing: 0.5,
+                  color: Color(0xFFA98258),
+                ),
+              ),
               if (item.isPriority) ...[
                 const SizedBox(height: 16),
                 Container(
@@ -257,14 +332,18 @@ class _GuestNavbarState extends State<GuestNavbar> {
   OverlayEntry? _overlayEntry;
 
   static const _links = [
-    _NI('HOME',    '/'),
-    _NI('MENU',    '/menu'),
-    _NI('ABOUT',   '/about'),
+    _NI('HOME', '/'),
+    _NI('MENU', '/menu'),
+    _NI('ABOUT', '/about'),
     _NI('CONTACT', '/contact'),
   ];
 
   @override
-  void dispose() { _closeMenu(); super.dispose(); }
+  void dispose() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    super.dispose();
+  }
 
   void _handleLinkTap(BuildContext context, String route) {
     _closeMenu();
@@ -301,10 +380,12 @@ class _GuestNavbarState extends State<GuestNavbar> {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, c) {
-      final isMobile = c.maxWidth < _kMobile;
-      return isMobile ? _buildMobile(context) : _buildDesktop(context);
-    });
+    return LayoutBuilder(
+      builder: (context, c) {
+        final isMobile = c.maxWidth < _kMobile;
+        return isMobile ? _buildMobile(context) : _buildDesktop(context);
+      },
+    );
   }
 
   Widget _buildDesktop(BuildContext context) {
@@ -312,7 +393,9 @@ class _GuestNavbarState extends State<GuestNavbar> {
       height: 72,
       decoration: BoxDecoration(
         color: const Color(0xF2EFE2C9),
-        border: Border(bottom: BorderSide(color: AppColors.primary.withOpacity(0.1))),
+        border: Border(
+          bottom: BorderSide(color: AppColors.primary.withOpacity(0.1)),
+        ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 48),
       child: Row(children: [
@@ -332,13 +415,13 @@ class _GuestNavbarState extends State<GuestNavbar> {
               )).toList(),
             ),
           ),
-        ),
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.onLogin,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text('LOGIN',
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: widget.onLogin,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                'LOGIN',
                 style: TextStyle(
                     fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
                     fontSize: 12, letterSpacing: 2.0, color: AppColors.primary)),
@@ -355,13 +438,28 @@ class _GuestNavbarState extends State<GuestNavbar> {
               borderRadius: BorderRadius.circular(8),
               boxShadow: const [BoxShadow(color: Color(0xFF2D2A26), offset: Offset(3, 3))],
             ),
-            child: const Text('JOIN NOW',
+          ),
+          const SizedBox(width: 12),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: widget.onJoinNow,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 11),
+              decoration: BoxDecoration(
+                color: AppColors.secondary,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: const [
+                  BoxShadow(color: Color(0xFF2D2A26), offset: Offset(3, 3)),
+                ],
+              ),
+              child: const Text(
+                'JOIN NOW',
                 style: TextStyle(
                     fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
                     fontSize: 12, letterSpacing: 1.2, color: Colors.white)),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 
@@ -370,18 +468,22 @@ class _GuestNavbarState extends State<GuestNavbar> {
       height: 72,
       decoration: BoxDecoration(
         color: const Color(0xF2EFE2C9),
-        border: Border(bottom: BorderSide(color: AppColors.primary.withOpacity(0.1))),
+        border: Border(
+          bottom: BorderSide(color: AppColors.primary.withOpacity(0.1)),
+        ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(children: [
-        _LogoImg(),
-        const Spacer(),
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.onLogin,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text('LOGIN',
+      child: Row(
+        children: [
+          _LogoImg(),
+          const Spacer(),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: widget.onLogin,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                'LOGIN',
                 style: TextStyle(
                     fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
                     fontSize: 11, letterSpacing: 2, color: AppColors.primary)),
@@ -400,25 +502,33 @@ class _GuestNavbarState extends State<GuestNavbar> {
                     fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
                     fontSize: 10, color: Colors.white)),
           ),
-        ),
-        const SizedBox(width: 10),
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => _menuOpen ? _closeMenu() : _openMenu(context),
-          child: Container(
-            width: 40, height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: const [BoxShadow(color: Color(0x1A000000), blurRadius: 4)],
+          const SizedBox(width: 6),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: widget.onJoinNow,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+              decoration: BoxDecoration(
+                color: AppColors.secondary,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                'JOIN NOW',
+                style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 10,
+                  color: Colors.white,
+                ),
+              ),
             ),
             child: Icon(
               _menuOpen ? Icons.close_rounded : Icons.menu_rounded,
               color: AppColors.primary, size: 20,
             ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
@@ -473,15 +583,21 @@ class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
         barrierLabel: 'Dismiss',
         barrierColor: Colors.black.withOpacity(0.3),
         transitionDuration: const Duration(milliseconds: 350),
-        pageBuilder: (_, __, ___) => const Align(
-          alignment: Alignment.centerRight,
-          child: NotificationPanel(isMobile: false),
-        ),
-        transitionBuilder: (_, animation, __, child) => SlideTransition(
-          position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
-              .animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
-          child: child,
-        ),
+        pageBuilder:
+            (_, __, ___) => const Align(
+              alignment: Alignment.centerRight,
+              child: NotificationPanel(isMobile: false),
+            ),
+        transitionBuilder:
+            (_, animation, __, child) => SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(1, 0),
+                end: Offset.zero,
+              ).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+              ),
+              child: child,
+            ),
       );
     }
   }
@@ -514,7 +630,8 @@ class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
               onLogout:        onLogout,
               onLoginRequired: onLoginRequired,
             );
-    });
+      },
+    );
   }
 }
 
@@ -576,7 +693,9 @@ class _DesktopCustomerNav extends StatelessWidget {
       height: 72,
       decoration: BoxDecoration(
         color: const Color(0xF2EFE2C9),
-        border: Border(bottom: BorderSide(color: AppColors.primary.withOpacity(0.1))),
+        border: Border(
+          bottom: BorderSide(color: AppColors.primary.withOpacity(0.1)),
+        ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 48),
       child: Row(
@@ -745,7 +864,9 @@ class _MobileCustomerNav extends StatelessWidget {
       height: 72,
       decoration: BoxDecoration(
         color: const Color(0xF2EFE2C9),
-        border: Border(bottom: BorderSide(color: AppColors.primary.withOpacity(0.1))),
+        border: Border(
+          bottom: BorderSide(color: AppColors.primary.withOpacity(0.1)),
+        ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(children: [
@@ -779,10 +900,9 @@ class _MobileCustomerNav extends StatelessWidget {
               color: const Color(0xFF2D2A26),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.menu_rounded, color: Colors.white, size: 18),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
@@ -853,12 +973,12 @@ class _SideDrawer extends StatelessWidget {
                     isGuest ? Icons.person_outline_rounded : Icons.person_rounded,
                     color: Colors.white, size: 28,
                   ),
-                ),
-                const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(userName,
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        userName,
                         style: const TextStyle(
                             fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
                             fontSize: 15, color: Colors.white)),
@@ -909,12 +1029,57 @@ class _SideDrawer extends StatelessWidget {
                                 width: 6, height: 6,
                                 decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
                               ),
-                            ],
-                          ]),
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                              decoration: BoxDecoration(
+                                color:
+                                    isActive
+                                        ? AppColors.primary.withOpacity(0.15)
+                                        : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    l.icon,
+                                    color:
+                                        isActive
+                                            ? AppColors.primary
+                                            : AppColors.primary.withOpacity(
+                                              0.6,
+                                            ),
+                                    size: 22,
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Text(
+                                    l.label,
+                                    style: TextStyle(
+                                      fontFamily: 'Urbanist',
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                      color:
+                                          isActive
+                                              ? AppColors.primary
+                                              : AppColors.primary.withOpacity(
+                                                0.6,
+                                              ),
+                                    ),
+                                  ),
+                                  if (isActive) ...[
+                                    const Spacer(),
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
                 ),
               ),
             ),
@@ -1071,8 +1236,8 @@ class _GuestMobileMenu extends StatelessWidget {
                         boxShadow: const [BoxShadow(color: Color(0x1A000000), blurRadius: 4)]),
                     child: const Icon(Icons.close_rounded, color: Color(0xFF2D2A26), size: 20),
                   ),
-                ),
-              ]),
+                ],
+              ),
             ),
             Container(
               color: AppColors.background,
@@ -1209,8 +1374,8 @@ class _IconCircleBtn extends StatelessWidget {
                   style: const TextStyle(color: Colors.white, fontSize: 7,
                       fontWeight: FontWeight.w900))),
             ),
-          ),
-      ]),
+        ],
+      ),
     );
   }
 }
