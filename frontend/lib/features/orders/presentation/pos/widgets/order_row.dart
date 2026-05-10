@@ -45,7 +45,9 @@ class OrderRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       decoration: BoxDecoration(
         border: Border(
-          top: BorderSide(color: AppColors.border),
+          bottom: BorderSide(color: AppColors.border),
+          right: BorderSide(color: AppColors.border),
+          left: BorderSide(color: AppColors.border),
         ),
       ),
       child: Row(
