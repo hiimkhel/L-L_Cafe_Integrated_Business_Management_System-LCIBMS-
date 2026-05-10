@@ -63,7 +63,7 @@ class _OrderTableState extends State<OrderTable> {
                         itemBuilder: (context, index) {
                           final order = _orders[index];
                           return OrderRow(
-                            id: "#${order['order_number'].toString().substring(order['order_number'].length - 5)}",
+                            id: "#${order['order_number']}",
                             customer: order['customer_name'] ?? "Guest",
                             items: (order['items'] as List)
                                 .map((i) => "${i['name']} x${i['qty']}")

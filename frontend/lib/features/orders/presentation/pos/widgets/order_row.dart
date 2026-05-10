@@ -73,16 +73,45 @@ class OrderRow extends StatelessWidget {
     );
   }
 
-  Widget _orderId() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(20),
+ Widget _orderId() {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [
+          AppColors.primary.withOpacity(0.15),
+          AppColors.secondary.withOpacity(0.10),
+        ],
       ),
-      child: Text(id, style: AppTextStyles.body),
-    );
-  }
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(
+        color: AppColors.primary.withOpacity(0.3),
+        width: 1,
+      ),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(
+          Icons.receipt_long,
+          size: 16,
+          color: AppColors.primary,
+        ),
+        const SizedBox(width: 6),
+        Text(
+          id,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppColors.primary,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 
   Widget _items() {
     return Column(
