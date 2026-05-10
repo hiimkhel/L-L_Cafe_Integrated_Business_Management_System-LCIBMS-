@@ -4,7 +4,7 @@ import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
 import 'package:frontend/core/constants/cart_provider.dart';
-import 'package:frontend/core/widgets/bamboo_breeze_background.dart'; // ← shared widget
+import 'package:frontend/core/widgets/bamboo_breeze_background.dart'; // shared widget
 import 'package:frontend/features/checkout/customer/presentation/cart_checkout_screen.dart';
 import 'package:frontend/core/constants/cart_item.dart' as legacy;
 
@@ -37,11 +37,14 @@ class CartScreen extends StatelessWidget {
                 notifCount: 1,
                 onCart: () {},
                 onNotif: () {},
-                onProfile: () =>
-                    Navigator.pushReplacementNamed(context, '/profile'),
-                onLogout: () =>
-                    Navigator.pushNamedAndRemoveUntil(
-                        context, '/', (r) => false),
+                onProfile:
+                    () => Navigator.pushReplacementNamed(context, '/profile'),
+                onLogout:
+                    () => Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/',
+                      (r) => false,
+                    ),
               ),
 
               Expanded(
@@ -90,25 +93,33 @@ class _EmptyCart extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(
-          horizontal: isMobile ? 24 : 64, vertical: 80),
+        horizontal: isMobile ? 24 : 64,
+        vertical: 80,
+      ),
       child: Center(
         child: Column(
           children: [
             Container(
-              width: 100, height: 100,
+              width: 100,
+              height: 100,
               decoration: BoxDecoration(
                 color: AppColors.primary.withOpacity(0.08),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.shopping_cart_outlined,
-                  size: 48, color: AppColors.primary.withOpacity(0.4)),
+              child: Icon(
+                Icons.shopping_cart_outlined,
+                size: 48,
+                color: AppColors.primary.withOpacity(0.4),
+              ),
             ),
             const SizedBox(height: 28),
             Text(
               'YOUR CART IS EMPTY',
               style: TextStyle(
-                fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                fontSize: 22, letterSpacing: -0.5,
+                fontFamily: 'Urbanist',
+                fontWeight: FontWeight.w900,
+                fontSize: 22,
+                letterSpacing: -0.5,
                 color: AppColors.receiptDark,
               ),
             ),
@@ -116,8 +127,10 @@ class _EmptyCart extends StatelessWidget {
             Text(
               'Add items from the menu to get started.',
               style: TextStyle(
-                fontFamily: 'Urbanist', fontWeight: FontWeight.w500,
-                fontSize: 14, color: AppColors.receiptDark.withOpacity(0.4),
+                fontFamily: 'Urbanist',
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+                color: AppColors.receiptDark.withOpacity(0.4),
               ),
             ),
             const SizedBox(height: 36),
@@ -125,24 +138,29 @@ class _EmptyCart extends StatelessWidget {
               onTap: () => Navigator.pushReplacementNamed(context, '/menu'),
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 36, vertical: 18),
+                  horizontal: 36,
+                  vertical: 18,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                      color: AppColors.receiptDark, width: 1.5),
+                  border: Border.all(color: AppColors.receiptDark, width: 1.5),
                   boxShadow: const [
                     BoxShadow(
-                        color: Color(0xFF2D2A26),
-                        blurRadius: 0,
-                        offset: Offset(4, 4))
+                      color: Color(0xFF2D2A26),
+                      blurRadius: 0,
+                      offset: Offset(4, 4),
+                    ),
                   ],
                 ),
                 child: const Text(
                   'BROWSE THE MENU',
                   style: TextStyle(
-                    fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                    fontSize: 13, letterSpacing: 2.0, color: Colors.white,
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                    letterSpacing: 2.0,
+                    color: Colors.white,
                   ),
                 ),
               ),
@@ -179,8 +197,10 @@ class _DesktopLayout extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 30),
                   child: Divider(
-                      height: 1, thickness: 1,
-                      color: AppColors.primary.withOpacity(0.3)),
+                    height: 1,
+                    thickness: 1,
+                    color: AppColors.primary.withOpacity(0.3),
+                  ),
                 ),
                 const SizedBox(height: 15),
                 _CartItemList(cart: cart),
@@ -190,10 +210,7 @@ class _DesktopLayout extends StatelessWidget {
               ],
             ),
           ),
-          Expanded(
-            flex: 1,
-            child: _CartSummary(cart: cart, isMobile: false),
-          ),
+          Expanded(flex: 1, child: _CartSummary(cart: cart, isMobile: false)),
         ],
       ),
     );
@@ -218,8 +235,10 @@ class _MobileLayout extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Divider(
-              height: 1, thickness: 1,
-              color: AppColors.primary.withOpacity(0.3)),
+            height: 1,
+            thickness: 1,
+            color: AppColors.primary.withOpacity(0.3),
+          ),
         ),
         const SizedBox(height: 10),
         _ReturnButton(),
@@ -246,7 +265,11 @@ class _SelectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          isMobile ? 16 : 45, 15, isMobile ? 16 : 30, 0),
+        isMobile ? 16 : 45,
+        15,
+        isMobile ? 16 : 30,
+        0,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -273,17 +296,11 @@ class _SelectionHeader extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
-                'TAX',
-                style: TextStyle(
-                  color: AppColors.secondary, fontSize: 11,
-                  letterSpacing: 0.6, fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 4),
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -291,8 +308,10 @@ class _SelectionHeader extends StatelessWidget {
                 child: Text(
                   '${cart.totalCount} UNITS',
                   style: const TextStyle(
-                    color: AppColors.primary, fontSize: 11,
-                    fontWeight: FontWeight.bold, letterSpacing: 0.6,
+                    color: AppColors.primary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.6,
                   ),
                 ),
               ),
@@ -341,14 +360,16 @@ class _CartItemList extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: item.imageUrl.isNotEmpty
-                    ? Image.network(
-                        item.imageUrl,
-                        width: 72, height: 72,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _placeholderImage(),
-                      )
-                    : _placeholderImage(),
+                child:
+                    item.imageUrl.isNotEmpty
+                        ? Image.network(
+                          item.imageUrl,
+                          width: 72,
+                          height: 72,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _placeholderImage(),
+                        )
+                        : _placeholderImage(),
               ),
               const SizedBox(width: 14),
 
@@ -359,8 +380,10 @@ class _CartItemList extends StatelessWidget {
                     Text(
                       item.name.toUpperCase(),
                       style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5, color: AppColors.receiptDark,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                        color: AppColors.receiptDark,
                       ),
                     ),
                     const SizedBox(height: 1),
@@ -369,19 +392,23 @@ class _CartItemList extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 9,
                         color: AppColors.secondary.withOpacity(0.9),
-                        letterSpacing: 0.4, fontWeight: FontWeight.bold,
+                        letterSpacing: 0.4,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 20),
 
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 2, vertical: 4),
+                        horizontal: 2,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(9),
                         border: Border.all(
-                            color: AppColors.primary.withOpacity(0.09)),
+                          color: AppColors.primary.withOpacity(0.09),
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -393,7 +420,9 @@ class _CartItemList extends StatelessWidget {
                               '${item.quantity}',
                               textAlign: TextAlign.center,
                               style: const TextStyle(
-                                  fontSize: 11, fontWeight: FontWeight.w600),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                           _QtyBtn(Icons.add, () => cart.increment(item.id)),
@@ -424,35 +453,56 @@ class _CartItemList extends StatelessWidget {
                           behavior: SnackBarBehavior.floating,
                           duration: const Duration(seconds: 2),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       );
                     },
                     child: Container(
-                      width: 32, height: 32,
+                      width: 32,
+                      height: 32,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: const Color(0xFFD95555).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.delete_outline,
-                          size: 18, color: Color(0xFFD95555)),
+                      child: const Icon(
+                        Icons.delete_outline,
+                        size: 18,
+                        color: Color(0xFFD95555),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'UNIT PRICE: ₱${item.originalPrice.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: AppColors.primary.withOpacity(0.5),
-                      letterSpacing: 0.4,
+                  const SizedBox(height: 25),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
                     ),
-                  ),
-                  Text(
-                    '₱${(item.price * item.quantity).toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold,
-                      color: AppColors.secondary,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.sell_outlined,
+                          size: 15,
+                          color: AppColors.primary,
+                        ),
+
+                        const SizedBox(width: 5),
+
+                        Text(
+                          '₱${item.originalPrice.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -466,13 +516,17 @@ class _CartItemList extends StatelessWidget {
 
   Widget _placeholderImage() {
     return Container(
-      width: 72, height: 72,
+      width: 72,
+      height: 72,
       decoration: BoxDecoration(
         color: AppColors.primary.withOpacity(0.08),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Icon(Icons.fastfood_rounded,
-          color: AppColors.primary.withOpacity(0.3), size: 28),
+      child: Icon(
+        Icons.fastfood_rounded,
+        color: AppColors.primary.withOpacity(0.3),
+        size: 28,
+      ),
     );
   }
 }
@@ -491,7 +545,8 @@ class _QtyBtn extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 26, height: 26,
+        width: 26,
+        height: 26,
         child: Icon(icon, size: 14, color: AppColors.primary),
       ),
     );
@@ -516,8 +571,10 @@ class _ReturnButton extends StatelessWidget {
             Text(
               'RETURN TO LNL CAFE MENU',
               style: TextStyle(
-                fontSize: 12, color: AppColors.primary,
-                fontWeight: FontWeight.bold, letterSpacing: 0.9,
+                fontSize: 12,
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.9,
               ),
             ),
           ],
@@ -543,9 +600,10 @@ class _CartSummary extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(25),
-      margin: isMobile
-          ? const EdgeInsets.fromLTRB(16, 8, 16, 20)
-          : const EdgeInsets.fromLTRB(20, 20, 30, 20),
+      margin:
+          isMobile
+              ? const EdgeInsets.fromLTRB(16, 8, 16, 20)
+              : const EdgeInsets.fromLTRB(20, 20, 30, 20),
       decoration: BoxDecoration(
         color: AppColors.receiptDark,
         borderRadius: BorderRadius.circular(26),
@@ -563,21 +621,27 @@ class _CartSummary extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 32, height: 32,
+                width: 32,
+                height: 32,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: AppColors.secondary,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.shopping_bag_outlined,
-                    size: 22, color: Colors.white),
+                child: const Icon(
+                  Icons.shopping_bag_outlined,
+                  size: 22,
+                  color: Colors.white,
+                ),
               ),
               const SizedBox(width: 16),
               const Text(
                 'ORDER SUMMARY',
                 style: TextStyle(
-                  color: AppColors.white, fontSize: 20,
-                  fontWeight: FontWeight.bold, letterSpacing: 1.2,
+                  color: AppColors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
                 ),
               ),
             ],
@@ -597,8 +661,10 @@ class _CartSummary extends StatelessWidget {
                         Text(
                           item.name.toUpperCase(),
                           style: const TextStyle(
-                            color: AppColors.white, fontSize: 11,
-                            fontWeight: FontWeight.bold, letterSpacing: 0.5,
+                            color: AppColors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -606,17 +672,20 @@ class _CartSummary extends StatelessWidget {
                           'X${item.quantity} UNITS',
                           style: TextStyle(
                             color: AppColors.white.withOpacity(0.7),
-                            fontSize: 9, letterSpacing: 0.4,
+                            fontSize: 11,
+                            letterSpacing: 0.4,
                           ),
                         ),
                       ],
                     ),
                   ),
                   Text(
-                    '₱${(item.price).toStringAsFixed(2)}',
+                    '₱${(item.price * item.quantity).toStringAsFixed(2)}',
                     style: const TextStyle(
-                      color: AppColors.secondary, fontSize: 12,
-                      fontWeight: FontWeight.w600, letterSpacing: 0.3,
+                      color: AppColors.secondary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.3,
                     ),
                   ),
                 ],
@@ -634,7 +703,8 @@ class _CartSummary extends StatelessWidget {
                 'SUBTOTAL',
                 style: TextStyle(
                   color: AppColors.white.withOpacity(0.55),
-                  fontSize: 10, letterSpacing: 0.6,
+                  fontSize: 10,
+                  letterSpacing: 0.6,
                 ),
               ),
               const Spacer(),
@@ -642,7 +712,8 @@ class _CartSummary extends StatelessWidget {
                 '₱${subtotal.toStringAsFixed(2)}',
                 style: TextStyle(
                   color: AppColors.white.withOpacity(0.55),
-                  fontSize: 11, fontWeight: FontWeight.w500,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
@@ -654,16 +725,20 @@ class _CartSummary extends StatelessWidget {
               const Text(
                 'ORDER TOTAL',
                 style: TextStyle(
-                  color: Colors.white, fontSize: 13,
-                  fontWeight: FontWeight.bold, letterSpacing: 0.8,
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.8,
                 ),
               ),
               const Spacer(),
               Text(
                 '₱${subtotal.toStringAsFixed(2)}',
                 style: const TextStyle(
-                  color: AppColors.secondary, fontSize: 24,
-                  fontWeight: FontWeight.bold, letterSpacing: 0.5,
+                  color: AppColors.secondary,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
                 ),
               ),
             ],
@@ -673,47 +748,45 @@ class _CartSummary extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => CartCheckoutScreen(
-                    items: cart.items.map((c) => legacy.CartItem(
-                      id: c.id,
-                      name: c.name,
-                      category: c.category,
-                      price: c.price,
-                      originalPrice: c.originalPrice,
-                      quantity: c.quantity,
-                      imageUrl: c.imageUrl
-                    )).toList(),
+              onPressed:
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (_) => CartCheckoutScreen(
+                            items:
+                                cart.items
+                                    .map(
+                                      (c) => legacy.CartItem(
+                                        id: c.id,
+                                        name: c.name,
+                                        category: c.category,
+                                        price: c.price,
+                                        originalPrice: c.originalPrice,
+                                        quantity: c.quantity,
+                                        imageUrl: c.imageUrl,
+                                      ),
+                                    )
+                                    .toList(),
+                          ),
+                    ),
                   ),
-                ),
-              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.secondary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 19),
                 shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero),
+                  borderRadius: BorderRadius.zero,
+                ),
                 elevation: 0,
               ),
               child: const Text(
                 'PROCEED TO CHECKOUT',
                 style: TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.4,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.4,
                 ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 13),
-
-          Center(
-            child: Text(
-              'PRICES ARE INCLUSIVE OF TAXES AND ENVIRONMENTAL FEES.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.3),
-                fontSize: 8, letterSpacing: 0.5,
               ),
             ),
           ),
