@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/services/pos/order_service.dart';
+import 'package:frontend/config/theme/app_colors.dart';
+import 'package:dotted_border/dotted_border.dart';
 
 class OnlineOrdersScreen extends StatefulWidget {
   const OnlineOrdersScreen({super.key});
@@ -24,35 +26,42 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
   bool _isLoading = true;
 
   List<Map<String, dynamic>> get _filteredOrders {
-    List<Map<String, dynamic>> result = _selectedFilter == 'ALL'
-        ? _orders
-        : _orders.where((o) => o['status'] == _selectedFilter).toList();
+    List<Map<String, dynamic>> result =
+        _selectedFilter == 'ALL'
+            ? _orders
+            : _orders.where((o) => o['status'] == _selectedFilter).toList();
 
     final query = _searchController.text.trim().toLowerCase();
     if (query.isNotEmpty) {
-      result = result
-          .where((o) =>
-              o['id'].toString().toLowerCase().contains(query) ||
-              o['customer'].toString().toLowerCase().contains(query) ||
-              o['phone'].toString().toLowerCase().contains(query))
-          .toList();
+      result =
+          result
+              .where(
+                (o) =>
+                    o['id'].toString().toLowerCase().contains(query) ||
+                    o['customer'].toString().toLowerCase().contains(query) ||
+                    o['phone'].toString().toLowerCase().contains(query),
+              )
+              .toList();
     }
     return result;
   }
 
-  Map<String, dynamic>? get _selectedOrder => _selectedOrderId == null
-      ? null
-      : _orders.firstWhere(
-          (o) => o['id'] == _selectedOrderId,
-          orElse: () => {},
-        );
+  Map<String, dynamic>? get _selectedOrder =>
+      _selectedOrderId == null
+          ? null
+          : _orders.firstWhere(
+            (o) => o['id'] == _selectedOrderId,
+            orElse: () => {},
+          );
 
   int _countByStatus(String status) =>
       _orders.where((o) => o['status'] == status).length;
 
   double _subtotal(Map<String, dynamic> order) {
-    return (order['items'] as List)
-        .fold(0.0, (sum, item) => sum + (item['qty'] * item['price']));
+    return (order['items'] as List).fold(
+      0.0,
+      (sum, item) => sum + (item['qty'] * item['price']),
+    );
   }
 
   double _total(Map<String, dynamic> order) {
@@ -93,13 +102,13 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
     final success = await _orderService.acceptOrder(order['db_id']);
 
     if (success) {
-      await fetchOnlineOrders(); 
+      await fetchOnlineOrders();
     } else {
       debugPrint("Failed to accept order");
     }
   }
 
- Future<void> _rejectOrder(String id) async {
+  Future<void> _rejectOrder(String id) async {
     final order = _orders.firstWhere((o) => o['id'] == id);
 
     final success = await _orderService.rejectOrder(order['db_id']);
@@ -291,19 +300,19 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
         const SizedBox(width: 10),
         ...filters.map((f) {
           final isActive = _selectedFilter == f;
-          final color = f == 'ALL'
-              ? _darkBrown
-              : f == 'PENDING'
+          final color =
+              f == 'ALL'
+                  ? _darkBrown
+                  : f == 'PENDING'
                   ? _brown
                   : f == 'ACCEPTED'
-                      ? _green
-                      : _red;
+                  ? _green
+                  : _red;
           return GestureDetector(
             onTap: () => setState(() => _selectedFilter = f),
             child: Container(
               margin: const EdgeInsets.only(left: 6),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
               decoration: BoxDecoration(
                 color: isActive ? color : Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
@@ -346,71 +355,76 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
         'label': 'Pending',
         'count': _countByStatus('PENDING'),
         'color': _brown,
-        'icon': Icons.access_time_rounded
+        'icon': Icons.access_time_rounded,
       },
       {
         'label': 'Accepted',
         'count': _countByStatus('ACCEPTED'),
         'color': _green,
-        'icon': Icons.check_circle_outline_rounded
+        'icon': Icons.check_circle_outline_rounded,
       },
       {
         'label': 'Rejected',
         'count': _countByStatus('REJECTED'),
         'color': _red,
-        'icon': Icons.cancel_outlined
+        'icon': Icons.cancel_outlined,
       },
     ];
 
     return Row(
-      children: cards.asMap().entries.map((entry) {
-        final i = entry.key;
-        final c = entry.value;
-        final color = c['color'] as Color;
-        return Expanded(
-          child: Container(
-            margin: EdgeInsets.only(right: i < cards.length - 1 ? 12 : 0),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _brown.withValues(alpha: .1)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: .15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(c['icon'] as IconData, color: color, size: 18),
+      children:
+          cards.asMap().entries.map((entry) {
+            final i = entry.key;
+            final c = entry.value;
+            final color = c['color'] as Color;
+            return Expanded(
+              child: Container(
+                margin: EdgeInsets.only(right: i < cards.length - 1 ? 12 : 0),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _brown.withValues(alpha: .1)),
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  '${c['count']}',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: _darkBrown,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: .15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        c['icon'] as IconData,
+                        color: color,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      '${c['count']}',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: _darkBrown,
+                      ),
+                    ),
+                    Text(
+                      (c['label'] as String).toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: _brown.withValues(alpha: .7),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  (c['label'] as String).toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: _brown.withValues(alpha: .7),
-                    letterSpacing: 0.8,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
+              ),
+            );
+          }).toList(),
     );
   }
 
@@ -424,8 +438,7 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
       return Center(
         child: Text(
           'No orders found.',
-          style: TextStyle(
-              color: _brown.withValues(alpha: .5), fontSize: 13),
+          style: TextStyle(color: _brown.withValues(alpha: .5), fontSize: 13),
         ),
       );
     }
@@ -477,8 +490,10 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
                 ),
                 const Spacer(),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: .15),
                     borderRadius: BorderRadius.circular(20),
@@ -504,7 +519,9 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
             Text(
               order['time'],
               style: TextStyle(
-                  fontSize: 11, color: _brown.withValues(alpha: .6)),
+                fontSize: 11,
+                color: _brown.withValues(alpha: .6),
+              ),
             ),
             const SizedBox(height: 8),
             _infoRow(Icons.person_outline, order['customer'], bold: true),
@@ -513,30 +530,33 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
             const SizedBox(height: 3),
             _infoRow(Icons.delivery_dining_outlined, order['delivery_address']),
             const SizedBox(height: 10),
-            ...displayItems.map((item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 2),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${item['qty']}x ${item['name']}',
-                          style:
-                              TextStyle(fontSize: 11, color: _darkBrown),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+            ...displayItems.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${item['qty']}x ${item['name']}',
+                        style: TextStyle(fontSize: 11, color: _darkBrown),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      Text(
-                        '₱${(item['qty'] * item['price'] as double).toStringAsFixed(2)}',
-                        style: TextStyle(fontSize: 11, color: _brown),
-                      ),
-                    ],
-                  ),
-                )),
+                    ),
+                    Text(
+                      '₱${(item['qty'] * item['price'] as double).toStringAsFixed(2)}',
+                      style: TextStyle(fontSize: 11, color: _brown),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             if (extra > 0)
               Text(
                 '+$extra more items',
                 style: TextStyle(
-                    fontSize: 10, color: _brown.withValues(alpha: .6)),
+                  fontSize: 10,
+                  color: _brown.withValues(alpha: .6),
+                ),
               ),
             const Spacer(),
             Row(
@@ -593,15 +613,13 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
       width: 320,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          bottomRight: Radius.circular(16),
-        ),
-        border:
-            Border(left: BorderSide(color: _brown.withValues(alpha: .15))),
+        borderRadius: const BorderRadius.only(bottomRight: Radius.circular(16)),
+        border: Border(left: BorderSide(color: _brown.withValues(alpha: .15))),
       ),
-      child: order == null || order.isEmpty
-          ? _buildEmptyDetail()
-          : _buildOrderDetail(order),
+      child:
+          order == null || order.isEmpty
+              ? _buildEmptyDetail()
+              : _buildOrderDetail(order),
     );
   }
 
@@ -610,8 +628,11 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.shopping_bag_outlined,
-              size: 56, color: _brown.withValues(alpha: .2)),
+          Icon(
+            Icons.shopping_bag_outlined,
+            size: 56,
+            color: _brown.withValues(alpha: .2),
+          ),
           const SizedBox(height: 12),
           Text(
             'SELECT AN ORDER TO VIEW DETAILS',
@@ -650,8 +671,11 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
                   color: _brown.withValues(alpha: .1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(Icons.shopping_bag_outlined,
-                    color: _green, size: 18),
+                child: Icon(
+                  Icons.shopping_bag_outlined,
+                  color: _green,
+                  size: 18,
+                ),
               ),
               const SizedBox(width: 10),
               Column(
@@ -723,67 +747,76 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
                   ),
                   child: Column(
                     children: [
-                      _detailRow(Icons.person_outline, order['customer'],
-                          bold: true),
+                      _detailRow(
+                        Icons.person_outline,
+                        order['customer'],
+                        bold: true,
+                      ),
                       const SizedBox(height: 6),
                       _detailRow(Icons.phone_outlined, order['phone']),
                       const SizedBox(height: 6),
                       _detailRow(
-                          Icons.delivery_dining_outlined, order['delivery_address']),
+                        Icons.delivery_dining_outlined,
+                        order['delivery_address'],
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 14),
                 _sectionLabel('ORDER ITEMS'),
                 const SizedBox(height: 8),
-                ...items.map((item) => Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: _bg.withValues(alpha: .5),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  item['name'],
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: _darkBrown,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                '₱${(item['qty'] * item['price'] as double).toStringAsFixed(2)}',
+                ...items.map(
+                  (item) => Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _bg.withValues(alpha: .5),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                item['name'],
                                 style: TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                   color: _darkBrown,
                                 ),
                               ),
-                            ],
+                            ),
+                            Text(
+                              '₱${(item['qty'] * item['price'] as double).toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: _darkBrown,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Quantity: ${item['qty']}',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: _brown.withValues(alpha: .6),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Quantity: ${item['qty']}',
-                            style: TextStyle(
-                                fontSize: 10,
-                                color: _brown.withValues(alpha: .6)),
+                        ),
+                        Text(
+                          '₱${(item['price'] as double).toStringAsFixed(2)} each',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: _brown.withValues(alpha: .6),
                           ),
-                          Text(
-                            '₱${(item['price'] as double).toStringAsFixed(2)} each',
-                            style: TextStyle(
-                                fontSize: 10,
-                                color: _brown.withValues(alpha: .6)),
-                          ),
-                        ],
-                      ),
-                    )),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 if (order['specialInstructions'] != null) ...[
                   const SizedBox(height: 6),
                   _sectionLabel('SPECIAL INSTRUCTIONS'),
@@ -827,6 +860,7 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 10),
                 Container(
                   width: double.infinity,
@@ -834,8 +868,7 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
                   decoration: BoxDecoration(
                     color: _bg.withValues(alpha: .5),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                        color: _brown.withValues(alpha: .15)),
+                    border: Border.all(color: _brown.withValues(alpha: .15)),
                   ),
                   child: Text(
                     order['payment'],
@@ -848,6 +881,163 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 10),
+
+                if (order['payment_method'] == 'e-wallet')
+                  DottedBorder(
+                    color: AppColors.primary.withOpacity(0.5),
+                    strokeWidth: 1,
+                    dashPattern: [6, 3],
+                    borderType: BorderType.RRect,
+                    radius: const Radius.circular(14),
+                    child: Material(
+                      color: Colors.grey.withValues(alpha: .2),
+                      borderRadius: BorderRadius.circular(14),
+                      child: InkWell(
+                        onTap: () {
+                          print('selected order proof: ${order['payment_proof_url']}');
+                          final proofUrl = order['payment_proof_url'];
+                          if (proofUrl == null || proofUrl.toString().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'No receipt uploaded for this order.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                          final fullUrl =
+                              'http://localhost:3006/uploads/$proofUrl';
+                          showDialog(
+                            context: context,
+                            builder:
+                                (_) => Dialog(
+                                  backgroundColor: Colors.transparent,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            const Text(
+                                              'PAYMENT RECEIPT',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 13,
+                                                letterSpacing: 0.8,
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            GestureDetector(
+                                              onTap:
+                                                  () => Navigator.pop(context),
+                                              child: const Icon(
+                                                Icons.close,
+                                                size: 18,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          child: Image.network(
+                                            fullUrl,
+                                            fit: BoxFit.contain,
+                                            loadingBuilder:
+                                                (_, child, progress) =>
+                                                    progress == null
+                                                        ? child
+                                                        : const SizedBox(
+                                                          height: 200,
+                                                          child: Center(
+                                                            child:
+                                                                CircularProgressIndicator(),
+                                                          ),
+                                                        ),
+                                            errorBuilder:
+                                                (_, __, ___) => const SizedBox(
+                                                  height: 200,
+                                                  child: Center(
+                                                    child: Text(
+                                                      'Failed to load image.',
+                                                    ),
+                                                  ),
+                                                ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                          );
+                        }, //--------------------------------------------------------end line of ontap
+                        borderRadius: BorderRadius.circular(14),
+                        splashColor: AppColors.primary.withOpacity(0.2),
+                        highlightColor: AppColors.white.withOpacity(0.05),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 14,
+                          ),
+
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.photo_outlined,
+                                  size: 20,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'VIEW PAYMENT RECEIPT',
+                                      style: TextStyle(
+                                        color: AppColors.primary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.8,
+                                      ),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      'Tap to open and verify receipt/screenshot',
+                                      style: TextStyle(
+                                        color: AppColors.primary,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
                 const SizedBox(height: 20),
               ],
             ),
@@ -857,69 +1047,209 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             border: Border(
-                top: BorderSide(color: _brown.withValues(alpha: .15))),
+              top: BorderSide(color: _brown.withValues(alpha: .15)),
+            ),
           ),
-          child: status == 'PENDING'
-              ? Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => _acceptOrder(order['id']),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _green,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: const Text(
-                          'ACCEPT ORDER',
-                          style: TextStyle(
-                              fontSize: 11, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => _rejectOrder(order['id']),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _red,
-                          side: BorderSide(color: _red),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: const Text(
-                          'REJECT ORDER',
-                          style: TextStyle(
-                              fontSize: 11, fontWeight: FontWeight.bold),
+          child:
+              status == 'PENDING'
+                  ? Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final confirmed = await _showConfirmDialog(
+                              action: 'accept',
+                              orderId: order['id'],
+                              color: _green,
+                              icon: Icons.check_circle_outline_rounded,
+                            );
+                            if (confirmed) _acceptOrder(order['id']);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _green,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: const Text(
+                            'ACCEPT ORDER',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(_statusIcon(status), size: 16, color: color),
-                    const SizedBox(width: 6),
-                    Text(
-                      'ORDER $status',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                        letterSpacing: 0.8,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () async {
+                            final confirmed = await _showConfirmDialog(
+                              action: 'reject',
+                              orderId: order['id'],
+                              color: _red,
+                              icon: Icons.cancel_outlined,
+                            );
+                            if (confirmed) _rejectOrder(order['id']);
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _red,
+                            side: BorderSide(color: _red),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: const Text(
+                            'REJECT ORDER',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  )
+                  : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(_statusIcon(status), size: 16, color: color),
+                      const SizedBox(width: 6),
+                      Text(
+                        'ORDER $status',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: color,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
         ),
       ],
     );
+  }
+
+  //-------------------------------------------------------------------------------------------------------------------
+  Future<bool> _showConfirmDialog({
+    required String action,
+    required String orderId,
+    required Color color,
+    required IconData icon,
+  }) async {
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder:
+              (_) => Dialog(
+                backgroundColor: Colors.transparent,
+                child: Container(
+                  width: 340,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Icon circle
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(icon, color: color, size: 30),
+                      ),
+                      const SizedBox(height: 16),
+
+                      Text(
+                        '${action.toUpperCase()} ORDER?',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: _darkBrown,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      Text(
+                        'Are you sure you want to $action order $orderId?',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.5,
+                          color: _brown.withOpacity(0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: _brown,
+                                side: BorderSide(
+                                  color: _brown.withOpacity(0.3),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                              ),
+                              child: const Text(
+                                'CANCEL',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: color,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                elevation: 0,
+                              ),
+                              child: Text(
+                                action.toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+        ) ??
+        false;
   }
 
   Widget _sectionLabel(String text) {
@@ -958,14 +1288,12 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
       children: [
         Text(
           label,
-          style: TextStyle(
-              fontSize: 11, color: _brown.withValues(alpha: .6)),
+          style: TextStyle(fontSize: 11, color: _brown.withValues(alpha: .6)),
         ),
         const Spacer(),
         Text(
           value,
-          style: TextStyle(
-              fontSize: 11, color: _brown.withValues(alpha: .8)),
+          style: TextStyle(fontSize: 11, color: _brown.withValues(alpha: .8)),
         ),
       ],
     );

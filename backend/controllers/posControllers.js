@@ -81,6 +81,7 @@ const getOnlineOrders = async (req, res ) => {
             o.payment_status,
             o.payment_method,
             o.notes,
+            o.payment_proof_url,
             oi.id AS item_id,
             oi.item_name,
             oi.quantity,
@@ -109,6 +110,7 @@ const getOnlineOrders = async (req, res ) => {
             payment_status: row.payment_status,
             payment_method: row.payment_method,
             notes: row.notes,
+            payment_proof_url: row.payment_proof_url,
             items: []
             };
         }

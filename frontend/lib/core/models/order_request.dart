@@ -17,6 +17,7 @@ class OrderRequest {
   final List<Map<String, dynamic>> items;
 
   final String? notes;
+  final String? paymentProofUrl;
   OrderRequest({
     required this.source,
     this.userId,
@@ -31,12 +32,13 @@ class OrderRequest {
     this.customerPhone,
     required this.items,
     this.notes,
+    this.paymentProofUrl,
   });
 
   Map<String, dynamic> toJson() {
     return {
       "source": source.toLowerCase(),
-      "user_id": userId, 
+      "user_id": userId,
       "order_type": orderType.toLowerCase().replaceAll(' ', '-'),
       "subtotal": subtotal,
       "delivery_fee": deliveryFee,
@@ -47,7 +49,8 @@ class OrderRequest {
       "customer_name": customerName,
       "customer_phone": customerPhone,
       "items": items,
-      "notes": notes
+      "notes": notes,
+      'payment_proof_url': paymentProofUrl,
     };
   }
 }

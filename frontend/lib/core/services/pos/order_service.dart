@@ -5,14 +5,11 @@ import 'package:http/http.dart' as http;
 class OrderService {
   final String baseUrl = "http://localhost:3006/api";
 
-
   // From ordersRoutes.js rather than posRoutes.js
   Future<bool> createOrder(OrderRequest order) async {
     final response = await http.post(
       Uri.parse("$baseUrl/orders/"),
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: {"Content-Type": "application/json"},
       body: jsonEncode(order.toJson()),
     );
 
@@ -59,14 +56,9 @@ class OrderService {
     }
   }
 
-
-
   // Fetch all online orders
   Future<List<Map<String, dynamic>>> fetchOnlineOrders() async {
-
-    final response = await http.get(
-      Uri.parse('$baseUrl/pos/orders/online'),
-    );
+    final response = await http.get(Uri.parse('$baseUrl/pos/orders/online'));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch orders');
@@ -74,12 +66,13 @@ class OrderService {
 
     final data = jsonDecode(response.body);
 
-    return List<Map<String, dynamic>>.from(data['data'])
-        .map((o) => _mapOrder(o))
-        .toList();
+    return List<Map<String, dynamic>>.from(
+      data['data'],
+    ).map((o) => _mapOrder(o)).toList();
   }
-  
+
   Map<String, dynamic> _mapOrder(Map<String, dynamic> o) {
+    print('payment_proof_url: ${o['payment_proof_url']}');
     String mapStatus(String status) {
       switch (status) {
         case 'pending':
@@ -100,18 +93,24 @@ class OrderService {
 
     return {
       'id': o['order_number'] ?? 'UNKNOWN',
-      'db_id': o['id'], 
+      'db_id': o['id'],
       'time': '',
       'status': mapStatus(o['status']),
       'customer': o['customer_name'] ?? 'Guest',
       'phone': o['customer_phone'] ?? 'N/A',
       'delivery_address': o['delivery_address'] ?? 'No address yet',
-      'items': (o['items'] as List).map((i) => {
-            'name': i['name'],
-            'qty': i['quantity'],
-            'price': double.parse(i['unit_price'].toString()),
-          }).toList(),
+      'items':
+          (o['items'] as List)
+              .map(
+                (i) => {
+                  'name': i['name'],
+                  'qty': i['quantity'],
+                  'price': double.parse(i['unit_price'].toString()),
+                },
+              )
+              .toList(),
       'specialInstructions': o['notes'],
+      'payment_method': (o['payment_method'] ?? '').toLowerCase(),
       'payment':
           '${(o['payment_method'] ?? 'N/A').toUpperCase()} - ${o['payment_status'].toUpperCase()}',
       'tax': 0.12,

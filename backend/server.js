@@ -23,6 +23,11 @@ app.use('/api/customer', require("./routes/customerRoutes.js"))
 app.use('/api/pos', require("./routes/posRoutes.js"));
 
 app.use('/api/orders', require("./routes/orderRoutes.js"));
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  next();
+}, express.static('uploads'));
+// Serve uploaded files from the 'uploads' directory
 app.use('/api/rider', require("./routes/riderRoutes.js"));
 app.use('/api/admin', require("./routes/adminRoutes.js"));
 
