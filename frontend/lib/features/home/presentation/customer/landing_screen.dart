@@ -157,7 +157,8 @@ class _LandingScreenState extends State<LandingScreen> {
         context,
         MaterialPageRoute(builder: (_) => RegisterScreen(onRegister: widget.onRegister)));
 
-    void goGuestMenu() => Navigator.push(
+   void goGuestMenu() {
+      Navigator.push(
         context,
         MaterialPageRoute(
           builder: (menuContext) => MenuScreen(
@@ -594,10 +595,12 @@ class _GalleryCarouselState extends State<_GalleryCarousel> {
     super.initState();
     _timer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (!mounted) return;
+      final next = (_current + 1) % widget.slots.length;
       _ctrl.animateToPage(
-          (_current + 1) % widget.slots.length,
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeInOut);
+        next,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOut,
+      );
     });
   }
 
@@ -622,20 +625,23 @@ class _GalleryCarouselState extends State<_GalleryCarousel> {
 
       return Padding(
         padding: EdgeInsets.only(top: isMobile ? 28 : 64),
-        child: Column(children: [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 75),
-            child: RichText(
-              textAlign: TextAlign.center,
-              text: TextSpan(children: [
-                const TextSpan(
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 75),
+              child: RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(children: [
+                  const TextSpan(
                     text: 'Experience the Heart of ',
                     style: TextStyle(
-                        fontFamily: 'Urbanist',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 28,
-                        color: Color(0xFF2D2A26))),
-                TextSpan(
+                      fontFamily: 'Urbanist',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 28,
+                      color: Color(0xFF2D2A26),
+                    ),
+                  ),
+                  TextSpan(
                     text: 'L&L Cafe',
                     style: TextStyle(
                         fontFamily: 'Urbanist',
@@ -703,44 +709,39 @@ class _GalleryCarouselState extends State<_GalleryCarousel> {
                     icon: Icons.chevron_left,
                     onTap: () => _go(
                         (_current - 1 + widget.slots.length) %
-                            widget.slots.length)),
+                            widget.slots.length,
+                      ),
+                    ),
+                  ),
+
+                  Positioned(
+                    right: isMobile ? 0 : 48,
+                    top: imgH / 2 - 22,
+                    child: _ChevronBtn(
+                      icon: Icons.chevron_right,
+                      onTap: () => _go(
+                        (_current + 1) % widget.slots.length,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              Positioned(
-                right: isMobile ? 0 : 48,
-                top: imgH / 2 - 22,
-                child: _ChevronBtn(
-                    icon: Icons.chevron_right,
-                    onTap: () =>
-                        _go((_current + 1) % widget.slots.length)),
-              ),
-            ]),
-          ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: isMobile ? 24 : 120),
-            child: Text(
-              'From handcrafted beverages to freshly prepared meals, every corner of L&L Cafe is designed to bring comfort, flavor, and connection.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontFamily: 'Urbanist',
-                  fontSize: isMobile ? 12 : 18,
-                  height: 1.5,
-                  color: AppColors.primary),
             ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(widget.slots.length, (i) {
-              final on = i == _current;
-              return GestureDetector(
-                onTap: () => _go(i),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: on ? 30 : 10,
-                  height: 10,
-                  decoration: BoxDecoration(
+
+            const SizedBox(height: 16),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(widget.slots.length, (i) {
+                final on = i == _current;
+                return GestureDetector(
+                  onTap: () => _go(i),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: on ? 30 : 10,
+                    height: 10,
+                    decoration: BoxDecoration(
                       color: on
                           ? AppColors.secondary
                           : AppColors.primary.withOpacity(0.3),
@@ -923,6 +924,17 @@ class _WhyCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
+          Text(
+            data.body,
+            style: TextStyle(
+              fontFamily: 'Urbanist',
+              fontWeight: FontWeight.w700,
+              fontSize: 11,
+              letterSpacing: 0.3,
+              height: 1.7,
+              color: AppColors.primary,
+            ),
+          ),
           Text(
             data.body,
             style: TextStyle(
