@@ -1,36 +1,33 @@
 import 'dart:math' as math;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend/config/theme/app_colors.dart';
 
-const Color _kGreen  = Color(0xFF758C6D);
 const double _kMobile = 768;
+const Color _primary = Color(0xFF758C6D);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PUBLIC WIDGET
-// ─────────────────────────────────────────────────────────────────────────────
-
+//--------------------------------------------bambooBackground------------------------------------------------
 class BambooBackground extends StatefulWidget {
-  const BambooBackground({super.key});
-
+  const BambooBackground();
   @override
   State<BambooBackground> createState() => _BambooBackgroundState();
 }
 
 class _BambooBackgroundState extends State<BambooBackground>
     with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-
+  late AnimationController _controller;
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(
+    _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 6),
+      duration: const Duration(seconds: 30),
     )..repeat();
   }
 
   @override
   void dispose() {
-    _ctrl.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -38,196 +35,149 @@ class _BambooBackgroundState extends State<BambooBackground>
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < _kMobile;
     return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (_, __) => CustomPaint(
-        painter: _BreezyBambooPainter(wind: _ctrl.value, isMobile: isMobile),
-        size: Size.infinite,
-      ),
+      animation: _controller,
+      builder: (context, child) {
+        return CustomPaint(
+          painter: _BambooPainter(
+            animationValue: _controller.value,
+            isMobile: isMobile,
+          ),
+          size: Size.infinite,
+        );
+      },
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PAINTER
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _BreezyBambooPainter extends CustomPainter {
-  final double wind;
+class _BambooPainter extends CustomPainter {
+  final double animationValue;
   final bool isMobile;
 
-  const _BreezyBambooPainter({required this.wind, required this.isMobile});
+  _BambooPainter({required this.animationValue, required this.isMobile});
 
-  // ── ALL stalks (desktop) ──────────────────────────────────────────────────
-  // [xFraction, widthPx, opacity, phaseOffset]
-  static const _allStalks = <List<double>>[
-    [0.03,  7.0, 0.07, 0.00],
-    [0.10,  5.0, 0.05, 0.35],
-    [0.18,  9.0, 0.08, 0.70],
-    [0.26,  6.0, 0.06, 0.15],
-    [0.35,  4.0, 0.05, 0.55],
-    [0.44, 10.0, 0.08, 0.80],
-    [0.52,  5.5, 0.06, 0.25],
-    [0.60,  8.0, 0.07, 0.60],
-    [0.68,  4.5, 0.05, 0.40],
-    [0.76,  9.5, 0.08, 0.10],
-    [0.84,  6.0, 0.06, 0.90],
-    [0.92,  7.5, 0.07, 0.50],
-    [0.97,  5.0, 0.05, 0.20],
+  static const _bamboos = [
+    [0.040, 13.0, 0.12, 1.53],
+    [0.095, 7.0, 0.10, -1.84],
+    [0.133, 14.0, 0.13, 1.45],
+    [0.190, 9.0, 0.10, -0.72],
+    [0.236, 9.5, 0.10, -0.71],
+    [0.283, 13.0, 0.12, -1.53],
+    [0.321, 13.0, 0.11, 1.24],
+    [0.374, 1.9, 0.08, 0.29],
+    [0.423, 2.2, 0.08, 0.35],
+    [0.469, 2.6, 0.08, -0.34],
+    [0.503, 20.0, 0.13, 2.00],
+    [0.560, 4.1, 0.09, 1.06],
+    [0.598, 17.6, 0.12, 1.82],
+    [0.656, 8.9, 0.10, -0.98],
+    [0.693, 15.5, 0.11, 1.72],
+    [0.739, 17.9, 0.12, 1.99],
+    [0.783, 18.8, 0.12, 1.81],
+    [0.839, 8.9, 0.10, 0.66],
+    [0.890, 5.2, 0.08, -1.98],
+    [0.936, 16.6, 0.11, -1.89],
   ];
 
-  // ✅ MOBILE stalks — thicker widths, slightly higher opacity
-  static const _mobileStalks = <List<double>>[
-    [0.04,  10.0, 0.10, 0.00],
-    [0.22,   9.0, 0.09, 0.40],
-    [0.50,  12.0, 0.10, 0.70],
-    [0.76,   9.0, 0.09, 0.20],
-    [0.94,  10.0, 0.10, 0.55],
-  ];
+  void _drawLeaf(
+    Canvas canvas,
+    Offset offset,
+    double angle,
+    double length,
+    double width,
+    Paint paint,
+  ) {
+    canvas.save();
+    canvas.translate(offset.dx, offset.dy);
+    canvas.rotate(angle);
 
-  // ── Smooth sway value ─────────────────────────────────────────────────────
-  // Returns ±maxRad radians — stalk sways from its base like a real bamboo
-  double _sway(double phase, {double maxRad = 0.025}) {
-    final t = (wind + phase) % 1.0;
-    return math.sin(t * 2 * math.pi) * maxRad;
-  }
-
-  // ── Realistic wavy bamboo leaf ────────────────────────────────────────────
-  // Uses two cubic bezier curves to create an S-shaped midrib with
-  // a tapered tip — much closer to a real bamboo leaf than a simple oval.
-  // `wind` is passed in so the leaf tip can ripple as well as rotate.
-  void _wavyLeaf(Canvas c, Offset origin, double angle, double len, double w,
-      double phase, Paint p) {
-    c.save();
-    c.translate(origin.dx, origin.dy);
-    c.rotate(angle);
-
-    // Tip ripple — the leaf tip flutters slightly independently
-    final tipRipple = math.sin(
-          ((wind + phase + 0.3) % 1.0) * 2 * math.pi,
-        ) *
-        w *
-        0.35; // subtle — just the tip, not the whole leaf
-
-    final path = Path()
-      ..moveTo(0, 0)
-      // Upper edge: slight S-curve using two cubics
-      ..cubicTo(
-        len * 0.25, -w * 0.9,   // control 1 — sweeps up near base
-        len * 0.65, -w * 1.1,   // control 2 — peaks before midpoint
-        len,         tipRipple, // tip — animated ripple
-      )
-      // Lower edge: mirror S-curve back to base
-      ..cubicTo(
-        len * 0.65,  w * 0.9,  // control 1
-        len * 0.25,  w * 0.5,  // control 2 — flatter near base
-        0,           0,         // back to origin
-      )
-      ..close();
-
-    c.drawPath(path, p);
-    c.restore();
-  }
-
-  // Keep the simple leaf for any internal fallback use
-  void _leaf(Canvas c, Offset origin, double angle, double len, double w,
-      Paint p) {
-    c.save();
-    c.translate(origin.dx, origin.dy);
-    c.rotate(angle);
-    final path = Path()
-      ..moveTo(0, 0)
-      ..quadraticBezierTo(len * 0.35, -w, len, 0)
-      ..quadraticBezierTo(len * 0.65,  w, 0, 0)
-      ..close();
-    c.drawPath(path, p);
-    c.restore();
+    final path =
+        Path()
+          ..moveTo(0, 0)
+          ..quadraticBezierTo(length * 0.4, -width, length, 0)
+          ..quadraticBezierTo(length * 0.6, width, 0, 0)
+          ..close();
+    canvas.drawPath(path, paint);
+    canvas.restore();
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint  = Paint()..isAntiAlias = true;
-    final stalks = isMobile ? _mobileStalks : _allStalks;
+    final paint = Paint()..color = _primary;
+    int index = 0;
+    for (final b in _bamboos) {
+      index++;
+      if (isMobile && index % 3 != 0) continue;
+      final baseX = size.width * (b[0] as double);
+      final w = b[1] as double;
+      final deg = b[3] as double;
+      final h = size.height;
+      final double baseOp = b[2] as double;
+      final op = isMobile ? baseOp * 0.4 : baseOp;
+      final movementX = animationValue * size.width * (op * 8);
+      final x = (baseX + movementX) % size.width;
+      final sway =
+          math.sin((animationValue * math.pi * 4) + (x * 0.01)) * 0.015;
+      final rad = (deg * math.pi / 180) + sway;
 
-    for (final b in stalks) {
-      final xFrac = b[0];
-      final w     = isMobile ? b[1] * 1.0 : b[1];   // full thickness on mobile
-      // ✅ Mobile opacity slightly higher so the sparse stalks remain visible
-      final op    = isMobile ? b[2] * 0.85 : b[2];
-      final phase = b[3];
-
-      final x     = size.width * xFrac;
-      final h     = size.height;
-
-      // Stalk sways gently from its root
-      final stalkSway = _sway(phase);
-
-      paint.color = _kGreen.withOpacity(op);
+      paint.color = _primary.withOpacity(op);
 
       canvas.save();
-      canvas.translate(x, h);       // pivot at ground level
-      canvas.rotate(stalkSway);
-      canvas.translate(-w / 2, 0);
+      canvas.translate(x + w / 2, h / 2);
+      canvas.rotate(rad);
 
-      // ── Stalk body ──────────────────────────────────────────────────────
-      canvas.drawRect(Rect.fromLTWH(0, -h, w, h), paint);
+      canvas.drawRect(Rect.fromLTWH(-w / 2, -h / 2 - 20, w, h + 40), paint);
+      int segments = (h / (w * 10 + 60)).ceil().clamp(3, 10);
+      double segmentHeight = (h + 40) / segments;
 
-      // ── Joints + leaves ─────────────────────────────────────────────────
-      // ✅ Both mobile AND desktop get the same number of joints now
-      const segCount = 5;
-      final segH     = h / (segCount + 1);
-
-      for (int i = 1; i <= segCount; i++) {
-        final jointY = -(i * segH); // upward = negative
-
-        // Knuckle ring
+      for (int i = 1; i < segments; i++) {
+        double jointY = (-h / 2 - 20) + (i * segmentHeight);
         canvas.drawRect(
-          Rect.fromLTWH(-1.5, jointY - 1, w + 3, 2),
+          Rect.fromLTWH(-w / 2 - 1.5, jointY - 1, w + 3, 2.5),
           paint,
         );
+        if ((index + i) % 4 != 0) {
+          bool isLeft = (index + i) % 2 == 0;
+          double leafLength = w * 2.5 + 20.0;
+          double leafWidth = leafLength * 0.25;
 
-        // ✅ Leaves — natural size, wavy realistic shape
-        final leafLen = isMobile ? w * 3.2 + 10 : w * 3.8 + 14;
-        final leafW   = leafLen * 0.18; // slimmer = more realistic bamboo leaf
+          double angle = isLeft ? math.pi * 0.8 : math.pi * 0.2;
 
-        // Each leaf gets its own phase so it flutters independently
-        final leafPhase  = phase + 0.18 * i;
-        final leafPhase2 = phase + 0.18 * i + 0.5; // offset for right leaf
-
-        // Gentle primary sway — same as before
-        final leafSway  = _sway(leafPhase,  maxRad: isMobile ? 0.045 : 0.040);
-        final leafSway2 = _sway(leafPhase2, maxRad: isMobile ? 0.040 : 0.035);
-
-        // Left leaf
-        _wavyLeaf(
-          canvas,
-          Offset(0, jointY),
-          math.pi * 0.75 + leafSway,
-          leafLen,
-          leafW,
-          leafPhase,
-          paint,
-        );
-
-        // Right leaf — every joint on mobile, alternating on desktop
-        final showRight = isMobile || i.isOdd;
-        if (showRight) {
-          _wavyLeaf(
+          _drawLeaf(
             canvas,
-            Offset(w, jointY),
-            math.pi * 0.25 - leafSway2,
-            leafLen * 0.85,
-            leafW   * 0.85,
-            leafPhase2,
+            Offset(isLeft ? -w / 2 : w / 2, jointY),
+            angle,
+            leafLength,
+            leafWidth,
             paint,
           );
+          if (i % 2 == 0) {
+            double secondaryAngle = isLeft ? math.pi * 1.1 : -math.pi * 0.1;
+            _drawLeaf(
+              canvas,
+              Offset(isLeft ? -w / 2 : w / 2, jointY),
+              secondaryAngle,
+              leafLength * 0.8,
+              leafWidth * 0.8,
+              paint,
+            );
+          }
         }
       }
+
+      canvas.translate(0, h * 0.2);
+      canvas.rotate(math.pi / 4);
+      canvas.drawRect(
+        Rect.fromLTWH(-w * 0.6, -w * 0.6, w * 1.2, w * 1.2),
+        paint,
+      );
 
       canvas.restore();
     }
   }
 
   @override
-  bool shouldRepaint(covariant _BreezyBambooPainter old) =>
-      old.wind != wind || old.isMobile != isMobile;
+  bool shouldRepaint(covariant _BambooPainter oldDelegate) {
+    return oldDelegate.animationValue != animationValue ||
+        oldDelegate.isMobile != isMobile;
+  }
 }
