@@ -52,9 +52,7 @@ class HeaderBar extends StatelessWidget {
 
           const Spacer(),
 
-          _historyButton(context),
-
-          const SizedBox(height: 12),
+        
           /// COUNTER
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -82,7 +80,10 @@ class HeaderBar extends StatelessWidget {
 
           const SizedBox(width: 16),
 
-          
+        _historyButton(context),
+
+        const SizedBox(width: 16),
+
         ],
       ),
     );
