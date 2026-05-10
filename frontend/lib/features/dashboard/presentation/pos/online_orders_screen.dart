@@ -540,13 +540,73 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
           headingRowHeight: 50,
           dataRowMaxHeight: 60,
           headingRowColor: WidgetStateProperty.all(_bg.withOpacity(0.3)),
-          columns: const [
-            DataColumn(label: Text('ORDER ID')),
-            DataColumn(label: Text('CUSTOMER')),
-            DataColumn(label: Text('TOTAL')),
-            DataColumn(label: Text('PAYMENT')),
-            DataColumn(label: Text('STATUS')),
-            DataColumn(label: Text('QUICK ACTION')),
+          columns: [
+            DataColumn(
+              label: Text(
+                'ORDER #',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.secondary,
+                  letterSpacing: 1.1,
+                ),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'CUSTOMER',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.secondary,
+                  letterSpacing: 1.1,
+                ),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'TOTAL',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.secondary,
+                  letterSpacing: 1.1,
+                ),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'PAYMENT',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.secondary,
+                  letterSpacing: 1.1,
+                ),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'STATUS',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.secondary,
+                  letterSpacing: 1.1,
+                ),
+              ),
+            ),
+            DataColumn(
+              label: Text(
+                'QUICK ACTION',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.secondary,
+                  letterSpacing: 1.1,
+                ),
+              ),
+            ),
           ],
           rows:
               orders.map((order) {
