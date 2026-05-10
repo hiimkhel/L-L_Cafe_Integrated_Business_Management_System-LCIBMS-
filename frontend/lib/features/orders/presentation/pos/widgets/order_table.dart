@@ -21,6 +21,8 @@ class _OrderTableState extends State<OrderTable> {
     _fetchOrders();
   }
 
+  
+
   Future<void> _fetchOrders() async {
     setState(() => _isLoading = true);
     final data = await _orderService.getOrdersByStatus('preparing');
@@ -67,7 +69,7 @@ class _OrderTableState extends State<OrderTable> {
                                 .map((i) => "${i['name']} x${i['qty']}")
                                 .toList(),
                             status: order['status'],
-                            time: "Now", // You can calculate wait time from created_at
+                            time: order['updated_at'], 
                             onActionPressed: () => _markAsReady(order['id']),
                           );
                         },

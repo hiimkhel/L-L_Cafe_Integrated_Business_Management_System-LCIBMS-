@@ -6,7 +6,7 @@ const getOrdersByStatus = async (req, res) => {
     try {
         const sql = `
             SELECT 
-                o.id, o.order_number, o.customer_name, o.status, o.total, o.created_at,
+                o.id, o.order_number, o.customer_name, o.status, o.total, o.created_at, o.updated_at,
                 oi.item_name, oi.quantity, oi.unit_price
             FROM orders o 
             LEFT JOIN order_items oi ON o.id = oi.order_id
@@ -26,6 +26,7 @@ const getOrdersByStatus = async (req, res) => {
                     status: row.status,
                     total: row.total,
                     created_at: row.created_at,
+                    updated_at: row.updated_at,
                     items: []
                 };
             }

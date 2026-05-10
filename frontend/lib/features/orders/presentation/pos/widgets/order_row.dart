@@ -22,6 +22,23 @@ class OrderRow extends StatelessWidget {
     required this.onActionPressed
   });
 
+  String getTimeAgo(String updatedAt) {
+    final updatedTime = DateTime.parse(updatedAt).toLocal();
+    final now = DateTime.now();
+
+    final diff = now.difference(updatedTime);
+
+    if (diff.inMinutes < 1) {
+      return "Just now";
+    } else if (diff.inMinutes < 60) {
+      return "${diff.inMinutes} min ago";
+    } else if (diff.inHours < 24) {
+      return "${diff.inHours} hr ago";
+    } else {
+      return "${diff.inDays} day(s) ago";
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -77,11 +94,27 @@ class OrderRow extends StatelessWidget {
   }
 
   Widget _time() {
+    final elapsed = getTimeAgo(time);
+
     return Row(
       children: [
-        const Icon(Icons.access_time, size: 16),
-        const SizedBox(width: 4),
-        Text(time, style: AppTextStyles.body),
+        const Icon(Icons.schedule, size: 16, color: AppColors.primary),
+        const SizedBox(width: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            elapsed,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.secondary,
+            ),
+          ),
+        ),
       ],
     );
   }
