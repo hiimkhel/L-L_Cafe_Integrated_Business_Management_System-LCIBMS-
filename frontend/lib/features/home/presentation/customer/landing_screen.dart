@@ -157,24 +157,26 @@ class _LandingScreenState extends State<LandingScreen> {
         context,
         MaterialPageRoute(builder: (_) => RegisterScreen(onRegister: widget.onRegister)));
 
-   void goGuestMenu() {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (menuContext) => MenuScreen(
-            isGuest: true,
-            onLoginRequired: () {
-              Navigator.of(menuContext).pushReplacement(
-                MaterialPageRoute(
-                  builder: (_) => LoginScreen(
-                    onLogin: widget.onLogin,
-                    popToRootOnSuccess: true,
-                  ),
-                );
-              },
-            ),
+  void goGuestMenu() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (menuContext) => MenuScreen(
+          isGuest: true,
+          onLoginRequired: () {
+            Navigator.of(menuContext).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => LoginScreen(
+                  onLogin: widget.onLogin,
+                  popToRootOnSuccess: true,
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
+  }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -611,11 +613,13 @@ class _GalleryCarouselState extends State<_GalleryCarousel> {
     super.dispose();
   }
 
-  void _go(int i) => _ctrl.animateToPage(
-    i,
-    duration: const Duration(milliseconds: 400),
-    curve: Curves.easeInOut,
-  );
+  void _go(int i) {
+    _ctrl.animateToPage(
+      i,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -644,70 +648,72 @@ class _GalleryCarouselState extends State<_GalleryCarousel> {
                   TextSpan(
                     text: 'L&L Cafe',
                     style: TextStyle(
-                        fontFamily: 'Urbanist',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 28,
-                        color: AppColors.secondary)),
-              ]),
-            ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            height: imgH,
-            child: Stack(children: [
-              PageView.builder(
-                controller: _ctrl,
-                itemCount: widget.slots.length,
-                onPageChanged: (i) => setState(() => _current = i),
-                itemBuilder: (_, i) => Padding(
-                  padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 75),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: Colors.white.withOpacity(0.6), width: 5),
-                      boxShadow: const [
-                        BoxShadow(
-                            color: Color(0x20000000),
-                            blurRadius: 20,
-                            offset: Offset(0, 8))
-                      ],
+                      fontFamily: 'Urbanist',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 28,
+                      color: AppColors.secondary,
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(15),
-                      child: Image.asset(
-                        widget.slots[i],
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: imgH,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: AppColors.primary.withOpacity(0.1),
-                          child: Center(
-                            child: Icon(Icons.add_photo_alternate_outlined,
-                                color: AppColors.primary.withOpacity(0.3),
-                                size: 48),
+                  ),
+                ]),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            SizedBox(
+              height: imgH,
+              child: Stack(
+                children: [
+                  PageView.builder(
+                    controller: _ctrl,
+                    itemCount: widget.slots.length,
+                    onPageChanged: (i) => setState(() => _current = i),
+                    itemBuilder: (_, i) {
+                      return Padding(
+                        padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 75),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.6),
+                              width: 5,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x20000000),
+                                blurRadius: 20,
+                                offset: Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(15),
+                            child: Image.asset(
+                              widget.slots[i],
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: imgH,
+                              errorBuilder: (_, __, ___) => Container(
+                                color: AppColors.primary.withOpacity(0.1),
+                                child: Icon(
+                                  Icons.image_not_supported,
+                                  color: AppColors.primary.withOpacity(0.3),
+                                  size: 40,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                      TextSpan(
-                        text: 'L&L Cafe',
-                        style: TextStyle(
-                          fontFamily: 'Urbanist',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 28,
-                          color: AppColors.secondary,
-                        ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                ),
-              ),
-              Positioned(
-                left: isMobile ? 0 : 48,
-                top: imgH / 2 - 22,
-                child: _ChevronBtn(
-                    icon: Icons.chevron_left,
-                    onTap: () => _go(
+
+                  Positioned(
+                    left: isMobile ? 0 : 48,
+                    top: imgH / 2 - 22,
+                    child: _ChevronBtn(
+                      icon: Icons.chevron_left,
+                      onTap: () => _go(
                         (_current - 1 + widget.slots.length) %
                             widget.slots.length,
                       ),
@@ -745,37 +751,16 @@ class _GalleryCarouselState extends State<_GalleryCarousel> {
                       color: on
                           ? AppColors.secondary
                           : AppColors.primary.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(100)),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(widget.slots.length, (i) {
-                  final on = i == _current;
-                  return GestureDetector(
-                    onTap: () => _go(i),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: on ? 30 : 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color:
-                            on
-                                ? AppColors.secondary
-                                : AppColors.primary.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(100),
-                      ),
+                      borderRadius: BorderRadius.circular(100),
                     ),
-                  );
-                }),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+                  ),
+                );
+              }),
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
