@@ -13,6 +13,11 @@ class AuthService {
   final fb.FirebaseAuth _auth = fb.FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
 
+  static final AuthService _instance = AuthService._internal();
+  factory AuthService() => _instance;
+  AuthService._internal();
+
+  User? currentUser;
   Future<User> _authenticateWithBackend(String endpoint) async {
     final fb.User? firebaseUser = _auth.currentUser;
 
@@ -39,12 +44,15 @@ class AuthService {
       throw Exception('Authentication failed');
     }
 
-    return User(
+    final user = User(
       data['id'].toString(),
       data['email'],
       stringToRole(data['role']),
       data['token'] ?? '',
     );
+
+    currentUser = user; // 🔥 IMPORTANT
+    return user;
   }
 
   ///  Email Login
@@ -119,11 +127,17 @@ class AuthService {
   // Get user Id 
   Future<String?> getUid() async {
     final user = _auth.currentUser;
+    print(user?.uid);
     return user?.uid;
+
   }
 
   Future<String?> getIdToken() async {
     return await _auth.currentUser?.getIdToken();
+  }
+
+  int? getMySqlUserId() {
+    return currentUser?.mysqlId;
   }
   ///  Logout
   Future<void> logout() async {
