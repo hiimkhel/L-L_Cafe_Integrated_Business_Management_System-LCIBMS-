@@ -7,16 +7,22 @@ import 'package:frontend/features/dashboard/presentation/pos/order_entry.dart';
 class HeaderBar extends StatelessWidget {
   final String title;
 
+ final int preparingCount;
+
   const HeaderBar({
     super.key,
     required this.title,
+    required this.preparingCount,
   });
+  
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       decoration: BoxDecoration(
+        color: AppColors.background,
         border: Border(
           bottom: BorderSide(color: AppColors.border),
         ),
@@ -24,40 +30,62 @@ class HeaderBar extends StatelessWidget {
       child: Row(
         children: [
           _backButton(context),
-          const SizedBox(width: 16),
+          const SizedBox(width: 24),
 
           /// TITLE SECTION
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: AppTextStyles.title),
-              const SizedBox(height: 4),
+              Text(title, style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w900,
+                color: AppColors.secondary
+              )),
               const Text(
                 "REAL-TIME SYSTEM MONITORING",
-                style: AppTextStyles.small,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.tertiary
+                ),
               ),
             ],
           ),
 
           const Spacer(),
 
-          _historyButton(context),
-
-         
+        
           /// COUNTER
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
-            children: const [
-              Text("IN PROGRESS", style: AppTextStyles.small),
-              SizedBox(height: 4),
-              Text("3", style: AppTextStyles.title),
+            children: [
+              const Text(
+                "PREPARING",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                preparingCount.toString(),
+                style: const TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.secondary,
+                ),
+              ),
             ],
           ),
 
           const SizedBox(width: 16),
 
-          /// 🔥 HISTORY BUTTON (ADDED HERE)
-          
+        _historyButton(context),
+
+        const SizedBox(width: 16),
+
         ],
       ),
     );
@@ -81,7 +109,7 @@ Widget _backButton(BuildContext context) {
         color: AppColors.card,
       ),
     
-  child: const Icon(Icons.arrow_back, color: AppColors.textDark),
+  child: const Icon(Icons.arrow_back, color: AppColors.primary),
     ),
   );
 }
@@ -103,7 +131,7 @@ Widget _historyButton(BuildContext context) {
         shape: BoxShape.circle,
         color: AppColors.card,
       ),
-      child: const Icon(Icons.history, color: AppColors.textDark),
+      child: const Icon(Icons.history, color: AppColors.primary),
     ),
   );
 }

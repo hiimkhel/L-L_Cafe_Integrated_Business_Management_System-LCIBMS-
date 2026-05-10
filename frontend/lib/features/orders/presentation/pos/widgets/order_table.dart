@@ -4,7 +4,9 @@ import 'package:frontend/features/orders/presentation/pos/widgets/order_row.dart
 import 'package:frontend/core/services/pos/order_service.dart';
 
 class OrderTable extends StatefulWidget {
-  const OrderTable({super.key});
+  final VoidCallback? onOrderUpdated;
+
+  const OrderTable({super.key, required this.onOrderUpdated});
 
   @override
   State<OrderTable> createState() => _OrderTableState();
@@ -21,6 +23,8 @@ class _OrderTableState extends State<OrderTable> {
     _fetchOrders();
   }
 
+  
+
   Future<void> _fetchOrders() async {
     setState(() => _isLoading = true);
     final data = await _orderService.getOrdersByStatus('preparing');
@@ -32,9 +36,14 @@ class _OrderTableState extends State<OrderTable> {
 
   Future<void> _markAsReady(int id) async {
     final success = await _orderService.updateOrderStatus(id, 'ready');
+
+    if (!mounted) return;
+  
     if (success) {
       // Refresh list: the order will disappear because status is no longer 'preparing'
-      _fetchOrders();
+      await _fetchOrders();
+      widget.onOrderUpdated?.call();
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Order marked as Ready!")),
       );
@@ -61,13 +70,13 @@ class _OrderTableState extends State<OrderTable> {
                         itemBuilder: (context, index) {
                           final order = _orders[index];
                           return OrderRow(
-                            id: "#${order['order_number'].toString().substring(order['order_number'].length - 5)}",
+                            id: "#${order['order_number']}",
                             customer: order['customer_name'] ?? "Guest",
                             items: (order['items'] as List)
                                 .map((i) => "${i['name']} x${i['qty']}")
                                 .toList(),
                             status: order['status'],
-                            time: "Now", // You can calculate wait time from created_at
+                            time: order['updated_at'], 
                             onActionPressed: () => _markAsReady(order['id']),
                           );
                         },
@@ -79,17 +88,64 @@ class _OrderTableState extends State<OrderTable> {
   }
 
   Widget _header() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+        border: Border(
+          bottom: BorderSide(
+            color: AppColors.border.withOpacity(0.5),
+            width: 1,
+          ),
+        ),
+      ),
       child: Row(
         children: const [
-          Expanded(flex: 3, child: Text("ORDER ID", style: TextStyle(fontWeight: FontWeight.bold))),
-          Expanded(flex: 3, child: Text("CUSTOMER", style: TextStyle(fontWeight: FontWeight.bold))),
-          Expanded(flex: 4, child: Text("ITEMS", style: TextStyle(fontWeight: FontWeight.bold))),
-          Expanded(flex: 3, child: Text("STATUS", style: TextStyle(fontWeight: FontWeight.bold))),
-          Expanded(flex: 2, child: Text("TIME", style: TextStyle(fontWeight: FontWeight.bold))),
-          Expanded(flex: 3, child: Text("ACTION", style: TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(
+            flex: 3,
+            child: _HeaderText("ORDER ID"),
+          ),
+          Expanded(
+            flex: 3,
+            child: _HeaderText("CUSTOMER"),
+          ),
+          Expanded(
+            flex:4,
+            child: _HeaderText("ITEMS"),
+          ),
+          Expanded(
+            flex: 3,
+            child: _HeaderText("TIME"),
+          ),
+          Expanded(
+            flex: 2,
+            child: _HeaderText("ACTION"),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+
+class _HeaderText extends StatelessWidget {
+  final String text;
+
+  const _HeaderText(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w800,
+        color: AppColors.secondary,
+        letterSpacing: 1.2,
       ),
     );
   }
