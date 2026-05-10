@@ -9,6 +9,7 @@ import 'package:frontend/core/services/menu_service.dart';
 import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 import 'package:frontend/core/models/menu_category.dart';
 import 'package:frontend/core/utils/order_num_utils.dart';
+import 'package:frontend/core/services/pos/order_service.dart';
 
 class POSOrderScreen extends StatefulWidget {
 
@@ -34,10 +35,14 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
 
   String _orderType = 'DINE IN';
 
+  int _pendingOnlineCount = 0;
+  bool _loadingCount = false;
+
   @override
   void initState(){
     super.initState();
     loadMenu();
+    _fetchPendingOnlineCount();
   }
 
   Future<void> loadMenu() async {
@@ -64,6 +69,26 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
       print("Error loading menu: $e");
     }
   }
+
+    Future<void> _fetchPendingOnlineCount() async {
+      setState(() => _loadingCount = true);
+
+      try {
+        final count = await OrderService().getPendingCount();
+
+        if (!mounted) return;
+
+        setState(() {
+          _pendingOnlineCount = count;
+          _loadingCount = false;
+        });
+      } catch (e) {
+        if (!mounted) return;
+
+        setState(() => _loadingCount = false);
+      }
+    }
+  
   String getCategoryName(int id) {
     return categories.firstWhere(
       (c) => c.id == id,
@@ -118,6 +143,8 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
 
   //----------------------------------------Order Header-----------------------------------------------------------
   Widget _orderHeader() {
+   
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 17),
@@ -187,7 +214,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
               size: 13,
             ),
             label: 'ONLINE ORDERS',
-            badgeCount: 9,
+            badgeCount: _pendingOnlineCount,
             onTap: () {
               showDialog(
                 context: context,

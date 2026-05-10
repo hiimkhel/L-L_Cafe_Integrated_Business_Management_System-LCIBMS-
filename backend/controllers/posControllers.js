@@ -193,4 +193,19 @@ const fetchPreparingOrders = async (req, res) => {
         });
     }
 }
-module.exports = {getOrdersByStatus, updateOrderStatus, getOnlineOrders, acceptOrder, rejectOrder, fetchPreparingOrders}
+
+const fetchPendingOrdersCount = async (req, res) => {
+    try {
+    const [rows] = await db.query(
+      `SELECT COUNT(*) AS count 
+       FROM orders 
+       WHERE status = 'pending' 
+       AND source = 'online'`
+    );
+
+    res.json({ count: rows[0].count });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch count" });
+  }
+}
+module.exports = {getOrdersByStatus, updateOrderStatus, getOnlineOrders, acceptOrder, rejectOrder, fetchPreparingOrders, fetchPendingOrdersCount}
