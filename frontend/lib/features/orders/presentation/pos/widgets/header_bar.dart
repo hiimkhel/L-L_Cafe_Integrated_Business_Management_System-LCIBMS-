@@ -24,17 +24,25 @@ class HeaderBar extends StatelessWidget {
       child: Row(
         children: [
           _backButton(context),
-          const SizedBox(width: 16),
+          const SizedBox(width: 24),
 
           /// TITLE SECTION
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: AppTextStyles.title),
+              Text(title, style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w900,
+                color: AppColors.secondary
+              )),
               const SizedBox(height: 4),
               const Text(
                 "REAL-TIME SYSTEM MONITORING",
-                style: AppTextStyles.small,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.tertiary
+                ),
               ),
             ],
           ),
@@ -56,7 +64,6 @@ class HeaderBar extends StatelessWidget {
 
           const SizedBox(width: 16),
 
-          /// 🔥 HISTORY BUTTON (ADDED HERE)
           
         ],
       ),
@@ -81,7 +88,7 @@ Widget _backButton(BuildContext context) {
         color: AppColors.card,
       ),
     
-  child: const Icon(Icons.arrow_back, color: AppColors.textDark),
+  child: const Icon(Icons.arrow_back, color: AppColors.primary),
     ),
   );
 }

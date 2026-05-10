@@ -1016,11 +1016,10 @@ class _RevCard extends StatelessWidget {
                           fontWeight: FontWeight.w900,
                           fontSize: 12,
                           color: Color(0xFF2D2A26))),
-                ],
-              ),
             ]),
           ]),
         ),
+      
       ]),
     );
   }

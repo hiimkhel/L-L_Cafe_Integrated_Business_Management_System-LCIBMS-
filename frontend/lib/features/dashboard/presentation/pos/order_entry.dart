@@ -48,9 +48,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
         MenuService.fetchNextOrderNumber(),
       ]);
 
-      print("RAW RESULT FROM API: ${results[2]}");
-    print("TYPE OF RESULT: ${results[2].runtimeType}");
-
       final items = results[0] as List<MenuItem>;
       final cats = results[1] as List<MenuCategory>;
       
