@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
-import 'package:frontend/core/widgets/bamboo_breeze_background.dart';
+import 'package:frontend/core/widgets/bamboo_background.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
 import 'package:frontend/core/constants/cart_provider.dart';
 
@@ -12,6 +12,10 @@ const Color _bgDark    = Color(0xFF2D2A26);
 const Color _primary   = Color(0xFF758C6D);
 const Color _secondary = Color(0xFFA98258);
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ASSET PATHS
+// ─────────────────────────────────────────────────────────────────────────────
+
 const _kHeroBanner = 'assets/images/gallery_neon_sign.png';
 const _kExterior   = 'assets/images/gallery_exterior.png';
 const _kNotesWall  = 'assets/images/gallery_notes_wall.png';
@@ -21,7 +25,8 @@ const _kNutella    = 'assets/images/best_nutella_frappe.png';
 const _kBiscoff    = 'assets/images/best_biscoff_frappe.png';
 
 const _filmImages = <String>[
-  _kExterior, _kNotesWall, _kPasta, _kNutella, _kWaffle, _kBiscoff,
+  _kExterior, _kNotesWall, _kPasta,
+  _kNutella,  _kWaffle,    _kBiscoff,
 ];
 
 class _Dish {
@@ -36,75 +41,73 @@ const _dishes = <_Dish>[
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ABOUT SCREEN
-// isGuest=true  → GuestNavbar (landing/guest flow)
-// isGuest=false → CustomerNavbar (logged-in flow)
+// SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AboutScreen extends StatelessWidget {
-  final bool isGuest;
-  final VoidCallback? onLogin;
-  final VoidCallback? onJoinNow;
+  /// true  → CustomerNavbar (logged-in icons)
+  /// false → GuestNavbar (LOGIN + JOIN NOW)
+  final bool isLoggedIn;
+
+  /// Logged-in only — called when user taps logout
   final VoidCallback? onLogout;
+
+  /// Guest only — called when guest taps LOGIN
+  final VoidCallback? onLogin;
+
+  /// Guest only — called when guest taps JOIN NOW
+  final VoidCallback? onJoinNow;
 
   const AboutScreen({
     super.key,
-    this.isGuest = true,
+    this.isLoggedIn = false,
+    this.onLogout,
     this.onLogin,
     this.onJoinNow,
-    this.onLogout,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cart = isGuest ? null : CartProvider.of(context);
-
-    final PreferredSizeWidget navbar = isGuest
-        ? GuestNavbar(
+    // ✅ Pick the right navbar once — no double navbar, no nested Navigator
+    final PreferredSizeWidget navbar = isLoggedIn
+        ? CustomerNavbar(
             activeRoute: '/about',
-            onLogin: onLogin,
-            onJoinNow: onJoinNow,
-            onBrowseMenu: () => Navigator.pushReplacementNamed(context, '/menu'),
+            cartCount:   CartProvider.of(context).totalCount,
+            notifCount:  0,
+            onCart:    () => Navigator.pushNamed(context, '/cart'),
+            onNotif:   () {},
+            onProfile: () => Navigator.pushNamed(context, '/profile'),
+            onLogout:  onLogout,
           )
-        : CustomerNavbar(
-            activeRoute: '/about',
-            cartCount: cart?.totalCount ?? 0,
-            notifCount: 0,
-            isGuest: false,
-            onProfile: () => Navigator.pushReplacementNamed(context, '/profile'),
-            onLogout: () {
-              onLogout?.call();
-              Navigator.pushNamedAndRemoveUntil(context, '/', (r) => false);
-            },
+        : GuestNavbar(
+            activeRoute:  '/about',
+            onLogin:      onLogin,
+            onJoinNow:    onJoinNow,
+            onBrowseMenu: () => Navigator.pushNamed(context, '/menu'),
           );
 
     return Scaffold(
       backgroundColor: _bgBeige,
+      appBar: navbar,
       body: Stack(
         children: [
-          const BreezeBambooBackground(),
-          Column(
-            children: [
-              navbar,
-              Expanded(
-                child: LayoutBuilder(builder: (ctx, c) {
-                  final isMobile = c.maxWidth < _kMobile;
-                  return SingleChildScrollView(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(minHeight: c.maxHeight),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          isMobile ? const _MobileLayout() : const _DesktopLayout(),
-                          const GuestFooter(),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
+          const BambooBackground(),
+          LayoutBuilder(builder: (ctx, c) {
+            final isMobile = c.maxWidth < _kMobile;
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: c.maxHeight),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    isMobile ? const _MobileLayout() : const _DesktopLayout(),
+                    // ✅ Footer also respects login state
+                    isLoggedIn ? const CustomerFooter() : const GuestFooter(),
+                  ],
+                ),
               ),
-            ],
-          ),
+            );
+          }),
         ],
       ),
     );
@@ -152,8 +155,8 @@ class _DesktopLayout extends StatelessWidget {
               ]),
               const SizedBox(height: 6),
               Container(height: 3, width: 90,
-                decoration: BoxDecoration(
-                    color: _secondary, borderRadius: BorderRadius.circular(2))),
+                  decoration: BoxDecoration(
+                      color: _secondary, borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 52),
               const Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,8 +220,8 @@ class _MobileLayout extends StatelessWidget {
               ])),
               const SizedBox(height: 5),
               Container(height: 3, width: 56,
-                decoration: BoxDecoration(
-                    color: _secondary, borderRadius: BorderRadius.circular(2))),
+                  decoration: BoxDecoration(
+                      color: _secondary, borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 8),
               Text("MAKING GOOD FOOD FOR PEOPLE'S HAPPINESS",
                   style: TextStyle(fontFamily: 'Urbanist',
@@ -229,8 +232,8 @@ class _MobileLayout extends StatelessWidget {
               const SizedBox(height: 32),
               Row(children: [
                 Container(width: 4, height: 22,
-                  decoration: BoxDecoration(color: _primary,
-                      borderRadius: BorderRadius.circular(2))),
+                    decoration: BoxDecoration(color: _primary,
+                        borderRadius: BorderRadius.circular(2))),
                 const SizedBox(width: 12),
                 const Text('FOUNDATION', style: TextStyle(
                     fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
@@ -353,9 +356,8 @@ class _Thumb extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 6),
-      Text(label, style: TextStyle(
-          fontFamily: 'Urbanist', fontWeight: FontWeight.w700,
-          fontSize: 8, letterSpacing: 2.0,
+      Text(label, style: TextStyle(fontFamily: 'Urbanist',
+          fontWeight: FontWeight.w700, fontSize: 8, letterSpacing: 2.0,
           color: Colors.white.withOpacity(0.6))),
     ]);
   }
@@ -529,7 +531,7 @@ class _FilmHoles extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 22, color: _bgDark,
-      child: Row(children: List.generate(16, (i) => Expanded(
+      child: Row(children: List.generate(16, (_) => Expanded(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 4),
           child: Container(decoration: BoxDecoration(
@@ -553,12 +555,12 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(children: [
       Container(width: 4, height: 22,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-              begin: Alignment.topCenter, end: Alignment.bottomCenter,
-              colors: [_primary, Color(0xFF3D5A45)]),
-          borderRadius: BorderRadius.circular(2),
-        )),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+                begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                colors: [_primary, Color(0xFF3D5A45)]),
+            borderRadius: BorderRadius.circular(2),
+          )),
       const SizedBox(width: 12),
       Text(text, style: const TextStyle(fontFamily: 'Urbanist',
           fontWeight: FontWeight.w900, fontSize: 14,
@@ -585,9 +587,9 @@ class _ValueCard extends StatelessWidget {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Container(width: 48, height: 48,
-          decoration: BoxDecoration(color: _secondary.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(12)),
-          child: Icon(icon, color: _secondary, size: 24)),
+            decoration: BoxDecoration(color: _secondary.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, color: _secondary, size: 24)),
         const SizedBox(height: 20),
         Text(title, style: const TextStyle(fontFamily: 'Urbanist',
             fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 0.5,

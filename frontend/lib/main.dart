@@ -4,14 +4,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-// Firebase & Core
 import 'firebase_options.dart';
 import 'core/models/user.dart';
 import 'core/providers/auth_provider.dart';
 import 'core/constants/cart_provider.dart';
 import 'core/constants/routes.dart';
 
-// ── Screens ─────────────────────────────────────────────────────────────────
 import 'package:frontend/features/customers/presentation/admin/customer_order_screen.dart';
 import 'features/home/presentation/customer/landing_screen.dart';
 import 'features/home/presentation/customer/home_screen.dart';
@@ -27,6 +25,7 @@ import 'features/auth/presentation/screens/register_screen.dart';
 import 'features/dashboard/presentation/admin/dashboard_screen.dart';
 import 'features/dashboard/presentation/rider/dashboard_screen.dart';
 import 'features/dashboard/presentation/pos/order_entry.dart';
+import 'core/constants/cart_provider.dart' show CartProvider;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,40 +51,32 @@ class LCIBMSApp extends StatefulWidget {
 class _LCIBMSAppState extends State<LCIBMSApp> {
   final CartNotifier _cartNotifier = CartNotifier();
 
-  // ── Navigation helpers ────────────────────────────────────────────────────
-
   void _goLogin(BuildContext ctx) {
-    Navigator.push(
-      ctx,
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => LoginScreen(
-          onLogin: (user) {
-            ctx.read<AuthProvider>().setUser(user);
-            Navigator.of(ctx).popUntil((route) => route.isFirst);
-          },
-        ),
-        transitionsBuilder: (_, anim, __, child) =>
-            FadeTransition(opacity: anim, child: child),
-        transitionDuration: const Duration(milliseconds: 220),
+    Navigator.push(ctx, PageRouteBuilder(
+      pageBuilder: (_, __, ___) => LoginScreen(
+        onLogin: (user) {
+          ctx.read<AuthProvider>().setUser(user);
+          Navigator.of(ctx).popUntil((route) => route.isFirst);
+        },
       ),
-    );
+      transitionsBuilder: (_, anim, __, child) =>
+          FadeTransition(opacity: anim, child: child),
+      transitionDuration: const Duration(milliseconds: 220),
+    ));
   }
 
   void _goRegister(BuildContext ctx) {
-    Navigator.push(
-      ctx,
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => RegisterScreen(
-          onRegister: (user) {
-            ctx.read<AuthProvider>().setUser(user);
-            Navigator.of(ctx).popUntil((route) => route.isFirst);
-          },
-        ),
-        transitionsBuilder: (_, anim, __, child) =>
-            FadeTransition(opacity: anim, child: child),
-        transitionDuration: const Duration(milliseconds: 220),
+    Navigator.push(ctx, PageRouteBuilder(
+      pageBuilder: (_, __, ___) => RegisterScreen(
+        onRegister: (user) {
+          ctx.read<AuthProvider>().setUser(user);
+          Navigator.of(ctx).popUntil((route) => route.isFirst);
+        },
       ),
-    );
+      transitionsBuilder: (_, anim, __, child) =>
+          FadeTransition(opacity: anim, child: child),
+      transitionDuration: const Duration(milliseconds: 220),
+    ));
   }
 
   @override
@@ -107,8 +98,6 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
     );
   }
 
-  // ── Root screen by role ───────────────────────────────────────────────────
-
   Widget _buildRootScreen(AuthProvider auth) {
     final user = auth.user;
     if (user == null) {
@@ -117,7 +106,6 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
         onRegister: (u) => auth.setUser(u),
       );
     }
-
     switch (user.role) {
       case UserRole.customer:
         return CustomerHomeScreen(onLogout: () {
@@ -132,10 +120,7 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
         return AdminDashboardScreen(
           key: ValueKey(user.email),
           activeIndex: 0,
-          onLogout: () {
-            auth.logout();
-            _cartNotifier.clear();
-          },
+          onLogout: () { auth.logout(); _cartNotifier.clear(); },
         );
       default:
         return LandingScreen(
@@ -145,24 +130,21 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
     }
   }
 
-  // ── Named route handler ───────────────────────────────────────────────────
-
   Route? _handleRoutes(RouteSettings settings, AuthProvider auth) {
     final user = auth.user;
+
+    void doLogout() {
+      auth.logout();
+      _cartNotifier.clear();
+    }
 
     switch (settings.name) {
       case '/':
         return _fade(_buildRootScreen(auth));
 
       case AppRoutes.home:
-        return _fade(CustomerHomeScreen(
-          onLogout: () {
-            auth.logout();
-            _cartNotifier.clear();
-          },
-        ));
+        return _fade(CustomerHomeScreen(onLogout: doLogout));
 
-      // ✅ /orders was missing — this is why the cart/orders button did nothing
       case AppRoutes.orders:
         if (user == null) return _fade(_buildRootScreen(auth));
         return _fade(const CustomerOrderScreen());
@@ -172,37 +154,27 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
         return _fade(ProfileScreen(
           userId: user.id,
           email: user.email,
-          onLogout: () {
-            auth.logout();
-            _cartNotifier.clear();
-          },
+          onLogout: doLogout,
         ));
 
       case AppRoutes.about:
+        // ✅ AboutScreen.isLoggedIn controls which navbar shows.
+        //    No wrapper, no nested Navigator — single Scaffold, single navbar.
+        return _fade(Builder(builder: (ctx) => AboutScreen(
+          isLoggedIn: user != null,
+          onLogin:    user == null ? () => _goLogin(ctx)    : null,
+          onJoinNow:  user == null ? () => _goRegister(ctx) : null,
+          onLogout:   user != null ? doLogout               : null,
+        )));
+
       case AppRoutes.contact:
-        // ✅ Use Consumer so the screen always has fresh auth context.
-        // If the user is logged in, we navigate with pushReplacementNamed
-        // so the auth stack is never popped — no accidental logout.
-        // AboutScreen/ContactScreen use GuestNavbar internally; for logged-in
-        // users we push via the customer navbar link so they arrive here
-        // already authenticated. The screens just need login/joinNow for
-        // the guest case.
-        return _fade(Consumer<AuthProvider>(
-          builder: (ctx, liveAuth, _) {
-            final isAbout = settings.name == AppRoutes.about;
-            if (isAbout) {
-              return AboutScreen(
-                onLogin:   () => _goLogin(ctx),
-                onJoinNow: () => _goRegister(ctx),
-              );
-            } else {
-              return ContactScreen(
-                onLogin:   () => _goLogin(ctx),
-                onJoinNow: () => _goRegister(ctx),
-              );
-            }
-          },
-        ));
+        // ✅ ContactScreen.isGuest controls which navbar shows.
+        return _fade(Builder(builder: (ctx) => ContactScreen(
+          isGuest:   user == null,
+          onLogin:   user == null ? () => _goLogin(ctx)    : null,
+          onJoinNow: user == null ? () => _goRegister(ctx) : null,
+          onLogout:  user != null ? doLogout               : null,
+        )));
 
       case AppRoutes.menu:
         return _fade(const MenuScreen());
@@ -216,9 +188,9 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
   }
 
   PageRouteBuilder _fade(Widget page) => PageRouteBuilder(
-        pageBuilder: (_, __, ___) => page,
-        transitionsBuilder: (_, anim, __, child) =>
-            FadeTransition(opacity: anim, child: child),
-        transitionDuration: const Duration(milliseconds: 220),
-      );
+    pageBuilder: (_, __, ___) => page,
+    transitionsBuilder: (_, anim, __, child) =>
+        FadeTransition(opacity: anim, child: child),
+    transitionDuration: const Duration(milliseconds: 220),
+  );
 }
