@@ -39,7 +39,6 @@ class HeaderBar extends StatelessWidget {
                 fontWeight: FontWeight.w900,
                 color: AppColors.secondary
               )),
-              const SizedBox(height: 4),
               const Text(
                 "REAL-TIME SYSTEM MONITORING",
                 style: TextStyle(
@@ -55,14 +54,29 @@ class HeaderBar extends StatelessWidget {
 
           _historyButton(context),
 
-         
+          const SizedBox(height: 12),
           /// COUNTER
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text("PREPARING", style: AppTextStyles.small),
-              SizedBox(height: 4),
-              Text(preparingCount.toString(), style: AppTextStyles.title),
+              const Text(
+                "PREPARING",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                preparingCount.toString(),
+                style: const TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.secondary,
+                ),
+              ),
             ],
           ),
 
@@ -114,7 +128,7 @@ Widget _historyButton(BuildContext context) {
         shape: BoxShape.circle,
         color: AppColors.card,
       ),
-      child: const Icon(Icons.history, color: AppColors.textDark),
+      child: const Icon(Icons.history, color: AppColors.primary),
     ),
   );
 }
