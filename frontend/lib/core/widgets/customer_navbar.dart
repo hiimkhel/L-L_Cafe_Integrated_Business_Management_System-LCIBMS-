@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../config/theme/app_colors.dart';
-import 'package:frontend/core/constants/cart_item.dart';
 
 const double _kMobile = 900;
 
@@ -60,13 +59,9 @@ class NotificationPanel extends StatelessWidget {
             topLeft: Radius.circular(40),
             bottomLeft: Radius.circular(40),
           ),
-          boxShadow: [
-            BoxShadow(color: Color(0x33000000), blurRadius: 50, offset: Offset(-10, 0))
-          ],
+          boxShadow: [BoxShadow(color: Color(0x33000000), blurRadius: 50, offset: Offset(-10, 0))],
         ),
-        child: Column(
-          children: [_buildHeader(context), Expanded(child: _buildList())],
-        ),
+        child: Column(children: [_buildHeader(context), Expanded(child: _buildList())]),
       ),
     );
   }
@@ -79,16 +74,14 @@ class NotificationPanel extends StatelessWidget {
           color: Color(0xFFEFE2C9),
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
-        constraints:
-            BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75),
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Center(
               child: Container(
                 margin: const EdgeInsets.only(top: 12, bottom: 8),
-                width: 40,
-                height: 4,
+                width: 40, height: 4,
                 decoration: BoxDecoration(
                   color: const Color(0xFFA98258).withOpacity(0.3),
                   borderRadius: BorderRadius.circular(10),
@@ -114,12 +107,9 @@ class NotificationPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 48, height: 48,
             decoration: BoxDecoration(
-              color: const Color(0xFF758C6D),
-              borderRadius: BorderRadius.circular(8),
-            ),
+                color: const Color(0xFF758C6D), borderRadius: BorderRadius.circular(8)),
             child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 24),
           ),
           const SizedBox(width: 16),
@@ -129,22 +119,14 @@ class NotificationPanel extends StatelessWidget {
               children: [
                 Text('L&L CHANNEL',
                     style: TextStyle(
-                      fontFamily: 'Urbanist',
-                      fontWeight: FontWeight.w900,
-                      fontSize: 20,
-                      height: 1.1,
-                      letterSpacing: -0.5,
-                      color: Color(0xFF2D2A26),
-                    )),
+                        fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                        fontSize: 20, height: 1.1, letterSpacing: -0.5,
+                        color: Color(0xFF2D2A26))),
                 SizedBox(height: 4),
                 Text('ORDER NOTIFICATION',
                     style: TextStyle(
-                      fontFamily: 'Urbanist',
-                      fontWeight: FontWeight.w900,
-                      fontSize: 10,
-                      letterSpacing: 1.0,
-                      color: Color(0xFFA98258),
-                    )),
+                        fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                        fontSize: 10, letterSpacing: 1.0, color: Color(0xFFA98258))),
               ],
             ),
           ),
@@ -153,12 +135,10 @@ class NotificationPanel extends StatelessWidget {
               behavior: HitTestBehavior.opaque,
               onTap: () => Navigator.pop(context),
               child: Container(
-                width: 40,
-                height: 40,
+                width: 40, height: 40,
                 decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
                 child: const Center(
-                  child: Icon(Icons.close_rounded, color: Color(0xFFA98258), size: 20),
-                ),
+                    child: Icon(Icons.close_rounded, color: Color(0xFFA98258), size: 20)),
               ),
             ),
         ],
@@ -205,54 +185,38 @@ class NotificationPanel extends StatelessWidget {
                     const SizedBox(width: 10),
                     Text(item.sender,
                         style: const TextStyle(
-                          fontFamily: 'Urbanist',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 10,
-                          letterSpacing: 1.5,
-                          color: Color(0xFF2D2A26),
-                        )),
+                            fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                            fontSize: 10, letterSpacing: 1.5, color: Color(0xFF2D2A26))),
                   ]),
                   Row(children: [
                     const Icon(Icons.access_time_rounded, size: 12, color: Color(0x66A98258)),
                     const SizedBox(width: 6),
                     Text(item.time,
                         style: const TextStyle(
-                          fontFamily: 'Urbanist',
-                          fontWeight: FontWeight.w800,
-                          fontSize: 10,
-                          color: Color(0x66A98258),
-                        )),
+                            fontFamily: 'Urbanist', fontWeight: FontWeight.w800,
+                            fontSize: 10, color: Color(0x66A98258))),
                   ]),
                 ],
               ),
               const SizedBox(height: 16),
               Text(item.body,
                   style: const TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    height: 1.5,
-                    letterSpacing: 0.5,
-                    color: Color(0xFFA98258),
-                  )),
+                      fontFamily: 'Urbanist', fontWeight: FontWeight.w700,
+                      fontSize: 13, height: 1.5, letterSpacing: 0.5,
+                      color: Color(0xFFA98258))),
               if (item.isPriority) ...[
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.only(top: 16),
                   decoration: const BoxDecoration(
-                    border: Border(top: BorderSide(color: Color(0x1A758C6D), width: 1.0)),
-                  ),
+                      border: Border(top: BorderSide(color: Color(0x1A758C6D), width: 1.0))),
                   child: const Row(children: [
-                    Icon(Icons.warning_rounded, size: 14, color: Color(0xFF758C6D)),
+                    Icon(Icons.celebration_rounded, size: 14, color: Color(0xFF758C6D)),
                     SizedBox(width: 8),
-                    Text('PRIORITY TRANSMISSION',
+                    Text('WELCOME MESSAGE',
                         style: TextStyle(
-                          fontFamily: 'Urbanist',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 9,
-                          letterSpacing: 0.9,
-                          color: Color(0xFF758C6D),
-                        )),
+                            fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                            fontSize: 9, letterSpacing: 0.9, color: Color(0xFF758C6D))),
                   ]),
                 ),
               ],
@@ -272,9 +236,6 @@ class GuestNavbar extends StatefulWidget implements PreferredSizeWidget {
   final String activeRoute;
   final VoidCallback? onLogin;
   final VoidCallback? onJoinNow;
-
-  /// ✅ Called when MENU is tapped from the guest navbar (desktop or mobile).
-  /// Pass goGuestMenu from LandingScreen here.
   final VoidCallback? onBrowseMenu;
 
   const GuestNavbar({
@@ -295,7 +256,6 @@ class GuestNavbar extends StatefulWidget implements PreferredSizeWidget {
 class _GuestNavbarState extends State<GuestNavbar> {
   OverlayEntry? _overlayEntry;
 
-  // ✅ MENU sits between HOME and ABOUT
   static const _links = [
     _NI('HOME',    '/'),
     _NI('MENU',    '/menu'),
@@ -304,9 +264,11 @@ class _GuestNavbarState extends State<GuestNavbar> {
   ];
 
   @override
-  void dispose() { _closeMenu(); super.dispose(); }
+  void dispose() {
+    _closeMenu();
+    super.dispose();
+  }
 
-  // ✅ Central handler — MENU taps fire onBrowseMenu, others navigate normally
   void _handleLinkTap(BuildContext context, String route) {
     _closeMenu();
     if (route == '/menu') {
@@ -323,7 +285,7 @@ class _GuestNavbarState extends State<GuestNavbar> {
         activeRoute: widget.activeRoute,
         links: _links,
         onClose: _closeMenu,
-        // ✅ Pass login/join callbacks so the overlay buttons work
+        // ✅ Pass login/joinNow so overlay buttons are wired
         onLogin: widget.onLogin,
         onJoinNow: widget.onJoinNow,
         onNavigate: (route) => _handleLinkTap(context, route),
@@ -369,7 +331,6 @@ class _GuestNavbarState extends State<GuestNavbar> {
                 child: _NavLink(
                   label: l.label,
                   active: widget.activeRoute == l.route,
-                  // ✅ Uses central handler — MENU fires onBrowseMenu
                   onTap: () => _handleLinkTap(context, l.route),
                 ),
               )).toList(),
@@ -383,11 +344,8 @@ class _GuestNavbarState extends State<GuestNavbar> {
             padding: const EdgeInsets.all(8.0),
             child: Text('LOGIN',
                 style: TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                    letterSpacing: 2.0,
-                    color: AppColors.primary)),
+                    fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                    fontSize: 12, letterSpacing: 2.0, color: AppColors.primary)),
           ),
         ),
         const SizedBox(width: 12),
@@ -403,11 +361,8 @@ class _GuestNavbarState extends State<GuestNavbar> {
             ),
             child: const Text('JOIN NOW',
                 style: TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                    letterSpacing: 1.2,
-                    color: Colors.white)),
+                    fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                    fontSize: 12, letterSpacing: 1.2, color: Colors.white)),
           ),
         ),
       ]),
@@ -432,11 +387,8 @@ class _GuestNavbarState extends State<GuestNavbar> {
             padding: const EdgeInsets.all(8.0),
             child: Text('LOGIN',
                 style: TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 11,
-                    letterSpacing: 2,
-                    color: AppColors.primary)),
+                    fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                    fontSize: 11, letterSpacing: 2, color: AppColors.primary)),
           ),
         ),
         const SizedBox(width: 6),
@@ -446,15 +398,11 @@ class _GuestNavbarState extends State<GuestNavbar> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
             decoration: BoxDecoration(
-              color: AppColors.secondary,
-              borderRadius: BorderRadius.circular(10),
-            ),
+                color: AppColors.secondary, borderRadius: BorderRadius.circular(10)),
             child: const Text('JOIN NOW',
                 style: TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 10,
-                    color: Colors.white)),
+                    fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                    fontSize: 10, color: Colors.white)),
           ),
         ),
         const SizedBox(width: 10),
@@ -470,8 +418,7 @@ class _GuestNavbarState extends State<GuestNavbar> {
             ),
             child: Icon(
               _menuOpen ? Icons.close_rounded : Icons.menu_rounded,
-              color: AppColors.primary,
-              size: 20,
+              color: AppColors.primary, size: 20,
             ),
           ),
         ),
@@ -481,7 +428,7 @@ class _GuestNavbarState extends State<GuestNavbar> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CUSTOMER NAVBAR
+// CUSTOMER NAVBAR  (logged-in users)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
@@ -549,26 +496,26 @@ class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
       final bool isMobile = c.maxWidth < _kMobile;
       return isMobile
           ? _MobileCustomerNav(
-              activeRoute: activeRoute,
-              cartCount: cartCount,
-              notifCount: notifCount,
-              userName: userName,
-              userClientId: userClientId,
-              isGuest: isGuest,
-              onCart: onCart,
-              onNotif: () => _showNotifications(context, true),
-              onLogout: onLogout,
+              activeRoute:    activeRoute,
+              cartCount:      cartCount,
+              notifCount:     notifCount,
+              userName:       userName,
+              userClientId:   userClientId,
+              isGuest:        isGuest,
+              onCart:         onCart,
+              onNotif:        () => _showNotifications(context, true),
+              onLogout:       onLogout,
               onLoginRequired: onLoginRequired,
             )
           : _DesktopCustomerNav(
-              activeRoute: activeRoute,
-              cartCount: cartCount,
-              notifCount: notifCount,
-              isGuest: isGuest,
-              onCart: onCart,
-              onNotif: () => _showNotifications(context, false),
-              onProfile: onProfile,
-              onLogout: onLogout,
+              activeRoute:    activeRoute,
+              cartCount:      cartCount,
+              notifCount:     notifCount,
+              isGuest:        isGuest,
+              onCart:         onCart,
+              onNotif:        () => _showNotifications(context, false),
+              onProfile:      onProfile,
+              onLogout:       onLogout,
               onLoginRequired: onLoginRequired,
             );
     });
@@ -589,6 +536,7 @@ class _DesktopCustomerNav extends StatelessWidget {
     _NI('HOME',   '/home'),
     _NI('MENU',   '/menu'),
     _NI('ORDERS', '/orders'),
+    _NI('ABOUT',  '/about'),
   ];
 
   const _DesktopCustomerNav({
@@ -603,20 +551,19 @@ class _DesktopCustomerNav extends StatelessWidget {
     this.onLoginRequired,
   });
 
-  void _handleCartTap(BuildContext context) {
-    if (isGuest) {
-      onLoginRequired?.call();
-      return;
-    }
-    onCart?.call();
-    if (activeRoute != '/cart') {
-      Navigator.pushReplacementNamed(context, '/cart');
+  void _handleNavTap(BuildContext context, String route) {
+    if (activeRoute == route) return;
+    if (route == '/about' || route == '/contact') {
+      Navigator.pushNamed(context, route);
+    } else {
+      Navigator.pushReplacementNamed(context, route);
     }
   }
 
-  void _handleNavTap(BuildContext context, String route) {
-    if (activeRoute == route) return;
-    Navigator.pushReplacementNamed(context, route);
+  void _handleCartTap(BuildContext context) {
+    if (isGuest) { onLoginRequired?.call(); return; }
+    onCart?.call();
+    if (activeRoute != '/cart') Navigator.pushReplacementNamed(context, '/cart');
   }
 
   @override
@@ -630,7 +577,6 @@ class _DesktopCustomerNav extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 48),
       child: Row(children: [
         GestureDetector(
-          behavior: HitTestBehavior.opaque,
           onTap: () => _handleNavTap(context, '/home'),
           child: _LogoImg(),
         ),
@@ -651,57 +597,51 @@ class _DesktopCustomerNav extends StatelessWidget {
           ),
         ),
 
+        // ── Icons ──────────────────────────────────────────────────────
         if (!isGuest) ...[
           _IconCircleBtn(
-            icon: Icons.notifications_none_rounded,
-            badge: notifCount,
-            onTap: onNotif,
-          ),
+              icon: Icons.notifications_none_rounded,
+              badge: notifCount,
+              onTap: onNotif),
           const SizedBox(width: 16),
           _IconCircleBtn(
-            icon: Icons.shopping_cart_outlined,
-            badge: cartCount,
-            onTap: () => _handleCartTap(context),
-          ),
+              icon: Icons.shopping_cart_outlined,
+              badge: cartCount,
+              onTap: () => _handleCartTap(context)),
           const SizedBox(width: 16),
           _IconCircleBtn(
-            icon: Icons.person_outline_rounded,
-            onTap: () {
-              onProfile?.call();
-              if (activeRoute != '/profile') {
-                Navigator.pushReplacementNamed(context, '/profile');
-              }
-            },
-          ),
+              icon: Icons.person_outline_rounded,
+              onTap: () {
+                onProfile?.call();
+                if (activeRoute != '/profile') {
+                  Navigator.pushReplacementNamed(context, '/profile');
+                }
+              }),
           const SizedBox(width: 16),
           _IconCircleBtn(
-            icon: Icons.logout_rounded,
-            onTap: () {
-              onLogout?.call();
-              Navigator.pushNamedAndRemoveUntil(context, '/', (r) => false);
-            },
-          ),
+              icon: Icons.logout_rounded,
+              onTap: () {
+                onLogout?.call();
+                Navigator.pushNamedAndRemoveUntil(context, '/', (r) => false);
+              }),
         ],
 
+        // Guest mode — show cart (disabled) + login/join
         if (isGuest) ...[
           _IconCircleBtn(
-            icon: Icons.shopping_cart_outlined,
-            badge: 0,
-            onTap: () => _handleCartTap(context),
-          ),
+              icon: Icons.shopping_cart_outlined,
+              badge: 0,
+              onTap: () => onLoginRequired?.call()),
           const SizedBox(width: 16),
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: onLoginRequired,
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(8),
               child: Text('LOGIN',
                   style: TextStyle(
-                      fontFamily: 'Urbanist',
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12,
-                      letterSpacing: 2.0,
-                      color: AppColors.primary)),
+                      fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                      fontSize: 12, letterSpacing: 2.0, color: AppColors.primary)),
             ),
           ),
           const SizedBox(width: 12),
@@ -717,11 +657,8 @@ class _DesktopCustomerNav extends StatelessWidget {
               ),
               child: const Text('JOIN NOW',
                   style: TextStyle(
-                      fontFamily: 'Urbanist',
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12,
-                      letterSpacing: 1.2,
-                      color: Colors.white)),
+                      fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                      fontSize: 12, letterSpacing: 1.2, color: Colors.white)),
             ),
           ),
         ],
@@ -738,14 +675,14 @@ class _MobileCustomerNav extends StatelessWidget {
   final String activeRoute;
   final int cartCount, notifCount;
   final String? userName, userClientId;
-  final bool isGuest;
+  final bool isGuest;                          // ✅ field present
   final VoidCallback? onCart, onNotif, onLogout, onLoginRequired;
 
   const _MobileCustomerNav({
     required this.activeRoute,
     required this.cartCount,
     required this.notifCount,
-    required this.isGuest,
+    required this.isGuest,                     // ✅ required
     this.userName,
     this.userClientId,
     this.onCart,
@@ -755,14 +692,9 @@ class _MobileCustomerNav extends StatelessWidget {
   });
 
   void _handleCartTap(BuildContext context) {
-    if (isGuest) {
-      onLoginRequired?.call();
-      return;
-    }
+    if (isGuest) { onLoginRequired?.call(); return; }
     onCart?.call();
-    if (activeRoute != '/cart') {
-      Navigator.pushReplacementNamed(context, '/cart');
-    }
+    if (activeRoute != '/cart') Navigator.pushReplacementNamed(context, '/cart');
   }
 
   void _openSideDrawer(BuildContext context) {
@@ -774,20 +706,21 @@ class _MobileCustomerNav extends StatelessWidget {
       pageBuilder: (_, __, ___) => Align(
         alignment: Alignment.centerRight,
         child: _SideDrawer(
-          activeRoute: activeRoute,
-          userName: userName ?? 'GUEST',
-          userClientId: isGuest ? 'GUEST USER' : (userClientId ?? 'CLIENT #LL-00124'),
-          isGuest: isGuest,
-          onLogout: isGuest
-              ? null
-              : () {
-                  onLogout?.call();
-                  Navigator.pushNamedAndRemoveUntil(context, '/', (r) => false);
-                },
+          activeRoute:  activeRoute,
+          userName:     isGuest ? 'GUEST' : (userName ?? 'USER'),
+          userClientId: isGuest ? 'GUEST USER' : (userClientId ?? ''),
+          isGuest:      isGuest,
+          onLogout: isGuest ? null : () {
+            onLogout?.call();
+            Navigator.pushNamedAndRemoveUntil(context, '/', (r) => false);
+          },
           onLoginRequired: onLoginRequired,
           onNav: (route) {
             Navigator.pop(context);
-            if (activeRoute != route) {
+            if (activeRoute == route) return;
+            if (route == '/about' || route == '/contact') {
+              Navigator.pushNamed(context, route);
+            } else {
               Navigator.pushReplacementNamed(context, route);
             }
           },
@@ -823,28 +756,28 @@ class _MobileCustomerNav extends StatelessWidget {
         ),
         const Spacer(),
 
+        // Notifications — hidden for guests
         if (!isGuest) ...[
           _IconCircleBtn(
-            icon: Icons.notifications_none_rounded,
-            badge: notifCount,
-            onTap: onNotif,
-          ),
-          const SizedBox(width: 6),
+              icon: Icons.notifications_none_rounded,
+              badge: notifCount,
+              onTap: onNotif),
+          const SizedBox(width: 8),
         ],
 
+        // Cart — always visible; guests get login redirect
         _IconCircleBtn(
-          icon: Icons.shopping_cart_outlined,
-          badge: isGuest ? 0 : cartCount,
-          onTap: () => _handleCartTap(context),
-        ),
+            icon: Icons.shopping_cart_outlined,
+            badge: isGuest ? 0 : cartCount,
+            onTap: () => _handleCartTap(context)),
         const SizedBox(width: 10),
 
+        // Hamburger → side drawer
         GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () => _openSideDrawer(context),
           child: Container(
-            width: 38,
-            height: 38,
+            width: 38, height: 38,
             decoration: BoxDecoration(
               color: const Color(0xFF2D2A26),
               borderRadius: BorderRadius.circular(10),
@@ -858,7 +791,7 @@ class _MobileCustomerNav extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SIDE DRAWER
+// SIDE DRAWER  (logged-in mobile)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _SideDrawer extends StatelessWidget {
@@ -870,13 +803,15 @@ class _SideDrawer extends StatelessWidget {
   static const _loggedInLinks = [
     _NID('HOME',    '/home',    Icons.grid_view_rounded),
     _NID('MENU',    '/menu',    Icons.receipt_long_rounded),
-    _NID('ORDERS',  '/orders',  Icons.shopping_cart_outlined),
+    _NID('ORDERS',  '/orders',  Icons.shopping_bag_outlined),
+    _NID('ABOUT',   '/about',   Icons.info_outline_rounded),
+    _NID('CONTACT', '/contact', Icons.mail_outline_rounded),
     _NID('PROFILE', '/profile', Icons.person_outline_rounded),
   ];
 
   static const _guestLinks = [
-    _NID('HOME', '/home', Icons.grid_view_rounded),
-    _NID('MENU', '/menu', Icons.receipt_long_rounded),
+    _NID('HOME',    '/home',    Icons.grid_view_rounded),
+    _NID('MENU',    '/menu',    Icons.receipt_long_rounded),
   ];
 
   const _SideDrawer({
@@ -901,11 +836,12 @@ class _SideDrawer extends StatelessWidget {
         decoration: const BoxDecoration(color: Color(0xFF2D2A26)),
         child: Column(
           children: [
+            // Profile header
             Container(
               padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
               decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.1))),
-              ),
+                  border: Border(
+                      bottom: BorderSide(color: Colors.white.withOpacity(0.1)))),
               child: Row(children: [
                 Container(
                   width: 56, height: 56,
@@ -917,8 +853,7 @@ class _SideDrawer extends StatelessWidget {
                   ),
                   child: Icon(
                     isGuest ? Icons.person_outline_rounded : Icons.person_rounded,
-                    color: Colors.white,
-                    size: 28,
+                    color: Colors.white, size: 28,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -927,20 +862,20 @@ class _SideDrawer extends StatelessWidget {
                   children: [
                     Text(userName,
                         style: const TextStyle(
-                            fontFamily: 'Urbanist',
-                            fontWeight: FontWeight.w900,
-                            fontSize: 15,
-                            color: Colors.white)),
-                    Text(userClientId,
-                        style: TextStyle(
-                            fontFamily: 'Urbanist',
-                            fontSize: 11,
-                            color: AppColors.primary)),
+                            fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                            fontSize: 15, color: Colors.white)),
+                    if (userClientId.isNotEmpty)
+                      Text(userClientId,
+                          style: TextStyle(
+                              fontFamily: 'Urbanist',
+                              fontSize: 11,
+                              color: AppColors.primary)),
                   ],
                 ),
               ]),
             ),
 
+            // Nav links
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -995,6 +930,7 @@ class _SideDrawer extends StatelessWidget {
               ),
             ),
 
+            // Bottom action
             Padding(
               padding: const EdgeInsets.all(24),
               child: isGuest
@@ -1070,9 +1006,7 @@ class _DrawerBtn extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(16),
-        ),
+            color: bgColor, borderRadius: BorderRadius.circular(16)),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -1080,10 +1014,8 @@ class _DrawerBtn extends StatelessWidget {
             const SizedBox(width: 10),
             Text(label,
                 style: TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                    color: textColor)),
+                    fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                    fontSize: 13, color: textColor)),
           ],
         ),
       ),
@@ -1100,8 +1032,7 @@ class _GuestMobileMenu extends StatelessWidget {
   final List<_NI> links;
   final VoidCallback onClose;
   final void Function(String) onNavigate;
-
-  // ✅ Login/Join callbacks passed through so overlay buttons actually work
+  // ✅ Both callbacks present — wired in GuestNavbar._openMenu
   final VoidCallback? onLogin;
   final VoidCallback? onJoinNow;
 
@@ -1125,6 +1056,7 @@ class _GuestMobileMenu extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Fake navbar bar
             Container(
               height: 72,
               color: const Color(0xF2EFE2C9),
@@ -1135,22 +1067,20 @@ class _GuestMobileMenu extends StatelessWidget {
                   child: Image.asset('assets/images/lnl.jpg',
                       width: 44, height: 44, fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Container(
-                        width: 44, height: 44,
-                        decoration: BoxDecoration(
-                          color: AppColors.secondary,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Center(
-                          child: Text('L&L',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 10)),
-                        ),
-                      )),
+                            width: 44, height: 44,
+                            decoration: BoxDecoration(
+                                color: AppColors.secondary,
+                                borderRadius: BorderRadius.circular(12)),
+                            child: const Center(
+                                child: Text('L&L',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 10))),
+                          )),
                 ),
                 const Spacer(),
-                // ✅ LOGIN button wired
+                // ✅ LOGIN wired
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () {
@@ -1158,18 +1088,16 @@ class _GuestMobileMenu extends StatelessWidget {
                     onLogin?.call();
                   },
                   child: Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(8),
                     child: Text('LOGIN',
                         style: TextStyle(
-                            fontFamily: 'Urbanist',
-                            fontWeight: FontWeight.w900,
-                            fontSize: 11,
-                            letterSpacing: 2,
+                            fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                            fontSize: 11, letterSpacing: 2,
                             color: AppColors.primary)),
                   ),
                 ),
                 const SizedBox(width: 6),
-                // ✅ JOIN NOW button wired
+                // ✅ JOIN NOW wired
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () {
@@ -1179,15 +1107,12 @@ class _GuestMobileMenu extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
                     decoration: BoxDecoration(
-                      color: AppColors.secondary,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                        color: AppColors.secondary,
+                        borderRadius: BorderRadius.circular(10)),
                     child: const Text('JOIN NOW',
                         style: TextStyle(
-                            fontFamily: 'Urbanist',
-                            fontWeight: FontWeight.w900,
-                            fontSize: 10,
-                            color: Colors.white)),
+                            fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                            fontSize: 10, color: Colors.white)),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -1198,13 +1123,18 @@ class _GuestMobileMenu extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      boxShadow: const [BoxShadow(color: Color(0x1A000000), blurRadius: 4)],
+                      boxShadow: const [
+                        BoxShadow(color: Color(0x1A000000), blurRadius: 4)
+                      ],
                     ),
-                    child: const Icon(Icons.close_rounded, color: Color(0xFF2D2A26), size: 20),
+                    child: const Icon(Icons.close_rounded,
+                        color: Color(0xFF2D2A26), size: 20),
                   ),
                 ),
               ]),
             ),
+
+            // Nav links
             Container(
               color: AppColors.background,
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
@@ -1218,29 +1148,33 @@ class _GuestMobileMenu extends StatelessWidget {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: GestureDetector(
-                      // ✅ onNavigate handles MENU specially (calls onBrowseMenu)
                       onTap: () => onNavigate(e.route),
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 22),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 28, vertical: 22),
                         decoration: BoxDecoration(
-                          color: isActive ? AppColors.secondary : const Color(0xFFE8D9BF),
+                          color: isActive
+                              ? AppColors.secondary
+                              : const Color(0xFFE8D9BF),
                           borderRadius: BorderRadius.circular(22),
                         ),
                         child: Text(e.label,
                             style: TextStyle(
-                              fontFamily: 'Urbanist',
-                              fontWeight: FontWeight.w900,
-                              fontSize: 20,
-                              letterSpacing: 1.5,
-                              color: isActive ? Colors.white : AppColors.secondary,
-                            )),
+                                fontFamily: 'Urbanist',
+                                fontWeight: FontWeight.w900,
+                                fontSize: 20,
+                                letterSpacing: 1.5,
+                                color: isActive
+                                    ? Colors.white
+                                    : AppColors.secondary)),
                       ),
                     ),
                   );
                 }).toList(),
               ),
             ),
+
             Expanded(
               child: GestureDetector(
                 onTap: onClose,
@@ -1277,17 +1211,17 @@ class _LogoImg extends StatelessWidget {
       child: Image.asset('assets/images/lnl.jpg',
           width: 44, height: 44, fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => Container(
-            width: 44, height: 44,
-            decoration: BoxDecoration(
-                color: AppColors.secondary,
-                borderRadius: BorderRadius.circular(12)),
-            child: const Center(
-                child: Text('L&L',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 10))),
-          )),
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                    color: AppColors.secondary,
+                    borderRadius: BorderRadius.circular(12)),
+                child: const Center(
+                    child: Text('L&L',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 10))),
+              )),
     );
   }
 }
@@ -1305,14 +1239,13 @@ class _NavLink extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(label,
                 style: TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w900,
+                    fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
                     fontSize: 12,
                     color: active ? AppColors.secondary : AppColors.primary)),
             if (active) ...[
@@ -1350,7 +1283,8 @@ class _IconCircleBtn extends StatelessWidget {
             color: Colors.white,
             shape: BoxShape.circle,
             boxShadow: [
-              BoxShadow(color: Color(0x1A000000), blurRadius: 4, offset: Offset(0, 2))
+              BoxShadow(
+                  color: Color(0x1A000000), blurRadius: 4, offset: Offset(0, 2))
             ],
           ),
           child: Icon(icon, color: const Color(0xFF2D2A26), size: 17),

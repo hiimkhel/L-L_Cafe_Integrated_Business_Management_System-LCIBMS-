@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
-import 'package:frontend/core/widgets/bamboo_background.dart';
+import 'package:frontend/core/widgets/bamboo_breeze_background.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
+import 'package:frontend/core/constants/cart_provider.dart';
 
 const double _kMobile = 900;
 const double _kDesktopMaxWidth = 1280;
@@ -11,60 +12,80 @@ const Color _bgDark    = Color(0xFF2D2A26);
 const Color _primary   = Color(0xFF758C6D);
 const Color _secondary = Color(0xFFA98258);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ASSET PATHS
-// ─────────────────────────────────────────────────────────────────────────────
+const _kHeroBanner = 'assets/images/gallery_neon_sign.png';
+const _kExterior   = 'assets/images/gallery_exterior.png';
+const _kNotesWall  = 'assets/images/gallery_notes_wall.png';
+const _kPasta      = 'assets/images/hero_pasta.png';
+const _kWaffle     = 'assets/images/hero_kitkat_waffle.png';
+const _kNutella    = 'assets/images/best_nutella_frappe.png';
+const _kBiscoff    = 'assets/images/best_biscoff_frappe.png';
 
-const _kHeroBanner    = 'assets/images/gallery_neon_sign.png';
-const _kExterior      = 'assets/images/gallery_exterior.png';
-const _kNotesWall     = 'assets/images/gallery_notes_wall.png';
-const _kPasta         = 'assets/images/hero_pasta.png';
-const _kWaffle        = 'assets/images/hero_kitkat_waffle.png';
-const _kNutella       = 'assets/images/best_nutella_frappe.png';
-const _kBiscoff       = 'assets/images/best_biscoff_frappe.png';
-const _kRedVelvet     = 'assets/images/best_redvelvet_frappe.png';
-
-// Film strip: 6 real images
 const _filmImages = <String>[
-  _kExterior, _kNotesWall, _kPasta,
-  _kNutella,   _kWaffle,   _kBiscoff,
+  _kExterior, _kNotesWall, _kPasta, _kNutella, _kWaffle, _kBiscoff,
 ];
 
-// Dish showcase: 3 items
 class _Dish {
   final String image, label, sub;
   const _Dish(this.image, this.label, this.sub);
 }
 
 const _dishes = <_Dish>[
-  _Dish(_kPasta,    'SIGNATURE PASTA',   'Creamy & herb-loaded'),
-  _Dish(_kWaffle,   'KITKAT WAFFLE',     'Our #1 bestseller'),
-  _Dish(_kNutella,  'NUTELLA FRAPPE',    'Handcrafted drinks'),
+  _Dish(_kPasta,   'SIGNATURE PASTA',  'Creamy & herb-loaded'),
+  _Dish(_kWaffle,  'KITKAT WAFFLE',    'Our #1 bestseller'),
+  _Dish(_kNutella, 'NUTELLA FRAPPE',   'Handcrafted drinks'),
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SCREEN
+// ABOUT SCREEN
+// isGuest=true  → GuestNavbar (landing/guest flow)
+// isGuest=false → CustomerNavbar (logged-in flow)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AboutScreen extends StatelessWidget {
+  final bool isGuest;
   final VoidCallback? onLogin;
   final VoidCallback? onJoinNow;
-  const AboutScreen({super.key, this.onLogin, this.onJoinNow});
+  final VoidCallback? onLogout;
+
+  const AboutScreen({
+    super.key,
+    this.isGuest = true,
+    this.onLogin,
+    this.onJoinNow,
+    this.onLogout,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final cart = isGuest ? null : CartProvider.of(context);
+
+    final PreferredSizeWidget navbar = isGuest
+        ? GuestNavbar(
+            activeRoute: '/about',
+            onLogin: onLogin,
+            onJoinNow: onJoinNow,
+            onBrowseMenu: () => Navigator.pushReplacementNamed(context, '/menu'),
+          )
+        : CustomerNavbar(
+            activeRoute: '/about',
+            cartCount: cart?.totalCount ?? 0,
+            notifCount: 0,
+            isGuest: false,
+            onProfile: () => Navigator.pushReplacementNamed(context, '/profile'),
+            onLogout: () {
+              onLogout?.call();
+              Navigator.pushNamedAndRemoveUntil(context, '/', (r) => false);
+            },
+          );
+
     return Scaffold(
       backgroundColor: _bgBeige,
       body: Stack(
         children: [
-          const BambooBackground(),
+          const BreezeBambooBackground(),
           Column(
             children: [
-              GuestNavbar(
-                activeRoute: '/about',
-                onLogin: onLogin,
-                onJoinNow: onJoinNow,
-              ),
+              navbar,
               Expanded(
                 child: LayoutBuilder(builder: (ctx, c) {
                   final isMobile = c.maxWidth < _kMobile;
@@ -107,11 +128,8 @@ class _DesktopLayout extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Hero banner ─────────────────────────────────────────────────
               const _HeroBanner(),
               const SizedBox(height: 64),
-
-              // Title + accent line ──────────────────────────────────────────
               Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
                 RichText(
                   text: const TextSpan(children: [
@@ -137,8 +155,6 @@ class _DesktopLayout extends StatelessWidget {
                 decoration: BoxDecoration(
                     color: _secondary, borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 52),
-
-              // Story + film strip ───────────────────────────────────────────
               const Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -148,14 +164,10 @@ class _DesktopLayout extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 64),
-
-              // Dish showcase ───────────────────────────────────────────────
               const _SectionLabel(text: 'FROM OUR KITCHEN'),
               const SizedBox(height: 20),
               const _DishShowcase(),
               const SizedBox(height: 64),
-
-              // Values ───────────────────────────────────────────────────────
               const _SectionLabel(text: 'WHAT WE STAND FOR'),
               const SizedBox(height: 20),
               Row(children: const [
@@ -195,7 +207,6 @@ class _MobileLayout extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Title ──────────────────────────────────────────────────────
               RichText(text: const TextSpan(children: [
                 TextSpan(text: 'ALL ABOUT ', style: TextStyle(
                     fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
@@ -213,13 +224,9 @@ class _MobileLayout extends StatelessWidget {
                   style: TextStyle(fontFamily: 'Urbanist',
                       fontWeight: FontWeight.w700, fontSize: 9,
                       letterSpacing: 2.0, color: _secondary.withOpacity(0.85))),
-
               const SizedBox(height: 28),
-              // Film strip ──────────────────────────────────────────────────
               const _FilmStrip(),
               const SizedBox(height: 32),
-
-              // Foundation header ───────────────────────────────────────────
               Row(children: [
                 Container(width: 4, height: 22,
                   decoration: BoxDecoration(color: _primary,
@@ -232,14 +239,10 @@ class _MobileLayout extends StatelessWidget {
               const SizedBox(height: 18),
               const _StoryText(),
               const SizedBox(height: 32),
-
-              // Dishes ──────────────────────────────────────────────────────
               const _SectionLabel(text: 'FROM OUR KITCHEN'),
               const SizedBox(height: 16),
               const _DishShowcase(isMobile: true),
               const SizedBox(height: 32),
-
-              // Values ──────────────────────────────────────────────────────
               const _SectionLabel(text: 'WHAT WE STAND FOR'),
               const SizedBox(height: 16),
               const _ValueCard(icon: Icons.wb_sunny_outlined,
@@ -275,19 +278,14 @@ class _HeroBanner extends StatelessWidget {
         width: double.infinity,
         height: isMobile ? 240 : 380,
         child: Stack(fit: StackFit.expand, children: [
-          // Background
           Image.asset(_kHeroBanner, fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(color: _bgDark)),
-
-          // Dark gradient
           Container(decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter, end: Alignment.bottomCenter,
               colors: [Color(0x22000000), Color(0xDD000000)],
             ),
           )),
-
-          // Overlay text
           Positioned(
             bottom: isMobile ? 24 : 40,
             left: isMobile ? 20 : 48,
@@ -319,17 +317,11 @@ class _HeroBanner extends StatelessWidget {
               ],
             ),
           ),
-
-          // Right: exterior + notes wall thumbnails (desktop only)
           if (!isMobile) ...[
-            Positioned(
-              top: 28, right: 40,
-              child: _Thumb(image: _kExterior, label: 'OUR PLACE'),
-            ),
-            Positioned(
-              top: 28, right: 192,
-              child: _Thumb(image: _kNotesWall, label: 'WISH BOARD'),
-            ),
+            Positioned(top: 28, right: 40,
+                child: _Thumb(image: _kExterior, label: 'OUR PLACE')),
+            Positioned(top: 28, right: 192,
+                child: _Thumb(image: _kNotesWall, label: 'WISH BOARD')),
           ],
         ]),
       ),
@@ -410,21 +402,17 @@ class _DishShowcase extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isMobile) {
-      return Column(
-        children: _dishes.map((d) => Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: _DishCard(dish: d, isMobile: true),
-        )).toList(),
-      );
+      return Column(children: _dishes.map((d) => Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: _DishCard(dish: d, isMobile: true),
+      )).toList());
     }
-    return Row(
-      children: _dishes.asMap().entries.map((e) => Expanded(
-        child: Padding(
-          padding: EdgeInsets.only(right: e.key < _dishes.length - 1 ? 20 : 0),
-          child: _DishCard(dish: e.value),
-        ),
-      )).toList(),
-    );
+    return Row(children: _dishes.asMap().entries.map((e) => Expanded(
+      child: Padding(
+        padding: EdgeInsets.only(right: e.key < _dishes.length - 1 ? 20 : 0),
+        child: _DishCard(dish: e.value),
+      ),
+    )).toList());
   }
 }
 
@@ -513,25 +501,23 @@ class _FilmStrip extends StatelessWidget {
   Widget _buildRow(List<String> paths, {bool isLast = false}) {
     return Padding(
       padding: EdgeInsets.fromLTRB(8, isLast ? 3 : 6, 8, isLast ? 6 : 3),
-      child: Row(
-        children: paths.map((path) => Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 3),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: Image.asset(path, fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: _bgDark.withOpacity(0.6),
-                      child: Center(child: Icon(Icons.image_outlined,
-                          color: Colors.white.withOpacity(0.2), size: 20)),
-                    )),
-              ),
+      child: Row(children: paths.map((path) => Expanded(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 3),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: AspectRatio(
+              aspectRatio: 1,
+              child: Image.asset(path, fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: _bgDark.withOpacity(0.6),
+                    child: Center(child: Icon(Icons.image_outlined,
+                        color: Colors.white.withOpacity(0.2), size: 20)),
+                  )),
             ),
           ),
-        )).toList(),
-      ),
+        ),
+      )).toList()),
     );
   }
 }

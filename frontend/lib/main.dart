@@ -16,16 +16,17 @@ import 'package:frontend/features/customers/presentation/admin/customer_order_sc
 import 'features/home/presentation/customer/landing_screen.dart';
 import 'features/home/presentation/customer/home_screen.dart';
 import 'features/home/presentation/rider/home_screen.dart';
-import 'features/dashboard/presentation/admin/dashboard_screen.dart';
-import 'features/dashboard/presentation/rider/dashboard_screen.dart';
-import 'features/dashboard/presentation/pos/order_entry.dart';
-import 'features/auth/presentation/screens/login_screen.dart';
-import 'features/auth/presentation/screens/register_screen.dart';
 import 'features/customers/presentation/admin/menu_screen.dart';
-import 'features/customers/presentation/admin/cart_screen.dart';
 import 'features/home/presentation/customer/contact_screen.dart';
 import 'features/home/presentation/customer/about_screen.dart';
 import 'features/home/presentation/customer/profile_screen.dart';
+import 'features/customers/presentation/admin/cart_screen.dart';
+import 'features/checkout/customer/presentation/cart_checkout_screen.dart';
+import 'features/auth/presentation/screens/login_screen.dart';
+import 'features/auth/presentation/screens/register_screen.dart';
+import 'features/dashboard/presentation/admin/dashboard_screen.dart';
+import 'features/dashboard/presentation/rider/dashboard_screen.dart';
+import 'features/dashboard/presentation/pos/order_entry.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -89,7 +90,6 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
 
   @override
   Widget build(BuildContext context) {
-    // 1. First, we provide the Auth state
     return ChangeNotifierProvider(
       create: (_) => AuthProvider(),
       child: Consumer<AuthProvider>(
@@ -162,6 +162,7 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
           },
         ));
 
+      // ✅ /orders was missing — this is why the cart/orders button did nothing
       case AppRoutes.orders:
         if (user == null) return _fade(_buildRootScreen(auth));
         return _fade(const CustomerOrderScreen());
@@ -179,16 +180,27 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
 
       case AppRoutes.about:
       case AppRoutes.contact:
-        return _fade(Builder(
-          builder: (ctx) {
-            final page = settings.name == AppRoutes.about
-                ? AboutScreen(
-                    onLogin: () => _goLogin(ctx),
-                    onJoinNow: () => _goRegister(ctx))
-                : ContactScreen(
-                    onLogin: () => _goLogin(ctx),
-                    onJoinNow: () => _goRegister(ctx));
-            return page;
+        // ✅ Use Consumer so the screen always has fresh auth context.
+        // If the user is logged in, we navigate with pushReplacementNamed
+        // so the auth stack is never popped — no accidental logout.
+        // AboutScreen/ContactScreen use GuestNavbar internally; for logged-in
+        // users we push via the customer navbar link so they arrive here
+        // already authenticated. The screens just need login/joinNow for
+        // the guest case.
+        return _fade(Consumer<AuthProvider>(
+          builder: (ctx, liveAuth, _) {
+            final isAbout = settings.name == AppRoutes.about;
+            if (isAbout) {
+              return AboutScreen(
+                onLogin:   () => _goLogin(ctx),
+                onJoinNow: () => _goRegister(ctx),
+              );
+            } else {
+              return ContactScreen(
+                onLogin:   () => _goLogin(ctx),
+                onJoinNow: () => _goRegister(ctx),
+              );
+            }
           },
         ));
 
