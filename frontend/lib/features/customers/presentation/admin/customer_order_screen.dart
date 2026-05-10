@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
-import 'package:frontend/core/widgets/bamboo_background.dart';
+import 'package:frontend/core/widgets/bamboo_breeze_background.dart';
 import 'package:frontend/core/constants/cart_provider.dart';
-
+import 'package:frontend/core/services/auth_service.dart';
+import 'package:frontend/core/services/customer/order_service.dart';
 const double _kMobile = 768;
 const Color _primary   = Color(0xFF758C6D);
 const Color _secondary = Color(0xFFA98258);
@@ -15,17 +16,17 @@ const Color _bgDark    = Color(0xFF2D2A26);
 
 Color _statusColor(OrderStatus status) {
   switch (status) {
-    case OrderStatus.pending:     return const Color(0xFF9E7145);
-    case OrderStatus.inProgress:  return const Color(0xFFE6A817);
-    case OrderStatus.archived:    return const Color(0xFF4CAF50);
+    case OrderStatus.pending:    return const Color(0xFF9E7145);
+    case OrderStatus.inProgress: return const Color(0xFFE6A817);
+    case OrderStatus.archived:   return const Color(0xFF4CAF50);
   }
 }
 
 String _statusLabel(OrderStatus status) {
   switch (status) {
-    case OrderStatus.pending:     return 'PENDING';
-    case OrderStatus.inProgress:  return 'PREPARING';
-    case OrderStatus.archived:    return 'COMPLETED';
+    case OrderStatus.pending:    return 'PENDING';
+    case OrderStatus.inProgress: return 'PREPARING';
+    case OrderStatus.archived:   return 'COMPLETED';
   }
 }
 
@@ -42,7 +43,7 @@ class Order {
   final String? method;
   final List<String> items;
 
-  const Order({
+  Order({
     required this.id,
     required this.status,
     this.subStatus,
@@ -51,64 +52,102 @@ class Order {
     this.method,
     this.items = const [],
   });
+
+  factory Order.fromJson(Map<String, dynamic> json) {
+    OrderStatus mapStatus(String status) {
+      switch (status) {
+        case 'pending':
+          return OrderStatus.pending;
+        case 'confirmed':
+        case 'preparing':
+        case 'ready':
+        case 'out_for_delivery':
+          return OrderStatus.inProgress;
+        default:
+          return OrderStatus.archived;
+      }
+    }
+
+    return Order(
+      id: json['order_number']?.toString() ?? '',
+      status: mapStatus(json['status'] ?? ''),
+      subStatus: json['status']?.toString().toUpperCase(),
+      total: json['total'] == null 
+          ? 0.0 
+          : double.parse(json['total'].toString()),
+      timestamp: json['created_at'],
+      method: json['order_type']?.toString().toUpperCase(),
+      items: (json['items'] as List?)
+              ?.map((e) => e['item_name'].toString())
+              .toList() ??
+          [],
+    );
+  }
 }
-
-// ─────────────────────────── Demo data ───────────────────────────────────────
-
-final List<Order> _demoOrders = [
-  Order(
-    id: 'LL-9482', status: OrderStatus.pending,
-    total: 1105.00, timestamp: 'FEB 07, 2026 • 10:30 AM', method: 'DELIVERY',
-    items: ['1X HARAMBE MANGO', '2X NUTELLA FRAPPE', '2X KITKAT WAFFLE',
-            '1X OREO WAFFLE', '1X RED VELVET FRAPPE', '1X O MORE',
-            '1X CRISPY CHICKEN BURGER'],
-  ),
-  Order(
-    id: 'LL-1023', status: OrderStatus.pending,
-    total: 180.00, timestamp: 'FEB 07, 2026 • 11:15 AM', method: 'DELIVERY',
-    items: ['1X O MORE'],
-  ),
-  Order(
-    id: 'LL-9482', status: OrderStatus.inProgress, subStatus: 'PREPARING',
-    total: 1105.00, timestamp: 'FEB 07, 2026 • 10:30 AM', method: 'DELIVERY',
-    items: ['1X HARAMBE MANGO', '2X NUTELLA FRAPPE', '2X KITKAT WAFFLE',
-            '1X OREO WAFFLE', '1X RED VELVET FRAPPE', '1X O MORE',
-            '1X CRISPY CHICKEN BURGER'],
-  ),
-  Order(
-    id: 'LL-1023', status: OrderStatus.inProgress, subStatus: 'OUT FOR DELIVERY',
-    total: 180.00, timestamp: 'FEB 07, 2026 • 11:15 AM', method: 'DELIVERY',
-    items: ['1X ICED AMERICANO'],
-  ),
-  Order(
-    id: 'LL-8271', status: OrderStatus.archived,
-    total: 520.00, timestamp: 'FEB 05, 2026', method: 'PICKUP',
-    items: ['2X CARAMEL MACCHIATO', '3X CHOCOLATE MUFFIN'],
-  ),
-  Order(
-    id: 'LL-7162', status: OrderStatus.archived,
-    total: 150.00, timestamp: 'FEB 01, 2026', method: 'PICKUP',
-    items: ['1X BREWED COFFEE'],
-  ),
-];
 
 // ─────────────────────────── Screen ──────────────────────────────────────────
 
 class CustomerOrderScreen extends StatefulWidget {
-  final List<Order> orders;
-  const CustomerOrderScreen({super.key, this.orders = const []});
+
+  const CustomerOrderScreen({super.key});
 
   @override
   State<CustomerOrderScreen> createState() => _CustomerOrderScreenState();
 }
 
 class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
+
+  final OrderService _service = OrderService();
+
+  List<Order> _orders = [];
+  bool _loading = true;
+  String? _error;
   int _selectedIndex = 0;
   final TextEditingController _searchCtrl = TextEditingController();
   String _searchQuery = '';
 
-  List<Order> get _source =>
-      widget.orders.isEmpty ? _demoOrders : widget.orders;
+  // Handle calling of services to call backend
+  Future<void> _loadOrders() async {
+    try {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+
+      final auth = AuthService();
+      final uid = await auth.getUid();
+
+      if (uid == null) {
+        throw Exception("User not logged in");
+      }
+
+      print("🔥 Firebase UID: $uid");
+
+     final token = await AuthService().getIdToken();
+
+    if (token == null || token.isEmpty) {
+      throw Exception("Missing auth token");
+    }
+
+    final data = await _service.getCustomerOrders(token);
+    print("🔥 Firebase Token: $token");
+      setState(() {
+        _orders = data.map((e) => Order.fromJson(e)).toList();
+      });
+
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+      });
+    } finally {
+      setState(() {
+        _loading = false;
+      });
+    }
+  }
+
+
+  List<Order> get _source => _orders;
 
   List<Order> get _filtered {
     final all = _source.where((o) {
@@ -119,29 +158,31 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
 
     if (_searchQuery.isEmpty || _selectedIndex != 2) return all;
     final q = _searchQuery.toLowerCase();
-    return all
-        .where((o) =>
-            o.id.toLowerCase().contains(q) ||
-            (o.timestamp?.toLowerCase().contains(q) ?? false) ||
-            o.items.any((i) => i.toLowerCase().contains(q)))
-        .toList();
+    return all.where((o) =>
+        o.id.toLowerCase().contains(q) ||
+        (o.timestamp?.toLowerCase().contains(q) ?? false) ||
+        o.items.any((i) => i.toLowerCase().contains(q))).toList();
   }
 
   int get _archiveCount =>
       _source.where((o) => o.status == OrderStatus.archived).length;
 
   void _onTabChanged(int i) => setState(() {
-        _selectedIndex = i;
-        _searchQuery = '';
-        _searchCtrl.clear();
-      });
+    _selectedIndex = i;
+    _searchQuery = '';
+    _searchCtrl.clear();
+  });
 
   @override
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
   }
-
+  @override
+  void initState() {
+    super.initState();
+    _loadOrders();
+  }
   // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
@@ -152,48 +193,35 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
       backgroundColor: _bgBeige,
       body: Stack(
         children: [
-          // Bamboo stays purely decorative in the background
-          const Positioned.fill(child: BambooBackground()),
+          // ✅ Gentle breeze bamboo — calm, slow, easy on the eyes
+          const Positioned.fill(child: BreezeBambooBackground()),
 
-          // Foreground: navbar + scrollable content + footer
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Navbar ────────────────────────────────────────────────
               CustomerNavbar(
                 activeRoute: '/orders',
                 cartCount: cart.totalCount,
                 notifCount: 1,
-                onCart: () => Navigator.pushNamed(context, '/cart'),
-                onNotif: () {},
+                onCart:    () => Navigator.pushNamed(context, '/cart'),
+                onNotif:   () {},
                 onProfile: () => Navigator.pushNamed(context, '/profile'),
-                onLogout: () => Navigator.pushNamedAndRemoveUntil(
+                onLogout:  () => Navigator.pushNamedAndRemoveUntil(
                     context, '/', (r) => false),
               ),
 
-              // ── Scrollable body ────────────────────────────────────────
-              // SingleChildScrollView inside Expanded = content scrolls,
-              // footer is the last item so it's always below the cards.
-              // LayoutBuilder gives us the exact available height so we can
-              // enforce minHeight and keep the footer pinned to the bottom
-              // even when there are only one or two order cards.
               Expanded(
                 child: LayoutBuilder(
                   builder: (_, constraints) => SingleChildScrollView(
                     child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight,
-                      ),
+                      constraints: BoxConstraints(minHeight: constraints.maxHeight),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // Page content
                           isMobile
                               ? _buildMobileContent()
                               : _buildDesktopContent(),
-
-                          // Footer pinned to bottom
                           const CustomerFooter(),
                         ],
                       ),
@@ -208,91 +236,74 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
     );
   }
 
-  // ─────────────────────────────
-  // DESKTOP CONTENT
-  // ─────────────────────────────
+  // ─────────────────── Desktop ─────────────────────────────────────────────
   Widget _buildDesktopContent() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 60),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 24),
-          _customerOrderHeader(isMobile: false),
-          const SizedBox(height: 12),
-          Divider(thickness: 1.2, color: _primary.withOpacity(0.4)),
-          const SizedBox(height: 12),
-          _customerOderCategory(isMobile: false),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const SizedBox(height: 24),
+        _orderHeader(isMobile: false),
+        const SizedBox(height: 12),
+        Divider(thickness: 1.2, color: _primary.withOpacity(0.4)),
+        const SizedBox(height: 12),
+        _tabs(isMobile: false),
+        const SizedBox(height: 16),
+        if (_selectedIndex == 2) ...[
+          _SearchBar(controller: _searchCtrl,
+              onChanged: (v) => setState(() => _searchQuery = v)),
           const SizedBox(height: 16),
-          if (_selectedIndex == 2) ...[
-            _SearchBar(
-                controller: _searchCtrl,
-                onChanged: (v) => setState(() => _searchQuery = v)),
-            const SizedBox(height: 16),
-          ],
-          _buildOrderList(isMobile: false),
-          const SizedBox(height: 32),
+          _ExportHistoryBanner(),
+          const SizedBox(height: 16),
         ],
-      ),
+        _buildOrderList(isMobile: false),
+        const SizedBox(height: 32),
+      ]),
     );
   }
 
-  // ─────────────────────────────
-  // MOBILE CONTENT
-  // ─────────────────────────────
+  // ─────────────────── Mobile ──────────────────────────────────────────────
   Widget _buildMobileContent() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 20),
-          _customerOrderHeader(isMobile: true),
-          const SizedBox(height: 10),
-          Divider(thickness: 1.2, color: _primary.withOpacity(0.5)),
-          const SizedBox(height: 10),
-          _customerOderCategory(isMobile: true),
-          const SizedBox(height: 14),
-          if (_selectedIndex == 2) ...[
-            _SearchBar(
-                controller: _searchCtrl,
-                onChanged: (v) => setState(() => _searchQuery = v)),
-            const SizedBox(height: 14),
-          ],
-          _buildOrderList(isMobile: true),
-          const SizedBox(height: 24),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const SizedBox(height: 20),
+        _orderHeader(isMobile: true),
+        const SizedBox(height: 10),
+        Divider(thickness: 1.2, color: _primary.withOpacity(0.5)),
+        const SizedBox(height: 10),
+        _tabs(isMobile: true),
+        const SizedBox(height: 14),
+        if (_selectedIndex == 2) ...[
+          _SearchBar(controller: _searchCtrl,
+              onChanged: (v) => setState(() => _searchQuery = v)),
+          const SizedBox(height: 12),
+          _ExportHistoryBanner(),
+          const SizedBox(height: 12),
         ],
-      ),
+        _buildOrderList(isMobile: true),
+        const SizedBox(height: 24),
+      ]),
     );
   }
 
-  // ─────────────────────────────
-  // HEADER
-  // ─────────────────────────────
-  Widget _customerOrderHeader({required bool isMobile}) {
+  // ─────────────────── Header ───────────────────────────────────────────────
+  Widget _orderHeader({required bool isMobile}) {
     return RichText(
       text: TextSpan(
-        style: TextStyle(
-          fontSize: isMobile ? 24 : 32,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1.2,
-          fontFamily: 'Urbanist',
-        ),
+        style: TextStyle(fontSize: isMobile ? 24 : 32,
+            fontWeight: FontWeight.bold, letterSpacing: 1.2, fontFamily: 'Urbanist'),
         children: const [
-          TextSpan(text: 'ORDER STATUS: ', style: TextStyle(color: _bgDark)),
-          TextSpan(text: 'ORDERS',        style: TextStyle(color: _secondary)),
+          TextSpan(text: 'MY ORDERS', style: TextStyle(color: _secondary)),
         ],
       ),
     );
   }
 
-  // ─────────────────────────────
-  // TABS
-  // ─────────────────────────────
-  Widget _customerOderCategory({required bool isMobile}) {
+  // ─────────────────── Tabs ─────────────────────────────────────────────────
+  Widget _tabs({required bool isMobile}) {
     final labels = ['PENDING', 'IN PROGRESS', 'ARCHIVE ($_archiveCount)'];
 
-    Widget row = Row(
+    final row = Row(
       mainAxisSize: isMobile ? MainAxisSize.min : MainAxisSize.max,
       children: List.generate(labels.length, (i) {
         final isActive = i == _selectedIndex;
@@ -303,29 +314,21 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: EdgeInsets.symmetric(
-                horizontal: isMobile ? 20 : 40,
-                vertical: isMobile ? 10 : 13,
-              ),
+                  horizontal: isMobile ? 20 : 40,
+                  vertical: isMobile ? 10 : 13),
               decoration: BoxDecoration(
                 color: isActive ? const Color(0xFF9E7145) : _bgBeige,
                 borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
+                boxShadow: [BoxShadow(
                     color: Colors.black.withOpacity(0.15),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                    blurRadius: 6, offset: const Offset(0, 2))],
               ),
-              child: Text(
-                labels[i],
-                style: TextStyle(
-                  fontSize: isMobile ? 12 : 13,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.4,
-                  color: isActive ? Colors.white : _primary.withOpacity(0.8),
-                ),
-              ),
+              child: Text(labels[i],
+                  style: TextStyle(
+                      fontSize: isMobile ? 12 : 13,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.4,
+                      color: isActive ? Colors.white : _primary.withOpacity(0.8))),
             ),
           ),
         );
@@ -337,40 +340,85 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
         : row;
   }
 
-  // ─────────────────────────────
-  // ORDER LIST
-  // ─────────────────────────────
+  // ─────────────────── Order list ───────────────────────────────────────────
   Widget _buildOrderList({required bool isMobile}) {
     final orders = _filtered;
 
-    if (orders.isEmpty) {
-      return Padding(
-        padding: EdgeInsets.symmetric(vertical: isMobile ? 40 : 60),
-        child: Center(
-          child: Column(
-            children: [
-              Icon(Icons.receipt_long_outlined,
-                  size: isMobile ? 48 : 56,
-                  color: _primary.withOpacity(0.3)),
-              const SizedBox(height: 12),
-              Text(
-                'No orders found.',
-                style: TextStyle(
-                    fontSize: isMobile ? 15 : 16,
-                    color: _primary.withOpacity(0.5)),
-              ),
-            ],
-          ),
+    if (_loading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Text(
+          _error!,
+          style: const TextStyle(color: Colors.red),
         ),
       );
     }
 
     return Column(
-      children: orders
-          .map((o) => isMobile
-              ? _MobileOrderCard(order: o)
-              : _DesktopOrderCard(order: o))
-          .toList(),
+      children: orders.map((o) => isMobile
+          ? _MobileOrderCard(order: o)
+          : _DesktopOrderCard(order: o)).toList(),
+    );
+  }
+}
+
+// ─────────────────────────── Export history banner ───────────────────────────
+
+class _ExportHistoryBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      decoration: BoxDecoration(
+        color: _bgDark,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(
+            color: _bgDark.withOpacity(0.25),
+            blurRadius: 12, offset: const Offset(0, 4))],
+      ),
+      child: Row(children: [
+        Container(
+          width: 40, height: 40,
+          decoration: BoxDecoration(
+              color: _primary.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(10)),
+          child: const Icon(Icons.receipt_long_outlined,
+              color: Colors.white70, size: 20),
+        ),
+        const SizedBox(width: 14),
+        Expanded(child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('EXPORT HISTORY',
+                style: TextStyle(color: Colors.white, fontSize: 13,
+                    fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+            const SizedBox(height: 2),
+            Text('Download a detailed record of all your past orders.',
+                style: TextStyle(color: Colors.white.withOpacity(0.55),
+                    fontSize: 11, height: 1.4)),
+          ],
+        )),
+        const SizedBox(width: 12),
+        GestureDetector(
+          onTap: () {
+            // TODO: connect to export / PDF service
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+            decoration: BoxDecoration(
+                color: _primary,
+                borderRadius: BorderRadius.circular(10)),
+            child: const Text('EXPORT',
+                style: TextStyle(color: Colors.white, fontSize: 11,
+                    fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+          ),
+        ),
+      ]),
     );
   }
 }
@@ -398,125 +446,88 @@ class _DesktopOrderCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.10),
-              blurRadius: 10,
-              offset: const Offset(0, 3)),
-        ],
+        boxShadow: [BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10, offset: const Offset(0, 3))],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('REFERENCE CODE',
-                        style: TextStyle(
-                            fontSize: 10,
-                            letterSpacing: 1.2,
-                            color: _primary.withOpacity(0.65))),
-                    const SizedBox(height: 4),
-                    Text('#${order.id}',
-                        style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: _bgDark,
-                            letterSpacing: 0.5)),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 7),
-                decoration: BoxDecoration(
-                    color: badgeColor,
-                    borderRadius: BorderRadius.circular(20)),
-                child: Text(badgeLabel,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2)),
-              ),
-              const SizedBox(width: 24),
-              Text('₱${order.total.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: _secondary)),
-            ],
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('REFERENCE CODE',
+                style: TextStyle(fontSize: 10, letterSpacing: 1.2,
+                    color: _primary.withOpacity(0.65))),
+            const SizedBox(height: 4),
+            Text('#${order.id}',
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold,
+                    color: _bgDark, letterSpacing: 0.5)),
+          ])),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+            decoration: BoxDecoration(color: badgeColor,
+                borderRadius: BorderRadius.circular(20)),
+            child: Text(badgeLabel,
+                style: const TextStyle(color: Colors.white, fontSize: 11,
+                    fontWeight: FontWeight.bold, letterSpacing: 1.2)),
           ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              if (order.timestamp != null) ...[
-                Icon(Icons.access_time_rounded,
-                    size: 16, color: _primary.withOpacity(0.55)),
-                const SizedBox(width: 6),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('TIMESTAMP',
-                        style: TextStyle(
-                            fontSize: 9,
-                            letterSpacing: 1,
-                            color: _primary.withOpacity(0.5))),
-                    Text(order.timestamp!,
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: _bgDark)),
-                  ],
-                ),
-                const SizedBox(width: 32),
-              ],
-              if (order.method != null) ...[
-                Icon(Icons.location_on_outlined,
-                    size: 16, color: _primary.withOpacity(0.55)),
-                const SizedBox(width: 6),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('METHOD',
-                        style: TextStyle(
-                            fontSize: 9,
-                            letterSpacing: 1,
-                            color: _primary.withOpacity(0.5))),
-                    Text(order.method!,
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: _bgDark)),
-                  ],
-                ),
-              ],
-            ],
-          ),
-          if (order.items.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Text('LAST ITEMS',
-                style: TextStyle(
-                    fontSize: 9,
-                    letterSpacing: 1,
+          const SizedBox(width: 24),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Text('INVESTMENT TOTAL',
+                style: TextStyle(fontSize: 9, letterSpacing: 1,
                     color: _primary.withOpacity(0.5))),
-            const SizedBox(height: 6),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                ...visible.map((item) => _ItemChip(label: item)),
-                if (overflow > 0)
-                  _ItemChip(label: '+$overflow MORE', faded: true),
-              ],
+            Text('₱${order.total.toStringAsFixed(2)}',
+                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold,
+                    color: _secondary)),
+          ]),
+        ]),
+        const SizedBox(height: 14),
+        Row(children: [
+          if (order.timestamp != null) ...[
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                  color: _secondary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8)),
+              child: Icon(Icons.access_time_rounded, size: 16,
+                  color: _secondary.withOpacity(0.8)),
             ),
+            const SizedBox(width: 10),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('TIMESTAMP', style: TextStyle(fontSize: 9, letterSpacing: 1,
+                  color: _primary.withOpacity(0.5))),
+              Text(order.timestamp!, style: const TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w600, color: _bgDark)),
+            ]),
+            const SizedBox(width: 32),
           ],
+          if (order.method != null) ...[
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                  color: _secondary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8)),
+              child: Icon(Icons.location_on_outlined, size: 16,
+                  color: _secondary.withOpacity(0.8)),
+            ),
+            const SizedBox(width: 10),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('SITE PROTOCOL', style: TextStyle(fontSize: 9, letterSpacing: 1,
+                  color: _primary.withOpacity(0.5))),
+              Text(order.method!, style: const TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w600, color: _bgDark)),
+            ]),
+          ],
+        ]),
+        if (order.items.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Text('CART ITEMS', style: TextStyle(fontSize: 9, letterSpacing: 1,
+              color: _primary.withOpacity(0.5))),
+          const SizedBox(height: 6),
+          Wrap(spacing: 8, runSpacing: 6, children: [
+            ...visible.map((item) => _ItemChip(label: item)),
+            if (overflow > 0) _ItemChip(label: '+$overflow MORE', faded: true),
+          ]),
         ],
-      ),
+      ]),
     );
   }
 }
@@ -544,100 +555,88 @@ class _MobileOrderCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.10),
-              blurRadius: 8,
-              offset: const Offset(0, 3)),
-        ],
+        boxShadow: [BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8, offset: const Offset(0, 3))],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('REFERENCE CODE',
-                        style: TextStyle(
-                            fontSize: 9,
-                            letterSpacing: 1,
-                            color: _primary.withOpacity(0.6))),
-                    const SizedBox(height: 2),
-                    Text('#${order.id}',
-                        style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: _bgDark)),
-                  ],
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                decoration: BoxDecoration(
-                    color: badgeColor,
-                    borderRadius: BorderRadius.circular(16)),
-                child: Text(badgeLabel,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1)),
-              ),
-            ],
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // Reference + badge
+        Row(children: [
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('REFERENCE CODE', style: TextStyle(fontSize: 9, letterSpacing: 1,
+                color: _primary.withOpacity(0.6))),
+            const SizedBox(height: 2),
+            Text('#${order.id}', style: const TextStyle(
+                fontSize: 20, fontWeight: FontWeight.bold, color: _bgDark)),
+          ])),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(color: badgeColor,
+                borderRadius: BorderRadius.circular(16)),
+            child: Text(badgeLabel, style: const TextStyle(
+                color: Colors.white, fontSize: 10,
+                fontWeight: FontWeight.bold, letterSpacing: 1)),
           ),
+        ]),
+        const SizedBox(height: 12),
+
+        // Timestamp
+        if (order.timestamp != null)
+          _InfoRow(icon: Icons.access_time_rounded,
+              label: 'TIMESTAMP', value: order.timestamp!),
+
+        // Method
+        if (order.method != null) ...[
+          const SizedBox(height: 8),
+          _InfoRow(icon: Icons.location_on_outlined,
+              label: 'METHOD', value: order.method!),
+        ],
+
+        // Items
+        if (order.items.isNotEmpty) ...[
           const SizedBox(height: 12),
-          if (order.timestamp != null)
-            _InfoRow(
-                icon: Icons.access_time_rounded,
-                label: 'TIMESTAMP',
-                value: order.timestamp!),
-          if (order.method != null) ...[
-            const SizedBox(height: 8),
-            _InfoRow(
-                icon: Icons.location_on_outlined,
-                label: 'METHOD',
-                value: order.method!),
-          ],
-          if (order.items.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text('ITEMS',
-                style: TextStyle(
-                    fontSize: 9,
-                    letterSpacing: 1,
-                    color: _primary.withOpacity(0.5))),
-            const SizedBox(height: 6),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                ...visible.map((item) => _ItemChip(label: item)),
-                if (overflow > 0)
-                  _ItemChip(label: '+$overflow MORE', faded: true),
-              ],
+          Text('ITEMS', style: TextStyle(fontSize: 9, letterSpacing: 1,
+              color: _primary.withOpacity(0.5))),
+          const SizedBox(height: 6),
+          Wrap(spacing: 6, runSpacing: 6, children: [
+            ...visible.map((item) => _ItemChip(label: item)),
+            if (overflow > 0) _ItemChip(label: '+$overflow MORE', faded: true),
+          ]),
+        ],
+
+        const SizedBox(height: 12),
+
+        // Total + VIEW button
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('TOTAL', style: TextStyle(fontSize: 9, letterSpacing: 1,
+                  color: _primary.withOpacity(0.5))),
+              Text('₱${order.total.toStringAsFixed(2)}',
+                  style: const TextStyle(fontSize: 22,
+                      fontWeight: FontWeight.bold, color: _secondary)),
+            ]),
+            // VIEW button
+            GestureDetector(
+              onTap: () {
+                // TODO: navigate to order detail screen
+              },
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.remove_red_eye_outlined,
+                    size: 14, color: _primary.withOpacity(0.6)),
+                const SizedBox(width: 5),
+                Text('VIEW',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2, color: _primary.withOpacity(0.7))),
+                Icon(Icons.chevron_right, size: 16,
+                    color: _primary.withOpacity(0.5)),
+              ]),
             ),
           ],
-          const SizedBox(height: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('TOTAL',
-                  style: TextStyle(
-                      fontSize: 9,
-                      letterSpacing: 1,
-                      color: _primary.withOpacity(0.5))),
-              Text('₱${order.total.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: _secondary)),
-            ],
-          ),
-        ],
-      ),
+        ),
+      ]),
     );
   }
 }
@@ -648,32 +647,26 @@ class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  const _InfoRow(
-      {required this.icon, required this.label, required this.value});
+  const _InfoRow({required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: _primary.withOpacity(0.6)),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label,
-                style: TextStyle(
-                    fontSize: 9,
-                    letterSpacing: 1,
-                    color: _primary.withOpacity(0.5))),
-            Text(value,
-                style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: _bgDark)),
-          ],
-        ),
-      ],
-    );
+    return Row(children: [
+      Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+            color: _secondary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8)),
+        child: Icon(icon, size: 14, color: _secondary.withOpacity(0.8)),
+      ),
+      const SizedBox(width: 10),
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: TextStyle(fontSize: 9, letterSpacing: 1,
+            color: _primary.withOpacity(0.5))),
+        Text(value, style: const TextStyle(fontSize: 13,
+            fontWeight: FontWeight.w600, color: _bgDark)),
+      ]),
+    ]);
   }
 }
 
@@ -690,30 +683,24 @@ class _SearchBar extends StatelessWidget {
       style: const TextStyle(fontSize: 13, color: _bgDark),
       decoration: InputDecoration(
         hintText: 'Search by order ID, date or item…',
-        hintStyle:
-            TextStyle(color: _primary.withOpacity(0.45), fontSize: 13),
+        hintStyle: TextStyle(color: _primary.withOpacity(0.45), fontSize: 13),
         prefixIcon: Icon(Icons.search_rounded,
             color: _primary.withOpacity(0.55), size: 20),
         suffixIcon: controller.text.isNotEmpty
             ? IconButton(
                 icon: Icon(Icons.close_rounded,
                     size: 18, color: _primary.withOpacity(0.5)),
-                onPressed: () {
-                  controller.clear();
-                  onChanged('');
-                })
+                onPressed: () { controller.clear(); onChanged(''); })
             : null,
         filled: true,
         fillColor: Colors.white,
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
             borderSide: BorderSide.none),
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
-            borderSide:
-                BorderSide(color: _primary.withOpacity(0.2), width: 1)),
+            borderSide: BorderSide(color: _primary.withOpacity(0.2), width: 1)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30),
             borderSide: const BorderSide(color: _primary, width: 1.5)),
@@ -732,19 +719,13 @@ class _ItemChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: faded
-            ? _primary.withOpacity(0.07)
-            : _primary.withOpacity(0.12),
+        color: faded ? _primary.withOpacity(0.07) : _primary.withOpacity(0.12),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.5,
-            color: faded ? _primary.withOpacity(0.45) : _primary),
-      ),
+      child: Text(label,
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500,
+              letterSpacing: 0.5,
+              color: faded ? _primary.withOpacity(0.45) : _primary)),
     );
   }
 }

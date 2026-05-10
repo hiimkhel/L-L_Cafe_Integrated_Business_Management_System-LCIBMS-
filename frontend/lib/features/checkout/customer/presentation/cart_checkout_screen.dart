@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
@@ -8,9 +7,12 @@ import 'package:frontend/core/constants/cart_item.dart';
 import 'package:frontend/core/constants/cart_provider.dart';
 import 'package:frontend/core/services/customer/order_service.dart';
 import 'package:frontend/core/models/order_request.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:image_picker/image_picker.dart';
+import 'package:frontend/core/services/menu_service.dart';
+import 'package:frontend/core/utils/order_num_utils.dart';
+import 'package:frontend/core/widgets/bamboo_breeze_background.dart'; // shared widget
+import 'dart:convert'; // jsonDecode
+import 'package:http/http.dart' as http; // http.MultipartRequest
+import 'package:image_picker/image_picker.dart'; // ImagePicker, ImageSource
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
@@ -22,168 +24,6 @@ const Color _kSecondary = Color(0xFFA98258);
 const Color _kDark = Color(0xFF2D2A26);
 const Color _kBg = Color(0xFFEFE2C9);
 const Color _kWhite = Colors.white;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// BAMBOO BACKGROUND
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _BambooBackground extends StatefulWidget {
-  const _BambooBackground();
-  @override
-  State<_BambooBackground> createState() => _BambooBackgroundState();
-}
-
-class _BambooBackgroundState extends State<_BambooBackground>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 30),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < _kMobile;
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder:
-          (_, __) => CustomPaint(
-            painter: _BambooPainter(
-              animationValue: _ctrl.value,
-              isMobile: isMobile,
-            ),
-            size: Size.infinite,
-          ),
-    );
-  }
-}
-
-class _BambooPainter extends CustomPainter {
-  final double animationValue;
-  final bool isMobile;
-
-  _BambooPainter({required this.animationValue, required this.isMobile});
-
-  static const _bamboos = [
-    [0.040, 13.0, 0.12, 1.53],
-    [0.095, 7.0, 0.10, -1.84],
-    [0.133, 14.0, 0.13, 1.45],
-    [0.190, 9.0, 0.10, -0.72],
-    [0.236, 9.5, 0.10, -0.71],
-    [0.283, 13.0, 0.12, -1.53],
-    [0.321, 13.0, 0.11, 1.24],
-    [0.374, 1.9, 0.08, 0.29],
-    [0.423, 2.2, 0.08, 0.35],
-    [0.469, 2.6, 0.08, -0.34],
-    [0.503, 20.0, 0.13, 2.00],
-    [0.560, 4.1, 0.09, 1.06],
-    [0.598, 17.6, 0.12, 1.82],
-    [0.656, 8.9, 0.10, -0.98],
-    [0.693, 15.5, 0.11, 1.72],
-    [0.739, 17.9, 0.12, 1.99],
-    [0.783, 18.8, 0.12, 1.81],
-    [0.839, 8.9, 0.10, 0.66],
-    [0.890, 5.2, 0.08, -1.98],
-    [0.936, 16.6, 0.11, -1.89],
-  ];
-
-  void _drawLeaf(
-    Canvas c,
-    Offset o,
-    double angle,
-    double len,
-    double w,
-    Paint p,
-  ) {
-    c.save();
-    c.translate(o.dx, o.dy);
-    c.rotate(angle);
-    final path =
-        Path()
-          ..moveTo(0, 0)
-          ..quadraticBezierTo(len * 0.4, -w, len, 0)
-          ..quadraticBezierTo(len * 0.6, w, 0, 0)
-          ..close();
-    c.drawPath(path, p);
-    c.restore();
-  }
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = _kPrimary;
-    int index = 0;
-    for (final b in _bamboos) {
-      index++;
-      if (isMobile && index % 3 != 0) continue;
-      final baseX = size.width * (b[0] as double);
-      final w = b[1] as double;
-      final deg = b[3] as double;
-      final h = size.height;
-      final baseOp = b[2] as double;
-      final op = isMobile ? baseOp * 0.4 : baseOp;
-      final x = (baseX + animationValue * size.width * (op * 8)) % size.width;
-      final sway =
-          math.sin((animationValue * math.pi * 4) + (x * 0.01)) * 0.015;
-      final rad = (deg * math.pi / 180) + sway;
-      paint.color = _kPrimary.withOpacity(op);
-      canvas.save();
-      canvas.translate(x + w / 2, h / 2);
-      canvas.rotate(rad);
-      canvas.drawRect(Rect.fromLTWH(-w / 2, -h / 2 - 20, w, h + 40), paint);
-      final segs = (h / (w * 10 + 60)).ceil().clamp(3, 10);
-      final segH = (h + 40) / segs;
-      for (int i = 1; i < segs; i++) {
-        final jY = (-h / 2 - 20) + (i * segH);
-        canvas.drawRect(Rect.fromLTWH(-w / 2 - 1.5, jY - 1, w + 3, 2.5), paint);
-        if ((index + i) % 4 != 0) {
-          final isLeft = (index + i) % 2 == 0;
-          final ll = w * 2.5 + 20.0;
-          final lw = ll * 0.25;
-          _drawLeaf(
-            canvas,
-            Offset(isLeft ? -w / 2 : w / 2, jY),
-            isLeft ? math.pi * 0.8 : math.pi * 0.2,
-            ll,
-            lw,
-            paint,
-          );
-          if (i % 2 == 0) {
-            _drawLeaf(
-              canvas,
-              Offset(isLeft ? -w / 2 : w / 2, jY),
-              isLeft ? math.pi * 1.1 : -math.pi * 0.1,
-              ll * 0.8,
-              lw * 0.8,
-              paint,
-            );
-          }
-        }
-      }
-      canvas.translate(0, h * 0.2);
-      canvas.rotate(math.pi / 4);
-      canvas.drawRect(
-        Rect.fromLTWH(-w * 0.6, -w * 0.6, w * 1.2, w * 1.2),
-        paint,
-      );
-      canvas.restore();
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _BambooPainter old) =>
-      old.animationValue != animationValue || old.isMobile != isMobile;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CHECKOUT SCREEN
@@ -259,45 +99,57 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
     }
 
     setState(() => _isLoading = true);
+    try {
+      final nextId = await MenuService.fetchNextOrderNumber();
 
-    final order = OrderRequest(
-      source: 'online',
-      orderType: _isDelivery ? 'delivery' : 'pickup',
-      subtotal: _subtotal,
-      deliveryFee: _fee,
-      deliveryAddress: _isDelivery ? _addressCtrl.text.trim() : 'STORE PICKUP',
-      total: _total,
-      paymentMethod: _isCash ? 'cash' : 'e-wallet',
-      paymentStatus: 'unpaid',
-      customerName: _nameCtrl.text.trim(),
-      customerPhone: _phoneCtrl.text.trim(),
-      notes: _notesCtrl.text.trim(),
-      items:
-          _items
-              .map(
-                (i) => {
-                  'menu_item_id': i.id,
-                  'name': i.name,
-                  'quantity': i.quantity,
-                  'unit_price': i.price,
-                  'subtotal': i.price * i.quantity,
-                },
-              )
-              .toList(),
-      paymentProofUrl: _isCash ? null : _proofImageUrl,
-    );
+      final String formattedOrderNumber = OrderNumberUtils.formatOrderNumber(
+        nextId,
+        'ONLINE',
+      );
 
-    final ok = await _orderService.createOrder(order);
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+      final order = OrderRequest(
+        orderNumber: formattedOrderNumber,
+        source: 'online',
+        orderType: _isDelivery ? 'delivery' : 'pickup',
+        subtotal: _subtotal,
+        deliveryFee: _fee,
+        deliveryAddress:
+            _isDelivery ? _addressCtrl.text.trim() : 'STORE PICKUP',
+        total: _total,
+        paymentMethod: _isCash ? 'cash' : 'e-wallet',
+        paymentStatus: 'unpaid',
+        customerName: _nameCtrl.text.trim(),
+        customerPhone: _phoneCtrl.text.trim(),
+        notes: _notesCtrl.text.trim(),
+        items:
+            _items
+                .map(
+                  (i) => {
+                    'menu_item_id': i.id,
+                    'name': i.name,
+                    'quantity': i.quantity,
+                    'unit_price': i.price,
+                    'subtotal': i.price * i.quantity,
+                  },
+                )
+                .toList(),
+        paymentProofUrl: _isCash ? null : _proofImageUrl,
+      );
 
-    if (ok) {
-      //  Clear cart FIRST so badge resets to 0 everywhere immediately
-      CartProvider.of(context).clear();
-      //  Then show success popup
-      _showSuccessDialog();
-    } else {
-      _snack('Failed to place order. Please try again.', error: true);
+      final ok = await _orderService.createOrder(order);
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (ok) {
+        CartProvider.of(context).clear();
+        _showSuccessDialog();
+      } else {
+        _snack('Failed to place order. Please try again.', error: true);
+      }
+    } catch (err) {
+      setState(() => _isLoading = false);
+      _snack('Error connecting to server.', error: true);
     }
   }
 
@@ -313,7 +165,6 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
     );
   }
 
-  // ── ✅ Success popup — shown immediately after cart is cleared ────────────
   void _showSuccessDialog() {
     showDialog(
       context: context,
@@ -347,12 +198,11 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
       backgroundColor: _kBg,
       body: Stack(
         children: [
-          const Positioned.fill(child: _BambooBackground()),
+          const Positioned.fill(child: BreezeBambooBackground()), // ← updated
           Column(
             children: [
               CustomerNavbar(
                 activeRoute: '/cart',
-                // ✅ Live count — will show 0 after cart is cleared
                 cartCount: cart.totalCount,
                 notifCount: 1,
                 onCart: () {},
@@ -383,13 +233,18 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
                         const SizedBox(height: 15),
                         _clientDetails(isMobile: true),
                         const SizedBox(height: 20),
-                        _fieldNotes(isMobile: true),
-                        const SizedBox(height: 20),
                         _paymentHeader(isMobile: true),
                         const SizedBox(height: 10),
                         _paymentChoices(isMobile: true),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 20),
+                        // FIX: field notes now has bottom padding so it doesn't
+                        //      press against the footer on mobile
+                        _fieldNotes(isMobile: true),
+                        const SizedBox(height: 32),
                         _cartSummary(isMobile: true),
+                        const SizedBox(
+                          height: 32,
+                        ), // ← breathing room above footer
                       ] else
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -410,6 +265,9 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
                                   _paymentChoices(),
                                   const SizedBox(height: 20),
                                   _fieldNotes(),
+                                  const SizedBox(
+                                    height: 48,
+                                  ), // ← breathing room above footer
                                 ],
                               ),
                             ),
@@ -881,7 +739,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // ✅ ORDER SUMMARY CARD — now uses _kPrimary (green) as background
+  // ORDER SUMMARY CARD
   // ─────────────────────────────────────────────────────────────────────────
 
   Widget _cartSummary({bool isMobile = false}) {
@@ -905,7 +763,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          // ── Header ──────────────────────────────────────────────
           Row(
             children: [
               Container(
@@ -913,7 +771,6 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
                 height: 32,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  // ✅ Accent uses secondary (gold) on the green card
                   color: _kPrimary,
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -938,7 +795,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
 
           const SizedBox(height: 20),
 
-          // Items list
+          // ── Item list ───────────────────────────────────────────
           ..._items.map(
             (item) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -972,7 +829,6 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
                   ),
                   Text(
                     '₱${(item.price * item.quantity).toStringAsFixed(2)}',
-                    // ✅ Use secondary (gold) for prices so they pop on green
                     style: const TextStyle(
                       color: _kPrimary,
                       fontSize: 12,
@@ -1000,6 +856,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
           Divider(thickness: 1, color: _kWhite.withOpacity(0.2)),
           const SizedBox(height: 12),
 
+          // ── Subtotal / fee rows ─────────────────────────────────
           _sumRow('SUBTOTAL', '₱${_subtotal.toStringAsFixed(2)}'),
           if (_isDelivery) ...[
             const SizedBox(height: 10),
@@ -1008,6 +865,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
 
           const SizedBox(height: 16),
 
+          // ── Total ───────────────────────────────────────────────
           Row(
             children: [
               const Text(
@@ -1033,7 +891,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
 
           const SizedBox(height: 20),
 
-          // Payment method pill
+          // ── Payment method pill ─────────────────────────────────
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
             decoration: BoxDecoration(
@@ -1065,8 +923,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
             ),
           ),
 
-          const SizedBox(height: 6),
-
+          // ── Payment proof upload (online only) ──────────────────
           if (!_isCash) ...[
             const SizedBox(height: 12),
             Material(
@@ -1108,7 +965,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
                             _proofImageUrl != null
                                 ? 'PROOF ATTACHED ✓'
                                 : 'ATTACH PAYMENT PROOF',
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: _kWhite,
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -1138,7 +995,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
 
           const SizedBox(height: 36),
 
-          // Confirm Order button — gold on green, validates then shows success popup
+          // ── Confirm Order button ────────────────────────────────
           SizedBox(
             width: double.infinity,
             height: 52,
@@ -1242,7 +1099,7 @@ class _CartCheckoutScreenState extends State<CartCheckoutScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SUCCESS DIALOG — shown immediately after cart is cleared on order success
+// SUCCESS DIALOG
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _SuccessDialog extends StatelessWidget {
@@ -1283,14 +1140,14 @@ class _SuccessDialog extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Green top stripe
+              // ── Green top bar ──────────────────────────────────
               Container(height: 8, color: _kPrimary),
 
               Padding(
                 padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
                 child: Column(
                   children: [
-                    // Animated success icon
+                    // ── Icon circle ──────────────────────────────
                     Container(
                       width: 80,
                       height: 80,
@@ -1299,9 +1156,9 @@ class _SuccessDialog extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Icons.check_circle_rounded,
+                        Icons.check_circle_outline_rounded,
                         color: _kPrimary,
-                        size: 48,
+                        size: 44,
                       ),
                     ),
 
@@ -1333,7 +1190,7 @@ class _SuccessDialog extends StatelessWidget {
 
                     const SizedBox(height: 20),
 
-                    // Order summary pill
+                    // ── Order summary card ───────────────────────
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
@@ -1341,7 +1198,6 @@ class _SuccessDialog extends StatelessWidget {
                         horizontal: 20,
                       ),
                       decoration: BoxDecoration(
-                        // ✅ Uses primary green for the summary block
                         color: _kPrimary,
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -1364,7 +1220,7 @@ class _SuccessDialog extends StatelessWidget {
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w900,
-                                  color: _kSecondary,
+                                  color: _kWhite,
                                 ),
                               ),
                             ],
@@ -1390,7 +1246,7 @@ class _SuccessDialog extends StatelessWidget {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: _kSecondary,
+                                  color: _kWhite,
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
@@ -1398,7 +1254,7 @@ class _SuccessDialog extends StatelessWidget {
                                   style: const TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w800,
-                                    color: _kWhite,
+                                    color: _kPrimary,
                                     letterSpacing: 0.8,
                                   ),
                                 ),
@@ -1411,7 +1267,6 @@ class _SuccessDialog extends StatelessWidget {
 
                     const SizedBox(height: 8),
 
-                    // Cart cleared notice
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -1433,7 +1288,7 @@ class _SuccessDialog extends StatelessWidget {
 
                     const SizedBox(height: 20),
 
-                    // Track order button
+                    // ── Track button ─────────────────────────────
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -1458,8 +1313,9 @@ class _SuccessDialog extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 20),
 
+                    // ── Continue shopping link ───────────────────
                     GestureDetector(
                       onTap: onContinue,
                       child: Text(
@@ -1468,6 +1324,8 @@ class _SuccessDialog extends StatelessWidget {
                           fontSize: 12,
                           color: _kDark.withOpacity(0.4),
                           fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
+                          decorationColor: _kDark.withOpacity(0.4),
                         ),
                       ),
                     ),

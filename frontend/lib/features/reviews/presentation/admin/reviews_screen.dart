@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/widgets/admin_sidebar.dart';
 import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/config/theme/app_colors.dart';
+import 'package:frontend/core/models/review_model.dart';
+import 'package:frontend/core/services/admin/reviews_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PALETTE
@@ -13,134 +15,6 @@ const Color _green1  = Color(0xFF3D5A45);
 const Color _green2  = Color(0xFF758C6D);
 const Color _gold    = Color(0xFFA98258);
 const Color _dark    = Color(0xFF2D2A26);
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MODEL
-// ─────────────────────────────────────────────────────────────────────────────
-
-enum ReviewStatus { pending, published, archived }
-
-class ReviewModel {
-  final String id;
-  final String customerId;
-  final String customerName;
-  final DateTime submittedAt;
-  final String content;
-  final double rating;
-  ReviewStatus status;
-  final String? avatarUrl;
-
-  ReviewModel({
-    required this.id,
-    required this.customerId,
-    required this.customerName,
-    required this.submittedAt,
-    required this.content,
-    required this.rating,
-    this.status = ReviewStatus.pending,
-    this.avatarUrl,
-  });
-
-  /// Deep copy for safe state mutation
-  ReviewModel copyWith({ReviewStatus? status}) => ReviewModel(
-        id: id,
-        customerId: customerId,
-        customerName: customerName,
-        submittedAt: submittedAt,
-        content: content,
-        rating: rating,
-        status: status ?? this.status,
-        avatarUrl: avatarUrl,
-      );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SERVICE  (swap bodies with real API calls)
-// ─────────────────────────────────────────────────────────────────────────────
-
-class ReviewService {
-  /// TODO: replace with real fetch, e.g.:
-  /// final res = await http.get(Uri.parse('$baseUrl/reviews'));
-  /// return (jsonDecode(res.body) as List).map(ReviewModel.fromJson).toList();
-  static Future<List<ReviewModel>> fetchAll() async {
-    await Future.delayed(const Duration(milliseconds: 400));
-    return _mock;
-  }
-
-  /// TODO: PATCH /reviews/:id  { status: 'published' }
-  static Future<void> publish(String id) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-  }
-
-  /// TODO: PATCH /reviews/:id  { status: 'archived' }
-  static Future<void> archive(String id) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-  }
-
-  /// TODO: DELETE /reviews/:id
-  static Future<void> delete(String id) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-  }
-
-  // ── Mock data ──────────────────────────────────────────────────────────────
-
-  static final List<ReviewModel> _mock = [
-    ReviewModel(
-      id: 'r1',
-      customerId: '#1001',
-      customerName: 'MARIA SANTOS',
-      submittedAt: DateTime(2026, 2, 7, 13, 20),
-      content: 'The coffee here is absolutely amazing. The ambiance is cozy and the staff is so friendly. Will definitely come back!',
-      rating: 5.0,
-      status: ReviewStatus.published,
-    ),
-    ReviewModel(
-      id: 'r2',
-      customerId: '#1002',
-      customerName: 'JOSE REYES',
-      submittedAt: DateTime(2026, 2, 6, 10, 15),
-      content: 'Great place to work from. Free WiFi is stable and the drinks are reasonably priced. The Nutella Frappe is my go-to.',
-      rating: 4.0,
-      status: ReviewStatus.pending,
-    ),
-    ReviewModel(
-      id: 'r3',
-      customerId: '#1003',
-      customerName: 'ANA DE LEON',
-      submittedAt: DateTime(2026, 2, 5, 16, 45),
-      content: 'Quality coffee perfect for any kind of event. Highly recommended for group orders and party trays!',
-      rating: 5.0,
-      status: ReviewStatus.pending,
-    ),
-    ReviewModel(
-      id: 'r4',
-      customerId: '#1004',
-      customerName: 'CARLO BAUTISTA',
-      submittedAt: DateTime(2026, 2, 4, 9, 30),
-      content: 'Good food but the wait time was a bit long during peak hours. The waffle is worth it though.',
-      rating: 3.0,
-      status: ReviewStatus.archived,
-    ),
-    ReviewModel(
-      id: 'r5',
-      customerId: '#1005',
-      customerName: 'LIZA MERCADO',
-      submittedAt: DateTime(2026, 2, 3, 14, 10),
-      content: 'Biscoff frappe is literally the best thing I have ever tasted. The Korean BBQ Wings are also a must try!',
-      rating: 5.0,
-      status: ReviewStatus.published,
-    ),
-    ReviewModel(
-      id: 'r6',
-      customerId: '#1006',
-      customerName: 'RICO BAUTISTA',
-      submittedAt: DateTime(2026, 2, 2, 11, 0),
-      content: 'Decent cafe. The food is good but I expected more variety. Service was quick and polite.',
-      rating: 3.5,
-      status: ReviewStatus.pending,
-    ),
-  ];
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SCREEN
@@ -181,6 +55,8 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
     }
   }
 
+
+
   // ── Filtering + sorting ───────────────────────────────────────────────────
   List<ReviewModel> get _visible {
     List<ReviewModel> list = List.from(_all);
@@ -218,6 +94,26 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
       if (i != -1) _all[i] = _all[i].copyWith(status: ReviewStatus.published);
     });
     _showSnack('Review published', Icons.check_circle_outline_rounded, _green1);
+  }
+
+  Future<void> _republish(ReviewModel r) async {
+    await ReviewService.republish(r.id);
+
+    setState(() {
+      final i = _all.indexWhere((x) => x.id == r.id);
+
+      if (i != -1) {
+        _all[i] = _all[i].copyWith(
+          status: ReviewStatus.published,
+        );
+      }
+    });
+
+    _showSnack(
+      'Review re-published',
+      Icons.refresh_rounded,
+      _green1,
+    );
   }
 
   Future<void> _archive(ReviewModel r) async {
@@ -440,6 +336,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
         onPublish: () => _publish(items[i]),
         onArchive: () => _archive(items[i]),
         onDelete:  () => _confirmDelete(items[i]),
+        onRepublish: () => _republish(items[i])
       ),
     );
   }
@@ -454,12 +351,14 @@ class _ReviewCard extends StatelessWidget {
   final VoidCallback onPublish;
   final VoidCallback onArchive;
   final VoidCallback onDelete;
+  final VoidCallback onRepublish;
 
   const _ReviewCard({
     required this.review,
     required this.onPublish,
     required this.onArchive,
     required this.onDelete,
+    required this.onRepublish
   });
 
   @override
@@ -593,29 +492,37 @@ class _ReviewCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              // Publish button — only for pending/archived
-              if (review.status != ReviewStatus.published)
+
+              // PENDING → Publish
+              if (review.status == ReviewStatus.pending)
                 _ActionBtn(
                   label: 'PUBLISH',
                   icon: Icons.check_circle_outline_rounded,
                   color: _green1,
                   onTap: onPublish,
                 ),
-              if (review.status != ReviewStatus.published)
-                const SizedBox(height: 8),
 
-              // Archive button — only for pending/published
-              if (review.status != ReviewStatus.archived)
+              // PUBLISHED → Archive
+              if (review.status == ReviewStatus.published)
                 _ActionBtn(
                   label: 'ARCHIVE',
                   icon: Icons.archive_outlined,
                   color: _gold,
                   onTap: onArchive,
                 ),
-              if (review.status != ReviewStatus.archived)
-                const SizedBox(height: 8),
 
-              // Delete — always available
+              // ARCHIVED → Re-publish
+              if (review.status == ReviewStatus.archived)
+                _ActionBtn(
+                  label: 'RE-PUBLISH',
+                  icon: Icons.refresh_rounded,
+                  color: _green1,
+                  onTap: onPublish,
+                ),
+
+              const SizedBox(height: 8),
+
+              // DELETE (always available)
               _ActionBtn(
                 label: 'DELETE',
                 icon: Icons.delete_outline_rounded,
@@ -623,7 +530,7 @@ class _ReviewCard extends StatelessWidget {
                 onTap: onDelete,
               ),
             ],
-          ),
+          )
         ],
       ),
     );

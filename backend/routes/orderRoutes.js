@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const {createOrder} = require("../controllers/orderControllers.js");
+const {createOrder, fetchCurrentOrderNumber} = require("../controllers/orderControllers.js");
 
 router.post('/', createOrder);
+router.get("/current-order-num", fetchCurrentOrderNumber);
 
 //-- Multer setup for file uploads
 const multer = require('multer');

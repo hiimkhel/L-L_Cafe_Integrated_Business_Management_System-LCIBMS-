@@ -113,6 +113,7 @@ class OrderService {
       'payment_method': (o['payment_method'] ?? '').toLowerCase(),
       'payment':
           '${(o['payment_method'] ?? 'N/A').toUpperCase()} - ${o['payment_status'].toUpperCase()}',
+      'payment_proof_url': o['payment_proof_url'],
       'tax': 0.12,
       'total': double.parse(o['total'].toString()),
     };

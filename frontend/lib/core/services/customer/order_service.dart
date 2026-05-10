@@ -25,5 +25,27 @@ class OrderService {
     }
   }
 
-  
+   Future<List<dynamic>> getCustomerOrders(String token) async {
+    try {
+      final response = await http.get(
+        Uri.parse("$baseUrl/customer/orders"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer ${token.trim()}",
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data["success"] == true) {
+        return data["orders"] ?? [];
+      } else {
+        print("Server Error: ${data['message']}");
+        throw Exception(data["message"] ?? "Failed to fetch orders");
+      }
+    } catch (e) {
+      print("OrderService Error: $e");
+      rethrow;
+    }
+  }
 }

@@ -83,7 +83,7 @@ const updateUserProfile = async (req, res) => {
         // FETCH UPDATED USER
         const [rows] = await db.query(
         `SELECT id, firebase_uid, email, full_name, phone, profile_picture, role 
-        FROM user WHERE firebase_uid = ?`,
+        FROM users WHERE firebase_uid = ?`,
         [uid]
         );
 
@@ -97,4 +97,81 @@ const updateUserProfile = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
-module.exports = { getUserAddresses, getUserProfile, updateUserProfile};
+
+const getCustomerOrders = async (req, res) => {    
+    try {
+        const authHeader = req.headers.authorization;
+
+        // 1. Check Header
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            console.log("Auth Error: No Bearer token provided");
+            return res.status(401).json({ success: false, message: "No token provided" });
+        }
+
+        // 2. Verify Firebase Token
+        const idToken = authHeader.split(" ")[1];
+        let decoded;
+
+        try {
+            decoded = await admin.auth().verifyIdToken(idToken);
+        } catch (tokenErr) {
+            console.error("Firebase Token Error:", tokenErr.message);
+            // STOP HERE. Do not proceed to the database query.
+            return res.status(401).json({ 
+                success: false, 
+                message: "Your session has expired. Please log in again." 
+            });
+        }
+
+        const firebaseUid = decoded.uid;
+
+            const [userRows] = await db.query(
+                "SELECT id FROM users WHERE TRIM(firebase_uid) = ?",
+                [firebaseUid]
+            );
+
+        if (userRows.length === 0) {
+            console.log(`Database Error: No user found for Firebase UID: ${firebaseUid}`);
+            return res.status(404).json({
+                success: false,
+                message: "User account not synced with database.",
+            });
+        }
+
+        const userId = userRows[0].id;
+
+        // 4. Fetch Orders
+        const [orders] = await db.query(
+            `SELECT id, order_number, order_type, status, total, payment_status, created_at 
+             FROM orders WHERE user_id = ? ORDER BY created_at DESC`,
+            [userId]
+        );
+
+        // 5. Fetch Items for each order
+        for (let order of orders) {
+            const [items] = await db.query(
+                `SELECT id, item_name, quantity, unit_price, subtotal 
+                 FROM order_items WHERE order_id = ?`,
+                [order.id]
+            );
+            order.items = items;
+        }
+
+        console.log(`Successfully returned ${orders.length} orders.`);
+        return res.json({
+            success: true,
+            count: orders.length,
+            orders,
+        });
+
+    } catch (err) {
+        console.error("Global Catch Error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: err.message
+        });
+    }
+};
+
+module.exports = { getUserAddresses, getUserProfile, updateUserProfile, getCustomerOrders};

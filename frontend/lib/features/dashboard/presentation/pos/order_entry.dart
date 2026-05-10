@@ -8,6 +8,7 @@ import 'package:frontend/core/models/menu_item.dart';
 import 'package:frontend/core/services/menu_service.dart';
 import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 import 'package:frontend/core/models/menu_category.dart';
+import 'package:frontend/core/utils/order_num_utils.dart';
 
 class POSOrderScreen extends StatefulWidget {
   POSOrderScreen({super.key});
@@ -19,6 +20,7 @@ class POSOrderScreen extends StatefulWidget {
 class _POSOrderScreenState extends State<POSOrderScreen> {
   List<MenuItem> menuItems = [];
   List<MenuCategory> categories = [];
+  int _nextOrderId = 1;
 
   // Cart State Handler
   List<Map<String, dynamic>> orderItems = [];
@@ -40,15 +42,22 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
       final results = await Future.wait([
         MenuService.fetchMenu(),
         MenuService.fetchCategories(),
+        MenuService.fetchNextOrderNumber(),
       ]);
+
+      print("RAW RESULT FROM API: ${results[2]}");
+    print("TYPE OF RESULT: ${results[2].runtimeType}");
 
       final items = results[0] as List<MenuItem>;
       final cats = results[1] as List<MenuCategory>;
+      
+      
 
       setState(() {
         menuItems = items;
         categories = cats;
         isLoading = false;
+        _nextOrderId = results[2] as int;
       });
     } catch (e) {
       setState(() => isLoading = false);
@@ -74,13 +83,9 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     return subtotal;
   }
 
-  // Fixed tax for VAT
-  double getTax() {
-    return 20.0;
-  }
 
   double getTotal() {
-    return getSubtotal() + getTax();
+    return getSubtotal();
   }
 
   @override
@@ -490,6 +495,9 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
 
   //----------------------------------------Finalize Order Section-----------------------------------------------------------
   Widget _finaizeOrderSection() {
+
+    String formattedOrderNum = OrderNumberUtils.formatOrderNumber(_nextOrderId, _orderType);
+
     return Container(
       margin: const EdgeInsets.fromLTRB(5, 14, 14, 14),
       decoration: BoxDecoration(
@@ -527,19 +535,17 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 17,
-                    vertical: 6,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.background,
+                    // Dynamic background based on order type
+                    color: _orderType == 'ONLINE' ? Colors.blue : AppColors.primary,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '#00123',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: AppColors.primary,
+                    formattedOrderNum,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.white, // Inverted for better readability
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -549,9 +555,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
           ),
           const SizedBox(height: 1),
 
-          //------------------------------------------------------------------------------------------------------------
-          //-------------------------------------------------------------------------------------------------------------
-          //--------------------------------------------temporary order list---------------------------------------------
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
@@ -648,27 +651,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                     ),
                   ],
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'VAT',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(
-                      '₱${getTax().toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
+
                 const SizedBox(height: 8),
                 const Divider(
                   height: 1,
@@ -756,11 +739,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder:
-                              (context) => CheckoutConfirmationScreen(
-                                orderItems: orderItems,
-                                orderType: _orderType,
-                              ),
+                          builder: (context) => CheckoutConfirmationScreen( orderItems: orderItems, orderType: _orderType, orderOrderId: _nextOrderId), 
                         ),
                       );
                     },

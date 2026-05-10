@@ -57,7 +57,6 @@ class ReceiptData {
   final DateTime dateTime;
   final OrderType orderType;
   final List<OrderItem> items;
-  final double taxRate;
   final PaymentMethod paymentMethod;
 
   const ReceiptData({
@@ -66,13 +65,11 @@ class ReceiptData {
     required this.dateTime,
     required this.orderType,
     required this.items,
-    this.taxRate = 0.12,
     required this.paymentMethod,
   });
 
   double get materialCost => items.fold(0, (sum, i) => sum + i.total);
-  double get engineeringTax => materialCost * taxRate;
-  double get grandTotal => materialCost + engineeringTax;
+  double get grandTotal => materialCost;
 
   String get formattedDate {
     final d = dateTime;
@@ -261,7 +258,7 @@ class LLCafeReceipt extends StatelessWidget {
         Expanded(child: Container(height: 2, color: _cream)),
         const SizedBox(width: 8),
         Text(
-          '${data.orderType.label}: # LL-${data.orderNumber}',
+          '${data.orderType.label}: #${data.orderNumber}',
           style: const TextStyle(
             fontWeight: FontWeight.w900,
             fontSize: 10,
@@ -375,10 +372,6 @@ class LLCafeReceipt extends StatelessWidget {
         children: [
           _buildTotalLine('MATERIAL COST', data.materialCost),
           const SizedBox(height: 10),
-          _buildTotalLine(
-            'TAX (${(data.taxRate * 100).toStringAsFixed(0)}%)',
-            data.engineeringTax,
-          ),
           const SizedBox(height: 14),
           Container(height: 1, color: const Color(0x33A98258)),
           const SizedBox(height: 14),

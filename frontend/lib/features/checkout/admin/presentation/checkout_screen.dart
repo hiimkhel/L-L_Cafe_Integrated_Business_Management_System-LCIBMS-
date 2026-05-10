@@ -9,11 +9,12 @@ import 'package:frontend/core/models/order_request.dart';
 import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 
 class CheckoutConfirmationScreen extends StatefulWidget {
-  const CheckoutConfirmationScreen({super.key, required this.orderType, required this.orderItems});
+  const CheckoutConfirmationScreen({super.key, required this.orderType, required this.orderItems, required this.orderOrderId});
 
   // Expected data from order_entry.dart screen
   final List<Map<String, dynamic>> orderItems;
   final String orderType;
+  final int orderOrderId;
 
   @override
   State<CheckoutConfirmationScreen> createState() => _CheckoutConfirmationScreenState();
@@ -29,9 +30,8 @@ class CheckoutConfirmationScreen extends StatefulWidget {
       (sum, item) => sum + (item["price"] * item["qty"]),
     );
 
-    double get tax => 20.0;
 
-    double get total => subtotal + tax;
+    double get total => subtotal;
 
     double get change => cashGiven - total;
 
@@ -40,6 +40,8 @@ class CheckoutConfirmationScreen extends StatefulWidget {
 
     @override
     Widget build(BuildContext context) {
+
+      final String formattedOrderNumber = "WALK-${widget.orderOrderId.toString().padLeft(5, '0')}";
       return Scaffold(
         backgroundColor: AppColors.background,
           body: Column(children: [
@@ -48,7 +50,6 @@ class CheckoutConfirmationScreen extends StatefulWidget {
                 Expanded(flex: 4, child: OrderSummary(
                   orderItems: widget.orderItems,
                   subtotal: subtotal,
-                  tax: tax,
                   total: total,
                   orderType: widget.orderType
                 )),
@@ -71,6 +72,7 @@ class CheckoutConfirmationScreen extends StatefulWidget {
                     }).toList();
                     // 1. Prepare the OrderRequest for the Database/API
                     final orderRequest = OrderRequest(
+                      orderNumber: formattedOrderNumber,
                       source: "POS",
                       orderType: widget.orderType,
                       subtotal: subtotal,
@@ -90,7 +92,7 @@ class CheckoutConfirmationScreen extends StatefulWidget {
                     if (success) {
                       // 3. Prepare data for the Visual Receipt
                       final receiptData = ReceiptData(
-                        orderNumber: DateTime.now().millisecondsSinceEpoch.toString(),
+                        orderNumber: formattedOrderNumber,
                         clientName: "WALK-IN CUSTOMER",
                         dateTime: DateTime.now(),
                         orderType: OrderType.walkIn,

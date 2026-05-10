@@ -6,6 +6,8 @@ import 'package:frontend/core/widgets/customer_footer.dart';
 import 'package:frontend/core/constants/cart_provider.dart';
 import 'package:frontend/core/services/customer/menu_service.dart';
 import 'package:frontend/core/models/menu_item.dart';
+import 'package:frontend/core/widgets/bamboo_breeze_background.dart'; // ← updated
+import 'package:frontend/core/constants/cart_item.dart';
 import 'package:frontend/core/widgets/bamboo_background.dart';
 import 'package:frontend/core/constants/cart_item.dart';
 
@@ -33,11 +35,7 @@ const List<Map<String, String>> _kCategories = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 class MenuScreen extends StatefulWidget {
-  /// Pass true when the user is not logged in so the add-to-cart button
-  /// redirects to login instead of adding items.
   final bool isGuest;
-
-  /// Called when a guest taps add-to-cart or any auth-required action.
   final VoidCallback? onLoginRequired;
 
   const MenuScreen({
@@ -107,10 +105,7 @@ class _MenuScreenState extends State<MenuScreen> {
     _debounce = Timer(const Duration(milliseconds: 500), _loadMenu);
   }
 
-  // ── Add to cart ──────────────────────────────────────────────────────────
-
   void _addToCart(MenuItem menuItem) {
-    // Guest taps add-to-cart → redirect to login
     if (widget.isGuest) {
       widget.onLoginRequired?.call();
       return;
@@ -150,19 +145,16 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
-  // ── Build ────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final cart = widget.isGuest ? null : CartProvider.of(context);
 
-    // ── Guests get GuestNavbar; logged-in users get CustomerNavbar ──────────
     final PreferredSizeWidget navbar = widget.isGuest
         ? GuestNavbar(
             activeRoute: '/menu',
             onLogin: widget.onLoginRequired,
             onJoinNow: widget.onLoginRequired,
-            onBrowseMenu: null, // already on the menu screen
+            onBrowseMenu: null,
           )
         : CustomerNavbar(
             activeRoute: '/menu',
@@ -177,7 +169,7 @@ class _MenuScreenState extends State<MenuScreen> {
       appBar: navbar,
       body: Stack(
         children: [
-          const BambooBackground(),
+          const BreezeBambooBackground(), // ← updated widget
           LayoutBuilder(
             builder: (context, constraints) {
               final isMobile = constraints.maxWidth < _kMobile;
@@ -209,8 +201,6 @@ class _MenuScreenState extends State<MenuScreen> {
       ),
     );
   }
-
-  // ── Desktop Layout ───────────────────────────────────────────────────────
 
   Widget _buildDesktopLayout() {
     final items = _filteredItems;
@@ -258,8 +248,6 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
-  // ── Mobile Layout ────────────────────────────────────────────────────────
-
   Widget _buildMobileLayout() {
     final items = _filteredItems;
     return Column(
@@ -293,8 +281,6 @@ class _MenuScreenState extends State<MenuScreen> {
       ],
     );
   }
-
-  // ── Shared Widgets ───────────────────────────────────────────────────────
 
   Widget _buildPageTitle() {
     return RichText(
@@ -568,7 +554,6 @@ class _MenuCardState extends State<_MenuCard>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image
           Expanded(
             flex: 5,
             child: Stack(
@@ -620,8 +605,6 @@ class _MenuCardState extends State<_MenuCard>
               ],
             ),
           ),
-
-          // Info
           Expanded(
             flex: 4,
             child: Padding(
