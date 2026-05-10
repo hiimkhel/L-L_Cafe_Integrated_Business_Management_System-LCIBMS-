@@ -11,11 +11,8 @@ import 'package:frontend/core/models/menu_category.dart';
 import 'package:frontend/core/utils/order_num_utils.dart';
 
 class POSOrderScreen extends StatefulWidget {
-
-
   POSOrderScreen({super.key});
 
- 
   @override
   State<POSOrderScreen> createState() => _POSOrderScreenState();
 }
@@ -35,7 +32,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   String _orderType = 'DINE IN';
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
     loadMenu();
   }
@@ -67,11 +64,14 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
       print("Error loading menu: $e");
     }
   }
+
   String getCategoryName(int id) {
-    return categories.firstWhere(
-      (c) => c.id == id,
-      orElse: () => MenuCategory(id: 0, name: "Unknown"),
-    ).name;
+    return categories
+        .firstWhere(
+          (c) => c.id == id,
+          orElse: () => MenuCategory(id: 0, name: "Unknown"),
+        )
+        .name;
   }
 
   // Handle calculation of subtotal price from cart items
@@ -87,7 +87,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   double getTotal() {
     return getSubtotal();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -337,7 +336,10 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
               onTap: () => setState(() => _selectedCategory = label),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 25,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected ? AppColors.primary : AppColors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -356,9 +358,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: isSelected
-                          ? AppColors.white
-                          : AppColors.primary,
+                      color: isSelected ? AppColors.white : AppColors.primary,
                     ),
                   ),
                 ),
@@ -376,19 +376,20 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-      final filteredItems = menuItems.where((item) {
-      final matchesCategory = _selectedCategory == 'All'
-          ? true
-          : categories
-              .firstWhere((c) => c.id == item.categoryId)
-              .name == _selectedCategory;
+    final filteredItems =
+        menuItems.where((item) {
+          final matchesCategory =
+              _selectedCategory == 'All'
+                  ? true
+                  : categories
+                          .firstWhere((c) => c.id == item.categoryId)
+                          .name ==
+                      _selectedCategory;
 
-      final matchesSearch = item.name
-          .toLowerCase()
-          .contains(_searchQuery);
+          final matchesSearch = item.name.toLowerCase().contains(_searchQuery);
 
-      return matchesCategory && matchesSearch;
-    }).toList();
+          return matchesCategory && matchesSearch;
+        }).toList();
 
     return GridView.builder(
       padding: const EdgeInsets.all(24),
@@ -396,7 +397,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
         crossAxisCount: 4,
         crossAxisSpacing: 20,
         mainAxisSpacing: 20,
-        childAspectRatio: 1.1,  
+        childAspectRatio: 1.1,
       ),
       itemCount: filteredItems.length,
       itemBuilder: (context, index) {
@@ -459,7 +460,9 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
               GestureDetector(
                 onTap: () {
                   setState(() {
-                    final index = orderItems.indexWhere((e) => e['id'] == item.id);
+                    final index = orderItems.indexWhere(
+                      (e) => e['id'] == item.id,
+                    );
 
                     if (index >= 0) {
                       orderItems[index]['qty'] += 1;
@@ -560,7 +563,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                 final item = orderItems[index];
 
                 return _orderItem(
-                  index:index,
+                  index: index,
                   name: item['name'],
                   price: "₱${item['price'] * item['qty']}",
                   qty: item['qty'],
@@ -646,7 +649,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                                      ],
+                  ],
                 ),
 
                 const SizedBox(height: 8),
@@ -685,46 +688,49 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
             child: Row(
               children: [
                 GestureDetector(
-                    onTap: () {
-                      if (orderItems.isEmpty) return;
+                  onTap: () {
+                    if (orderItems.isEmpty) return;
 
-                      showDialog(
-                        context: context,
-                        builder: (_) => AlertDialog(
-                          title: const Text('Clear Order'),
-                          content: const Text('Are you sure you want to remove all items?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('Cancel'),
+                    showDialog(
+                      context: context,
+                      builder:
+                          (_) => AlertDialog(
+                            title: const Text('Clear Order'),
+                            content: const Text(
+                              'Are you sure you want to remove all items?',
                             ),
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  orderItems.clear();
-                                });
-                                Navigator.pop(context);
-                              },
-                              child: const Text('Clear'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.delete_outline,
-                        color: Colors.white,
-                        size: 22,
-                      ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    orderItems.clear();
+                                  });
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Clear'),
+                              ),
+                            ],
+                          ),
+                    );
+                  },
+                  child: Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.white,
+                      size: 22,
                     ),
                   ),
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: GestureDetector(
@@ -783,7 +789,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     required String name,
     required String price,
     required int qty,
-    required int index
+    required int index,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -860,7 +866,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                       ),
                     ),
                     _qtyBtn(Icons.add, () {
-                        setState(() {
+                      setState(() {
                         orderItems[index]['qty']++;
                       });
                     }),
@@ -903,7 +909,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   }) {
     return GestureDetector(
       onTap: onTap,
-        child: Container(
+      child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color:
@@ -934,7 +940,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
             ),
           ],
         ),
-      )
+      ),
     );
   }
 }
@@ -945,7 +951,10 @@ class _NoGlowScrollBehavior extends ScrollBehavior {
 
   @override
   Widget buildOverscrollIndicator(
-      BuildContext context, Widget child, ScrollableDetails details) {
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
     return child;
   }
 }
