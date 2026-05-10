@@ -19,8 +19,10 @@ class HeaderBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       decoration: BoxDecoration(
+        color: AppColors.background,
         border: Border(
           bottom: BorderSide(color: AppColors.border),
         ),

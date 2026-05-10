@@ -81,17 +81,68 @@ class _OrderTableState extends State<OrderTable> {
   }
 
   Widget _header() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+        border: Border(
+          bottom: BorderSide(
+            color: AppColors.border.withOpacity(0.5),
+            width: 1,
+          ),
+        ),
+      ),
       child: Row(
         children: const [
-          Expanded(flex: 3, child: Text("ORDER ID", style: TextStyle(fontWeight: FontWeight.bold))),
-          Expanded(flex: 3, child: Text("CUSTOMER", style: TextStyle(fontWeight: FontWeight.bold))),
-          Expanded(flex: 4, child: Text("ITEMS", style: TextStyle(fontWeight: FontWeight.bold))),
-          Expanded(flex: 3, child: Text("STATUS", style: TextStyle(fontWeight: FontWeight.bold))),
-          Expanded(flex: 2, child: Text("TIME", style: TextStyle(fontWeight: FontWeight.bold))),
-          Expanded(flex: 3, child: Text("ACTION", style: TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(
+            flex: 3,
+            child: _HeaderText("ORDER ID"),
+          ),
+          Expanded(
+            flex: 3,
+            child: _HeaderText("CUSTOMER"),
+          ),
+          Expanded(
+            flex: 4,
+            child: _HeaderText("ITEMS"),
+          ),
+          Expanded(
+            flex: 3,
+            child: _HeaderText("STATUS"),
+          ),
+          Expanded(
+            flex: 2,
+            child: _HeaderText("TIME"),
+          ),
+          Expanded(
+            flex: 3,
+            child: _HeaderText("ACTION"),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+
+class _HeaderText extends StatelessWidget {
+  final String text;
+
+  const _HeaderText(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+        color: AppColors.primary,
+        letterSpacing: 1.2,
       ),
     );
   }

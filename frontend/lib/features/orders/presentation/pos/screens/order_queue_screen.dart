@@ -12,7 +12,7 @@ class OrderQueueScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.white,
       body: FutureBuilder<int>(
         future: _orderService.getPreparingCount(),
         builder: (context, snapshot) {
