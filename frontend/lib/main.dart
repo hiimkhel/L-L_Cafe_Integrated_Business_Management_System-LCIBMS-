@@ -169,17 +169,17 @@ switch (settings.name) {
   case AppRoutes.home:
     return _fade(CustomerHomeScreen(onLogout: doLogout));
 
-  case AppRoutes.orders:
-    if (!isLoggedIn) return _fade(_buildRootScreen(auth));
-    return _fade(const CustomerOrderScreen());
+      case AppRoutes.orders:
+        if (!isLoggedIn) return _fade(_buildRootScreen(auth));
+        return _fade(const CustomerOrderScreen());
 
-  case AppRoutes.profile:
-    if (!isLoggedIn) return _fade(_buildRootScreen(auth));
-    return _fade(ProfileScreen(
-      userId: user!.id, // ✅ FIX: null safety
-      email: user.email,
-      onLogout: doLogout,
-    ));
+      case AppRoutes.profile:
+        if (!isLoggedIn) return _fade(_buildRootScreen(auth));
+        return _fade(ProfileScreen(
+          userId: user.id,
+          email: user.email,
+          onLogout: doLogout,
+        ));
 
   case AppRoutes.about:
     return _fade(
@@ -199,41 +199,27 @@ switch (settings.name) {
       ),
     );
 
-  case AppRoutes.contact:
-    return _fade(
-      Builder(
-        builder: (ctx) => Consumer<AuthProvider>(
-          builder: (ctx, auth, _) {
-            final isLoggedIn = auth.user != null;
+      case AppRoutes.contact:
+        return _fade(Builder(builder: (ctx) => ContactScreen(
+          // ✅ KEY: isGuest is derived from actual auth state, not hardcoded.
+          //    This means navigating to /contact always shows the correct navbar.
+          isGuest:   !isLoggedIn,
+          onLogin:   isLoggedIn ? null : () => _goLogin(ctx),
+          onJoinNow: isLoggedIn ? null : () => _goRegister(ctx),
+          onLogout:  isLoggedIn ? doLogout : null,
+        )));
 
-            return ContactScreen(
-              isGuest: !isLoggedIn,
-              onLogin: isLoggedIn ? null : () => _goLogin(ctx),
-              onJoinNow: isLoggedIn ? null : () => _goRegister(ctx),
-              onLogout: isLoggedIn ? doLogout : null,
-            );
-          },
-        ),
-      ),
-    );
-
-  case AppRoutes.menu:
-    return _fade(
-      Builder(
-        builder: (ctx) => Consumer<AuthProvider>(
-          builder: (ctx, auth, _) {
-            final isLoggedIn = auth.user != null;
-
-            return isLoggedIn
-                ? const MenuScreen(isGuest: false)
-                : MenuScreen(
-                    isGuest: true,
-                    onLoginRequired: () => _goLogin(ctx),
-                  );
-          },
-        ),
-      ),
-    );
+      // ✅ KEY FIX: /menu now reads auth state and passes isGuest correctly.
+      //    Previously MenuScreen() had no arguments so isGuest defaulted to
+      //    false — meaning ANY navigation to /menu showed logged-in mode,
+      //    even for unauthenticated users coming from Contact or About pages.
+      case AppRoutes.menu:
+        return _fade(Builder(builder: (ctx) => isLoggedIn
+            ? const MenuScreen(isGuest: false)
+            : MenuScreen(
+                isGuest: true,
+                onLoginRequired: () => _goLogin(ctx),
+              )));
 
   case AppRoutes.cart:
     return _fade(const CartScreen());
