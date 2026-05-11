@@ -16,7 +16,7 @@ const Color _bgDark    = Color(0xFF2D2A26);
 
 Color _statusColor(OrderStatus status) {
   switch (status) {
-    case OrderStatus.pending:    return const Color(0xFF9E7145);
+    case OrderStatus.pending:    return Colors.grey;
     case OrderStatus.inProgress: return const Color(0xFFE6A817);
     case OrderStatus.archived:   return const Color(0xFF4CAF50);
   }
@@ -731,33 +731,48 @@ class _DesktopOrderCard extends StatelessWidget {
           ],
 
           // ───────────────── Cancel Button ─────────────────
-          if (canCancel && onCancel != null) ...[
-            const SizedBox(height: 18),
-            Align(
-              alignment: Alignment.centerRight,
-              child: OutlinedButton.icon(
+        if (canCancel && onCancel != null) ...[
+          const SizedBox(height: 20),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Tooltip(
+              message: 'Cancel this order',
+              child: ElevatedButton.icon(
                 onPressed: onCancel,
                 icon: const Icon(
-                  Icons.cancel_outlined,
+                  Icons.close_rounded,
                   size: 18,
+                  color: Colors.white, // Explicit icon color
                 ),
-                label: const Text('Cancel Order'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
-                  side: BorderSide(
-                    color: Colors.red.shade300,
+                label: const Text(
+                  'CANCEL ORDER',
+                  style: TextStyle(
+                    color: Colors.white, // Explicit text color
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.1,
                   ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFD9534F),
+                  foregroundColor: Colors.white, // Applies to icon and text by default
+                  elevation: 0,
+                  shadowColor: Colors.transparent,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 12,
+                    horizontal: 22,
+                    vertical: 14,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ).copyWith(
+                  overlayColor: WidgetStateProperty.all(
+                    Colors.white.withOpacity(0.08),
                   ),
                 ),
               ),
             ),
-          ],
+          ),
+        ],
         ],
       ),
     );
