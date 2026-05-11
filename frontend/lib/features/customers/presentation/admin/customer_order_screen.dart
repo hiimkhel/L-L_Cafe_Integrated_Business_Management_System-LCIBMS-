@@ -97,6 +97,66 @@ class CustomerOrderScreen extends StatefulWidget {
 
 class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
 
+  Future<void> _cancelOrder(Order order) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancel Order'),
+        content: Text(
+          'Are you sure you want to cancel order #${order.id}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('No'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Yes, Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      final token = await AuthService().getIdToken();
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Missing auth token');
+      }
+
+      // Call your backend endpoint
+      await _service.cancelOrder(token, order.id);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Order #${order.id} cancelled successfully.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Reload orders
+      await _loadOrders();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to cancel order: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   final OrderService _service = OrderService();
 
   List<Order> _orders = [];
@@ -341,13 +401,12 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
   }
 
   // ─────────────────── Order list ───────────────────────────────────────────
+ // Update _buildOrderList inside _CustomerOrderScreenState
   Widget _buildOrderList({required bool isMobile}) {
     final orders = _filtered;
 
     if (_loading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_error != null) {
@@ -359,10 +418,29 @@ class _CustomerOrderScreenState extends State<CustomerOrderScreen> {
       );
     }
 
+    if (orders.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: Text('No orders found.'),
+        ),
+      );
+    }
+
     return Column(
-      children: orders.map((o) => isMobile
-          ? _MobileOrderCard(order: o)
-          : _DesktopOrderCard(order: o)).toList(),
+      children: orders.map((o) {
+        if (isMobile) {
+          return _MobileOrderCard(
+            order: o,
+            // onCancel: () => _cancelOrder(o),
+          );
+        }
+
+        return _DesktopOrderCard(
+          order: o,
+          onCancel: () => _cancelOrder(o),
+        );
+      }).toList(),
     );
   }
 }
@@ -427,17 +505,26 @@ class _ExportHistoryBanner extends StatelessWidget {
 
 class _DesktopOrderCard extends StatelessWidget {
   final Order order;
-  const _DesktopOrderCard({required this.order});
+  final VoidCallback? onCancel;
+
+  const _DesktopOrderCard({
+    required this.order,
+    this.onCancel,
+  });
 
   @override
   Widget build(BuildContext context) {
     final badgeLabel = order.subStatus ?? _statusLabel(order.status);
+
     final badgeColor = order.subStatus == 'OUT FOR DELIVERY'
         ? const Color(0xFF2196F3)
         : _statusColor(order.status);
 
+    final canCancel =
+    order.status == OrderStatus.pending;
+
     const maxVisible = 5;
-    final visible  = order.items.take(maxVisible).toList();
+    final visible = order.items.take(maxVisible).toList();
     final overflow = order.items.length - maxVisible;
 
     return Container(
@@ -446,88 +533,233 @@ class _DesktopOrderCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(
+        boxShadow: [
+          BoxShadow(
             color: Colors.black.withOpacity(0.08),
-            blurRadius: 10, offset: const Offset(0, 3))],
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('REFERENCE CODE',
-                style: TextStyle(fontSize: 10, letterSpacing: 1.2,
-                    color: _primary.withOpacity(0.65))),
-            const SizedBox(height: 4),
-            Text('#${order.id}',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold,
-                    color: _bgDark, letterSpacing: 0.5)),
-          ])),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-            decoration: BoxDecoration(color: badgeColor,
-                borderRadius: BorderRadius.circular(20)),
-            child: Text(badgeLabel,
-                style: const TextStyle(color: Colors.white, fontSize: 11,
-                    fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
-          const SizedBox(width: 24),
-          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text('INVESTMENT TOTAL',
-                style: TextStyle(fontSize: 9, letterSpacing: 1,
-                    color: _primary.withOpacity(0.5))),
-            Text('₱${order.total.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold,
-                    color: _secondary)),
-          ]),
-        ]),
-        const SizedBox(height: 14),
-        Row(children: [
-          if (order.timestamp != null) ...[
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                  color: _secondary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8)),
-              child: Icon(Icons.access_time_rounded, size: 16,
-                  color: _secondary.withOpacity(0.8)),
-            ),
-            const SizedBox(width: 10),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('TIMESTAMP', style: TextStyle(fontSize: 9, letterSpacing: 1,
-                  color: _primary.withOpacity(0.5))),
-              Text(order.timestamp!, style: const TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w600, color: _bgDark)),
-            ]),
-            const SizedBox(width: 32),
-          ],
-          if (order.method != null) ...[
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                  color: _secondary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8)),
-              child: Icon(Icons.location_on_outlined, size: 16,
-                  color: _secondary.withOpacity(0.8)),
-            ),
-            const SizedBox(width: 10),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('SITE PROTOCOL', style: TextStyle(fontSize: 9, letterSpacing: 1,
-                  color: _primary.withOpacity(0.5))),
-              Text(order.method!, style: const TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w600, color: _bgDark)),
-            ]),
-          ],
-        ]),
-        if (order.items.isNotEmpty) ...[
-          const SizedBox(height: 14),
-          Text('CART ITEMS', style: TextStyle(fontSize: 9, letterSpacing: 1,
-              color: _primary.withOpacity(0.5))),
-          const SizedBox(height: 6),
-          Wrap(spacing: 8, runSpacing: 6, children: [
-            ...visible.map((item) => _ItemChip(label: item)),
-            if (overflow > 0) _ItemChip(label: '+$overflow MORE', faded: true),
-          ]),
         ],
-      ]),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ───────────────── Header ─────────────────
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'REFERENCE CODE',
+                      style: TextStyle(
+                        fontSize: 10,
+                        letterSpacing: 1.2,
+                        color: _primary.withOpacity(0.65),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '#${order.id}',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: _bgDark,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Status Badge
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: badgeColor,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  badgeLabel,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 24),
+
+              // Total
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'INVESTMENT TOTAL',
+                    style: TextStyle(
+                      fontSize: 9,
+                      letterSpacing: 1,
+                      color: _primary.withOpacity(0.5),
+                    ),
+                  ),
+                  Text(
+                    '₱${order.total.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: _secondary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          // ───────────────── Metadata ─────────────────
+          Row(
+            children: [
+              if (order.timestamp != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _secondary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.access_time_rounded,
+                    size: 16,
+                    color: _secondary.withOpacity(0.8),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'TIMESTAMP',
+                      style: TextStyle(
+                        fontSize: 9,
+                        letterSpacing: 1,
+                        color: _primary.withOpacity(0.5),
+                      ),
+                    ),
+                    Text(
+                      order.timestamp!,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _bgDark,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 32),
+              ],
+
+              if (order.method != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _secondary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.location_on_outlined,
+                    size: 16,
+                    color: _secondary.withOpacity(0.8),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'SITE PROTOCOL',
+                      style: TextStyle(
+                        fontSize: 9,
+                        letterSpacing: 1,
+                        color: _primary.withOpacity(0.5),
+                      ),
+                    ),
+                    Text(
+                      order.method!,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _bgDark,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+
+          // ───────────────── Items ─────────────────
+          if (order.items.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Text(
+              'CART ITEMS',
+              style: TextStyle(
+                fontSize: 9,
+                letterSpacing: 1,
+                color: _primary.withOpacity(0.5),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                ...visible.map((item) => _ItemChip(label: item)),
+                if (overflow > 0)
+                  _ItemChip(
+                    label: '+$overflow MORE',
+                    faded: true,
+                  ),
+              ],
+            ),
+          ],
+
+          // ───────────────── Cancel Button ─────────────────
+          if (canCancel && onCancel != null) ...[
+            const SizedBox(height: 18),
+            Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton.icon(
+                onPressed: onCancel,
+                icon: const Icon(
+                  Icons.cancel_outlined,
+                  size: 18,
+                ),
+                label: const Text('Cancel Order'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: BorderSide(
+                    color: Colors.red.shade300,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
