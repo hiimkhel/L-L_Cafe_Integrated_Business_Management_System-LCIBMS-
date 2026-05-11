@@ -4,28 +4,31 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-// Firebase & Core
 import 'firebase_options.dart';
 import 'core/models/user.dart';
 import 'core/providers/auth_provider.dart';
 import 'core/constants/cart_provider.dart';
 import 'core/constants/routes.dart';
 
-// ── Screens ─────────────────────────────────────────────────────────────────
+// ✅ Import the NotificationProvider and its controller
+import 'core/constants/notification_provider.dart';
+
 import 'package:frontend/features/customers/presentation/admin/customer_order_screen.dart';
 import 'features/home/presentation/customer/landing_screen.dart';
 import 'features/home/presentation/customer/home_screen.dart';
 import 'features/home/presentation/rider/home_screen.dart';
-import 'features/dashboard/presentation/admin/dashboard_screen.dart';
-import 'features/dashboard/presentation/rider/dashboard_screen.dart';
-import 'features/dashboard/presentation/pos/order_entry.dart';
-import 'features/auth/presentation/screens/login_screen.dart';
-import 'features/auth/presentation/screens/register_screen.dart';
 import 'features/customers/presentation/admin/menu_screen.dart';
-import 'features/customers/presentation/admin/cart_screen.dart';
 import 'features/home/presentation/customer/contact_screen.dart';
 import 'features/home/presentation/customer/about_screen.dart';
 import 'features/home/presentation/customer/profile_screen.dart';
+import 'features/customers/presentation/admin/cart_screen.dart';
+import 'features/checkout/customer/presentation/cart_checkout_screen.dart';
+import 'features/auth/presentation/screens/login_screen.dart';
+import 'features/auth/presentation/screens/register_screen.dart';
+import 'features/dashboard/presentation/admin/dashboard_screen.dart';
+import 'features/dashboard/presentation/rider/dashboard_screen.dart';
+import 'features/dashboard/presentation/pos/order_entry.dart';
+import 'core/constants/cart_provider.dart' show CartProvider;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,63 +54,69 @@ class LCIBMSApp extends StatefulWidget {
 class _LCIBMSAppState extends State<LCIBMSApp> {
   final CartNotifier _cartNotifier = CartNotifier();
 
-  // ── Navigation helpers ────────────────────────────────────────────────────
+  // ✅ Single NotificationController instance — lives for the lifetime of the
+  //    app so the unread count persists across route changes and screen swaps.
+  final NotificationController _notificationController =
+      NotificationController();
 
   void _goLogin(BuildContext ctx) {
-    Navigator.push(
-      ctx,
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => LoginScreen(
-          onLogin: (user) {
-            ctx.read<AuthProvider>().setUser(user);
-            Navigator.of(ctx).popUntil((route) => route.isFirst);
-          },
-        ),
-        transitionsBuilder: (_, anim, __, child) =>
-            FadeTransition(opacity: anim, child: child),
-        transitionDuration: const Duration(milliseconds: 220),
+    Navigator.push(ctx, PageRouteBuilder(
+      pageBuilder: (_, __, ___) => LoginScreen(
+        onLogin: (user) {
+          ctx.read<AuthProvider>().setUser(user);
+          Navigator.of(ctx).popUntil((route) => route.isFirst);
+        },
       ),
-    );
+      transitionsBuilder: (_, anim, __, child) =>
+          FadeTransition(opacity: anim, child: child),
+      transitionDuration: const Duration(milliseconds: 220),
+    ));
   }
 
   void _goRegister(BuildContext ctx) {
-    Navigator.push(
-      ctx,
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => RegisterScreen(
-          onRegister: (user) {
-            ctx.read<AuthProvider>().setUser(user);
-            Navigator.of(ctx).popUntil((route) => route.isFirst);
-          },
-        ),
-        transitionsBuilder: (_, anim, __, child) =>
-            FadeTransition(opacity: anim, child: child),
-        transitionDuration: const Duration(milliseconds: 220),
+    Navigator.push(ctx, PageRouteBuilder(
+      pageBuilder: (_, __, ___) => RegisterScreen(
+        onRegister: (user) {
+          ctx.read<AuthProvider>().setUser(user);
+          Navigator.of(ctx).popUntil((route) => route.isFirst);
+        },
       ),
-    );
+      transitionsBuilder: (_, anim, __, child) =>
+          FadeTransition(opacity: anim, child: child),
+      transitionDuration: const Duration(milliseconds: 220),
+    ));
+  }
+
+  @override
+  void dispose() {
+    _notificationController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // 1. First, we provide the Auth state
     return ChangeNotifierProvider(
       create: (_) => AuthProvider(),
       child: Consumer<AuthProvider>(
         builder: (context, auth, _) {
           return CartProvider(
             notifier: _cartNotifier,
-            child: MaterialApp(
-              debugShowCheckedModeBanner: false,
-              home: _buildRootScreen(auth),
-              onGenerateRoute: (settings) => _handleRoutes(settings, auth),
+            // ✅ NotificationProvider wraps MaterialApp so every screen —
+            //    CustomerNavbar, NotificationPanel, CustomerHomeScreen, etc. —
+            //    can call NotificationProvider.of(context) without an assertion.
+            child: NotificationProvider(
+              controller: _notificationController,
+              child: MaterialApp(
+                debugShowCheckedModeBanner: false,
+                home: _buildRootScreen(auth),
+                onGenerateRoute: (settings) => _handleRoutes(settings, auth),
+              ),
             ),
           );
         },
       ),
     );
   }
-
-  // ── Root screen by role ───────────────────────────────────────────────────
 
   Widget _buildRootScreen(AuthProvider auth) {
     final user = auth.user;
@@ -117,7 +126,6 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
         onRegister: (u) => auth.setUser(u),
       );
     }
-
     switch (user.role) {
       case UserRole.customer:
         return CustomerHomeScreen(onLogout: () {
@@ -145,62 +153,80 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
     }
   }
 
-  // ── Named route handler ───────────────────────────────────────────────────
-
   Route? _handleRoutes(RouteSettings settings, AuthProvider auth) {
     final user = auth.user;
+    final isLoggedIn = user != null;
 
-    switch (settings.name) {
-      case '/':
-        return _fade(_buildRootScreen(auth));
+    void doLogout() {
+      auth.logout();
+      _cartNotifier.clear();
+    }
 
-      case AppRoutes.home:
-        return _fade(CustomerHomeScreen(
-          onLogout: () {
-            auth.logout();
-            _cartNotifier.clear();
-          },
-        ));
+switch (settings.name) {
+  case '/':
+    return _fade(_buildRootScreen(auth));
+
+  case AppRoutes.home:
+    return _fade(CustomerHomeScreen(onLogout: doLogout));
 
       case AppRoutes.orders:
-        if (user == null) return _fade(_buildRootScreen(auth));
+        if (!isLoggedIn) return _fade(_buildRootScreen(auth));
         return _fade(const CustomerOrderScreen());
 
       case AppRoutes.profile:
-        if (user == null) return _fade(_buildRootScreen(auth));
+        if (!isLoggedIn) return _fade(_buildRootScreen(auth));
         return _fade(ProfileScreen(
           userId: user.id,
           email: user.email,
-          onLogout: () {
-            auth.logout();
-            _cartNotifier.clear();
-          },
+          onLogout: doLogout,
         ));
 
-      case AppRoutes.about:
+  case AppRoutes.about:
+    return _fade(
+      Builder(
+        builder: (ctx) => Consumer<AuthProvider>(
+          builder: (ctx, auth, _) {
+            final isLoggedIn = auth.user != null;
+
+            return AboutScreen(
+              isGuest: !isLoggedIn,
+              onLogin: isLoggedIn ? null : () => _goLogin(ctx),
+              onJoinNow: isLoggedIn ? null : () => _goRegister(ctx),
+              onLogout: isLoggedIn ? doLogout : null,
+            );
+          },
+        ),
+      ),
+    );
+
       case AppRoutes.contact:
-        return _fade(Builder(
-          builder: (ctx) {
-            final page = settings.name == AppRoutes.about
-                ? AboutScreen(
-                    onLogin: () => _goLogin(ctx),
-                    onJoinNow: () => _goRegister(ctx))
-                : ContactScreen(
-                    onLogin: () => _goLogin(ctx),
-                    onJoinNow: () => _goRegister(ctx));
-            return page;
-          },
-        ));
+        return _fade(Builder(builder: (ctx) => ContactScreen(
+          // ✅ KEY: isGuest is derived from actual auth state, not hardcoded.
+          //    This means navigating to /contact always shows the correct navbar.
+          isGuest:   !isLoggedIn,
+          onLogin:   isLoggedIn ? null : () => _goLogin(ctx),
+          onJoinNow: isLoggedIn ? null : () => _goRegister(ctx),
+          onLogout:  isLoggedIn ? doLogout : null,
+        )));
 
+      // ✅ KEY FIX: /menu now reads auth state and passes isGuest correctly.
+      //    Previously MenuScreen() had no arguments so isGuest defaulted to
+      //    false — meaning ANY navigation to /menu showed logged-in mode,
+      //    even for unauthenticated users coming from Contact or About pages.
       case AppRoutes.menu:
-        return _fade(const MenuScreen());
+        return _fade(Builder(builder: (ctx) => isLoggedIn
+            ? const MenuScreen(isGuest: false)
+            : MenuScreen(
+                isGuest: true,
+                onLoginRequired: () => _goLogin(ctx),
+              )));
 
-      case AppRoutes.cart:
-        return _fade(const CartScreen());
+  case AppRoutes.cart:
+    return _fade(const CartScreen());
 
-      default:
-        return null;
-    }
+  default:
+    return null;
+  }
   }
 
   PageRouteBuilder _fade(Widget page) => PageRouteBuilder(

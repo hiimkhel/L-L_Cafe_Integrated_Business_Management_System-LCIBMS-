@@ -28,10 +28,23 @@ const Color _secondary = Color(0xFFA98258);
 // ─────────────────────────────────────────────────────────────────────────────
 
 class ContactScreen extends StatefulWidget {
+  // ✅ Guest-mode callbacks (shown when not logged in)
   final VoidCallback? onLogin;
   final VoidCallback? onJoinNow;
 
-  const ContactScreen({super.key, this.onLogin, this.onJoinNow});
+  // ✅ Auth state — controls which navbar is shown
+  final bool isGuest;
+
+  // ✅ Logout callback (shown when logged in)
+  final VoidCallback? onLogout;
+
+  const ContactScreen({
+    super.key,
+    this.isGuest = true,
+    this.onLogin,
+    this.onJoinNow,
+    this.onLogout,
+  });
 
   @override
   State<ContactScreen> createState() => _ContactScreenState();
@@ -78,7 +91,6 @@ class _ContactScreenState extends State<ContactScreen> {
 
   /// Opens the location in Google Maps (works on web, Android, iOS)
   Future<void> _openMap() async {
-    // Direct Google Maps URL — works on web, Android and iOS without an API key
     final uri = Uri.parse(
       'https://www.google.com/maps/search/?api=1'
       '&query=$_kLat,$_kLng'
@@ -87,7 +99,6 @@ class _ContactScreenState extends State<ContactScreen> {
     try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {
-      // fallback: open plain maps URL
       final fallback = Uri.parse('https://maps.google.com/?q=$_kLat,$_kLng');
       await launchUrl(fallback, mode: LaunchMode.externalApplication);
     }
@@ -102,12 +113,18 @@ class _ContactScreenState extends State<ContactScreen> {
           const BambooBackground(),
           Column(
             children: [
-              // Guest navbar (landing screen header)
-              GuestNavbar(
-                activeRoute: '/contact',
-                onLogin: widget.onLogin,
-                onJoinNow: widget.onJoinNow,
-              ),
+              // ✅ Show GuestNavbar for guests, CustomerNavbar for logged-in users
+              if (widget.isGuest)
+                GuestNavbar(
+                  activeRoute: '/contact',
+                  onLogin: widget.onLogin,
+                  onJoinNow: widget.onJoinNow,
+                )
+              else
+                CustomerNavbar(
+                  activeRoute: '/contact',
+                  onLogout: widget.onLogout,
+                ),
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
@@ -152,7 +169,6 @@ class _ContactScreenState extends State<ContactScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Page title
         _buildPageTitle(),
         const SizedBox(height: 8),
         const Text(
@@ -164,11 +180,9 @@ class _ContactScreenState extends State<ContactScreen> {
         ),
         const SizedBox(height: 52),
 
-        // Two-column body
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Left: Contact Form
             Expanded(
               flex: 5,
               child: Column(
@@ -181,8 +195,6 @@ class _ContactScreenState extends State<ContactScreen> {
               ),
             ),
             const SizedBox(width: 64),
-
-            // Right: Location info + map + hours
             Expanded(
               flex: 5,
               child: Column(
@@ -300,7 +312,6 @@ class _ContactScreenState extends State<ContactScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Instruction text
             const Text(
               'HAVE QUESTIONS, FEEDBACK, OR WANT TO BOOK A GROUP ORDER?\nFILL OUT THE FORM BELOW AND WE\'LL GET BACK TO YOU AS SOON AS POSSIBLE!',
               style: TextStyle(
@@ -310,7 +321,6 @@ class _ContactScreenState extends State<ContactScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Name + Email row (desktop side-by-side, mobile stacked)
             if (!isMobile)
               Row(
                 children: [
@@ -322,7 +332,7 @@ class _ContactScreenState extends State<ContactScreen> {
             else ...[
               _buildField('NAME', _nameCtrl, 'Full Name...'),
               const SizedBox(height: 16),
-              _buildField('SIGNAL ADDRESS', _emailCtrl, 'email@domain.com', isEmail: true),
+              _buildField('EMAIL ADDRESS', _emailCtrl, 'email@domain.com', isEmail: true),
             ],
 
             const SizedBox(height: 16),
@@ -331,7 +341,6 @@ class _ContactScreenState extends State<ContactScreen> {
             _buildField('MESSAGE SPECIFICATION', _messageCtrl, 'Describe your request...', maxLines: 5),
             const SizedBox(height: 24),
 
-            // Send button
             GestureDetector(
               onTap: _sending ? null : _sendMessage,
               child: Container(
@@ -499,7 +508,6 @@ class _ContactScreenState extends State<ContactScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Static map tile from OpenStreetMap (no API key needed)
             Image.network(
               _buildStaticMapUrl(),
               fit: BoxFit.cover,
@@ -509,8 +517,6 @@ class _ContactScreenState extends State<ContactScreen> {
               },
               errorBuilder: (_, __, ___) => _mapPlaceholder(),
             ),
-
-            // Semi-transparent overlay with tap hint
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -520,8 +526,6 @@ class _ContactScreenState extends State<ContactScreen> {
                 ),
               ),
             ),
-
-            // Pin marker in center
             Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -537,15 +541,10 @@ class _ContactScreenState extends State<ContactScreen> {
                     child: const Icon(Icons.location_on, color: Colors.white, size: 20),
                   ),
                   const SizedBox(height: 4),
-                  Container(
-                    width: 2, height: 8,
-                    color: _primary,
-                  ),
+                  Container(width: 2, height: 8, color: _primary),
                 ],
               ),
             ),
-
-            // Bottom label
             Positioned(
               bottom: 12, left: 0, right: 0,
               child: Center(
@@ -578,9 +577,7 @@ class _ContactScreenState extends State<ContactScreen> {
     );
   }
 
-  /// Builds a static map tile URL using OpenStreetMap tile server (no API key)
   String _buildStaticMapUrl() {
-    // Use a simple tile-based approach: center tile at zoom 16
     const zoom = 16;
     final latRad = _kLat * math.pi / 180;
     final n = math.pow(2, zoom);
