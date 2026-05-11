@@ -11,18 +11,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/core/services/customer/cms_service.dart';
 import 'package:frontend/core/widgets/bamboo_background.dart';
 
-
 const double _kMobile = 768;
 const double _kDesktopMaxWidth = 1280;
 
-// Brand Colors
-const Color _bgBeige = Color(0xFFEFE2C9);
-const Color _bgDark = Color(0xFF2D2A26);
-const Color _primary = Color(0xFF758C6D); // Green
-const Color _secondary = Color(0xFFA98258); // Gold
+const Color _bgBeige   = Color(0xFFEFE2C9);
+const Color _bgDark    = Color(0xFF2D2A26);
+const Color _primary   = Color(0xFF758C6D);
+const Color _secondary = Color(0xFFA98258);
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MODELS & DATA
+// MODELS
 // ─────────────────────────────────────────────────────────────────────────────
 
 class HomeMenuItem {
@@ -40,20 +38,10 @@ class HomeMenuItem {
 }
 
 const _featuredBeverages = <HomeMenuItem>[
-  HomeMenuItem(
-    id: 100, 
-    name: 'Nutella Frappe', 
-    price: 120.00, 
-    imageAsset: null,
-    ),
-  HomeMenuItem(
-    id: 101, 
-    name: 'Red Velvet Frappe', 
-    price: 150.00, 
-    imageAsset: null,
-    ),
-  HomeMenuItem(id: 102, name: 'S\'more', price: 110.00, imageAsset: null),
-  HomeMenuItem(id: 103, name: 'Biscoff', price: 180.00, imageAsset: null),
+  HomeMenuItem(id: 100, name: 'Nutella Frappe',    price: 120.00, imageAsset: null),
+  HomeMenuItem(id: 101, name: 'Red Velvet Frappe', price: 150.00, imageAsset: null),
+  HomeMenuItem(id: 102, name: 'S\'more',            price: 110.00, imageAsset: null),
+  HomeMenuItem(id: 103, name: 'Biscoff',            price: 180.00, imageAsset: null),
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -61,9 +49,7 @@ const _featuredBeverages = <HomeMenuItem>[
 // ─────────────────────────────────────────────────────────────────────────────
 
 class CustomerHomeScreen extends StatefulWidget {
-  
   final VoidCallback? onLogout;
-
   const CustomerHomeScreen({super.key, this.onLogout});
 
   @override
@@ -83,38 +69,20 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   void _logout(BuildContext ctx) {
-
-    if (widget.onLogout != null) {
-      widget.onLogout!();
-    }
+    widget.onLogout?.call();
     Navigator.of(ctx).pushNamedAndRemoveUntil('/', (route) => false);
   }
 
-   Future<void> submitReview(int stars, String reviewText) async {
+  Future<void> submitReview(int stars, String reviewText) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-
-      // Debug: print ALL stored keys------------------------------------------------------------------------
-      print("ALL PREFS KEYS: ${prefs.getKeys()}");
-      print("user_id value: ${prefs.getInt('user_id')}");
-      print("token value: ${prefs.getString('token')}");
-
-      final userId =
-          prefs.getInt('user_id') ??
-          int.tryParse(
-            prefs.getString('user_id_str') ?? '',
-          ); //--------------------------------------------
-
-      print("USER ID: $userId");
-      print("STARS: $stars");
-      print("TEXT: $reviewText");
+      final userId = prefs.getInt('user_id') ??
+          int.tryParse(prefs.getString('user_id_str') ?? '');
 
       if (userId == null) {
         setState(() => _msg = "Not logged in.");
         return;
       }
-
-      print("SENDING REVIEW REQUEST...");
 
       final response = await http.post(
         Uri.parse('http://localhost:3006/api/reviews/add-review'),
@@ -126,33 +94,25 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         }),
       );
 
-      print("STATUS: ${response.statusCode}");
-      print("BODY: ${response.body}");
-
       final data = jsonDecode(response.body);
 
-      //------------------------------------------------------------------not working validation----------------------------------------------
       if (response.statusCode == 200 || response.statusCode == 201) {
         _ctrl.clear();
         setState(() {
           _sent = true;
           _stars = 4;
-          _msg =
-              stars >= 4
-                  ? '✨ Great! Thank you for the positive feedback!'
-                  : '🙏 Thank you! We\'ll work on improving your experience.';
+          _msg = stars >= 4
+              ? '✨ Great! Thank you for the positive feedback!'
+              : '🙏 Thank you! We\'ll work on improving your experience.';
         });
       } else {
-        setState(() {
-          _msg = data['message'] ?? "Failed: ${response.body}";
-        });
+        setState(() => _msg = data['message'] ?? "Failed: ${response.body}");
       }
     } catch (e) {
-      print("ERROR TYPE: ${e.runtimeType}");
-      print("FULL ERROR: $e");
       setState(() => _msg = "Error: $e");
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final cart = CartProvider.of(context);
@@ -164,72 +124,51 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         notifCount: 1,
         onLogout: () => _logout(context),
         onCart: () => Navigator.pushNamed(context, '/cart'),
-        onNotif: () { ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text("Notifications clicked")),
-  );},
+        onNotif: () {},
         onProfile: () {},
       ),
       body: Stack(
         children: [
-          // Moving Bamboo Background
           const BambooBackground(),
-
           SingleChildScrollView(
             child: Column(
               children: [
                 Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: _kDesktopMaxWidth,
-                    ),
+                    constraints: const BoxConstraints(maxWidth: _kDesktopMaxWidth),
                     child: Column(
                       children: [
-                        const _MainHero(),
+                        // ✅ Pass navigator so BROWSE MENU button works
+                        _MainHero(
+                          onBrowseMenu: () =>
+                              Navigator.pushNamed(context, '/menu'),
+                        ),
                         const _PromoSection(),
                         const _FeaturedBeveragesSection(),
+                        // ✅ Hoverable stars review section
                         _ReviewFormSection(
                           stars: _stars,
                           ctrl: _ctrl,
                           sent: _sent,
                           msg: _msg,
-                          onStars:
-                              (s) => setState(() {
-                                _stars = s;
-                                _sent = false;
-                                _msg = '';
-                              }),
+                          onStars: (s) => setState(() {
+                            _stars = s;
+                            _sent = false;
+                            _msg = '';
+                          }),
                           onSubmit: () async {
                             final text = _ctrl.text.trim();
-
                             if (_stars == 0) {
-                              setState(
-                                () => _msg = "Please select rating stars.",
-                              );
+                              setState(() => _msg = "Please select rating stars.");
                               return;
                             }
-
                             if (text.isEmpty) {
-                              setState(
-                                () => _msg = "Please write a review first.",
-                              );
+                              setState(() => _msg = "Please write a review first.");
                               return;
                             }
-
-                            //------------------------------------------------validation---------------------------------------------------
-                            if (_stars >= 4) {
-                              setState(
-                                () =>
-                                    _msg =
-                                        "✨ Great! Thank you for the positive feedback!",
-                              );
-                            } else {
-                              setState(
-                                () =>
-                                    _msg =
-                                        "🙏 Thank you! We'll work on improving your experience.",
-                              );
-                            }
-
+                            setState(() => _msg = _stars >= 4
+                                ? '✨ Great! Thank you for the positive feedback!'
+                                : '🙏 Thank you! We\'ll work on improving your experience.');
                             await submitReview(_stars, text);
                           },
                         ),
@@ -248,7 +187,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// REUSABLE IMAGE SLOT
+// IMAGE SLOT
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _ImgSlot extends StatelessWidget {
@@ -269,147 +208,128 @@ class _ImgSlot extends StatelessWidget {
         borderRadius: radius,
         border: Border.all(color: _secondary.withOpacity(0.05)),
       ),
-      child:
-          asset != null
-              ? ClipRRect(
-                borderRadius: radius,
-                child: Image.asset(asset!, fit: BoxFit.cover),
-              )
-              : Stack(
-                alignment: Alignment.center,
-                children: [
-                  Opacity(
-                    opacity: 0.1,
-                    child: GridView.builder(
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 4,
-                          ),
-                      itemCount: 16,
-                      itemBuilder:
-                          (context, index) => Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(color: _secondary, width: 0.5),
-                            ),
-                          ),
-                    ),
+      child: asset != null
+          ? ClipRRect(
+              borderRadius: radius,
+              child: Image.asset(asset!, fit: BoxFit.cover),
+            )
+          : Stack(alignment: Alignment.center, children: [
+              Opacity(
+                opacity: 0.1,
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4),
+                  itemCount: 16,
+                  itemBuilder: (_, __) => Container(
+                    decoration: BoxDecoration(
+                        border: Border.all(color: _secondary, width: 0.5)),
                   ),
-                  Icon(
-                    Icons.image_outlined,
-                    color: _primary.withOpacity(0.3),
-                    size: 36,
-                  ),
-                ],
+                ),
               ),
+              Icon(Icons.image_outlined,
+                  color: _primary.withOpacity(0.3), size: 36),
+            ]),
     );
   }
 }
 
-
 // ─────────────────────────────────────────────────────────────────────────────
-// HERO SECTION
+// HERO SECTION  — ✅ "BROWSE MENU" button navigates to /menu
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _MainHero extends StatelessWidget {
-  
-  const _MainHero();
+  /// Called when the BROWSE MENU button is tapped.
+  final VoidCallback onBrowseMenu;
+
+  const _MainHero({required this.onBrowseMenu});
+
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < _kMobile;
+    return LayoutBuilder(builder: (context, constraints) {
+      final isMobile = constraints.maxWidth < _kMobile;
 
       return Padding(
-          padding: EdgeInsets.symmetric(vertical: isMobile ? 32 : 64),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                'L&L CAFE',
-                textAlign: TextAlign.center,
+        padding: EdgeInsets.symmetric(vertical: isMobile ? 32 : 64),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text.rich(
+              TextSpan(
+                text: 'L&L ',
                 style: TextStyle(
                   fontFamily: 'Urbanist',
                   fontWeight: FontWeight.w900,
                   fontSize: isMobile ? 48 : 128,
                   height: 1.0,
                   letterSpacing: -2.0,
-                  color: _bgDark,
+                  color: _bgDark, // Color for "L&L "
                 ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'MAKING GOOD FOOD FOR PEOPLE\'S HAPPINESS.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Urbanist',
-                  fontWeight: FontWeight.w900,
-                  fontSize: isMobile ? 10 : 20,
-                  letterSpacing: isMobile ? 2.0 : 4.0,
-                  color: _secondary.withOpacity(0.8),
-                ),
-              ),
-              SizedBox(height: isMobile ? 24 : 40),
-
-              GestureDetector(
-                onTap: () {},
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isMobile ? 40 : 64,
-                    vertical: isMobile ? 16 : 24,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _primary,
-                    border: Border.all(color: _bgDark, width: 1.5),
-                    borderRadius: BorderRadius.circular(2),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: _bgDark,
-                        blurRadius: 0,
-                        offset: Offset(4, 4),
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    'ORDER YOUR IDEAL',
+                children: [
+                  TextSpan(
+                    text: 'CAFE',
                     style: TextStyle(
-                      fontFamily: 'Urbanist',
-                      fontWeight: FontWeight.w900,
-                      fontSize: isMobile ? 14 : 16,
-                      letterSpacing: 2.0,
-                      color: Colors.white,
+                      color: AppColors.secondary, // Color for "CAFE"
                     ),
                   ),
+                ],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: isMobile ? 24 : 40),
+
+            // ✅ Changed label to BROWSE MENU and wired onBrowseMenu callback
+            GestureDetector(
+              onTap: onBrowseMenu,
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 40 : 64,
+                  vertical: isMobile ? 16 : 24,
+                ),
+                decoration: BoxDecoration(
+                  color: _primary,
+                  border: Border.all(color: _bgDark, width: 1.5),
+                  borderRadius: BorderRadius.circular(2),
+                  boxShadow: const [
+                    BoxShadow(
+                        color: _bgDark, blurRadius: 0, offset: Offset(4, 4)),
+                  ],
+                ),
+                child: Text(
+                  'BROWSE MENU',
+                  style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: isMobile ? 14 : 16,
+                    letterSpacing: 2.0,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-            ],
-          ),
-        );
-      },
-    );
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PROMO BANNERS
+// PROMO SECTION  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
-  String? getImageUrl(dynamic data) {
-    try {
-      final image = data['image'];
-      if (image == null) return null;
 
-      // Strapi v5 flattened structure
-      final String? path = image['url'];
-
-      if (path == null) return null;
-
-      // Always ensure the path starts with /
-      return path.startsWith('http') ? path : "http://localhost:1337$path";
-    } catch (e) {
-      debugPrint("Error parsing image URL: $e");
-      return null;
-    }
+String? getImageUrl(dynamic data) {
+  try {
+    final image = data['image'];
+    if (image == null) return null;
+    final String? path = image['url'];
+    if (path == null) return null;
+    return path.startsWith('http') ? path : "http://localhost:1337$path";
+  } catch (e) {
+    debugPrint("Error parsing image URL: $e");
+    return null;
   }
+}
 
 class _PromoSection extends StatelessWidget {
   const _PromoSection();
@@ -422,43 +342,33 @@ class _PromoSection extends StatelessWidget {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
-
         final promos = snapshot.data as List;
-
         final primary = promos.firstWhere(
-          (p) => p['type'] == 'primary',
-          orElse: () => null,
-        );
-
+            (p) => p['type'] == 'primary', orElse: () => null);
         final secondary = promos.firstWhere(
-          (p) => p['type'] == 'secondary',
-          orElse: () => null,
-        );
+            (p) => p['type'] == 'secondary', orElse: () => null);
 
         return LayoutBuilder(builder: (_, c) {
           final isMobile = c.maxWidth < 768;
-
           return Padding(
             padding: EdgeInsets.all(isMobile ? 24 : 75),
             child: isMobile
-                ? Column(
-                    children: [
-                      if (primary != null)
-                        PromoCard(data: primary, isPrimary: true),
-                      const SizedBox(height: 20),
-                      if (secondary != null)
-                        PromoCard(data: secondary, isPrimary: false),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      if (primary != null)
-                        Expanded(child: PromoCard(data: primary, isPrimary: true)),
-                      const SizedBox(width: 20),
-                      if (secondary != null)
-                        Expanded(child: PromoCard(data: secondary, isPrimary: false)),
-                    ],
-                  ),
+                ? Column(children: [
+                    if (primary != null)
+                      PromoCard(data: primary, isPrimary: true),
+                    const SizedBox(height: 20),
+                    if (secondary != null)
+                      PromoCard(data: secondary, isPrimary: false),
+                  ])
+                : Row(children: [
+                    if (primary != null)
+                      Expanded(
+                          child: PromoCard(data: primary, isPrimary: true)),
+                    const SizedBox(width: 20),
+                    if (secondary != null)
+                      Expanded(
+                          child: PromoCard(data: secondary, isPrimary: false)),
+                  ]),
           );
         });
       },
@@ -466,34 +376,26 @@ class _PromoSection extends StatelessWidget {
   }
 }
 
-
 class PromoCard extends StatelessWidget {
   final dynamic data;
   final bool isPrimary;
-
-  const PromoCard({
-    super.key,
-    required this.data,
-    required this.isPrimary,
-  });
+  const PromoCard({super.key, required this.data, required this.isPrimary});
 
   String extractText(dynamic desc) {
     try {
       if (desc == null || desc is! List || desc.isEmpty) return '';
-
       return desc[0]['children'][0]['text'] ?? '';
-    } catch (e) {
+    } catch (_) {
       return '';
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final title = data['Title'] ?? '';
+    final title       = data['Title'] ?? '';
     final description = extractText(data['description']);
-    final buttonText = data['buttonText'] ?? '';
-    final imageUrl = getImageUrl(data);
-
+    final buttonText  = data['buttonText'] ?? '';
+    final imageUrl    = getImageUrl(data);
 
     return Container(
       height: 260,
@@ -505,9 +407,7 @@ class PromoCard extends StatelessWidget {
                 image: NetworkImage(imageUrl),
                 fit: BoxFit.cover,
                 colorFilter: ColorFilter.mode(
-                  Colors.white.withOpacity(0.4), 
-                  BlendMode.dstIn,
-                ),
+                    Colors.white.withOpacity(0.4), BlendMode.dstIn),
               )
             : null,
         color: Colors.grey,
@@ -519,61 +419,49 @@ class PromoCard extends StatelessWidget {
           gradient: const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.black54,
-              Colors.black26,
-            ],
+            colors: [Colors.black54, Colors.black26],
           ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title.toUpperCase(),
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 20,
-                color: Colors.white,
-              ),
-            ),
+            Text(title.toUpperCase(),
+                style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 20,
+                    color: Colors.white)),
             const SizedBox(height: 12),
-            Text(
-              description,
-              style: const TextStyle(color: Colors.white70),
-            ),
+            Text(description,
+                style: const TextStyle(color: Colors.white70)),
             const Spacer(),
             GestureDetector(
-  onTap: () {
-    final route = isPrimary ? '/contact' : '/menu';
-    Navigator.pushNamed(context, route);
-  },
-  child: Container(
-    width: 160,
-    padding: const EdgeInsets.symmetric(
-      vertical: 12,
-      horizontal: 16,
-    ),
-    decoration: BoxDecoration(
-      color: isPrimary ? Colors.white : AppColors.primary,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: isPrimary ? _primary : Colors.white,
-        width: 1.5,
-      ),
-    ),
-    child: Text(
-      buttonText,
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontFamily: 'Urbanist',
-        fontWeight: FontWeight.w900,
-        fontSize: 12,
-        letterSpacing: 1.5,
-        color: isPrimary ? _primary : Colors.white,
-      ),
-    ),
-  ),
-)
+              onTap: () => Navigator.pushNamed(
+                  context, isPrimary ? '/contact' : '/menu'),
+              child: Container(
+                width: 160,
+                padding: const EdgeInsets.symmetric(
+                    vertical: 12, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: isPrimary ? Colors.white : AppColors.primary,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isPrimary ? _primary : Colors.white,
+                    width: 1.5,
+                  ),
+                ),
+                child: Text(
+                  buttonText,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                    letterSpacing: 1.5,
+                    color: isPrimary ? _primary : Colors.white,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -582,184 +470,142 @@ class PromoCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FEATURED BEVERAGES
+// FEATURED BEVERAGES  (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _FeaturedBeveragesSection extends StatelessWidget {
   const _FeaturedBeveragesSection();
+
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (_, c) {
-        final isMobile = c.maxWidth < _kMobile;
-        final ph = isMobile ? 24.0 : 75.0; 
+    return LayoutBuilder(builder: (_, c) {
+      final isMobile = c.maxWidth < _kMobile;
+      final ph = isMobile ? 24.0 : 75.0;
 
-              return Padding(
-          padding: EdgeInsets.fromLTRB(ph, isMobile ? 40 : 80, ph, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: 'FEATURED ',
-                            style: TextStyle(
-                              fontFamily: 'Urbanist',
-                              fontWeight: FontWeight.w900,
-                              fontSize: isMobile ? 20 : 30,
-                              letterSpacing: -1.0,
-                              color: _bgDark,
-                            ),
-                          ),
-                          TextSpan(
-                            text: 'BEVERAGES',
-                            style: TextStyle(
-                              fontFamily: 'Urbanist',
-                              fontWeight: FontWeight.w900,
-                              fontSize: isMobile ? 20 : 30,
-                              letterSpacing: -1.0,
-                              color: _primary,
-                            ),
-                          ),
-                        ],
+      return Padding(
+        padding: EdgeInsets.fromLTRB(ph, isMobile ? 40 : 80, ph, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  RichText(
+                    text: TextSpan(children: [
+                      TextSpan(
+                        text: 'FEATURED ',
+                        style: TextStyle(
+                          fontFamily: 'Urbanist',
+                          fontWeight: FontWeight.w900,
+                          fontSize: isMobile ? 20 : 30,
+                          letterSpacing: -1.0,
+                          color: _bgDark,
+                        ),
                       ),
-                    ),
-                    Row(
-                      children: [
-                        Text(
-                          'SEE ALL',
+                      TextSpan(
+                        text: 'BEVERAGES',
+                        style: TextStyle(
+                          fontFamily: 'Urbanist',
+                          fontWeight: FontWeight.w900,
+                          fontSize: isMobile ? 20 : 30,
+                          letterSpacing: -1.0,
+                          color: _primary,
+                        ),
+                      ),
+                    ]),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.pushNamed(context, '/menu'),
+                    child: Row(children: [
+                      Text('SEE ALL',
                           style: TextStyle(
                             fontFamily: 'Urbanist',
                             fontWeight: FontWeight.w900,
                             fontSize: isMobile ? 10 : 12,
                             letterSpacing: isMobile ? 2.0 : 3.0,
                             color: _secondary,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.chevron_right,
-                          size: 18,
-                          color: _secondary,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              isMobile
-                  ? Column(
-                    children:
-                        _featuredBeverages
-                            .map(
-                              (i) => Padding(
-                                padding: const EdgeInsets.only(bottom: 24),
-                                child: _MenuListRow(item: i),
-                              ),
-                            )
-                            .toList(),
-                  )
-                  : LayoutBuilder(
-                    builder: (_, cc) {
-                      final gap = 32.0;
-                      final cardW = (cc.maxWidth - gap * 3) / 4;
-                      return Wrap(
-                        spacing: gap,
-                        runSpacing: gap,
-                        children:
-                            _featuredBeverages
-                                .map(
-                                  (i) => _MenuGridCard(item: i, width: cardW),
-                                )
-                                .toList(),
-                      );
-                    },
+                          )),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.chevron_right,
+                          size: 18, color: _secondary),
+                    ]),
                   ),
-            ],
-          ),
-        );
-      },
-    );
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            isMobile
+                ? Column(
+                    children: _featuredBeverages
+                        .map((i) => Padding(
+                            padding: const EdgeInsets.only(bottom: 24),
+                            child: _MenuListRow(item: i)))
+                        .toList(),
+                  )
+                : LayoutBuilder(builder: (_, cc) {
+                    const gap = 32.0;
+                    final cardW = (cc.maxWidth - gap * 3) / 4;
+                    return Wrap(
+                      spacing: gap,
+                      runSpacing: gap,
+                      children: _featuredBeverages
+                          .map((i) => _MenuGridCard(item: i, width: cardW))
+                          .toList(),
+                    );
+                  }),
+          ],
+        ),
+      );
+    });
   }
 }
 
 class _MenuListRow extends StatelessWidget {
   final HomeMenuItem item;
   const _MenuListRow({required this.item});
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.15),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: _ImgSlot(
-            width: 80,
-            height: 80,
-            asset: item.imageAsset,
-            borderRadius: BorderRadius.circular(16),
-          ),
+    return Row(children: [
+      Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 15,
+              offset: const Offset(0, 8))],
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item.name.toUpperCase(),
-                style: const TextStyle(
-                  fontFamily: 'Urbanist',
-                  fontWeight: FontWeight.w900,
-                  fontSize: 14,
-                  color: _bgDark,
-                  letterSpacing: 0,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                item.display,
-                style: const TextStyle(
-                  fontFamily: 'Urbanist',
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                  color: _primary,
-                ),
-              ),
-            ],
-          ),
+        child: _ImgSlot(
+            width: 80, height: 80, asset: item.imageAsset,
+            borderRadius: BorderRadius.circular(16)),
+      ),
+      const SizedBox(width: 16),
+      Expanded(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(item.name.toUpperCase(),
+              style: const TextStyle(
+                  fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                  fontSize: 14, color: _bgDark)),
+          const SizedBox(height: 4),
+          Text(item.display,
+              style: const TextStyle(
+                  fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                  fontSize: 16, color: _primary)),
+        ]),
+      ),
+      Container(
+        width: 40, height: 40,
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          border: Border.all(color: _secondary.withOpacity(0.3), width: 1.5),
+          borderRadius: BorderRadius.circular(12),
         ),
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            border: Border.all(color: _secondary.withOpacity(0.3), width: 1.5),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(
-            Icons.shopping_cart_outlined,
-            color: _secondary,
-            size: 20,
-          ),
-        ),
-      ],
-    );
+        child: const Icon(Icons.shopping_cart_outlined,
+            color: _secondary, size: 20),
+      ),
+    ]);
   }
 }
 
@@ -767,6 +613,7 @@ class _MenuGridCard extends StatelessWidget {
   final HomeMenuItem item;
   final double width;
   const _MenuGridCard({required this.item, required this.width});
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -775,58 +622,35 @@ class _MenuGridCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _ImgSlot(
-            width: width,
-            height: width,
-            asset: item.imageAsset,
-            borderRadius: BorderRadius.circular(40),
-          ),
+              width: width, height: width, asset: item.imageAsset,
+              borderRadius: BorderRadius.circular(40)),
           const SizedBox(height: 20),
-          Text(
-            item.name.toUpperCase(),
-            style: const TextStyle(
-              fontFamily: 'Urbanist',
-              fontWeight: FontWeight.w900,
-              fontSize: 18,
-              color: _bgDark,
-              letterSpacing: -0.5,
-            ),
-          ),
+          Text(item.name.toUpperCase(),
+              style: const TextStyle(
+                  fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                  fontSize: 18, color: _bgDark, letterSpacing: -0.5)),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.only(top: 12),
             decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(
-                  color: _secondary.withOpacity(0.1),
-                  style: BorderStyle.solid,
-                ),
-              ),
-            ),
+                border: Border(
+                    top: BorderSide(
+                        color: _secondary.withOpacity(0.1),
+                        style: BorderStyle.solid))),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  item.display,
-                  style: const TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 24,
-                    color: _primary,
-                    letterSpacing: -0.5,
-                  ),
-                ),
+                Text(item.display,
+                    style: const TextStyle(
+                        fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                        fontSize: 24, color: _primary, letterSpacing: -0.5)),
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 44, height: 44,
                   decoration: BoxDecoration(
-                    color: _bgBeige,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.shopping_cart_outlined,
-                    color: _secondary,
-                    size: 20,
-                  ),
+                      color: _bgBeige,
+                      borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.shopping_cart_outlined,
+                      color: _secondary, size: 20),
                 ),
               ],
             ),
@@ -838,10 +662,10 @@ class _MenuGridCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// REVIEW FORM
+// REVIEW FORM  — ✅ Hoverable stars using MouseRegion
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ReviewFormSection extends StatelessWidget {
+class _ReviewFormSection extends StatefulWidget {
   final int stars;
   final TextEditingController ctrl;
   final bool sent;
@@ -859,209 +683,206 @@ class _ReviewFormSection extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (_, c) {
-        final isMobile = c.maxWidth < _kMobile;
-        final ph = isMobile ? 24.0 : 75.0;
+  State<_ReviewFormSection> createState() => _ReviewFormSectionState();
+}
 
-        return Container(
-          margin: EdgeInsets.fromLTRB(
-            ph,
-            isMobile ? 40 : 80,
-            ph,
-            isMobile ? 40 : 80,
-          ),
-          padding: EdgeInsets.fromLTRB(
-            isMobile ? 24 : 48,
-            isMobile ? 32 : 48,
-            isMobile ? 24 : 48,
-            0,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: _primary.withOpacity(0.08)),
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: const [
-              BoxShadow(
+class _ReviewFormSectionState extends State<_ReviewFormSection> {
+  // ✅ -1 means no hover; 0–4 means hovering that star index
+  int _hoverIndex = -1;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (_, c) {
+      final isMobile = c.maxWidth < _kMobile;
+      final ph = isMobile ? 24.0 : 75.0;
+
+      // Displayed star count: hover takes precedence over selected
+      final displayStars = _hoverIndex >= 0 ? _hoverIndex + 1 : widget.stars;
+
+      return Container(
+        margin: EdgeInsets.fromLTRB(ph, isMobile ? 40 : 80, ph, isMobile ? 40 : 80),
+        padding: EdgeInsets.fromLTRB(
+          isMobile ? 24 : 48,
+          isMobile ? 32 : 48,
+          isMobile ? 24 : 48,
+          0,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: _primary.withOpacity(0.08)),
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: const [
+            BoxShadow(
                 color: Color(0x0A000000),
                 blurRadius: 30,
-                offset: Offset(0, 15),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'RATE YOUR ',
-                      style: const TextStyle(
-                        fontFamily: 'Urbanist',
-                        fontWeight: FontWeight.w900,
-                        fontSize: 24,
-                        letterSpacing: -1.0,
-                        color: _bgDark,
-                      ),
-                    ),
-                    TextSpan(
-                      text: 'EXPERIENCE',
-                      style: const TextStyle(
-                        fontFamily: 'Urbanist',
-                        fontWeight: FontWeight.w900,
-                        fontSize: 24,
-                        letterSpacing: -1.0,
-                        color: _primary,
-                      ),
-                    ),
-                  ],
+                offset: Offset(0, 15)),
+          ],
+        ),
+        child: Column(
+          children: [
+            RichText(
+              textAlign: TextAlign.center,
+              text: const TextSpan(children: [
+                TextSpan(
+                  text: 'RATE YOUR ',
+                  style: TextStyle(
+                    fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                    fontSize: 24, letterSpacing: -1.0, color: _bgDark),
                 ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'WE HIGHLY VALUE YOUR FEEDBACK!\nKINDLY TAKE A MOMENT\nTO RATE YOUR EXPERIENCE AND PROVIDE US WITH YOUR VALUABLE FEEDBACK.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Urbanist',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 10,
-                  letterSpacing: 0.5,
-                  height: 1.8,
-                  color: _primary,
+                TextSpan(
+                  text: 'EXPERIENCE',
+                  style: TextStyle(
+                    fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                    fontSize: 24, letterSpacing: -1.0, color: _primary),
                 ),
-              ),
-              const SizedBox(height: 24),
+              ]),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'WE HIGHLY VALUE YOUR FEEDBACK!\nKINDLY TAKE A MOMENT\nTO RATE YOUR EXPERIENCE AND PROVIDE US WITH YOUR VALUABLE FEEDBACK.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Urbanist', fontWeight: FontWeight.w600,
+                fontSize: 10, letterSpacing: 0.5, height: 1.8, color: _primary),
+            ),
+            const SizedBox(height: 24),
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  5,
-                  (i) => GestureDetector(
-                    onTap: () => onStars(i + 1),
-                    child: Padding(
+            // ✅ Hoverable star row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(5, (i) {
+                final isLit = i < displayStars;
+                return MouseRegion(
+                  // When cursor enters a star, highlight up to that star
+                  onEnter: (_) => setState(() => _hoverIndex = i),
+                  // When cursor leaves the whole star row, reset hover
+                  onExit:  (_) => setState(() => _hoverIndex = -1),
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () => widget.onStars(i + 1),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 120),
                       padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Icon(
-                        i < stars
-                            ? Icons.star_rounded
-                            : Icons.star_outline_rounded,
-                        color: i < stars ? _primary : _primary.withOpacity(0.2),
-                        size: 40,
+                      child: AnimatedScale(
+                        // Slightly enlarge the hovered star
+                        scale: (_hoverIndex == i) ? 1.25 : 1.0,
+                        duration: const Duration(milliseconds: 120),
+                        child: Icon(
+                          isLit
+                              ? Icons.star_rounded
+                              : Icons.star_outline_rounded,
+                          // Brighter when hovering, dimmer when not selected
+                          color: isLit
+                              ? (_hoverIndex >= 0
+                                  ? _secondary          // warm gold on hover
+                                  : _primary)           // green when just selected
+                              : _primary.withOpacity(0.2),
+                          size: 40,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 24),
+                );
+              }),
+            ),
 
-              TextField(
-                controller: ctrl,
-                maxLines: 4,
-                maxLength: 500,
-                decoration: InputDecoration(
-                  hintText: 'TELL US ABOUT YOUR EXPERIENCE!',
-                  hintStyle: TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                    color: _primary.withOpacity(0.3),
-                  ),
-                  filled: true,
-                  fillColor: _bgBeige.withOpacity(0.3),
-                  border: OutlineInputBorder(
+            const SizedBox(height: 24),
+
+            TextField(
+              controller: widget.ctrl,
+              maxLines: 4,
+              maxLength: 500,
+              decoration: InputDecoration(
+                hintText: 'TELL US ABOUT YOUR EXPERIENCE!',
+                hintStyle: TextStyle(
+                  fontFamily: 'Urbanist', fontWeight: FontWeight.w700,
+                  fontSize: 12, color: _primary.withOpacity(0.3)),
+                filled: true,
+                fillColor: _bgBeige.withOpacity(0.3),
+                border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: _primary.withOpacity(0.1)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
+                    borderSide:
+                        BorderSide(color: _primary.withOpacity(0.1))),
+                enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: _primary.withOpacity(0.1)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
+                    borderSide:
+                        BorderSide(color: _primary.withOpacity(0.1))),
+                focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: _primary, width: 1.5),
-                  ),
-                  contentPadding: const EdgeInsets.all(20),
-                  counterStyle: TextStyle(
+                    borderSide:
+                        const BorderSide(color: _primary, width: 1.5)),
+                contentPadding: const EdgeInsets.all(20),
+                counterStyle: TextStyle(
                     fontFamily: 'Urbanist',
                     fontSize: 10,
-                    color: _primary.withOpacity(0.5),
-                  ),
-                ),
+                    color: _primary.withOpacity(0.5)),
               ),
-              const SizedBox(height: 20),
+            ),
+            const SizedBox(height: 20),
 
-              GestureDetector(
-                onTap: sent ? null : onSubmit,
-                //onTap: onSubmit,
-                child: Container(
-                  width: isMobile ? double.infinity : 300,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: sent ? _primary.withOpacity(0.3) : _primary,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow:
-                        sent
-                            ? []
-                            : [
-                              BoxShadow(
-                                color: _primary.withOpacity(0.3),
-                                blurRadius: 15,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.send_rounded, color: Colors.white, size: 16),
-                      SizedBox(width: 10),
-                      Text(
-                        'SEND REVIEW',
+            GestureDetector(
+              onTap: widget.sent ? null : widget.onSubmit,
+              child: Container(
+                width: isMobile ? double.infinity : 300,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: widget.sent
+                      ? _primary.withOpacity(0.3)
+                      : _primary,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: widget.sent
+                      ? []
+                      : [BoxShadow(
+                          color: _primary.withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5))],
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.send_rounded, color: Colors.white, size: 16),
+                    SizedBox(width: 10),
+                    Text('SEND REVIEW',
                         style: TextStyle(
                           fontFamily: 'Urbanist',
                           fontWeight: FontWeight.w900,
                           fontSize: 13,
                           letterSpacing: 2.5,
                           color: Colors.white,
-                        ),
-                      ),
-                    ],
+                        )),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            if (widget.msg.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24, vertical: 14),
+                decoration: BoxDecoration(
+                  color: _secondary.withOpacity(0.1),
+                  border: Border.all(color: _secondary.withOpacity(0.2)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  widget.msg,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                    color: _secondary,
                   ),
                 ),
               ),
 
-              const SizedBox(height: 16),
-
-              if (msg.isNotEmpty)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _secondary.withOpacity(0.1),
-                    border: Border.all(color: _secondary.withOpacity(0.2)),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    msg,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontFamily: 'Urbanist',
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12,
-                      color: _secondary,
-                    ),
-                  ),
-                ),
-
-              const SizedBox(height: 48),
-            ],
-          ),
-        );
-      },
-    );
+            const SizedBox(height: 48),
+          ],
+        ),
+      );
+    });
   }
 }
