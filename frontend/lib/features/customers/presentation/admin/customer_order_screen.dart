@@ -769,15 +769,15 @@ class _DesktopOrderCard extends StatelessWidget {
                     Text(
                       'TIMESTAMP',
                       style: TextStyle(
-                        fontSize: 9,
+                        fontSize: 10,
                         letterSpacing: 1,
-                        color: _primary.withOpacity(0.5),
+                        color: _primary.withOpacity(0.9),
                       ),
                     ),
                     Text(
                       order.timestamp!,
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: _bgDark,
                       ),
@@ -805,17 +805,17 @@ class _DesktopOrderCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'SITE PROTOCOL',
+                      'ORDER TYPE',
                       style: TextStyle(
-                        fontSize: 9,
+                        fontSize: 10,
                         letterSpacing: 1,
-                        color: _primary.withOpacity(0.5),
+                        color: _primary.withOpacity(0.8),
                       ),
                     ),
                     Text(
                       order.method!,
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: _bgDark,
                       ),
@@ -832,9 +832,9 @@ class _DesktopOrderCard extends StatelessWidget {
             Text(
               'CART ITEMS',
               style: TextStyle(
-                fontSize: 9,
+                fontSize: 10,
                 letterSpacing: 1,
-                color: _primary.withOpacity(0.5),
+                color: _primary.withOpacity(0.8),
               ),
             ),
             const SizedBox(height: 6),
