@@ -675,9 +675,9 @@ class _DesktopOrderCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'REFERENCE CODE',
+                      'ORDER ID REFERENCE',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 12,
                         letterSpacing: 1.2,
                         color: _primary.withOpacity(0.65),
                       ),
@@ -686,7 +686,7 @@ class _DesktopOrderCard extends StatelessWidget {
                     Text(
                       '#${order.id}',
                       style: const TextStyle(
-                        fontSize: 22,
+                        fontSize: 26,
                         fontWeight: FontWeight.bold,
                         color: _bgDark,
                         letterSpacing: 0.5,
@@ -710,7 +710,7 @@ class _DesktopOrderCard extends StatelessWidget {
                   badgeLabel,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2,
                   ),
@@ -724,17 +724,17 @@ class _DesktopOrderCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'INVESTMENT TOTAL',
+                    'TOTAL ORDER COST',
                     style: TextStyle(
-                      fontSize: 9,
-                      letterSpacing: 1,
-                      color: _primary.withOpacity(0.5),
+                      fontSize: 11,
+                      letterSpacing: 0.5,
+                      color: _primary.withOpacity(0.8),
                     ),
                   ),
                   Text(
                     '₱${order.total.toStringAsFixed(2)}',
                     style: const TextStyle(
-                      fontSize: 26,
+                      fontSize: 32,
                       fontWeight: FontWeight.bold,
                       color: _secondary,
                     ),
@@ -853,48 +853,51 @@ class _DesktopOrderCard extends StatelessWidget {
           ],
 
           // ───────────────── Cancel Button ─────────────────
-        if (canCancel && onCancel != null) ...[
-          const SizedBox(height: 20),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Tooltip(
-              message: 'Cancel this order',
-              child: ElevatedButton.icon(
-                onPressed: onCancel,
-                icon: const Icon(
-                  Icons.close_rounded,
-                  size: 18,
-                  color: Colors.white, // Explicit icon color
-                ),
-                label: const Text(
-                  'CANCEL ORDER',
-                  style: TextStyle(
-                    color: Colors.white, // Explicit text color
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.1,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFD9534F),
-                  foregroundColor: Colors.white, // Applies to icon and text by default
-                  elevation: 0,
-                  shadowColor: Colors.transparent,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 22,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ).copyWith(
-                  overlayColor: WidgetStateProperty.all(
-                    Colors.white.withOpacity(0.08),
-                  ),
-                ),
-              ),
-            ),
+        // ───────────────── Cancel Button ─────────────────
+if (canCancel && onCancel != null) ...[
+  const SizedBox(height: 24),
+  Align(
+    alignment: Alignment.centerRight,
+    child: SizedBox(
+      height: 48,
+      child: ElevatedButton.icon(
+        onPressed: onCancel,
+        icon: const Icon(
+          Icons.close_rounded,
+          size: 18,
+          color: Colors.white,
+        ),
+        label: const Text(
+          'CANCEL ORDER',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.2,
+            color: Colors.white,
           ),
-        ],
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFD9534F),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 0,
+          ),
+          minimumSize: const Size(180, 48), // Boxy fixed size
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10), // Less rounded = boxier
+          ),
+        ).copyWith(
+          overlayColor: WidgetStateProperty.all(
+            Colors.white.withOpacity(0.08),
+          ),
+        ),
+      ),
+    ),
+  ),
+],
         ],
       ),
     );
