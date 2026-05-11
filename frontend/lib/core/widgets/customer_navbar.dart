@@ -1,40 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../config/theme/app_colors.dart';
+import 'package:frontend/core/constants/notification_provider.dart';
 
 const double _kMobile = 900;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NOTIFICATION DATA MODELS
-// ─────────────────────────────────────────────────────────────────────────────
-
-class NotificationItem {
-  final String id;
-  final String sender;
-  final String time;
-  final String body;
-  final bool isPriority;
-
-  const NotificationItem({
-    required this.id,
-    required this.sender,
-    required this.time,
-    required this.body,
-    this.isPriority = false,
-  });
-}
-
-final List<NotificationItem> _mockNotifications = [
-  const NotificationItem(
-    id: 'n1',
-    sender: 'L&L ADMIN',
-    time: 'JUST NOW',
-    body: 'WELCOME TO L&L CAFE! WE ARE SO EXCITED TO SERVE YOU THE BEST FOOD IN TOWN.',
-    isPriority: true,
-  ),
-];
-
-// ─────────────────────────────────────────────────────────────────────────────
-// NOTIFICATION PANEL
+// NOTIFICATION PANEL  — reads from NotificationProvider
 // ─────────────────────────────────────────────────────────────────────────────
 
 class NotificationPanel extends StatelessWidget {
@@ -59,9 +30,13 @@ class NotificationPanel extends StatelessWidget {
             topLeft: Radius.circular(40),
             bottomLeft: Radius.circular(40),
           ),
-          boxShadow: [BoxShadow(color: Color(0x33000000), blurRadius: 50, offset: Offset(-10, 0))],
+          boxShadow: [BoxShadow(
+              color: Color(0x33000000), blurRadius: 50, offset: Offset(-10, 0))],
         ),
-        child: Column(children: [_buildHeader(context), Expanded(child: _buildList())]),
+        child: Column(children: [
+          _buildHeader(context),
+          Expanded(child: _buildList(context)),
+        ]),
       ),
     );
   }
@@ -74,7 +49,8 @@ class NotificationPanel extends StatelessWidget {
           color: Color(0xFFEFE2C9),
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75),
+        constraints:
+            BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -89,7 +65,7 @@ class NotificationPanel extends StatelessWidget {
               ),
             ),
             _buildHeader(context, isMobileHeader: true),
-            Flexible(child: _buildList()),
+            Flexible(child: _buildList(context)),
           ],
         ),
       ),
@@ -97,130 +73,236 @@ class NotificationPanel extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context, {bool isMobileHeader = false}) {
+    final ctrl = NotificationProvider.of(context);
+    final hasUnread = ctrl.unreadCount > 0;
+
     return Container(
-      padding: EdgeInsets.fromLTRB(24, isMobileHeader ? 12 : 32, 24, 24),
+      padding: EdgeInsets.fromLTRB(24, isMobileHeader ? 12 : 32, 24, 16),
       decoration: const BoxDecoration(
         color: Colors.transparent,
         border: Border(bottom: BorderSide(color: Color(0x1AA98258), width: 1.0)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 48, height: 48,
-            decoration: BoxDecoration(
-                color: const Color(0xFF758C6D), borderRadius: BorderRadius.circular(8)),
-            child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 24),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 48, height: 48,
+                decoration: BoxDecoration(
+                    color: const Color(0xFF758C6D),
+                    borderRadius: BorderRadius.circular(8)),
+                child: const Icon(Icons.notifications_rounded,
+                    color: Colors.white, size: 24),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('L&L CHANNEL',
+                        style: TextStyle(
+                            fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                            fontSize: 20, height: 1.1, letterSpacing: -0.5,
+                            color: Color(0xFF2D2A26))),
+                    SizedBox(height: 4),
+                    Text('ORDER NOTIFICATION',
+                        style: TextStyle(
+                            fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                            fontSize: 10, letterSpacing: 1.0,
+                            color: Color(0xFFA98258))),
+                  ],
+                ),
+              ),
+              if (!isMobileHeader)
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 40, height: 40,
+                    decoration: const BoxDecoration(
+                        color: Colors.white, shape: BoxShape.circle),
+                    child: const Center(
+                        child: Icon(Icons.close_rounded,
+                            color: Color(0xFFA98258), size: 20)),
+                  ),
+                ),
+            ],
           ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('L&L CHANNEL',
-                    style: TextStyle(
-                        fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                        fontSize: 20, height: 1.1, letterSpacing: -0.5,
-                        color: Color(0xFF2D2A26))),
-                SizedBox(height: 4),
-                Text('ORDER NOTIFICATION',
-                    style: TextStyle(
-                        fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                        fontSize: 10, letterSpacing: 1.0, color: Color(0xFFA98258))),
-              ],
-            ),
-          ),
-          if (!isMobileHeader)
+
+          // ── Mark all read button ───────────────────────────────────────
+          if (hasUnread) ...[
+            const SizedBox(height: 12),
             GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => Navigator.pop(context),
+              onTap: () => ctrl.markAllRead(),
               child: Container(
-                width: 40, height: 40,
-                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                child: const Center(
-                    child: Icon(Icons.close_rounded, color: Color(0xFFA98258), size: 20)),
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 9),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF758C6D).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                      color: const Color(0xFF758C6D).withOpacity(0.25)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.done_all_rounded,
+                        size: 14,
+                        color: const Color(0xFF758C6D).withOpacity(0.8)),
+                    const SizedBox(width: 7),
+                    Text(
+                      'MARK ALL AS READ  (${ctrl.unreadCount})',
+                      style: const TextStyle(
+                        fontFamily: 'Urbanist', fontWeight: FontWeight.w800,
+                        fontSize: 10, letterSpacing: 1.0,
+                        color: Color(0xFF758C6D),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
+          ],
+
+          if (!hasUnread) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 9),
+              decoration: BoxDecoration(
+                color: const Color(0xFF4CAF50).withOpacity(0.07),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle_outline_rounded,
+                      size: 14,
+                      color: const Color(0xFF4CAF50).withOpacity(0.7)),
+                  const SizedBox(width: 7),
+                  Text(
+                    'ALL CAUGHT UP',
+                    style: TextStyle(
+                      fontFamily: 'Urbanist', fontWeight: FontWeight.w800,
+                      fontSize: 10, letterSpacing: 1.0,
+                      color: const Color(0xFF4CAF50).withOpacity(0.8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildList() {
+  Widget _buildList(BuildContext context) {
+    final ctrl = NotificationProvider.of(context);
+    final notifications = ctrl.notifications;
+
     return ListView.builder(
-      padding: const EdgeInsets.only(top: 24, bottom: 40),
-      itemCount: _mockNotifications.length,
+      padding: const EdgeInsets.only(top: 20, bottom: 40),
+      itemCount: notifications.length,
       itemBuilder: (context, index) {
-        final item = _mockNotifications[index];
-        return Container(
-          margin: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(item.isPriority ? 1.0 : 0.8),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: item.isPriority ? const Color(0x4D758C6D) : const Color(0x0DA98258),
-              width: 1.0,
-            ),
-            boxShadow: item.isPriority
-                ? const [BoxShadow(color: Color(0x26000000), blurRadius: 20, offset: Offset(0, 10))]
-                : const [BoxShadow(color: Color(0x0D000000), blurRadius: 10, offset: Offset(0, 4))],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(children: [
-                    Container(
-                      width: 10, height: 10,
-                      decoration: BoxDecoration(
-                        color: item.isPriority
-                            ? const Color(0xFF758C6D)
-                            : const Color(0x33A98258),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(item.sender,
-                        style: const TextStyle(
-                            fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                            fontSize: 10, letterSpacing: 1.5, color: Color(0xFF2D2A26))),
-                  ]),
-                  Row(children: [
-                    const Icon(Icons.access_time_rounded, size: 12, color: Color(0x66A98258)),
-                    const SizedBox(width: 6),
-                    Text(item.time,
-                        style: const TextStyle(
-                            fontFamily: 'Urbanist', fontWeight: FontWeight.w800,
-                            fontSize: 10, color: Color(0x66A98258))),
-                  ]),
-                ],
+        final item = notifications[index];
+        final isUnread = !item.isRead;
+
+        return GestureDetector(
+          onTap: () => ctrl.markRead(item.id),
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(24, 0, 24, 14),
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: isUnread ? Colors.white : Colors.white.withOpacity(0.6),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isUnread
+                    ? item.isPriority
+                        ? const Color(0x4D758C6D)
+                        : const Color(0xFF758C6D).withOpacity(0.2)
+                    : const Color(0x0DA98258),
+                width: isUnread ? 1.5 : 1.0,
               ),
-              const SizedBox(height: 16),
-              Text(item.body,
-                  style: const TextStyle(
-                      fontFamily: 'Urbanist', fontWeight: FontWeight.w700,
-                      fontSize: 13, height: 1.5, letterSpacing: 0.5,
-                      color: Color(0xFFA98258))),
-              if (item.isPriority) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.only(top: 16),
-                  decoration: const BoxDecoration(
-                      border: Border(top: BorderSide(color: Color(0x1A758C6D), width: 1.0))),
-                  child: const Row(children: [
-                    Icon(Icons.celebration_rounded, size: 14, color: Color(0xFF758C6D)),
-                    SizedBox(width: 8),
-                    Text('WELCOME MESSAGE',
-                        style: TextStyle(
-                            fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                            fontSize: 9, letterSpacing: 0.9, color: Color(0xFF758C6D))),
-                  ]),
+              boxShadow: isUnread
+                  ? [BoxShadow(
+                      color: item.isPriority
+                          ? const Color(0x26000000)
+                          : Colors.black.withOpacity(0.06),
+                      blurRadius: item.isPriority ? 20 : 10,
+                      offset: const Offset(0, 6))]
+                  : [],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(children: [
+                      Container(
+                        width: 8, height: 8,
+                        decoration: BoxDecoration(
+                          color: isUnread
+                              ? const Color(0xFF758C6D)
+                              : const Color(0xFF758C6D).withOpacity(0.2),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(item.sender,
+                          style: TextStyle(
+                              fontFamily: 'Urbanist',
+                              fontWeight: isUnread
+                                  ? FontWeight.w900 : FontWeight.w600,
+                              fontSize: 10, letterSpacing: 1.5,
+                              color: isUnread
+                                  ? const Color(0xFF2D2A26)
+                                  : const Color(0xFF2D2A26).withOpacity(0.5))),
+                    ]),
+                    Row(children: [
+                      const Icon(Icons.access_time_rounded,
+                          size: 11, color: Color(0x66A98258)),
+                      const SizedBox(width: 5),
+                      Text(item.time,
+                          style: const TextStyle(
+                              fontFamily: 'Urbanist', fontWeight: FontWeight.w700,
+                              fontSize: 10, color: Color(0x66A98258))),
+                    ]),
+                  ],
                 ),
+                const SizedBox(height: 12),
+                Text(item.body,
+                    style: TextStyle(
+                        fontFamily: 'Urbanist',
+                        fontWeight: isUnread ? FontWeight.w700 : FontWeight.w500,
+                        fontSize: 13, height: 1.5, letterSpacing: 0.5,
+                        color: isUnread
+                            ? const Color(0xFFA98258)
+                            : const Color(0xFFA98258).withOpacity(0.55))),
+                if (item.isPriority) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.only(top: 12),
+                    decoration: const BoxDecoration(
+                        border: Border(top: BorderSide(
+                            color: Color(0x1A758C6D), width: 1.0))),
+                    child: const Row(children: [
+                      Icon(Icons.celebration_rounded,
+                          size: 13, color: Color(0xFF758C6D)),
+                      SizedBox(width: 7),
+                      Text('WELCOME MESSAGE',
+                          style: TextStyle(
+                              fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                              fontSize: 9, letterSpacing: 0.9,
+                              color: Color(0xFF758C6D))),
+                    ]),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         );
       },
@@ -321,44 +403,37 @@ class _GuestNavbarState extends State<GuestNavbar> {
         Expanded(
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Row(
-              children: _links.map((l) => Padding(
-                padding: const EdgeInsets.only(right: 32),
-                child: _NavLink(
-                  label: l.label,
-                  active: widget.activeRoute == l.route,
-                  onTap: () => _handleLinkTap(context, l.route),
-                ),
-              )).toList(),
-            ),
+            child: Row(children: _links.map((l) => Padding(
+              padding: const EdgeInsets.only(right: 32),
+              child: _NavLink(
+                label: l.label,
+                active: widget.activeRoute == l.route,
+                onTap: () => _handleLinkTap(context, l.route),
+              ),
+            )).toList()),
           ),
         ),
         GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.onLogin,
+          behavior: HitTestBehavior.opaque, onTap: widget.onLogin,
           child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text('LOGIN',
-                style: TextStyle(
-                    fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                    fontSize: 12, letterSpacing: 2.0, color: AppColors.primary)),
+            padding: const EdgeInsets.all(8),
+            child: Text('LOGIN', style: TextStyle(
+                fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                fontSize: 12, letterSpacing: 2.0, color: AppColors.primary)),
           ),
         ),
         const SizedBox(width: 12),
         GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.onJoinNow,
+          behavior: HitTestBehavior.opaque, onTap: widget.onJoinNow,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 11),
             decoration: BoxDecoration(
-              color: AppColors.secondary,
-              borderRadius: BorderRadius.circular(8),
+              color: AppColors.secondary, borderRadius: BorderRadius.circular(8),
               boxShadow: const [BoxShadow(color: Color(0xFF2D2A26), offset: Offset(3, 3))],
             ),
-            child: const Text('JOIN NOW',
-                style: TextStyle(
-                    fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                    fontSize: 12, letterSpacing: 1.2, color: Colors.white)),
+            child: const Text('JOIN NOW', style: TextStyle(
+                fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                fontSize: 12, letterSpacing: 1.2, color: Colors.white)),
           ),
         ),
       ]),
@@ -374,31 +449,25 @@ class _GuestNavbarState extends State<GuestNavbar> {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(children: [
-        _LogoImg(),
-        const Spacer(),
+        _LogoImg(), const Spacer(),
         GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.onLogin,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text('LOGIN',
-                style: TextStyle(
-                    fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                    fontSize: 11, letterSpacing: 2, color: AppColors.primary)),
+          behavior: HitTestBehavior.opaque, onTap: widget.onLogin,
+          child: Padding(padding: const EdgeInsets.all(8),
+            child: Text('LOGIN', style: TextStyle(
+                fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                fontSize: 11, letterSpacing: 2, color: AppColors.primary)),
           ),
         ),
         const SizedBox(width: 6),
         GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.onJoinNow,
+          behavior: HitTestBehavior.opaque, onTap: widget.onJoinNow,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-            decoration: BoxDecoration(
-                color: AppColors.secondary, borderRadius: BorderRadius.circular(10)),
-            child: const Text('JOIN NOW',
-                style: TextStyle(
-                    fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                    fontSize: 10, color: Colors.white)),
+            decoration: BoxDecoration(color: AppColors.secondary,
+                borderRadius: BorderRadius.circular(10)),
+            child: const Text('JOIN NOW', style: TextStyle(
+                fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                fontSize: 10, color: Colors.white)),
           ),
         ),
         const SizedBox(width: 10),
@@ -407,15 +476,11 @@ class _GuestNavbarState extends State<GuestNavbar> {
           onTap: () => _menuOpen ? _closeMenu() : _openMenu(context),
           child: Container(
             width: 40, height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: const [BoxShadow(color: Color(0x1A000000), blurRadius: 4)],
-            ),
-            child: Icon(
-              _menuOpen ? Icons.close_rounded : Icons.menu_rounded,
-              color: AppColors.primary, size: 20,
-            ),
+            decoration: BoxDecoration(color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: const [BoxShadow(color: Color(0x1A000000), blurRadius: 4)]),
+            child: Icon(_menuOpen ? Icons.close_rounded : Icons.menu_rounded,
+                color: AppColors.primary, size: 20),
           ),
         ),
       ]),
@@ -424,13 +489,14 @@ class _GuestNavbarState extends State<GuestNavbar> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CUSTOMER NAVBAR  (logged-in users)
+// CUSTOMER NAVBAR
+// notifCount reads from NotificationProvider — live badge across all screens
 // ─────────────────────────────────────────────────────────────────────────────
 
 class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
   final String activeRoute;
   final int cartCount;
-  final int notifCount;
+  final int notifCount; // kept for API compat — overridden by live provider
   final String? userName;
   final String? userClientId;
   final bool isGuest;
@@ -479,7 +545,8 @@ class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
         ),
         transitionBuilder: (_, animation, __, child) => SlideTransition(
           position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
-              .animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+              .animate(CurvedAnimation(
+                  parent: animation, curve: Curves.easeOutCubic)),
           child: child,
         ),
       );
@@ -488,13 +555,16 @@ class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Live unread count — rebuilds this widget whenever markRead/markAllRead fires
+    final liveNotifCount = NotificationProvider.of(context).unreadCount;
+
     return LayoutBuilder(builder: (context, c) {
       final bool isMobile = c.maxWidth < _kMobile;
       return isMobile
           ? _MobileCustomerNav(
               activeRoute:     activeRoute,
               cartCount:       cartCount,
-              notifCount:      notifCount,
+              notifCount:      liveNotifCount,
               userName:        userName,
               userClientId:    userClientId,
               isGuest:         isGuest,
@@ -506,7 +576,7 @@ class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
           : _DesktopCustomerNav(
               activeRoute:     activeRoute,
               cartCount:       cartCount,
-              notifCount:      notifCount,
+              notifCount:      liveNotifCount,
               isGuest:         isGuest,
               onCart:          onCart,
               onNotif:         () => _showNotifications(context, false),
@@ -520,10 +590,7 @@ class CustomerNavbar extends StatelessWidget implements PreferredSizeWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DESKTOP CUSTOMER NAV
-// ✅ KEY FIX: ABOUT and CONTACT use pushNamed (not pushReplacementNamed)
-// This means pressing ABOUT/CONTACT pushes a new route ON TOP of the
-// authenticated route. The auth stack is preserved — pressing back pops
-// back to wherever the user was, and they stay logged in.
+// ABOUT/CONTACT → pushNamed (preserves auth stack, no logout)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _DesktopCustomerNav extends StatelessWidget {
@@ -541,22 +608,16 @@ class _DesktopCustomerNav extends StatelessWidget {
   ];
 
   const _DesktopCustomerNav({
-    required this.activeRoute,
-    required this.cartCount,
-    required this.notifCount,
-    required this.isGuest,
-    this.onCart,
-    this.onNotif,
-    this.onProfile,
-    this.onLogout,
-    this.onLoginRequired,
+    required this.activeRoute, required this.cartCount,
+    required this.notifCount, required this.isGuest,
+    this.onCart, this.onNotif, this.onProfile,
+    this.onLogout, this.onLoginRequired,
   });
 
   void _handleNavTap(BuildContext context, String route) {
     if (activeRoute == route) return;
-    // ✅ ABOUT and CONTACT: pushNamed overlays on top of auth stack
-    //    Pressing back returns to where the user was — no logout.
-    // All other authenticated routes: pushReplacementNamed (clean swap).
+    // ABOUT and CONTACT are pushed on top — back button returns to previous
+    // authenticated screen without touching the auth state.
     if (route == '/about' || route == '/contact') {
       Navigator.pushNamed(context, route);
     } else {
@@ -579,93 +640,77 @@ class _DesktopCustomerNav extends StatelessWidget {
         border: Border(bottom: BorderSide(color: AppColors.primary.withOpacity(0.1))),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 48),
-      child: Row(
-        children: [
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => _handleNavTap(context, '/home'),
-            child: _LogoImg(),
+      child: Row(children: [
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _handleNavTap(context, '/home'),
+          child: _LogoImg(),
+        ),
+        const SizedBox(width: 48),
+        ..._links.map((l) => Padding(
+          padding: const EdgeInsets.only(right: 32),
+          child: _NavLink(
+            label: l.label, active: activeRoute == l.route,
+            onTap: () => _handleNavTap(context, l.route),
           ),
-          const SizedBox(width: 48),
+        )),
+        const Spacer(),
 
-          // Nav links — no Expanded, Spacer pushes icons right
-          ..._links.map((l) => Padding(
-            padding: const EdgeInsets.only(right: 32),
-            child: _NavLink(
-              label: l.label,
-              active: activeRoute == l.route,
-              onTap: () => _handleNavTap(context, l.route),
-            ),
-          )),
-
-          const Spacer(),
-
-          // Logged-in icons
-          if (!isGuest) ...[
-            _IconCircleBtn(
-                icon: Icons.notifications_none_rounded,
-                badge: notifCount, onTap: onNotif),
-            const SizedBox(width: 16),
-            _IconCircleBtn(
-                icon: Icons.shopping_cart_outlined,
-                badge: cartCount,
-                onTap: () => _handleCartTap(context)),
-            const SizedBox(width: 16),
-            _IconCircleBtn(
-                icon: Icons.person_outline_rounded,
-                onTap: () {
-                  onProfile?.call();
-                  if (activeRoute != '/profile') {
-                    Navigator.pushReplacementNamed(context, '/profile');
-                  }
-                }),
-            const SizedBox(width: 16),
-            _IconCircleBtn(
-                icon: Icons.logout_rounded,
-                onTap: () {
-                  onLogout?.call();
-                  Navigator.pushNamedAndRemoveUntil(context, '/', (r) => false);
-                }),
-          ],
-
-          // Guest mode
-          if (isGuest) ...[
-            _IconCircleBtn(
-                icon: Icons.shopping_cart_outlined,
-                badge: 0,
-                onTap: () => onLoginRequired?.call()),
-            const SizedBox(width: 16),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onLoginRequired,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Text('LOGIN',
-                    style: TextStyle(
-                        fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                        fontSize: 12, letterSpacing: 2.0, color: AppColors.primary)),
-              ),
-            ),
-            const SizedBox(width: 12),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onLoginRequired,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 11),
-                decoration: BoxDecoration(
-                  color: AppColors.secondary,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: const [BoxShadow(color: Color(0xFF2D2A26), offset: Offset(3, 3))],
-                ),
-                child: const Text('JOIN NOW',
-                    style: TextStyle(
-                        fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                        fontSize: 12, letterSpacing: 1.2, color: Colors.white)),
-              ),
-            ),
-          ],
+        if (!isGuest) ...[
+          _IconCircleBtn(
+              icon: Icons.notifications_none_rounded,
+              badge: notifCount, onTap: onNotif),
+          const SizedBox(width: 16),
+          _IconCircleBtn(
+              icon: Icons.shopping_cart_outlined,
+              badge: cartCount, onTap: () => _handleCartTap(context)),
+          const SizedBox(width: 16),
+          _IconCircleBtn(
+              icon: Icons.person_outline_rounded,
+              onTap: () {
+                onProfile?.call();
+                if (activeRoute != '/profile') {
+                  Navigator.pushReplacementNamed(context, '/profile');
+                }
+              }),
+          const SizedBox(width: 16),
+          _IconCircleBtn(
+              icon: Icons.logout_rounded,
+              onTap: () {
+                onLogout?.call();
+                Navigator.pushNamedAndRemoveUntil(context, '/', (r) => false);
+              }),
         ],
-      ),
+
+        if (isGuest) ...[
+          _IconCircleBtn(
+              icon: Icons.shopping_cart_outlined,
+              badge: 0, onTap: () => onLoginRequired?.call()),
+          const SizedBox(width: 16),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque, onTap: onLoginRequired,
+            child: Padding(padding: const EdgeInsets.all(8),
+              child: Text('LOGIN', style: TextStyle(
+                  fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                  fontSize: 12, letterSpacing: 2.0, color: AppColors.primary)),
+            ),
+          ),
+          const SizedBox(width: 12),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque, onTap: onLoginRequired,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 11),
+              decoration: BoxDecoration(
+                color: AppColors.secondary, borderRadius: BorderRadius.circular(8),
+                boxShadow: const [BoxShadow(color: Color(0xFF2D2A26), offset: Offset(3, 3))],
+              ),
+              child: const Text('JOIN NOW', style: TextStyle(
+                  fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                  fontSize: 12, letterSpacing: 1.2, color: Colors.white)),
+            ),
+          ),
+        ],
+      ]),
     );
   }
 }
@@ -682,16 +727,10 @@ class _MobileCustomerNav extends StatelessWidget {
   final VoidCallback? onCart, onNotif, onLogout, onLoginRequired;
 
   const _MobileCustomerNav({
-    required this.activeRoute,
-    required this.cartCount,
-    required this.notifCount,
-    required this.isGuest,
-    this.userName,
-    this.userClientId,
-    this.onCart,
-    this.onNotif,
-    this.onLogout,
-    this.onLoginRequired,
+    required this.activeRoute, required this.cartCount,
+    required this.notifCount, required this.isGuest,
+    this.userName, this.userClientId, this.onCart,
+    this.onNotif, this.onLogout, this.onLoginRequired,
   });
 
   void _handleCartTap(BuildContext context) {
@@ -703,8 +742,7 @@ class _MobileCustomerNav extends StatelessWidget {
   void _openSideDrawer(BuildContext context) {
     showGeneralDialog(
       context: context,
-      barrierDismissible: true,
-      barrierLabel: '',
+      barrierDismissible: true, barrierLabel: '',
       barrierColor: Colors.black.withOpacity(0.5),
       pageBuilder: (_, __, ___) => Align(
         alignment: Alignment.centerRight,
@@ -719,9 +757,8 @@ class _MobileCustomerNav extends StatelessWidget {
           },
           onLoginRequired: onLoginRequired,
           onNav: (route) {
-            Navigator.pop(context); // close drawer first
+            Navigator.pop(context);
             if (activeRoute == route) return;
-            // ✅ Same fix as desktop: about/contact overlay, everything else replaces
             if (route == '/about' || route == '/contact') {
               Navigator.pushNamed(context, route);
             } else {
@@ -776,9 +813,8 @@ class _MobileCustomerNav extends StatelessWidget {
           child: Container(
             width: 38, height: 38,
             decoration: BoxDecoration(
-              color: const Color(0xFF2D2A26),
-              borderRadius: BorderRadius.circular(10),
-            ),
+                color: const Color(0xFF2D2A26),
+                borderRadius: BorderRadius.circular(10)),
             child: const Icon(Icons.menu_rounded, color: Colors.white, size: 18),
           ),
         ),
@@ -788,7 +824,7 @@ class _MobileCustomerNav extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SIDE DRAWER  (mobile)
+// SIDE DRAWER
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _SideDrawer extends StatelessWidget {
@@ -814,138 +850,126 @@ class _SideDrawer extends StatelessWidget {
   ];
 
   const _SideDrawer({
-    required this.activeRoute,
-    required this.userName,
-    required this.userClientId,
-    required this.isGuest,
-    this.onLogout,
-    this.onLoginRequired,
-    required this.onNav,
+    required this.activeRoute, required this.userName,
+    required this.userClientId, required this.isGuest,
+    this.onLogout, this.onLoginRequired, required this.onNav,
   });
 
   @override
   Widget build(BuildContext context) {
     final links = isGuest ? _guestLinks : _loggedInLinks;
-
     return Material(
       color: Colors.transparent,
       child: Container(
         width: 300,
         height: MediaQuery.of(context).size.height,
         decoration: const BoxDecoration(color: Color(0xFF2D2A26)),
-        child: Column(
-          children: [
-            // Profile header
-            Container(
-              padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
-              decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.1)))),
-              child: Row(children: [
-                Container(
-                  width: 56, height: 56,
-                  decoration: BoxDecoration(
-                    color: isGuest
-                        ? const Color(0xFFA98258).withOpacity(0.6)
-                        : const Color(0xFF758C6D),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    isGuest ? Icons.person_outline_rounded : Icons.person_rounded,
-                    color: Colors.white, size: 28,
-                  ),
+        child: Column(children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
+            decoration: BoxDecoration(
+                border: Border(bottom:
+                    BorderSide(color: Colors.white.withOpacity(0.1)))),
+            child: Row(children: [
+              Container(
+                width: 56, height: 56,
+                decoration: BoxDecoration(
+                  color: isGuest
+                      ? const Color(0xFFA98258).withOpacity(0.6)
+                      : const Color(0xFF758C6D),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(userName,
-                        style: const TextStyle(
-                            fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                            fontSize: 15, color: Colors.white)),
-                    if (userClientId.isNotEmpty)
-                      Text(userClientId,
-                          style: TextStyle(
-                              fontFamily: 'Urbanist',
-                              fontSize: 11, color: AppColors.primary)),
-                  ],
-                ),
-              ]),
-            ),
-
-            // Nav links
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: links.map((l) {
-                    final isActive = activeRoute == l.route;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () => onNav(l.route),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          decoration: BoxDecoration(
-                            color: isActive
-                                ? AppColors.primary.withOpacity(0.15)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(children: [
-                            Icon(l.icon,
-                                color: isActive ? AppColors.primary : AppColors.primary.withOpacity(0.6),
-                                size: 22),
-                            const SizedBox(width: 16),
-                            Text(l.label,
-                                style: TextStyle(
-                                    fontFamily: 'Urbanist', fontWeight: FontWeight.w700,
-                                    fontSize: 14,
-                                    color: isActive ? AppColors.primary : AppColors.primary.withOpacity(0.6))),
-                            if (isActive) ...[
-                              const Spacer(),
-                              Container(
-                                width: 6, height: 6,
-                                decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                              ),
-                            ],
-                          ]),
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                child: Icon(
+                  isGuest ? Icons.person_outline_rounded : Icons.person_rounded,
+                  color: Colors.white, size: 28,
                 ),
               ),
-            ),
-
-            // Bottom action
-            Padding(
+              const SizedBox(width: 16),
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(userName, style: const TextStyle(
+                    fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+                    fontSize: 15, color: Colors.white)),
+                if (userClientId.isNotEmpty)
+                  Text(userClientId, style: TextStyle(
+                      fontFamily: 'Urbanist', fontSize: 11,
+                      color: AppColors.primary)),
+              ]),
+            ]),
+          ),
+          Expanded(
+            child: Padding(
               padding: const EdgeInsets.all(24),
-              child: isGuest
-                  ? Column(children: [
-                      _DrawerBtn(
-                        label: 'LOGIN', icon: Icons.login_rounded,
-                        bgColor: AppColors.primary, textColor: Colors.white,
-                        onTap: () { Navigator.pop(context); onLoginRequired?.call(); },
+              child: Column(
+                children: links.map((l) {
+                  final isActive = activeRoute == l.route;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => onNav(l.route),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? AppColors.primary.withOpacity(0.15)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(children: [
+                          Icon(l.icon,
+                              color: isActive
+                                  ? AppColors.primary
+                                  : AppColors.primary.withOpacity(0.6),
+                              size: 22),
+                          const SizedBox(width: 16),
+                          Text(l.label, style: TextStyle(
+                              fontFamily: 'Urbanist', fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: isActive
+                                  ? AppColors.primary
+                                  : AppColors.primary.withOpacity(0.6))),
+                          if (isActive) ...[
+                            const Spacer(),
+                            Container(width: 6, height: 6,
+                                decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle)),
+                          ],
+                        ]),
                       ),
-                      const SizedBox(height: 10),
-                      _DrawerBtn(
-                        label: 'JOIN NOW', icon: Icons.person_add_outlined,
-                        bgColor: const Color(0xFFEFE2C9),
-                        textColor: AppColors.secondary, iconColor: AppColors.secondary,
-                        onTap: () { Navigator.pop(context); onLoginRequired?.call(); },
-                      ),
-                    ])
-                  : _DrawerBtn(
-                      label: 'LOGOUT', icon: Icons.logout_rounded,
-                      bgColor: const Color(0xFFEFE2C9),
-                      textColor: AppColors.primary, iconColor: AppColors.primary,
-                      onTap: () { Navigator.pop(context); onLogout?.call(); },
                     ),
+                  );
+                }).toList(),
+              ),
             ),
-          ],
-        ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: isGuest
+                ? Column(children: [
+                    _DrawerBtn(
+                      label: 'LOGIN', icon: Icons.login_rounded,
+                      bgColor: AppColors.primary, textColor: Colors.white,
+                      onTap: () { Navigator.pop(context); onLoginRequired?.call(); },
+                    ),
+                    const SizedBox(height: 10),
+                    _DrawerBtn(
+                      label: 'JOIN NOW', icon: Icons.person_add_outlined,
+                      bgColor: const Color(0xFFEFE2C9),
+                      textColor: AppColors.secondary, iconColor: AppColors.secondary,
+                      onTap: () { Navigator.pop(context); onLoginRequired?.call(); },
+                    ),
+                  ])
+                : _DrawerBtn(
+                    label: 'LOGOUT', icon: Icons.logout_rounded,
+                    bgColor: const Color(0xFFEFE2C9),
+                    textColor: AppColors.primary, iconColor: AppColors.primary,
+                    onTap: () { Navigator.pop(context); onLogout?.call(); },
+                  ),
+          ),
+        ]),
       ),
     );
   }
@@ -971,22 +995,19 @@ class _DrawerBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
+      behavior: HitTestBehavior.opaque, onTap: onTap,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(16)),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: iconColor ?? textColor, size: 18),
-            const SizedBox(width: 10),
-            Text(label, style: TextStyle(
-                fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                fontSize: 13, color: textColor)),
-          ],
-        ),
+        decoration: BoxDecoration(color: bgColor,
+            borderRadius: BorderRadius.circular(16)),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(icon, color: iconColor ?? textColor, size: 18),
+          const SizedBox(width: 10),
+          Text(label, style: TextStyle(
+              fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
+              fontSize: 13, color: textColor)),
+        ]),
       ),
     );
   }
@@ -1041,8 +1062,7 @@ class _GuestMobileMenu extends StatelessWidget {
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () { onClose(); onLogin?.call(); },
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
+                  child: Padding(padding: const EdgeInsets.all(8),
                     child: Text('LOGIN', style: TextStyle(
                         fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
                         fontSize: 11, letterSpacing: 2, color: AppColors.primary)),
@@ -1068,8 +1088,10 @@ class _GuestMobileMenu extends StatelessWidget {
                     width: 40, height: 40,
                     decoration: BoxDecoration(color: Colors.white,
                         borderRadius: BorderRadius.circular(10),
-                        boxShadow: const [BoxShadow(color: Color(0x1A000000), blurRadius: 4)]),
-                    child: const Icon(Icons.close_rounded, color: Color(0xFF2D2A26), size: 20),
+                        boxShadow: const [BoxShadow(
+                            color: Color(0x1A000000), blurRadius: 4)]),
+                    child: const Icon(Icons.close_rounded,
+                        color: Color(0xFF2D2A26), size: 20),
                   ),
                 ),
               ]),
@@ -1090,9 +1112,12 @@ class _GuestMobileMenu extends StatelessWidget {
                       onTap: () => onNavigate(e.route),
                       child: Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 22),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 28, vertical: 22),
                         decoration: BoxDecoration(
-                          color: isActive ? AppColors.secondary : const Color(0xFFE8D9BF),
+                          color: isActive
+                              ? AppColors.secondary
+                              : const Color(0xFFE8D9BF),
                           borderRadius: BorderRadius.circular(22),
                         ),
                         child: Text(e.label, style: TextStyle(
@@ -1152,7 +1177,6 @@ class _NavLink extends StatelessWidget {
   final String label;
   final bool active;
   final VoidCallback? onTap;
-
   const _NavLink({required this.label, required this.active, this.onTap});
 
   @override
@@ -1161,20 +1185,17 @@ class _NavLink extends StatelessWidget {
       behavior: HitTestBehavior.opaque, onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(label, style: TextStyle(
-                fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontSize: 12,
-                color: active ? AppColors.secondary : AppColors.primary)),
-            if (active) ...[
-              const SizedBox(height: 3),
-              Container(height: 3, width: 24,
-                  decoration: BoxDecoration(color: AppColors.secondary,
-                      borderRadius: BorderRadius.circular(100))),
-            ],
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(label, style: TextStyle(
+              fontFamily: 'Urbanist', fontWeight: FontWeight.w900, fontSize: 12,
+              color: active ? AppColors.secondary : AppColors.primary)),
+          if (active) ...[
+            const SizedBox(height: 3),
+            Container(height: 3, width: 24,
+                decoration: BoxDecoration(color: AppColors.secondary,
+                    borderRadius: BorderRadius.circular(100))),
           ],
-        ),
+        ]),
       ),
     );
   }
@@ -1184,7 +1205,6 @@ class _IconCircleBtn extends StatelessWidget {
   final IconData icon;
   final int badge;
   final VoidCallback? onTap;
-
   const _IconCircleBtn({required this.icon, this.badge = 0, this.onTap});
 
   @override
@@ -1194,8 +1214,11 @@ class _IconCircleBtn extends StatelessWidget {
       child: Stack(clipBehavior: Clip.none, children: [
         Container(
           width: 38, height: 38,
-          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: Color(0x1A000000), blurRadius: 4, offset: Offset(0, 2))]),
+          decoration: const BoxDecoration(
+            color: Colors.white, shape: BoxShape.circle,
+            boxShadow: [BoxShadow(color: Color(0x1A000000),
+                blurRadius: 4, offset: Offset(0, 2))],
+          ),
           child: Icon(icon, color: const Color(0xFF2D2A26), size: 17),
         ),
         if (badge > 0)
@@ -1203,7 +1226,8 @@ class _IconCircleBtn extends StatelessWidget {
             top: -3, right: -3,
             child: Container(
               width: 15, height: 15,
-              decoration: BoxDecoration(color: AppColors.secondary, shape: BoxShape.circle,
+              decoration: BoxDecoration(
+                  color: AppColors.secondary, shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 1.5)),
               child: Center(child: Text(badge > 99 ? '99+' : '$badge',
                   style: const TextStyle(color: Colors.white, fontSize: 7,

@@ -10,6 +10,9 @@ import 'core/providers/auth_provider.dart';
 import 'core/constants/cart_provider.dart';
 import 'core/constants/routes.dart';
 
+// ✅ Import the NotificationProvider and its controller
+import 'core/constants/notification_provider.dart';
+
 import 'package:frontend/features/customers/presentation/admin/customer_order_screen.dart';
 import 'features/home/presentation/customer/landing_screen.dart';
 import 'features/home/presentation/customer/home_screen.dart';
@@ -51,6 +54,11 @@ class LCIBMSApp extends StatefulWidget {
 class _LCIBMSAppState extends State<LCIBMSApp> {
   final CartNotifier _cartNotifier = CartNotifier();
 
+  // ✅ Single NotificationController instance — lives for the lifetime of the
+  //    app so the unread count persists across route changes and screen swaps.
+  final NotificationController _notificationController =
+      NotificationController();
+
   void _goLogin(BuildContext ctx) {
     Navigator.push(ctx, PageRouteBuilder(
       pageBuilder: (_, __, ___) => LoginScreen(
@@ -80,6 +88,12 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
   }
 
   @override
+  void dispose() {
+    _notificationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => AuthProvider(),
@@ -87,10 +101,16 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
         builder: (context, auth, _) {
           return CartProvider(
             notifier: _cartNotifier,
-            child: MaterialApp(
-              debugShowCheckedModeBanner: false,
-              home: _buildRootScreen(auth),
-              onGenerateRoute: (settings) => _handleRoutes(settings, auth),
+            // ✅ NotificationProvider wraps MaterialApp so every screen —
+            //    CustomerNavbar, NotificationPanel, CustomerHomeScreen, etc. —
+            //    can call NotificationProvider.of(context) without an assertion.
+            child: NotificationProvider(
+              controller: _notificationController,
+              child: MaterialApp(
+                debugShowCheckedModeBanner: false,
+                home: _buildRootScreen(auth),
+                onGenerateRoute: (settings) => _handleRoutes(settings, auth),
+              ),
             ),
           );
         },
@@ -120,7 +140,10 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
         return AdminDashboardScreen(
           key: ValueKey(user.email),
           activeIndex: 0,
-          onLogout: () { auth.logout(); _cartNotifier.clear(); },
+          onLogout: () {
+            auth.logout();
+            _cartNotifier.clear();
+          },
         );
       default:
         return LandingScreen(
@@ -197,9 +220,9 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
   }
 
   PageRouteBuilder _fade(Widget page) => PageRouteBuilder(
-    pageBuilder: (_, __, ___) => page,
-    transitionsBuilder: (_, anim, __, child) =>
-        FadeTransition(opacity: anim, child: child),
-    transitionDuration: const Duration(milliseconds: 220),
-  );
+        pageBuilder: (_, __, ___) => page,
+        transitionsBuilder: (_, anim, __, child) =>
+            FadeTransition(opacity: anim, child: child),
+        transitionDuration: const Duration(milliseconds: 220),
+      );
 }
