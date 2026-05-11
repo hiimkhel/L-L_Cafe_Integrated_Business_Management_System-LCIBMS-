@@ -1,5 +1,18 @@
 enum ReviewStatus { pending, published, archived }
 
+  ReviewStatus reviewStatusFromString(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return ReviewStatus.pending;
+      case 'published':
+        return ReviewStatus.published;
+      case 'archived':
+        return ReviewStatus.archived;
+      default:
+        return ReviewStatus.pending; // fallback
+    }
+  }
+
 class ReviewModel {
   final String id;
   final String customerId;
@@ -44,7 +57,7 @@ class ReviewModel {
           DateTime.now(),
       content: e['content']?.toString() ?? '',
       rating: (e['rating'] as num?)?.toDouble() ?? 0.0,
-      status: ReviewStatus.published,
+      status: reviewStatusFromString(e['status']?.toString() ?? ''),
       avatarUrl: e['profile_picture']?.toString(),
     );
   }
@@ -56,4 +69,6 @@ class ReviewModel {
       default: return ReviewStatus.pending;
     }
   }
+  
+
 }
