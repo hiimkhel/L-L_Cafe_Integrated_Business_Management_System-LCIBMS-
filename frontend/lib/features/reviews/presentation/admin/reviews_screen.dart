@@ -4,6 +4,7 @@ import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/models/review_model.dart';
 import 'package:frontend/core/services/admin/reviews_service.dart';
+import 'package:frontend/config/theme/app_colors.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PALETTE
@@ -186,7 +187,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _beige,
+      backgroundColor: AppColors.white,
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

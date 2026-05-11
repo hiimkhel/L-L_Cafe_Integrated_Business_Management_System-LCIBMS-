@@ -257,7 +257,7 @@ Future<void> _pickFile() async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.white,
       body: Row(
         children: [
           Sidebar(activeIndex: widget.activeIndex, onLogout: widget.onLogout),

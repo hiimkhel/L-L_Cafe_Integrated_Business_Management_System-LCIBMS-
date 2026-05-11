@@ -41,7 +41,7 @@ class _CMSScreenState extends State<CMSScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: AppColors.white,
       body: Row(
         children: [
           Sidebar(activeIndex: widget.activeIndex, onLogout: widget.onLogout),
@@ -270,6 +270,7 @@ class _CMSBodyState extends State<_CMSBody> {
 
   @override
   Widget build(BuildContext context) {
+    
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -796,6 +797,7 @@ class _ImageUploadTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
     final uploaded = uploadedImgId != null;
     return GestureDetector(
       onTap: isUploading ? null : (uploaded ? null : onUpload),
