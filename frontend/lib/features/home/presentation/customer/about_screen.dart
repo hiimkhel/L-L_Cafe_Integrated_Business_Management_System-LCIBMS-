@@ -47,9 +47,23 @@ const _dishes = <_Dish>[
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AboutScreen extends StatelessWidget {
+  // ✅ Guest-mode callbacks (shown when not logged in)
   final VoidCallback? onLogin;
   final VoidCallback? onJoinNow;
-  const AboutScreen({super.key, this.onLogin, this.onJoinNow});
+
+  // ✅ Auth state — controls which navbar is shown
+  final bool isGuest;
+
+  // ✅ Logout callback (shown when logged in)
+  final VoidCallback? onLogout;
+
+  const AboutScreen({
+    super.key,
+    this.isGuest = true,
+    this.onLogin,
+    this.onJoinNow,
+    this.onLogout,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -60,11 +74,18 @@ class AboutScreen extends StatelessWidget {
           const BambooBackground(),
           Column(
             children: [
-              GuestNavbar(
-                activeRoute: '/about',
-                onLogin: onLogin,
-                onJoinNow: onJoinNow,
-              ),
+              // ✅ Show GuestNavbar for guests, CustomerNavbar for logged-in users
+              if (isGuest)
+                GuestNavbar(
+                  activeRoute: '/about',
+                  onLogin: onLogin,
+                  onJoinNow: onJoinNow,
+                )
+              else
+                CustomerNavbar(
+                  activeRoute: '/about',
+                  onLogout: onLogout,
+                ),
               Expanded(
                 child: LayoutBuilder(builder: (ctx, c) {
                   final isMobile = c.maxWidth < _kMobile;
