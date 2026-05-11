@@ -132,6 +132,7 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
 
   Route? _handleRoutes(RouteSettings settings, AuthProvider auth) {
     final user = auth.user;
+    final isLoggedIn = user != null;
 
     void doLogout() {
       auth.logout();
@@ -146,11 +147,11 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
         return _fade(CustomerHomeScreen(onLogout: doLogout));
 
       case AppRoutes.orders:
-        if (user == null) return _fade(_buildRootScreen(auth));
+        if (!isLoggedIn) return _fade(_buildRootScreen(auth));
         return _fade(const CustomerOrderScreen());
 
       case AppRoutes.profile:
-        if (user == null) return _fade(_buildRootScreen(auth));
+        if (!isLoggedIn) return _fade(_buildRootScreen(auth));
         return _fade(ProfileScreen(
           userId: user.id,
           email: user.email,
@@ -158,26 +159,34 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
         ));
 
       case AppRoutes.about:
-        // ✅ AboutScreen.isLoggedIn controls which navbar shows.
-        //    No wrapper, no nested Navigator — single Scaffold, single navbar.
         return _fade(Builder(builder: (ctx) => AboutScreen(
-          isLoggedIn: user != null,
-          onLogin:    user == null ? () => _goLogin(ctx)    : null,
-          onJoinNow:  user == null ? () => _goRegister(ctx) : null,
-          onLogout:   user != null ? doLogout               : null,
+          isLoggedIn: isLoggedIn,
+          onLogin:    isLoggedIn ? null : () => _goLogin(ctx),
+          onJoinNow:  isLoggedIn ? null : () => _goRegister(ctx),
+          onLogout:   isLoggedIn ? doLogout : null,
         )));
 
       case AppRoutes.contact:
-        // ✅ ContactScreen.isGuest controls which navbar shows.
         return _fade(Builder(builder: (ctx) => ContactScreen(
-          isGuest:   user == null,
-          onLogin:   user == null ? () => _goLogin(ctx)    : null,
-          onJoinNow: user == null ? () => _goRegister(ctx) : null,
-          onLogout:  user != null ? doLogout               : null,
+          // ✅ KEY: isGuest is derived from actual auth state, not hardcoded.
+          //    This means navigating to /contact always shows the correct navbar.
+          isGuest:   !isLoggedIn,
+          onLogin:   isLoggedIn ? null : () => _goLogin(ctx),
+          onJoinNow: isLoggedIn ? null : () => _goRegister(ctx),
+          onLogout:  isLoggedIn ? doLogout : null,
         )));
 
+      // ✅ KEY FIX: /menu now reads auth state and passes isGuest correctly.
+      //    Previously MenuScreen() had no arguments so isGuest defaulted to
+      //    false — meaning ANY navigation to /menu showed logged-in mode,
+      //    even for unauthenticated users coming from Contact or About pages.
       case AppRoutes.menu:
-        return _fade(const MenuScreen());
+        return _fade(Builder(builder: (ctx) => isLoggedIn
+            ? const MenuScreen(isGuest: false)
+            : MenuScreen(
+                isGuest: true,
+                onLoginRequired: () => _goLogin(ctx),
+              )));
 
       case AppRoutes.cart:
         return _fade(const CartScreen());
