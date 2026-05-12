@@ -38,10 +38,10 @@ class HomeMenuItem {
 }
 
 const _featuredBeverages = <HomeMenuItem>[
-  HomeMenuItem(id: 100, name: 'Nutella Frappe',    price: 120.00, imageAsset: null),
-  HomeMenuItem(id: 101, name: 'Red Velvet Frappe', price: 150.00, imageAsset: null),
-  HomeMenuItem(id: 102, name: 'S\'more',            price: 110.00, imageAsset: null),
-  HomeMenuItem(id: 103, name: 'Biscoff',            price: 180.00, imageAsset: null),
+  HomeMenuItem(id: 100, name: 'Nutella Frappe',    price: 120.00, imageAsset:  'assets/images/best_nutella_frappe.png'),
+  HomeMenuItem(id: 101, name: 'Red Velvet Frappe', price: 150.00, imageAsset: 'assets/images/best_redvelvet_frappe.png'),
+  HomeMenuItem(id: 102, name: 'Choco Chips Frappe',            price: 110.00, imageAsset: 'assets/images/choco-chips-frappe.jpg'),
+  HomeMenuItem(id: 103, name: 'Biscoff Frappe',            price: 180.00, imageAsset: 'assets/images/best_nutella_frappe.png'),
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
