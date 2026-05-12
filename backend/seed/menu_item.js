@@ -42,7 +42,7 @@ const seedMenu = async () => {
       // FOODS
       ['L&L Cafe Burger', 'Foods', 'Signature house burger.', 95.00, 'lnl-cafe-burger.jpg'],
       ['Cheese Burger', 'Foods', 'Double patty, double cheese.', 110.00, 'double-cheese-burger.jpg'],
-      ['Lechon Sauce Chicken Wings', 'Foods', 'Rich tomato pesto pasta.', 160.00, 'lechon-chicken-wings.jpg'],  
+      ['Lechon Sauce Chicken Wings', 'Foods', 'Enjoy chicken wings with a taste of lechon sauce.', 160.00, 'lechon-chicken-wings.jpg'],  
       ['Red Pesto Pasta', 'Foods', 'Rich tomato pesto pasta.', 120.00, 'red-pesto.jpg'],
       ['Creamy Carbonara', 'Foods', 'Creamy white sauce pasta.', 100.00, 'creamy-carbonara.jpg'],
       ['Cheese Stick', 'Foods', 'Fried mozzarella sticks.', 130.00, 'mozarella-sticks.jpg'],
@@ -56,25 +56,25 @@ const seedMenu = async () => {
       ['Chicken Wings (50 pcs)', 'Party Tray', 'Party wings set.', 1350.00, 'chicken-wings-tray.jpg'],
 
       // WAFFLES
-      ['Chocolate Waffle', 'Waffles', 'Chocolate marshmallow waffle.', 80.00, 'chocolate-waffle.jpg'],
-      ['Bubble Waffle Caramel Cookie', 'Waffles', 'Hong Kong style waffle.', 85.00, 'caramel-cookie-waffle.jpg'],
-      ['Bubble Waffle Biscoff', 'Waffles', 'With Oreo toppings.', 100.00, 'biscoff-waffle.jpg'],
-      ['Bubble Waffle KitKat Oreo', 'Waffles', 'Loaded waffle combo.', 120.00, 'kitkat-oreo-waffle.jpg'],
+      ['Chocolate Waffle', 'Waffles', 'Chocolate marshmallow waffle.', 60.00, 'chocolate-waffle.jpg'],
+      ['Bubble Waffle Caramel Cookie', 'Waffles', 'rispy Hong Kong-style bubble waffle drizzled with caramel and topped with cookie crumble', 90.00, 'caramel-cookie-waffle.jpg'],
+      ['Bubble Waffle Biscoff', 'Waffles', 'Warm bubble waffle loaded with creamy Biscoff spread ', 120.00, 'biscoff-waffle.jpg'],
+      ['Bubble Waffle KitKat Oreo', 'Waffles', 'Fully loaded bubble waffle topped with KitKat and Oreo chunks', 130.00, 'kitkat-oreo-waffle.jpg'],
 
       // COFFEE
       ['Iced Coffee', 'Coffee', 'Refreshing iced coffee.', 60.00, 'iced-latte.jpg'],
-      ['Spanish Latte', 'Coffee', 'Sweet caramel espresso.', 75.00, 'spanish-latte.jpg'],
+      ['Spanish Latte', 'Coffee', 'Rich espresso blended with creamy milk .', 75.00, 'spanish-latte.jpg'],
 
       // NON-COFFEE
-      ['Strawberry Milk', 'Non-Coffee', 'Sweet strawberry drink.', 95.00, 'strawberry-milk.jpg'],
-      ['Biscoff Drink', 'Non-Coffee', 'Fresh mango milk.', 95.00, 'biscoff-drink.jpg'],
-      ['Oreo Milk', 'Non-Coffee', 'Cookies and cream drink.', 95.00, 'oreo-milk.jpg'],
-      ['Mango Milk', 'Non-Coffee', 'Japanese matcha drink.', 100.00, 'mango-milk.jpg'],
+      ['Strawberry Milk', 'Non-Coffee', 'Sweet strawberry drink.', 85.00, 'strawberry-milk.jpg'],
+      ['Biscoff Drink', 'Non-Coffee', 'Creamy milk drink infused with Biscoff spread ', 110.00, 'biscoff-drink.jpg'],
+      ['Oreo Milk', 'Non-Coffee', 'Cookies and cream drink.', 85.00, 'oreo-milk.jpg'],
+      ['Mango Milk', 'Non-Coffee', 'Fresh mango milk.', 85.00, 'mango-milk.jpg'],
 
       // FRAPPE
-      ['Choco Chips Frappe', 'Frappe', 'Sweet peach blend.', 120.00, 'choco-chips-frappe.jpg'],
-      ['Nutella Frappe', 'Frappe', 'Tropical mango drink.', 120.00, 'nutella-frappe.jpg'],
-      ['Red Velvet Frappe', 'Frappe', 'Cookies blended frappe.', 130.00, 'red-velvet.jpg'],
+      ['Choco Chips Frappe', 'Frappe', 'Blended chocolate frappe with crunchy chocolate chips', 115.00, 'choco-chips-frappe.jpg'],
+      ['Nutella Frappe', 'Frappe', 'Creamy blended frappe made with Nutella', 115.00, 'nutella-frappe.jpg'],
+      ['Red Velvet Frappe', 'Frappe', 'Velvety red velvet blended frappe', 115.00, 'red-velvet.jpg'],
     ];
 
     const itemInsertQuery = `
