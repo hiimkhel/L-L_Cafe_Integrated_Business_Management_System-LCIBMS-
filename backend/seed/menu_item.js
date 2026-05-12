@@ -40,48 +40,41 @@ const seedMenu = async () => {
     // 4. Seed Menu Items
     const items = [
       // FOODS
-      ['L&L Cafe Burger', 'Foods', 'Signature house burger.', 100.00, 'temp.png'],
-      ['Cheese Burger', 'Foods', 'Classic cheeseburger.', 115.00, 'temp.png'],
-      ['Double Cheese Burger', 'Foods', 'Double patty, double cheese.', 140.00, 'temp.png'],
-      ['Red Pesto Pasta', 'Foods', 'Rich tomato pesto pasta.', 120.00, 'temp.png'],
-      ['Creamy Carbonara', 'Foods', 'Creamy white sauce pasta.', 100.00, 'temp.png'],
-      ['Plain Fries', 'Foods', 'Crispy fries.', 70.00, 'temp.png'],
-      ['Cheese Stick', 'Foods', 'Fried mozzarella sticks.', 130.00, 'temp.png'],
-      ['Loaded Beef Fries', 'Foods', 'Fries with beef toppings.', 160.00, 'temp.png'],
+      ['L&L Cafe Burger', 'Foods', 'Signature house burger.', 95.00, 'lnl-cafe-burger.jpg'],
+      ['Cheese Burger', 'Foods', 'Double patty, double cheese.', 110.00, 'double-cheese-burger.jpg'],
+      ['Lechon Sauce Chicken Wings', 'Foods', 'Rich tomato pesto pasta.', 160.00, 'lechon-chicken-wings.jpg'],  
+      ['Red Pesto Pasta', 'Foods', 'Rich tomato pesto pasta.', 120.00, 'red-pesto.jpg'],
+      ['Creamy Carbonara', 'Foods', 'Creamy white sauce pasta.', 100.00, 'creamy-carbonara.jpg'],
+      ['Cheese Stick', 'Foods', 'Fried mozzarella sticks.', 130.00, 'mozarella-sticks.jpg'],
+      ['Loaded Fries', 'Foods', 'Fries with chicken toppings.', 150.00, 'loaded-fries.jpg'],
 
       // PARTY TRAY
-      ['Red Pesto Pasta (Half Tray)', 'Party Tray', 'Good for small group.', 700.00, 'temp.png'],
-      ['Red Pesto Pasta (Full Tray)', 'Party Tray', 'Good for large group.', 1200.00, 'temp.png'],
-      ['Creamy Carbonara (Half Tray)', 'Party Tray', 'Good for small group.', 550.00, 'temp.png'],
-      ['Creamy Carbonara (Full Tray)', 'Party Tray', 'Good for large group.', 1000.00, 'temp.png'],
-      ['Chicken Wings (30 pcs)', 'Party Tray', 'Party wings set.', 820.00, 'temp.png'],
-      ['Chicken Wings (40 pcs)', 'Party Tray', 'Party wings set.', 1090.00, 'temp.png'],
-      ['Chicken Wings (50 pcs)', 'Party Tray', 'Party wings set.', 1350.00, 'temp.png'],
+      ['Creamy Carbonara (Half Tray)', 'Party Tray', 'Good for small group.', 550.00, 'creamy-carbonara-tray.jpg'],
+      ['Creamy Carbonara (Full Tray)', 'Party Tray', 'Good for large group.', 1000.00, 'creamy-carbonara-tray.jpg'],
+      ['Chicken Wings (30 pcs)', 'Party Tray', 'Party wings set.', 820.00, 'chicken-wings-tray.jpg'],
+      ['Chicken Wings (40 pcs)', 'Party Tray', 'Party wings set.', 1090.00, 'chicken-wings-tray.jpg'],
+      ['Chicken Wings (50 pcs)', 'Party Tray', 'Party wings set.', 1350.00, 'chicken-wings-tray.jpg'],
 
       // WAFFLES
-      ['Plain Belgian Waffle', 'Waffles', 'Classic waffle.', 60.00, 'temp.png'],
-      ['Nutella Waffle', 'Waffles', 'Waffle with Nutella.', 80.00, 'temp.png'],
-      ['S’mores Waffle', 'Waffles', 'Chocolate marshmallow waffle.', 80.00, 'temp.png'],
-      ['Bubble Waffle Classic', 'Waffles', 'Hong Kong style waffle.', 85.00, 'temp.png'],
-      ['Bubble Waffle Oreo', 'Waffles', 'With Oreo toppings.', 100.00, 'temp.png'],
-      ['Bubble Waffle KitKat Oreo', 'Waffles', 'Loaded waffle combo.', 120.00, 'temp.png'],
+      ['Chocolate Waffle', 'Waffles', 'Chocolate marshmallow waffle.', 80.00, 'chocolate-waffle.jpg'],
+      ['Bubble Waffle Caramel Cookie', 'Waffles', 'Hong Kong style waffle.', 85.00, 'caramel-cookie-waffle.jpg'],
+      ['Bubble Waffle Biscoff', 'Waffles', 'With Oreo toppings.', 100.00, 'biscoff-waffle.jpg'],
+      ['Bubble Waffle KitKat Oreo', 'Waffles', 'Loaded waffle combo.', 120.00, 'kitkat-oreo-waffle.jpg'],
 
       // COFFEE
-      ['Iced Coffee', 'Coffee', 'Refreshing iced coffee.', 70.00, 'temp.png'],
-      ['Caramel Latte', 'Coffee', 'Sweet caramel espresso.', 80.00, 'temp.png'],
-      ['Iced Mocha', 'Coffee', 'Chocolate coffee blend.', 80.00, 'temp.png'],
+      ['Iced Coffee', 'Coffee', 'Refreshing iced coffee.', 60.00, 'iced-latte.jpg'],
+      ['Spanish Latte', 'Coffee', 'Sweet caramel espresso.', 75.00, 'spanish-latte.jpg'],
 
       // NON-COFFEE
-      ['Strawberry Milk', 'Non-Coffee', 'Sweet strawberry drink.', 95.00, 'temp.png'],
-      ['Mango Milk', 'Non-Coffee', 'Fresh mango milk.', 95.00, 'temp.png'],
-      ['Oreo Milk', 'Non-Coffee', 'Cookies and cream drink.', 95.00, 'temp.png'],
-      ['Matcha Milk', 'Non-Coffee', 'Japanese matcha drink.', 100.00, 'temp.png'],
+      ['Strawberry Milk', 'Non-Coffee', 'Sweet strawberry drink.', 95.00, 'strawberry-milk.jpg'],
+      ['Biscoff Drink', 'Non-Coffee', 'Fresh mango milk.', 95.00, 'biscoff-drink.jpg'],
+      ['Oreo Milk', 'Non-Coffee', 'Cookies and cream drink.', 95.00, 'oreo-milk.jpg'],
+      ['Mango Milk', 'Non-Coffee', 'Japanese matcha drink.', 100.00, 'mango-milk.jpg'],
 
       // FRAPPE
-      ['Banana Frappe', 'Frappe', 'Blended banana drink.', 110.00, 'temp.png'],
-      ['Peach Frappe', 'Frappe', 'Sweet peach blend.', 120.00, 'temp.png'],
-      ['Mango Frappe', 'Frappe', 'Tropical mango drink.', 120.00, 'temp.png'],
-      ['Oreo Frappe', 'Frappe', 'Cookies blended frappe.', 130.00, 'temp.png'],
+      ['Choco Chips Frappe', 'Frappe', 'Sweet peach blend.', 120.00, 'choco-chips-frappe.jpg'],
+      ['Nutella Frappe', 'Frappe', 'Tropical mango drink.', 120.00, 'nutella-frappe.jpg'],
+      ['Red Velvet Frappe', 'Frappe', 'Cookies blended frappe.', 130.00, 'red-velvet.jpg'],
     ];
 
     const itemInsertQuery = `
