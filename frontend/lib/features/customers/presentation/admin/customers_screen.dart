@@ -158,7 +158,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: AppColors.white,
       body: SizedBox.expand(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,

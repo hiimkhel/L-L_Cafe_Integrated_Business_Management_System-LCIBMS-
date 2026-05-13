@@ -48,4 +48,46 @@ class OrderService {
       rethrow;
     }
   }
+
+ Future<void> cancelOrder(String token, String orderNumber) async {
+  final url = '$baseUrl/customer/orders/$orderNumber/cancel';
+
+  try {
+    print("🚀 [CANCEL ORDER] Request starting...");
+    print("🔗 URL: $url");
+    print("🔑 Token: ${token.isNotEmpty ? "Present" : "MISSING"}");
+    print("📦 Order Number: $orderNumber");
+
+    final response = await http.patch(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer ${token.trim()}',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    print("📡 [CANCEL ORDER] Response received");
+    print("📊 Status Code: ${response.statusCode}");
+    print("📄 Body: ${response.body}");
+
+    // Try decoding safely
+    try {
+      final decoded = jsonDecode(response.body);
+      print("🧠 Decoded Response: $decoded");
+    } catch (e) {
+      print("⚠️ JSON Decode Error: $e");
+    }
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Cancel failed | Status: ${response.statusCode} | Body: ${response.body}',
+      );
+    }
+
+    print("✅ Order cancelled successfully");
+  } catch (e) {
+    print("❌ [CANCEL ORDER ERROR]: $e");
+    rethrow;
+  }
+}
 }

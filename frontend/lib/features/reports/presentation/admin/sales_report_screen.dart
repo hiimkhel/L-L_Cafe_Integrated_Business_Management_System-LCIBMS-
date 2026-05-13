@@ -4,7 +4,7 @@ import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/core/widgets/admin_sidebar.dart';
 import 'package:frontend/features/reports/presentation/widget/business_performance_card.dart';
 
-const Color _cardBg  = Color(0xFFF7F0E4);
+const Color _cardBg  = AppColors.background;
 const Color _primary = Color(0xFF3D5A45);
 const Color _accent  = Color(0xFF758C6D);
 const Color _gold    = Color(0xFFA98258);
@@ -69,7 +69,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.white,
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

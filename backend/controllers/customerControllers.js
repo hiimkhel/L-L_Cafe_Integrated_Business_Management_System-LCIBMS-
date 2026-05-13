@@ -174,4 +174,93 @@ const getCustomerOrders = async (req, res) => {
     }
 };
 
-module.exports = { getUserAddresses, getUserProfile, updateUserProfile, getCustomerOrders};
+const cancelPendingOrder = async (req, res) => {
+  const { id: orderNumber } = req.params;
+
+  try {
+    if (!req.user || !req.user.uid) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const firebaseUid = req.user.uid;
+
+    // 1. Get user
+    const [users] = await db.execute(
+      `SELECT id FROM users WHERE firebase_uid = ? LIMIT 1`,
+      [firebaseUid]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const userId = users[0].id; // ✅ FIXED
+
+    // 2. Get order using order_number (correct system)
+    const [orders] = await db.execute(
+      `
+      SELECT id, status
+      FROM orders
+      WHERE order_number = ?
+        AND user_id = ?
+      LIMIT 1
+      `,
+      [orderNumber, userId]
+    );
+
+    if (orders.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    const order = orders[0];
+
+    // 3. Only allow pending
+    if (order.status !== "pending") {
+      return res.status(400).json({
+        success: false,
+        message: "Only pending orders can be cancelled",
+      });
+    }
+
+    // 4. Cancel order
+    await db.execute(
+      `
+      UPDATE orders
+      SET status = 'cancelled',
+          updated_at = NOW()
+      WHERE order_number = ?
+        AND user_id = ?
+      `,
+      [orderNumber, userId]
+    );
+
+    return res.json({
+      success: true,
+      message: "Order cancelled successfully",
+      data: {
+        order_number: orderNumber,
+        status: "cancelled",
+      },
+    });
+
+  } catch (error) {
+    console.error("Cancel error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to cancel order",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = { getUserAddresses, getUserProfile, updateUserProfile, getCustomerOrders, cancelPendingOrder};

@@ -9,6 +9,8 @@ import 'package:frontend/core/models/menu_item.dart';
 import 'package:frontend/core/widgets/bamboo_breeze_background.dart'; // ← updated
 import 'package:frontend/core/constants/cart_item.dart';
 import 'package:frontend/core/widgets/bamboo_background.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:frontend/core/constants/cart_item.dart';
 
 const double _kMobile = 900;
@@ -20,15 +22,7 @@ const Color _secondary = Color(0xFFA98258);
 
 enum StockStatus { inStock, outOfStock, limitedStock }
 
-const List<Map<String, String>> _kCategories = [
-  {'label': 'ALL',              'value': ''},
-  {'label': 'FOODS',            'value': '1'},
-  {'label': 'PARTY TRAY',       'value': '2'},
-  {'label': 'WAFFLES',          'value': '3'},
-  {'label': 'COFFEE',           'value': '4'},
-  {'label': 'NON-COFFEE DRINKS','value': '5'},
-  {'label': 'FRAPPES',          'value': '6'},
-];
+List<Map<String, String>> _categories = [];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MENU SCREEN
@@ -62,7 +56,36 @@ class _MenuScreenState extends State<MenuScreen> {
   void initState() {
     super.initState();
     _loadMenu();
+    _loadCategories();
   }
+
+  Future<void> _loadCategories() async {
+  try {
+    final res = await http.get(
+      Uri.parse('http://localhost:3006/api/admin/menu/category'),
+    );
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+
+      setState(() {
+        _categories = [
+          {'label': 'ALL', 'value': ''},
+          ...data.map<Map<String, String>>((cat) {
+            return {
+              'label': cat['name'].toString().toUpperCase(),
+              'value': cat['id'].toString(),
+            };
+          }).toList(),
+        ];
+      });
+    } else {
+      throw Exception('Failed to load categories');
+    }
+  } catch (e) {
+    debugPrint("CATEGORY ERROR: $e");
+  }
+}
 
   Future<void> _loadMenu() async {
     if (!mounted) return;
@@ -359,7 +382,7 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   Widget _buildCategoryFilter({required bool scrollable}) {
-    final chips = _kCategories.map((cat) {
+    final chips = _categories.map((cat) {
       final label = cat['label']!;
       final value = cat['value']!;
       return Padding(
