@@ -517,66 +517,61 @@ Future<void> _pickFile() async {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-
-            // ── Item header row ──────────────────────────────────────────
+            // ── Item Header Row ──────────────────────────────────────────
             Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-              Container(
-                width: 52, height: 52,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(Icons.fastfood_rounded, color: AppColors.primary, size: 26),
+             Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: _kBorder.withOpacity(0.5)),
               ),
-              const SizedBox(width: 14),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(
-                  selectedItemName!,
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.primary),
-                ),
-                Text(
-                  categories.firstWhere(
-                    (c) => c['id'] == selectedCategoryId, orElse: () => {'name': ''})['name'] ?? '',
-                  style: TextStyle(fontSize: 11, color: AppColors.primary.withOpacity(0.5)),
-                ),
-              ])),
-              // Availability toggle
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: _kBorder),
-                ),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Text(
-                    isAvailable ? 'Available' : 'Unavailable',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isAvailable ? const Color(0xFF4CAF50) : Colors.redAccent,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  SizedBox(
-                    width: 36, height: 20,
-                    child: Switch(
-                      value: isAvailable,
-                      onChanged: (v) => setState(() => isAvailable = v),
-                      activeColor: const Color(0xFF4CAF50),
-                      inactiveThumbColor: Colors.redAccent,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  ),
-                ]),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(13),
+                child: _buildItemImage(selectedItem?['image_url']),
               ),
+            ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start, 
+                  children: [
+                    Text(
+                      selectedItemName!,
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.primary),
+                    ),
+                    const SizedBox(height: 2),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        categories.firstWhere(
+                          (c) => c['id'] == selectedCategoryId, 
+                          orElse: () => {'name': 'General'}
+                        )['name'].toString().toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 9, 
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                          color: AppColors.primary.withOpacity(0.6)
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _buildAvailabilityToggle(),
             ]),
 
             const SizedBox(height: 24),
             Divider(color: _kBorder, height: 1),
             const SizedBox(height: 24),
 
-            // ── Fields grid ───────────────────────────────────────────────
+            // ── Fields Grid ───────────────────────────────────────────────
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 _FieldLabel('Item Name'),
@@ -602,7 +597,7 @@ Future<void> _pickFile() async {
 
             const SizedBox(height: 20),
 
-            // ── Image upload ──────────────────────────────────────────────
+            // ── Image Upload ──────────────────────────────────────────────
             _FieldLabel('Item Photo'),
             const SizedBox(height: 8),
             GestureDetector(
@@ -617,7 +612,6 @@ Future<void> _pickFile() async {
                     color: _pickedFileName != null
                         ? AppColors.primary.withOpacity(0.6)
                         : _kBorder,
-                    style: BorderStyle.solid,
                   ),
                 ),
                 child: _pickedFileName != null
@@ -628,7 +622,7 @@ Future<void> _pickFile() async {
 
             const SizedBox(height: 28),
 
-            // ── Action buttons ────────────────────────────────────────────
+            // ── Action Buttons ────────────────────────────────────────────
             Row(children: [
               _FilledBtn(
                 label: 'Save Changes',
@@ -643,12 +637,91 @@ Future<void> _pickFile() async {
                 danger: true,
               ),
             ]),
-
           ]),
         ),
       ),
     ]);
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // NEW CUSTOM TOGGLE COMPONENT
+  // ─────────────────────────────────────────────────────────────────────────
+
+  Widget _buildAvailabilityToggle() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              isAvailable ? 'ACTIVE' : 'INACTIVE',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.8,
+                color: isAvailable ? const Color(0xFF2E7D32) : Colors.redAccent,
+              ),
+            ),
+            const SizedBox(width: 10),
+            GestureDetector(
+              onTap: () => setState(() => isAvailable = !isAvailable),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 44,
+                height: 22,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(11),
+                  color: isAvailable 
+                      ? const Color(0xFF4CAF50) 
+                      : const Color(0xFFBDBDBD).withOpacity(0.3),
+                  border: Border.all(
+                    color: isAvailable 
+                        ? const Color(0xFF388E3C) 
+                        : const Color(0xFFBDBDBD),
+                    width: 1,
+                  ),
+                ),
+                child: AnimatedAlign(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutBack,
+                  alignment: isAvailable ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: Container(
+                      width: 14,
+                      height: 14,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 2,
+                            offset: Offset(0, 1),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'Visibility on Menu',
+          style: TextStyle(
+            fontSize: 9,
+            color: AppColors.primary.withOpacity(0.4),
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ],
+    );
+  }
+
 
   Widget _buildFilePreview() {
     return Padding(
@@ -1046,4 +1119,33 @@ class _OutlineBtn extends StatelessWidget {
       ),
     );
   }
+}
+Widget _buildItemImage(String? urlPath) {
+  // Replace with your actual backend storage URL
+  const String baseUrl = "http://localhost:3006/uploads/menu-items/";
+
+  if (urlPath == null || urlPath.isEmpty) {
+    return Icon(Icons.fastfood_rounded, color: AppColors.primary.withOpacity(0.3), size: 28);
+  }
+
+  return Image.network(
+    "$baseUrl$urlPath",
+    fit: BoxFit.cover,
+    // Loading State
+    loadingBuilder: (context, child, loadingProgress) {
+      if (loadingProgress == null) return child;
+      return Center(
+        child: SizedBox(
+          width: 20, height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary.withOpacity(0.2)),
+        ),
+      );
+    },
+    // Error State (e.g. 404 or no internet)
+    errorBuilder: (context, error, stackTrace) => Icon(
+      Icons.broken_image_outlined, 
+      color: Colors.redAccent.withOpacity(0.3), 
+      size: 24
+    ),
+  );
 }
