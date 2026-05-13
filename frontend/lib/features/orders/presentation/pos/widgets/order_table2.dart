@@ -9,14 +9,16 @@ class OrderTable2 extends StatefulWidget {
   const OrderTable2({super.key});
 
   @override
-  State<OrderTable2> createState() => _OrderTable2State();
+  State<OrderTable2> createState() => OrderTable2State();
 }
 
-class _OrderTable2State extends State<OrderTable2> {
+class OrderTable2State extends State<OrderTable2> {
   final OrderService _orderService = OrderService();
 
   bool _isLoading = true;
   List<Map<String, dynamic>> _orders = [];
+
+  String currentSearch = '';
 
   @override
   void initState() {
@@ -24,19 +26,34 @@ class _OrderTable2State extends State<OrderTable2> {
     _loadOrderHistory();
   }
 
-  Future<void> _loadOrderHistory() async {
-    setState(() => _isLoading = true);
+  void handleSearch(String query) {
+    _loadOrderHistory(search: query);
+  }
 
-    final result = await _orderService.fetchOrderHistory(
-      dateFilter: 'all',
-      page: 1,
-      limit: 50,
-    );
-
+ Future<void> _loadOrderHistory({String search = ''}) async {
     setState(() {
-      _orders = List<Map<String, dynamic>>.from(result['orders']);
-      _isLoading = false;
+      _isLoading = true;
+      currentSearch = search; // Store the query
     });
+
+    try {
+      final result = await _orderService.fetchOrderHistory(
+        search: currentSearch,
+        dateFilter: 'all',
+        page: 1,
+        limit: 50,
+      );
+
+      if (mounted) {
+        setState(() {
+          _orders = List<Map<String, dynamic>>.from(result['orders']);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Load History Error: $e");
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
