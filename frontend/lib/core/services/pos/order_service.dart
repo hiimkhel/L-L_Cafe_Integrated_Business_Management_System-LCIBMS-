@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:frontend/core/models/order_request.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class OrderService {
   final String baseUrl = "http://localhost:3006/api";
@@ -156,31 +157,30 @@ class OrderService {
 
   Future<Map<String, dynamic>> fetchOrderHistory({
     String search = '',
-    String dateFilter = 'all', // today | yesterday | last7days | all
+    String dateFilter = 'all',
     int page = 1,
     int limit = 10,
+    String startDate = '', 
+    String endDate = '',   
   }) async {
     try {
       final uri = Uri.parse(
         '$baseUrl/pos/orders/history'
         '?search=${Uri.encodeComponent(search)}'
         '&dateFilter=$dateFilter'
+        '&startDate=$startDate' 
+        '&endDate=$endDate'     
         '&page=$page'
         '&limit=$limit',
       );
 
       final response = await http.get(uri);
-
-      if (response.statusCode != 200) {
-        throw Exception('Failed to fetch order history');
-      }
+      if (response.statusCode != 200) throw Exception('Failed to fetch history');
 
       final data = jsonDecode(response.body);
-
-      final List<Map<String, dynamic>> orders =
-          List<Map<String, dynamic>>.from(
-            data['data'],
-          ).map((order) => _mapOrderHistory(order)).toList();
+      final List<Map<String, dynamic>> orders = List<Map<String, dynamic>>.from(data['data'])
+          .map((order) => _mapOrderHistory(order))
+          .toList();
 
       return {
         'orders': orders,
@@ -190,21 +190,31 @@ class OrderService {
       print('Order History Error: $e');
       return {
         'orders': <Map<String, dynamic>>[],
-        'pagination': {
-          'currentPage': 1,
-          'pageSize': limit,
-          'totalRecords': 0,
-          'totalPages': 0,
-        },
+        'pagination': {'currentPage': 1, 'pageSize': limit, 'totalRecords': 0, 'totalPages': 0},
       };
     }
   }
 
   // Maps backend response to UI-friendly structure
   Map<String, dynamic> _mapOrderHistory(Map<String, dynamic> o) {
+    String rawDate = o['created_at'] ?? '';
+   String formattedTime = 'N/A';
+
+
+   if (rawDate.isNotEmpty) {
+      try {
+        // 2. Parse the UTC string and convert to local time
+        DateTime dateTime = DateTime.parse(rawDate).toLocal();
+        
+        // 3. Format it: "MMM dd, hh:mm a" -> "May 11, 03:33 PM"
+        formattedTime = DateFormat('MMM dd, hh:mm a').format(dateTime);
+      } catch (e) {
+        formattedTime = rawDate; // Fallback to raw string if parsing fails
+      }
+    }
     return {
       // Time column
-      'time': o['created_at'],
+      'time': formattedTime,
 
       // Customer Name column
       'customer_name': o['customer_name'] ?? 'Walk-in Customer',

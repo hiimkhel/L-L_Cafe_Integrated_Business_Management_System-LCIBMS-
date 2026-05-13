@@ -475,7 +475,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ],
 
         _buildPrimaryButton(
-          label: isMobile ? 'LOGIN' : 'INITIALIZE LOGIN',
+          label: isMobile ? 'LOGIN' : 'LOGIN',
           onTap: isLoading ? null : _login,
           isLoading: isLoading,
         ),

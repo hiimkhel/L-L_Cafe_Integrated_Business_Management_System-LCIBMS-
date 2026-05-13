@@ -22,7 +22,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       body: Column(
         children: [
           HeaderBar2(
-            title: "Order History",
+            title: "ORDER HISTORY",
             onFilterChanged: (query, dateFilter, {customRange}) {
               _tableKey.currentState?.applyFilters(
                 query, 

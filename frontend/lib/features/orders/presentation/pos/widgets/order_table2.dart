@@ -51,14 +51,14 @@ class OrderTable2State extends State<OrderTable2> {
     currentSearch = search;
   });
 
-  // Format dates for API if custom range is used
-  String startDate = start != null ? DateFormat('yyyy-MM-dd').format(start) : '';
-  String endDate = end != null ? DateFormat('yyyy-MM-dd').format(end) : '';
+  String startDateStr = start != null ? DateFormat('yyyy-MM-dd').format(start) : '';
+  String endDateStr = end != null ? DateFormat('yyyy-MM-dd').format(end) : '';
 
   final result = await _orderService.fetchOrderHistory(
     search: search,
-    dateFilter: dateFilter, // pass "today", "yesterday", etc.
-    // Ensure your OrderService.fetchOrderHistory is updated to accept these!
+    dateFilter: dateFilter, 
+    startDate: startDateStr, 
+    endDate: endDateStr,
     page: 1,
     limit: 50,
   );
