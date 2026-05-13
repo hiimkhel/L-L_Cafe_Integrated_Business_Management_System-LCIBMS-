@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/services/pos/order_service.dart';
 import 'order_row2.dart';
+import 'package:intl/intl.dart';
 
 class OrderTable2 extends StatefulWidget {
   const OrderTable2({super.key});
@@ -30,31 +31,43 @@ class OrderTable2State extends State<OrderTable2> {
     _loadOrderHistory(search: query);
   }
 
- Future<void> _loadOrderHistory({String search = ''}) async {
-    setState(() {
-      _isLoading = true;
-      currentSearch = search; // Store the query
-    });
-
-    try {
-      final result = await _orderService.fetchOrderHistory(
-        search: currentSearch,
-        dateFilter: 'all',
-        page: 1,
-        limit: 50,
-      );
-
-      if (mounted) {
-        setState(() {
-          _orders = List<Map<String, dynamic>>.from(result['orders']);
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      debugPrint("Load History Error: $e");
-      if (mounted) setState(() => _isLoading = false);
-    }
+  void applyFilters(String query, String dateFilter, {DateTimeRange? customRange}) {
+    _loadOrderHistory(
+      search: query,
+      dateFilter: dateFilter,
+      start: customRange?.start,
+      end: customRange?.end,
+    );
   }
+
+ Future<void> _loadOrderHistory({
+  String search = '', 
+  String dateFilter = 'all',
+  DateTime? start,
+  DateTime? end,
+}) async {
+  setState(() {
+    _isLoading = true;
+    currentSearch = search;
+  });
+
+  // Format dates for API if custom range is used
+  String startDate = start != null ? DateFormat('yyyy-MM-dd').format(start) : '';
+  String endDate = end != null ? DateFormat('yyyy-MM-dd').format(end) : '';
+
+  final result = await _orderService.fetchOrderHistory(
+    search: search,
+    dateFilter: dateFilter, // pass "today", "yesterday", etc.
+    // Ensure your OrderService.fetchOrderHistory is updated to accept these!
+    page: 1,
+    limit: 50,
+  );
+
+  setState(() {
+    _orders = List<Map<String, dynamic>>.from(result['orders']);
+    _isLoading = false;
+  });
+}
 
   @override
   Widget build(BuildContext context) {

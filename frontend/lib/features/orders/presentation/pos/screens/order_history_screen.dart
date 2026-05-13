@@ -23,9 +23,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         children: [
           HeaderBar2(
             title: "Order History",
-            onSearch: (query) {
-              // Direct access to the table's load method
-              _tableKey.currentState?.handleSearch(query);
+            onFilterChanged: (query, dateFilter, {customRange}) {
+              _tableKey.currentState?.applyFilters(
+                query, 
+                dateFilter, 
+                customRange: customRange
+              );
             },
             onExport: () {
               // You can implement CSV export here
