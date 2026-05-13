@@ -1,9 +1,43 @@
+// order_table2.dart
+
 import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
+import 'package:frontend/core/services/pos/order_service.dart';
 import 'order_row2.dart';
 
-class OrderTable2 extends StatelessWidget {
+class OrderTable2 extends StatefulWidget {
   const OrderTable2({super.key});
+
+  @override
+  State<OrderTable2> createState() => _OrderTable2State();
+}
+
+class _OrderTable2State extends State<OrderTable2> {
+  final OrderService _orderService = OrderService();
+
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _orders = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOrderHistory();
+  }
+
+  Future<void> _loadOrderHistory() async {
+    setState(() => _isLoading = true);
+
+    final result = await _orderService.fetchOrderHistory(
+      dateFilter: 'all',
+      page: 1,
+      limit: 50,
+    );
+
+    setState(() {
+      _orders = List<Map<String, dynamic>>.from(result['orders']);
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +49,7 @@ class OrderTable2 extends StatelessWidget {
           BoxShadow(
             blurRadius: 20,
             color: Colors.black.withOpacity(0.05),
-          )
+          ),
         ],
       ),
       child: Column(
@@ -23,33 +57,39 @@ class OrderTable2 extends StatelessWidget {
           _header(),
 
           Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: const [
-                  OrderRow2(
-                    id: "LL-402",
-                    customer: "Marcus D.",
-                    items: ["Chicken Burger x2", "Nutella Frappe x1"],
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _orders.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No order history found.',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: _loadOrderHistory,
+                        child: ListView.builder(
+                          padding: EdgeInsets.zero,
+                          itemCount: _orders.length,
+                          itemBuilder: (context, index) {
+                            final order = _orders[index];
 
-                    time: "9m",
-                  ),
-                  OrderRow2(
-                    id: "LL-403",
-                    customer: "Sarah K.",
-                    items: ["Biscoff x1"],
-
-                    time: "4m",
-                  ),
-                  OrderRow2(
-                    id: "LL-401",
-                    customer: "Jun P.",
-                    items: ["Red Velvet x3", "S'more x2"],
-
-                    time: "16m",
-                  ),
-                ],
-              ),
-            ),
+                            return OrderRow2(
+                              orderId: order['order_id'] ?? '',
+                              customerName:
+                                  order['customer_name'] ?? 'Walk-in Customer',
+                              itemCount: order['item_count'] ?? 0,
+                              paymentType:
+                                  order['payment_type'] ?? 'N/A',
+                              total:
+                                  (order['total'] as num?)?.toDouble() ?? 0.0,
+                              time: order['time'] ?? '',
+                              fullOrderData:
+                                  order['full_order_data'] ?? {},
+                            );
+                          },
+                        ),
+                      ),
           ),
         ],
       ),
@@ -61,10 +101,13 @@ class OrderTable2 extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: const [
-          Expanded(flex: 3, child: Text("ORDER ID")),
+          Expanded(flex: 2, child: Text("TIME")),
           Expanded(flex: 3, child: Text("CUSTOMER")),
-          Expanded(flex: 4, child: Text("ITEMS")),
-          Expanded(flex: 3, child: Text("TIME")),
+          Expanded(flex: 3, child: Text("ORDER ID")),
+          Expanded(flex: 2, child: Text("ITEMS")),
+          Expanded(flex: 2, child: Text("PAYMENT")),
+          Expanded(flex: 2, child: Text("TOTAL")),
+          Expanded(flex: 2, child: Text("ACTION")),
         ],
       ),
     );

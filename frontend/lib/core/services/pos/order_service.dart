@@ -152,4 +152,103 @@ class OrderService {
       throw Exception('Failed to fetch count');
     }
   }
+
+
+  Future<Map<String, dynamic>> fetchOrderHistory({
+    String search = '',
+    String dateFilter = 'all', // today | yesterday | last7days | all
+    int page = 1,
+    int limit = 10,
+  }) async {
+    try {
+      final uri = Uri.parse(
+        '$baseUrl/pos/orders/history'
+        '?search=${Uri.encodeComponent(search)}'
+        '&dateFilter=$dateFilter'
+        '&page=$page'
+        '&limit=$limit',
+      );
+
+      final response = await http.get(uri);
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to fetch order history');
+      }
+
+      final data = jsonDecode(response.body);
+
+      final List<Map<String, dynamic>> orders =
+          List<Map<String, dynamic>>.from(
+            data['data'],
+          ).map((order) => _mapOrderHistory(order)).toList();
+
+      return {
+        'orders': orders,
+        'pagination': data['pagination'],
+      };
+    } catch (e) {
+      print('Order History Error: $e');
+      return {
+        'orders': <Map<String, dynamic>>[],
+        'pagination': {
+          'currentPage': 1,
+          'pageSize': limit,
+          'totalRecords': 0,
+          'totalPages': 0,
+        },
+      };
+    }
+  }
+
+  // Maps backend response to UI-friendly structure
+  Map<String, dynamic> _mapOrderHistory(Map<String, dynamic> o) {
+    return {
+      // Time column
+      'time': o['created_at'],
+
+      // Customer Name column
+      'customer_name': o['customer_name'] ?? 'Walk-in Customer',
+
+      // Order ID column
+      'order_id': o['order_number'] ?? 'N/A',
+
+      // Item Count column
+      'item_count': int.tryParse(o['item_count'].toString()) ?? 0,
+
+      // Payment Type column
+      'payment_type':
+          (o['payment_method'] ?? 'N/A').toString().toUpperCase(),
+
+      // Total Value column
+      'total':
+          double.tryParse(o['total'].toString()) ?? 0.0,
+
+      // Full order data for "View Receipt"
+      'full_order_data': _decodeFullOrderData(o['full_order_data']),
+    };
+  }
+
+  // Decode JSON_OBJECT result from MySQL
+  Map<String, dynamic> _decodeFullOrderData(dynamic fullOrderData) {
+    if (fullOrderData == null) {
+      return {};
+    }
+
+    // If backend returns JSON string
+    if (fullOrderData is String) {
+      return jsonDecode(fullOrderData);
+    }
+
+    // If backend already returns Map
+    if (fullOrderData is Map<String, dynamic>) {
+      return fullOrderData;
+    }
+
+    // Convert generic map
+    if (fullOrderData is Map) {
+      return Map<String, dynamic>.from(fullOrderData);
+    }
+
+    return {};
+  }
 }

@@ -212,4 +212,148 @@ const fetchPendingOrdersCount = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch count" });
   }
 }
-module.exports = {getOrdersByStatus, updateOrderStatus, getOnlineOrders, acceptOrder, rejectOrder, fetchPreparingOrders, fetchPendingOrdersCount}
+
+const getOrderHistory = async (req, res) => {
+  try {
+    const {
+      search = "",
+      dateFilter = "all",
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    const currentPage = parseInt(page, 10);
+    const pageSize = parseInt(limit, 10);
+    const offset = (currentPage - 1) * pageSize;
+
+    let whereClauses = [];
+    let params = [];
+
+    // Show only completed/cancelled orders in history
+    whereClauses.push(
+      `status IN ('completed', 'cancelled', 'rejected')`
+    );
+
+    // Search by order number or customer name
+    if (search.trim()) {
+      whereClauses.push(`
+        (
+          o.order_number LIKE ?
+          OR o.customer_name LIKE ?
+        )
+      `);
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    // Date filters
+    switch (dateFilter) {
+      case "today":
+        whereClauses.push(`DATE(o.created_at) = CURDATE()`);
+        break;
+
+      case "yesterday":
+        whereClauses.push(
+          `DATE(o.created_at) = CURDATE() - INTERVAL 1 DAY`
+        );
+        break;
+
+      case "last7days":
+        whereClauses.push(
+          `o.created_at >= CURDATE() - INTERVAL 7 DAY`
+        );
+        break;
+
+      case "all":
+      default:
+        break;
+    }
+
+    const whereSQL =
+      whereClauses.length > 0
+        ? `WHERE ${whereClauses.join(" AND ")}`
+        : "";
+
+    // Count query
+    const countQuery = `
+      SELECT COUNT(*) AS total
+      FROM orders o
+      ${whereSQL}
+    `;
+
+    const [countRows] = await db.query(countQuery, params);
+    const totalRecords = countRows[0].total;
+    const totalPages = Math.ceil(totalRecords / pageSize);
+
+    // Main query
+    const dataQuery = `
+      SELECT
+        o.id,
+        o.order_number,
+        o.customer_name,
+        o.payment_method,
+        o.total,
+        o.created_at,
+
+        -- Count total quantity of items in the order
+        COALESCE(SUM(oi.quantity), 0) AS item_count,
+
+        -- Full order data (for receipt modal)
+        JSON_OBJECT(
+          'id', o.id,
+          'order_number', o.order_number,
+          'source', o.source,
+          'customer_name', o.customer_name,
+          'customer_phone', o.customer_phone,
+          'order_type', o.order_type,
+          'status', o.status,
+          'subtotal', o.subtotal,
+          'delivery_fee', o.delivery_fee,
+          'delivery_address', o.delivery_address,
+          'total', o.total,
+          'payment_status', o.payment_status,
+          'payment_method', o.payment_method,
+          'notes', o.notes,
+          'payment_proof_url', o.payment_proof_url,
+          'created_at', o.created_at,
+          'updated_at', o.updated_at
+        ) AS full_order_data
+
+      FROM orders o
+      LEFT JOIN order_items oi
+        ON oi.order_id = o.id
+
+      ${whereSQL}
+
+      GROUP BY o.id
+
+      ORDER BY o.created_at DESC
+
+      LIMIT ? OFFSET ?
+    `;
+
+    const dataParams = [...params, pageSize, offset];
+    const [orders] = await db.query(dataQuery, dataParams);
+
+    return res.status(200).json({
+      success: true,
+      message: "Order history retrieved successfully.",
+      data: orders,
+      pagination: {
+        currentPage,
+        pageSize,
+        totalRecords,
+        totalPages,
+      },
+    });
+  } catch (error) {
+    console.error("Get Order History Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve order history.",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = {getOrdersByStatus, updateOrderStatus, getOnlineOrders, acceptOrder, rejectOrder, fetchPreparingOrders, fetchPendingOrdersCount, getOrderHistory}
