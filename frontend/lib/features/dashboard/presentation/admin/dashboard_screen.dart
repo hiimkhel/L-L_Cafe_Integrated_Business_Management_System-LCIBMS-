@@ -360,7 +360,7 @@ class _SummaryCard extends StatelessWidget {
                       style: const TextStyle(
                           fontFamily: 'Urbanist',
                           fontWeight: FontWeight.w900,
-                          fontSize: 20,
+                          fontSize: 24,
                           color: _green1)),
                 ),
                 const SizedBox(width: 5),
@@ -379,7 +379,7 @@ class _SummaryCard extends StatelessWidget {
                     Text(data.delta,
                         style: TextStyle(
                             fontFamily: 'Urbanist',
-                            fontSize: 10,
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: data.deltaPositive
                                 ? const Color(0xFF4CAF50)
@@ -390,7 +390,7 @@ class _SummaryCard extends StatelessWidget {
               Text(data.label,
                   style: TextStyle(
                       fontFamily: 'Urbanist',
-                      fontSize: 9,
+                      fontSize: 12,
                       letterSpacing: 0.8,
                       fontWeight: FontWeight.w600,
                       color: _green1.withOpacity(0.55))),
@@ -450,7 +450,7 @@ class _TargetIncomeCard extends StatelessWidget {
                   Text('DAILY TARGET INCOME',
                       style: TextStyle(
                           fontFamily: 'Urbanist',
-                          fontSize: 11,
+                          fontSize: 18,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1.0,
                           color: _beige.withOpacity(0.85))),
@@ -1175,7 +1175,7 @@ class _CardHeader extends StatelessWidget {
       Text(title,
           style: const TextStyle(
               fontFamily: 'Urbanist',
-              fontSize: 14,
+              fontSize: 18,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.3,
               color: _green1)),

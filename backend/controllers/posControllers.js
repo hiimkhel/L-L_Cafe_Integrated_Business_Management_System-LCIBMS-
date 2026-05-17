@@ -82,6 +82,7 @@ const getOnlineOrders = async (req, res ) => {
             o.payment_status,
             o.payment_method,
             o.notes,
+            DATE_FORMAT(o.created_at, '%Y-%m-%dT%H:%i:%sZ') AS created_at,
             o.payment_proof_url,
             oi.id AS item_id,
             oi.item_name,
@@ -112,6 +113,7 @@ const getOnlineOrders = async (req, res ) => {
             payment_method: row.payment_method,
             notes: row.notes,
             payment_proof_url: row.payment_proof_url,
+            created_at: row.created_at,
             items: []
             };
         }
@@ -210,4 +212,111 @@ const fetchPendingOrdersCount = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch count" });
   }
 }
-module.exports = {getOrdersByStatus, updateOrderStatus, getOnlineOrders, acceptOrder, rejectOrder, fetchPreparingOrders, fetchPendingOrdersCount}
+
+const getOrderHistory = async (req, res) => {
+  try {
+    const {
+      search = "",
+      dateFilter = "all",
+      startDate = "", // Added this
+      endDate = "",   // Added this
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    const currentPage = parseInt(page, 10);
+    const pageSize = parseInt(limit, 10);
+    const offset = (currentPage - 1) * pageSize;
+
+    let whereClauses = [];
+    let params = [];
+
+    // 1. Base Filter: History should only show finalized states
+    whereClauses.push(`o.status IN ('completed', 'cancelled', 'rejected')`);
+
+    // 2. Search Logic
+    if (search.trim()) {
+      whereClauses.push(`(o.order_number LIKE ? OR o.customer_name LIKE ?)`);
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    // 3. Date Filters (Fixed with Custom Range support)
+    switch (dateFilter) {
+      case "today":
+        whereClauses.push(`DATE(o.created_at) = CURDATE()`);
+        break;
+
+      case "yesterday":
+        whereClauses.push(`DATE(o.created_at) = CURDATE() - INTERVAL 1 DAY`);
+        break;
+
+      case "last7days":
+        whereClauses.push(`o.created_at >= CURDATE() - INTERVAL 7 DAY`);
+        break;
+
+      case "custom": // Added this case
+        if (startDate && endDate) {
+          // We use >= and <= with time to ensure we get the full last day
+          whereClauses.push(`DATE(o.created_at) BETWEEN ? AND ?`);
+          params.push(startDate, endDate);
+        }
+        break;
+
+      case "all":
+      default:
+        break;
+    }
+
+    const whereSQL = whereClauses.length > 0 
+      ? `WHERE ${whereClauses.join(" AND ")}` 
+      : "";
+
+    // --- COUNT QUERY ---
+    const countQuery = `SELECT COUNT(*) AS total FROM orders o ${whereSQL}`;
+    const [countRows] = await db.query(countQuery, params);
+    const totalRecords = countRows[0].total;
+    const totalPages = Math.ceil(totalRecords / pageSize);
+
+    // --- MAIN DATA QUERY ---
+    const dataQuery = `
+    SELECT 
+        o.id, 
+        o.order_number, 
+        o.customer_name, 
+        o.payment_method, 
+        o.total, 
+        o.created_at,
+        -- Summing the quantity from the joined order_items table
+        CAST(COALESCE(SUM(oi.quantity), 0) AS UNSIGNED) AS item_count,
+        JSON_OBJECT(
+        'id', o.id,
+        'order_number', o.order_number,
+        'customer_name', o.customer_name,
+        'status', o.status,
+        'total', o.total,
+        'payment_method', o.payment_method,
+        'created_at', o.created_at
+        ) AS full_order_data
+    FROM orders o
+    LEFT JOIN order_items oi ON o.id = oi.order_id
+    ${whereSQL}
+    GROUP BY o.id
+    ORDER BY o.created_at DESC
+    LIMIT ? OFFSET ?
+    `;
+
+    const dataParams = [...params, pageSize, offset];
+    const [orders] = await db.query(dataQuery, dataParams);
+
+    return res.status(200).json({
+      success: true,
+      data: orders,
+      pagination: { currentPage, pageSize, totalRecords, totalPages },
+    });
+  } catch (error) {
+    console.error("Get Order History Error:", error);
+    return res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+module.exports = {getOrdersByStatus, updateOrderStatus, getOnlineOrders, acceptOrder, rejectOrder, fetchPreparingOrders, fetchPendingOrdersCount, getOrderHistory}

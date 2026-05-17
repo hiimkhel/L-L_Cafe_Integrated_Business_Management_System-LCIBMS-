@@ -406,7 +406,7 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 28),
         ],
 
-        _buildLabel('EMAIL / USERNAME'),
+        _buildLabel('EMAIL'),
         const SizedBox(height: 6),
         _buildTextField(
           controller: _emailCtrl,
@@ -475,7 +475,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ],
 
         _buildPrimaryButton(
-          label: isMobile ? 'LOGIN' : 'INITIALIZE LOGIN',
+          label: isMobile ? 'LOGIN' : 'LOGIN',
           onTap: isLoading ? null : _login,
           isLoading: isLoading,
         ),

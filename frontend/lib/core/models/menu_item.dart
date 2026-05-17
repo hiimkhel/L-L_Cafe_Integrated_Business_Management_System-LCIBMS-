@@ -23,9 +23,28 @@ class MenuItem {
       categoryId: json['category_id'],
       name: json['name'],
       description: json['description'] ?? '',
-      imageUrl: json['image_url'] ?? '',
+      imageUrl: resolveImageUrl(json['image_url'] ?? 'temp.png'),
       price: double.parse(json['price'].toString()),
       isAvailable: json['is_available'] == 1,
     );
   }
 }
+
+  String resolveImageUrl(String imageUrl) {
+    // CHANGE THIS if testing on Android emulator or physical device.
+    const String baseUrl = 'http://localhost:3006';
+    const String uploadPath = '/uploads/menu-items/';
+
+    // If already a full URL, return as-is.
+    if (imageUrl.startsWith('http://') ||
+        imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+
+    // Remove leading slash if present.
+    final clean = imageUrl.startsWith('/')
+        ? imageUrl.substring(1)
+        : imageUrl;
+
+    return '$baseUrl$uploadPath$clean';
+  }

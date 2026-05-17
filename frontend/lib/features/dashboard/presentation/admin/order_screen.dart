@@ -544,7 +544,7 @@ class _OrderScreenState extends State<OrderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.white,
       body: Row(
         children: [
           Sidebar(activeIndex: 1, onLogout: widget.onLogout),
