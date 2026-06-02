@@ -6,7 +6,7 @@ const getOrdersByStatus = async (req, res) => {
     try {
         const sql = `
             SELECT 
-                o.id, o.order_number, o.customer_name, o.status, o.total, o.created_at, o.updated_at,
+                o.id, o.source, o.order_number, o.customer_name, o.status, o.total, o.created_at, o.updated_at,
                 oi.item_name, oi.quantity, oi.unit_price
             FROM orders o 
             LEFT JOIN order_items oi ON o.id = oi.order_id
@@ -21,6 +21,7 @@ const getOrdersByStatus = async (req, res) => {
             if (!ordersMap[row.id]) {
                 ordersMap[row.id] = {
                     id: row.id,
+                    source: row.source,
                     order_number: row.order_number,
                     customer_name: row.customer_name || "WALK-IN",
                     status: row.status,

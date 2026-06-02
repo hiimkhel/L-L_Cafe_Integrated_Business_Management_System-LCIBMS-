@@ -19,7 +19,7 @@ class RevenueTab extends StatelessWidget {
             children: [
               // Revenue amount
               const Text(
-                '₱20,000',
+                '₱2,660',
                 style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.w900,
@@ -47,9 +47,9 @@ class RevenueTab extends StatelessWidget {
               const SizedBox(height: 12),
 
               // Mini breakdown
-              _BreakdownRow(label: 'Online Orders', value: '₱12,500', ratio: 0.625),
+              _BreakdownRow(label: 'Online Orders', value: '₱2,000', ratio: 0.625),
               const SizedBox(height: 8),
-              _BreakdownRow(label: 'Walk-in',       value: '₱7,500',  ratio: 0.375),
+              _BreakdownRow(label: 'Walk-in',       value: '₱660',  ratio: 0.375),
             ],
           ),
         ),

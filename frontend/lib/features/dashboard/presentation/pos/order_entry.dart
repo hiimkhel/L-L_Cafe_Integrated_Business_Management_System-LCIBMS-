@@ -264,7 +264,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "CASHIER 128",
+                "L&L CASHIER",
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: AppColors.receiptDark,
