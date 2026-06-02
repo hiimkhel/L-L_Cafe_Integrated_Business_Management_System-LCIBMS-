@@ -20,6 +20,14 @@ router.delete("/menu-items/:id", deleteMenuItem);
 router.get("/menu/category", fetchMenuCategories );
 router.post("/menu/category", addMenuCategory);
 
+// Sales & Report Screen
+router.get("/reports/revenue", getCustomerReviews);
+router.get("/reports/orders", getCustomerReviews);
+router.get("/reports/menu", getCustomerReviews);
+router.get("/reports/customer", getCustomerReviews);
+router.get("/reports/chart", getCustomerReviews);
+
+
 // Reviews Screen
 router.get("/reviews", getCustomerReviews);
 router.patch("/reviews/:id/publish", publishReview);

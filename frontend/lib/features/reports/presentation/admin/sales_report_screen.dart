@@ -83,8 +83,6 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-                    // ✅ Single Column with Expanded children — no scroll views,
-                    // no LayoutBuilder with infinite constraints
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
