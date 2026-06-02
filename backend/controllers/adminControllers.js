@@ -464,6 +464,37 @@ const republishReview = async (req, res) => {
   }
 };
 
+const getMenuSales = async (req, res) => {
+    try{
+        const { startDate, endDate } = req.query;
+
+        const [rows] = await db.query(`
+            SELECT 
+                mi.id, mi.name,
+                SUM(oi.quantity) AS total_sold
+            FROM order_items oi
+            INNER JOIN orders o ON oi.order_id = o.id
+            INNER JOIN menu_items mi ON oi.menu_item_id = mi.id
+            WHERE o.status = 'completed'
+            AND o.created_at BETWEEN ? AND ?
+            GROUP BY mi.id, mi.name
+            ORDER BY total_sold DESC
+            LIMIT 10; 
+            `, startDate, endDate);
+
+        return res.status(200).json({
+            success: true,
+            data: rows
+        });
+
+
+    }catch(err){
+        return res.status(500).json({
+            error: err.message
+        })
+    }
+}
+
 module.exports = { fetchAllCustomer, 
     fetchMenuItems,
     fetchMenuCategories,
