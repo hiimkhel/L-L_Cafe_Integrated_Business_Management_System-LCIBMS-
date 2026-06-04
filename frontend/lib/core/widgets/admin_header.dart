@@ -777,7 +777,7 @@ class _SettingsPanelState extends State<_SettingsPanel> {
   bool _reviewAlerts   = false;
   bool _stockAlerts    = true;
   String _language     = 'English';
-  String _timezone     = 'UTC+8 (Philippine Time)';
+  final String _timezone     = 'UTC+8 (Philippine Time)';
 
   static const _languages = ['English', 'Filipino', 'Bisaya'];
 
@@ -1191,7 +1191,7 @@ class _ToggleTile extends StatelessWidget {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: _kGreen,
+          activeThumbColor: _kGreen,
           activeTrackColor: _kGreen.withOpacity(0.3),
           inactiveThumbColor: Colors.white,
           inactiveTrackColor: _kDark.withOpacity(0.15),
