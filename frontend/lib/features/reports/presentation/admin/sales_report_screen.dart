@@ -3,6 +3,7 @@ import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/core/widgets/admin_sidebar.dart';
 import 'package:frontend/features/reports/presentation/widget/business_performance_card.dart';
+import 'package:frontend/core/services/admin/sales_reports_services.dart';
 
 const Color _cardBg  = AppColors.background;
 const Color _primary = Color(0xFF3D5A45);
@@ -26,6 +27,9 @@ class SalesReportScreen extends StatefulWidget {
 }
 
 class _SalesReportScreenState extends State<SalesReportScreen> {
+  List<dynamic> topCustomers = [];
+  List<dynamic> topMenuItems = [];
+  bool isLoading = true;
   static const List<String> _ranges = [
     'Last 24 hours',
     'Last 7 days',
@@ -65,6 +69,30 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
       duration: const Duration(seconds: 2),
     ));
   }
+  Future<void> loadReports() async {
+    final ReportsService reportsService = ReportsService();
+    final customers =
+        await reportsService.getTopCustomers("2026-03-30", "2026-06-30");
+      print("CUSTOMERS:");
+      print(customers);
+
+    // final menuItems =
+    //     await reportsService.getTopMenuItems("2026-03-30", "2026-06-30");
+
+    setState(() {
+      topCustomers = customers;
+      //topMenuItems = menuItems;
+      isLoading = false;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadReports();
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +149,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                             children: [
                               Expanded(flex: 3, child: _TopPicksCard()),
                               const SizedBox(width: 16),
-                              const Expanded(flex: 1, child: _TopCustomersCard()),
+                              Expanded(flex: 1, child: _TopCustomersCard( customers: topCustomers)),
                             ],
                           ),
                         ),
@@ -494,83 +522,172 @@ class _PickTile extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _TopCustomersCard extends StatelessWidget {
-  static const _customers = [
-    _CustItem(name: 'Maria Santos',   initials: 'MS', amount: 3200),
-    _CustItem(name: 'Jose Reyes',     initials: 'JR', amount: 2750),
-    _CustItem(name: 'Ana de Leon',    initials: 'AD', amount: 2100),
-    _CustItem(name: 'Carlo Bautista', initials: 'CB', amount: 1800),
-  ];
+  final List<dynamic> customers;
 
-  const _TopCustomersCard();
+  const _TopCustomersCard({
+    required this.customers,
+  });
+
+  String getInitials(String name) {
+    if (name.trim().isEmpty) return '?';
+
+    final parts = name.trim().split(' ');
+
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+
+    return parts[0][0].toUpperCase();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final top = _customers.first.amount.toDouble();
+    if (customers.isEmpty) {
+      try{
+         return const _BaseCard(
+          title: 'TOP CUSTOMERS',
+          child: Center(
+            child: Text(
+              'No customer data available',
+              style: TextStyle(
+                fontFamily: 'Urbanist',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        );
+      }catch (e, stack) {
+        print(e);
+        print(stack);
+
+        return const Center(
+          child: Text('Error loading customers'),
+        );
+      }
+     
+    }
+
+    final topAmount =
+        double.parse(customers.first['total_spent'].toString());
+
     return _BaseCard(
       title: 'TOP CUSTOMERS',
       child: Column(
-        children: List.generate(_customers.length, (i) {
-          final c      = _customers[i];
-          final ratio  = c.amount / top;
-          final isLast = i == _customers.length - 1;
+        children: List.generate(customers.length, (i) {
+          final customer = customers[i];
+
+          final String customerName =
+              customer['customer_name'] ?? 'Unknown Customer';
+
+          final double amount =
+              double.parse(customer['total_spent'].toString());
+
+          final double ratio =
+              topAmount > 0 ? amount / topAmount : 0;
+
+          final bool isLast =
+              i == customers.length - 1;
+
           return Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 10),
-              child: Row(children: [
-                Container(
-                  width: 36, height: 36,
-                  decoration: BoxDecoration(
+              padding: EdgeInsets.only(
+                bottom: isLast ? 0 : 10,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
                       color: _primary.withOpacity(0.12),
-                      shape: BoxShape.circle),
-                  child: Center(
-                    child: Text(c.initials,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        getInitials(customerName),
                         style: const TextStyle(
-                            fontFamily: 'Urbanist',
-                            fontWeight: FontWeight.w900,
-                            fontSize: 11,
-                            color: _primary)),
+                          fontFamily: 'Urbanist',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 11,
+                          color: _primary,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(c.name,
+
+                  const SizedBox(width: 10),
+
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                      mainAxisAlignment:
+                          MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          customerName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                              fontFamily: 'Urbanist',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 11,
-                              color: _dark)),
-                      const SizedBox(height: 4),
-                      LayoutBuilder(builder: (_, box) {
-                        return Stack(children: [
-                          Container(
-                              height: 4, width: box.maxWidth,
-                              decoration: BoxDecoration(
-                                  color: _accent.withOpacity(0.12),
-                                  borderRadius: BorderRadius.circular(10))),
-                          Container(
-                              height: 4, width: box.maxWidth * ratio,
-                              decoration: BoxDecoration(
-                                  color: _accent,
-                                  borderRadius: BorderRadius.circular(10))),
-                        ]);
-                      }),
-                    ],
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                            color: _dark,
+                          ),
+                        ),
+
+                        const SizedBox(height: 4),
+
+                        LayoutBuilder(
+                          builder: (_, box) {
+                            return Stack(
+                              children: [
+                                Container(
+                                  height: 4,
+                                  width: box.maxWidth,
+                                  decoration: BoxDecoration(
+                                    color: _accent.withOpacity(
+                                      0.12,
+                                    ),
+                                    borderRadius:
+                                        BorderRadius.circular(
+                                      10,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  height: 4,
+                                  width:
+                                      box.maxWidth * ratio,
+                                  decoration: BoxDecoration(
+                                    color: _accent,
+                                    borderRadius:
+                                        BorderRadius.circular(
+                                      10,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text('₱${c.amount}',
+
+                  const SizedBox(width: 8),
+
+                  Text(
+                    '₱${amount.toStringAsFixed(2)}',
                     style: const TextStyle(
-                        fontFamily: 'Urbanist',
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12,
-                        color: _gold)),
-              ]),
+                      fontFamily: 'Urbanist',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12,
+                      color: _gold,
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         }),
@@ -578,6 +695,7 @@ class _TopCustomersCard extends StatelessWidget {
     );
   }
 }
+
 
 class _CustItem {
   final String name, initials;
