@@ -495,6 +495,29 @@ const getMenuSales = async (req, res) => {
     }
 }
 
+const getTopCustomer = async (req, res) => {
+    try{
+        const { startDate, endDate } = req.query;
+
+        const [rows] = await db.query(`
+            SELECT u.id, u.full_name AS customer_name,
+                SUM(o.total) AS total_spent        
+                FROM users u INNER JOIN orders o
+                ON u.id = o.user_id             
+                WHERE o.status = 'completed'
+                AND o.created_at BETWEEN ? AND ?
+                GROUP BY u.id ORDER BY total_spent DESC LIMIT 10;
+            `,[ startDate, endDate])
+
+            return res.status(200).json({
+                success: true,
+                data: rows
+            })
+    }catch(err){
+        res.status(500).json({error: err.message})
+    }
+}
+
 module.exports = { fetchAllCustomer, 
     fetchMenuItems,
     fetchMenuCategories,
@@ -507,5 +530,6 @@ module.exports = { fetchAllCustomer,
     publishReview,
     archiveReview, 
     deleteReview,
-    republishReview
+    republishReview,
+    getTopCustomer
  };
