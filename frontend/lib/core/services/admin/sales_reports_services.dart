@@ -16,7 +16,6 @@ class ReportsService {
     );
 
     final data = jsonDecode(response.body);
-    print(data);
     return data['data'];
   }
 

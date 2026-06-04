@@ -480,7 +480,7 @@ const getMenuSales = async (req, res) => {
             GROUP BY mi.id, mi.name
             ORDER BY total_sold DESC
             LIMIT 10; 
-            `, startDate, endDate);
+            `, [startDate, endDate]);
 
         return res.status(200).json({
             success: true,
@@ -531,5 +531,6 @@ module.exports = { fetchAllCustomer,
     archiveReview, 
     deleteReview,
     republishReview,
+    getMenuSales,
     getTopCustomer
  };

@@ -73,15 +73,13 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
     final ReportsService reportsService = ReportsService();
     final customers =
         await reportsService.getTopCustomers("2026-03-30", "2026-06-30");
-      print("CUSTOMERS:");
-      print(customers);
 
-    // final menuItems =
-    //     await reportsService.getTopMenuItems("2026-03-30", "2026-06-30");
+    final menuItems =
+        await reportsService.getTopMenuItems("2026-03-30", "2026-06-30");
 
     setState(() {
       topCustomers = customers;
-      //topMenuItems = menuItems;
+      topMenuItems = menuItems;
       isLoading = false;
     });
   }
@@ -147,7 +145,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Expanded(flex: 3, child: _TopPicksCard()),
+                              Expanded(flex: 3, child: _TopPicksCard( menuItems: topMenuItems)),
                               const SizedBox(width: 16),
                               Expanded(flex: 1, child: _TopCustomersCard( customers: topCustomers)),
                             ],
@@ -419,18 +417,32 @@ class _SalesSummaryCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _TopPicksCard extends StatelessWidget {
-  static final _items = List.generate(8, (i) => _PickItem(
-    name:  'Menu Item ${i + 1}',
-    sold:  10 + i * 5,
-    price: (i + 1) * 100,
-    rank:  i + 1,
-  ));
+  final List<dynamic> menuItems;
+
+  const _TopPicksCard({
+    required this.menuItems,
+  });
 
   @override
   Widget build(BuildContext context) {
+    if (menuItems.isEmpty) {
+      return const _BaseCard(
+        title: 'TOP PICKS',
+        child: Center(
+          child: Text(
+            'No menu data available',
+            style: TextStyle(
+              fontFamily: 'Urbanist',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      );
+    }
+
     return _BaseCard(
-      title:    'TOP PICKS',
-      trailing: _pill('${_items.length} ITEMS', _gold),
+      title: 'TOP PICKS',
+      trailing: _pill('${menuItems.length} ITEMS', _gold),
       child: GridView.builder(
         physics: const BouncingScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -439,8 +451,11 @@ class _TopPicksCard extends StatelessWidget {
           crossAxisSpacing: 8,
           childAspectRatio: 3.6,
         ),
-        itemCount: _items.length,
-        itemBuilder: (_, i) => _PickTile(item: _items[i]),
+        itemCount: menuItems.length,
+        itemBuilder: (_, i) => _PickTile(
+          item: menuItems[i],
+          rank: i + 1,
+        ),
       ),
     );
   }
@@ -457,65 +472,92 @@ class _PickItem {
 }
 
 class _PickTile extends StatelessWidget {
-  final _PickItem item;
-  const _PickTile({required this.item});
+  final dynamic item;
+  final int rank;
+
+  const _PickTile({
+    required this.item,
+    required this.rank,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final String name =
+        item['name']?.toString() ?? 'Unknown Item';
+
+    final int sold =
+        int.tryParse(item['total_sold'].toString()) ?? 0;
+
     return Container(
       decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.6),
-          borderRadius: BorderRadius.circular(10)),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      child: Row(children: [
-        Container(
-          width: 30, height: 30,
-          decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 6,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
               color: _accent.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(7)),
-          child: Center(
-            child: Text('#${item.rank}',
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Center(
+              child: Text(
+                '#$rank',
                 style: const TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 9,
-                    color: _accent)),
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 9,
+                  color: _accent,
+                ),
+              ),
+            ),
           ),
-        ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(item.name,
+
+          const SizedBox(width: 6),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
+              children: [
+                Text(
+                  name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                      fontFamily: 'Urbanist',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 10,
-                      color: _dark)),
-              const SizedBox(height: 1),
-              Row(children: [
-                Text('Sold: ${item.sold}',
-                    style: TextStyle(
-                        fontFamily: 'Urbanist', fontSize: 9, color: _muted)),
-                const SizedBox(width: 4),
-                Text('₱${item.price}',
-                    style: const TextStyle(
-                        fontFamily: 'Urbanist',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 9,
-                        color: _gold)),
-              ]),
-            ],
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 10,
+                    color: _dark,
+                  ),
+                ),
+
+                const SizedBox(height: 2),
+
+                Text(
+                  'Sold: $sold',
+                  style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontSize: 9,
+                    color: _muted,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOP CUSTOMERS CARD
