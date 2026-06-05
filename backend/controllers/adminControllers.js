@@ -297,6 +297,82 @@ const updateMenuItem = async (req, res) => {
     }
 }
 
+const getOrders = async (req, res) => {
+  try {
+    const {
+      startDate,
+      endDate,
+      status,
+      search,
+    } = req.query;
+
+    let sql = `
+      SELECT
+        o.id,
+        o.order_number,
+        o.customer_name,
+        o.status,
+        o.total,
+        o.created_at
+      FROM orders o
+      WHERE 1 = 1
+    `;
+
+    const params = [];
+
+    if (startDate && endDate) {
+      sql += `
+        AND o.created_at BETWEEN ? AND ?
+      `;
+
+      params.push(
+        `${startDate} 00:00:00`,
+        `${endDate} 23:59:59`
+      );
+    }
+
+    if (status) {
+      sql += `
+        AND o.status = ?
+      `;
+
+      params.push(status.toLowerCase());
+    }
+
+    if (search) {
+      sql += `
+        AND (
+          o.order_number LIKE ?
+          OR o.customer_name LIKE ?
+        )
+      `;
+
+      params.push(
+        `%${search}%`,
+        `%${search}%`
+      );
+    }
+
+    sql += `
+      ORDER BY o.created_at DESC
+    `;
+
+    const [rows] = await db.query(sql, params);
+
+    return res.status(200).json({
+      success: true,
+      data: rows,
+    });
+
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+};
+
+
 const getCustomerReviews = async (req, res) => {
     try{
 
@@ -818,6 +894,7 @@ module.exports = { fetchAllCustomer,
     deleteMenuItem,
     getItemById,
     updateMenuItem,
+    getOrders,
     getCustomerReviews,
     publishReview,
     archiveReview, 

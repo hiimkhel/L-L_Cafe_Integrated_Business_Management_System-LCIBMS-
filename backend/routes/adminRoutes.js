@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { fetchAllCustomer, fetchMenuItems, fetchMenuCategories,
     addMenuCategory, addMenuItem, deleteMenuItem, getItemById, updateMenuItem, getCustomerReviews, publishReview, archiveReview, deleteReview, republishReview,
-    getTopCustomer, getMenuSales, getRevenueReport, getOrdersReport, getSalesDistributionReport, getSalesSummaryReport
+    getTopCustomer, getMenuSales, getRevenueReport, getOrdersReport, getSalesDistributionReport, getSalesSummaryReport, getOrders
  } = require("../controllers/adminControllers.js");
 
 router.get("/customers", fetchAllCustomer);
@@ -10,6 +10,9 @@ router.get("/customers", fetchAllCustomer);
 // Menu Items
 router.get("/menu-items", fetchMenuItems);
 router.post("/menu-items", addMenuItem);
+
+// Orders
+router.get("/orders", getOrders);
 
 // Individual Menu Item
 router.get("/menu-items/:id", getItemById);
