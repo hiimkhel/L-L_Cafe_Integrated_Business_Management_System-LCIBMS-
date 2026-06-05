@@ -518,6 +518,95 @@ const getTopCustomer = async (req, res) => {
     }
 }
 
+const getRevenueReport = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                COUNT(*) AS total_orders,
+                SUM(total) AS total_revenue
+            FROM orders
+            WHERE status = 'completed'
+            AND created_at BETWEEN ? AND ?
+            `,
+            [startDate, endDate]
+        );
+
+        return res.status(200).json({
+            success: true,
+            data: rows[0]
+        });
+
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            error: err.message
+        });
+    }
+}
+
+const getOrdersReport = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                COUNT(*) AS total_orders
+            FROM orders
+            WHERE status = 'completed'
+            AND created_at BETWEEN ? AND ?
+            `,
+            [startDate, endDate]
+        );
+
+        return res.status(200).json({
+            success: true,
+            data: rows[0]
+        });
+
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            error: err.message
+        });
+    }
+};
+
+
+
+const getAverageOrderReport = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                COUNT(*) AS total_orders,
+                SUM(total) AS total_revenue,
+                AVG(total) AS average_order_value
+            FROM orders
+            WHERE status = 'completed'
+            AND created_at BETWEEN ? AND ?
+            `,
+            [startDate, endDate]
+        );
+
+        return res.status(200).json({
+            success: true,
+            data: rows[0]
+        });
+
+    } catch (err) {
+        return res.status(500).json({
+            success: false,
+            error: err.message
+        });
+    }
+};
+
 module.exports = { fetchAllCustomer, 
     fetchMenuItems,
     fetchMenuCategories,
@@ -532,5 +621,8 @@ module.exports = { fetchAllCustomer,
     deleteReview,
     republishReview,
     getMenuSales,
-    getTopCustomer
+    getTopCustomer,
+    getRevenueReport,
+    getOrdersReport,
+    getAverageOrderReport
  };
