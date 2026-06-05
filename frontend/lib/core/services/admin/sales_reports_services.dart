@@ -5,16 +5,22 @@ class ReportsService {
   static const String baseUrl = "http://localhost:3006/api/admin/reports";
 
    Future<List<dynamic>> getTopCustomers(
-    String startDate,
-    String endDate,
+    String? startDate,
+    String? endDate,
   ) async {
+    String url = '$baseUrl/customer';
+
+    if (startDate != null && endDate != null) {
+      url +=
+          '?startDate=$startDate&endDate=$endDate';
+    }
+
     final response = await http.get(
-      Uri.parse(
-        '$baseUrl/customer?startDate=$startDate&endDate=$endDate',
-      ),
+      Uri.parse(url),
     );
 
     final data = jsonDecode(response.body);
+
     return data['data'];
   }
 

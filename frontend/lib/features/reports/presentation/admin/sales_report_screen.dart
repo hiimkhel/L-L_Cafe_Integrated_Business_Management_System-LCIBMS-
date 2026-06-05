@@ -43,8 +43,88 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
     'Last 30 days',
     'Last 3 months',
     'This year',
+    'All Time'
   ];
   String _selectedRange = _ranges[1];
+
+  Map<String, String?> getDateRange() {
+    final now = DateTime.now();
+
+    switch (_selectedRange) {
+      case 'Last 24 hours':
+        return {
+          'startDate': now
+              .subtract(const Duration(days: 1))
+              .toIso8601String()
+              .split('T')
+              .first,
+          'endDate': now
+              .toIso8601String()
+              .split('T')
+              .first,
+        };
+
+      case 'Last 7 days':
+        return {
+          'startDate': now
+              .subtract(const Duration(days: 7))
+              .toIso8601String()
+              .split('T')
+              .first,
+          'endDate': now
+              .toIso8601String()
+              .split('T')
+              .first,
+        };
+
+      case 'Last 30 days':
+        return {
+          'startDate': now
+              .subtract(const Duration(days: 30))
+              .toIso8601String()
+              .split('T')
+              .first,
+          'endDate': now
+              .toIso8601String()
+              .split('T')
+              .first,
+        };
+
+      case 'Last 3 months':
+        return {
+          'startDate': DateTime(
+            now.year,
+            now.month - 3,
+            now.day,
+          ).toIso8601String().split('T').first,
+          'endDate': now
+              .toIso8601String()
+              .split('T')
+              .first,
+        };
+
+      case 'This year':
+        return {
+          'startDate': '${now.year}-01-01',
+          'endDate': now
+              .toIso8601String()
+              .split('T')
+              .first,
+        };
+
+      case 'All Time':
+        return {
+          'startDate': null,
+          'endDate': null,
+        };
+
+      default:
+        return {
+          'startDate': null,
+          'endDate': null,
+        };
+    }
+  }
 
   void _handleExport() {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -58,9 +138,14 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
     ));
   }
   Future<void> loadReports() async {
+    final range = getDateRange();
+    
+    final startDate = range['startDate'];
+    final endDate = range['endDate'];
+
     final ReportsService reportsService = ReportsService();
     final customers =
-        await reportsService.getTopCustomers("2026-03-30", "2026-06-30");
+        await reportsService.getTopCustomers(startDate, endDate);
 
     final menuItems =
         await reportsService.getTopMenuItems("2026-03-30", "2026-06-30");
@@ -192,7 +277,14 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
         _RangeSelector(
           selected: _selectedRange,
           options: _ranges,
-          onChanged: (v) => setState(() => _selectedRange = v),
+          onChanged: (v) async {
+            setState(() {
+              _selectedRange = v;
+              isLoading = true;
+            });
+
+            await loadReports();
+          },
         ),
         const Spacer(),
         _ExportButton(onTap: _handleExport),
@@ -632,15 +724,31 @@ class _TopCustomersCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (customers.isEmpty) {
       try{
-         return const _BaseCard(
+        return const _BaseCard(
           title: 'TOP CUSTOMERS',
           child: Center(
-            child: Text(
-              'No customer data available',
-              style: TextStyle(
-                fontFamily: 'Urbanist',
-                fontWeight: FontWeight.w600,
-              ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.people_outline,
+                  size: 42,
+                  color: _muted,
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'No customer purchases found',
+                  style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'No completed orders were recorded during this period.',
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ),
         );
