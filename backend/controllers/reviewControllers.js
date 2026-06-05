@@ -6,7 +6,7 @@ const getPublicReviews = async (req, res) => {
       SELECT 
         r.id,
         u.full_name AS customer_name,
-        r.review_text AS content,
+        r.review_text,
         r.rating,
         r.created_at AS submitted_at
       FROM reviews r

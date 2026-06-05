@@ -3,6 +3,8 @@ import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/core/widgets/admin_sidebar.dart';
 import 'package:frontend/features/reports/presentation/widget/business_performance_card.dart';
+import 'package:frontend/core/services/admin/sales_reports_services.dart';
+import 'package:frontend/core/services/admin/pdf_admin_export.dart';
 
 const Color _cardBg  = AppColors.background;
 const Color _primary = Color(0xFF3D5A45);
@@ -26,45 +28,194 @@ class SalesReportScreen extends StatefulWidget {
 }
 
 class _SalesReportScreenState extends State<SalesReportScreen> {
+  List<dynamic> topCustomers = [];
+  List<dynamic> topMenuItems = [];
+
+  Map<String, dynamic> revenueData = {};
+  Map<String, dynamic> ordersData = {};
+  Map<String, dynamic> salesData = {};
+
+  List<dynamic> salesSummaryData = [];
+
+  bool isLoading = true;
   static const List<String> _ranges = [
     'Last 24 hours',
     'Last 7 days',
     'Last 30 days',
     'Last 3 months',
     'This year',
+    'All Time'
   ];
-  String _selectedRange = _ranges[1];
+  String _selectedRange = _ranges[2];
 
-  static const Map<String, List<double>> _barData = {
-    'Last 24 hours': [1200, 900, 1500, 800, 2100, 1700, 1300],
-    'Last 7 days':   [7200, 9800, 11500, 13400, 15800, 18200, 19500],
-    'Last 30 days':  [45000, 52000, 48000, 61000, 70000, 66000, 74000],
-    'Last 3 months': [180000, 210000, 195000, 230000, 255000, 240000, 270000],
-    'This year':     [320000, 410000, 390000, 450000, 500000, 480000, 530000],
-  };
+  Map<String, String?> getDateRange() {
+    final now = DateTime.now();
 
-  static const Map<String, List<String>> _barLabels = {
-    'Last 24 hours': ['1am', '4am', '8am', '12pm', '4pm', '8pm', '11pm'],
-    'Last 7 days':   ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    'Last 30 days':  ['W1',  'W2',  'W3',  'W4',  'W5',  'W6',  'W7'],
-    'Last 3 months': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-    'This year':     ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-  };
+    switch (_selectedRange) {
+      case 'Last 24 hours':
+        return {
+          'startDate': now
+              .subtract(const Duration(days: 1))
+              .toIso8601String()
+              .split('T')
+              .first,
+          'endDate': now
+              .toIso8601String()
+              .split('T')
+              .first,
+        };
 
-  List<double> get _currentValues => _barData[_selectedRange]!;
-  List<String> get _currentLabels => _barLabels[_selectedRange]!;
+      case 'Last 7 days':
+        return {
+          'startDate': now
+              .subtract(const Duration(days: 7))
+              .toIso8601String()
+              .split('T')
+              .first,
+          'endDate': now
+              .toIso8601String()
+              .split('T')
+              .first,
+        };
 
-  void _handleExport() {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Exporting CSV for "$_selectedRange"…',
-          style: const TextStyle(
-              fontFamily: 'Urbanist', fontWeight: FontWeight.w600)),
-      backgroundColor: _primary,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      duration: const Duration(seconds: 2),
-    ));
+      case 'Last 30 days':
+        return {
+          'startDate': now
+              .subtract(const Duration(days: 30))
+              .toIso8601String()
+              .split('T')
+              .first,
+          'endDate': now
+              .toIso8601String()
+              .split('T')
+              .first,
+        };
+
+      case 'Last 3 months':
+        return {
+          'startDate': DateTime(
+            now.year,
+            now.month - 3,
+            now.day,
+          ).toIso8601String().split('T').first,
+          'endDate': now
+              .toIso8601String()
+              .split('T')
+              .first,
+        };
+
+      case 'This year':
+        return {
+          'startDate': '${now.year}-01-01',
+          'endDate': now
+              .toIso8601String()
+              .split('T')
+              .first,
+        };
+
+      case 'All Time':
+        return {
+          'startDate': null,
+          'endDate': null,
+        };
+
+      default:
+        return {
+          'startDate': null,
+          'endDate': null,
+        };
+    }
   }
+
+void _handleExport() async {
+
+  try {
+    setState(() => isLoading = true);
+
+    final pdfBytes = await PdfExportService.generateSalesReportPdf(
+      range: _selectedRange,
+      topCustomers: topCustomers,
+      topMenuItems: topMenuItems,
+      revenueData: revenueData,
+      ordersData: ordersData,
+      salesData: salesData,
+    );
+
+    await PdfExportService.printPdf(pdfBytes);
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('PDF exported successfully')),
+    );
+
+  } catch (e) {
+    debugPrint("EXPORT ERROR: $e");
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Export failed: $e'),
+        backgroundColor: Colors.red,
+      ),
+    );
+
+  } finally {
+    if (mounted) setState(() => isLoading = false);
+  }
+}
+
+  Future<void> loadReports() async {
+    final range = getDateRange();
+    
+    final startDate = range['startDate'];
+    final endDate = range['endDate'];
+
+    final ReportsService reportsService = ReportsService();
+    final customers =
+        await reportsService.getTopCustomers(startDate, endDate);
+
+    final menuItems =
+        await reportsService.getTopMenuItems(startDate, endDate);
+
+     final revenue =
+          await reportsService.getRevenueReport(
+              startDate, endDate);
+
+      final orders =
+          await reportsService.getOrdersReport(
+            startDate, endDate);
+
+      final sales =
+          await reportsService.getSalesDistributionReport(
+            startDate, endDate);
+
+      final salesSummary =
+        await reportsService.getSalesSummaryReport(
+          startDate, endDate
+        );
+
+    setState(() {
+      salesSummaryData = salesSummary;
+      topCustomers = customers;
+      topMenuItems = menuItems;
+
+      revenueData = revenue;
+      ordersData = orders;
+      salesData = sales;
+
+      isLoading = false;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadReports();
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -83,8 +234,6 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-                    // ✅ Single Column with Expanded children — no scroll views,
-                    // no LayoutBuilder with infinite constraints
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -99,13 +248,16 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Expanded(
-                                child: const BusinessPerformanceCard(),
+                                child: BusinessPerformanceCard(
+                                  revenueData: revenueData,
+                                  ordersData: ordersData,
+                                  salesData: salesData,
+                                )
                               ),
                               const SizedBox(width: 16),
                               Expanded(
                                 child: _SalesSummaryCard(
-                                  values: _currentValues,
-                                  labels: _currentLabels,
+                                  salesSummaryData: salesSummaryData,
                                   rangeLabel: _selectedRange.toUpperCase(),
                                 ),
                               ),
@@ -121,9 +273,9 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Expanded(flex: 3, child: _TopPicksCard()),
+                              Expanded(flex: 3, child: _TopPicksCard( menuItems: topMenuItems)),
                               const SizedBox(width: 16),
-                              const Expanded(flex: 1, child: _TopCustomersCard()),
+                              Expanded(flex: 1, child: _TopCustomersCard( customers: topCustomers)),
                             ],
                           ),
                         ),
@@ -145,7 +297,14 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
         _RangeSelector(
           selected: _selectedRange,
           options: _ranges,
-          onChanged: (v) => setState(() => _selectedRange = v),
+          onChanged: (v) async {
+            setState(() {
+              _selectedRange = v;
+              isLoading = true;
+            });
+
+            await loadReports();
+          },
         ),
         const Spacer(),
         _ExportButton(onTap: _handleExport),
@@ -260,7 +419,7 @@ class _ExportButton extends StatelessWidget {
         child: Row(mainAxisSize: MainAxisSize.min, children: const [
           Icon(Icons.download_rounded, size: 16, color: Colors.white),
           SizedBox(width: 8),
-          Text('EXPORT CSV',
+          Text('EXPORT PDF',
               style: TextStyle(
                   fontFamily: 'Urbanist',
                   fontWeight: FontWeight.w900,
@@ -278,13 +437,11 @@ class _ExportButton extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _SalesSummaryCard extends StatelessWidget {
-  final List<double> values;
-  final List<String> labels;
+  final List<dynamic> salesSummaryData;
   final String rangeLabel;
 
   const _SalesSummaryCard({
-    required this.values,
-    required this.labels,
+    required this.salesSummaryData,
     required this.rangeLabel,
   });
 
@@ -296,6 +453,58 @@ class _SalesSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final values = salesSummaryData
+      .map(
+        (e) => double.tryParse(
+              e['sales'].toString(),
+            ) ??
+            0,
+      )
+      .toList();
+
+  final labels = salesSummaryData
+      .map(
+        (e) => e['label'].toString(),
+      )
+      .toList();
+
+  final totalSales =
+    values.fold<double>(
+      0,
+      (sum, value) => sum + value,
+    );
+
+if (totalSales == 0) {
+  return _BaseCard(
+    title: 'SALES SUMMARY',
+    child: const Center(
+      child: Column(
+        mainAxisAlignment:
+            MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.bar_chart,
+            size: 42,
+            color: _muted,
+          ),
+          SizedBox(height: 12),
+          Text(
+            'No sales recorded',
+            style: TextStyle(
+              fontFamily: 'Urbanist',
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            'No completed orders were recorded during this period.',
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    ),
+  );
+}
     final maxVal = values.reduce((a, b) => a > b ? a : b);
     final step   = (maxVal / 4).ceilToDouble();
     final ticks  = List.generate(5, (i) => step * i);
@@ -393,18 +602,49 @@ class _SalesSummaryCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _TopPicksCard extends StatelessWidget {
-  static final _items = List.generate(8, (i) => _PickItem(
-    name:  'Menu Item ${i + 1}',
-    sold:  10 + i * 5,
-    price: (i + 1) * 100,
-    rank:  i + 1,
-  ));
+  final List<dynamic> menuItems;
+
+  const _TopPicksCard({
+    required this.menuItems,
+  });
 
   @override
   Widget build(BuildContext context) {
+    if (menuItems.isEmpty) {
+      return const _BaseCard(
+        title: 'TOP PICKS',
+        child: Center(
+          child: Column(
+            mainAxisAlignment:
+                MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.restaurant_menu_outlined,
+                size: 42,
+                color: _muted,
+              ),
+              SizedBox(height: 12),
+              Text(
+                'No menu sales found',
+                style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                'No completed orders were recorded during this period.',
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return _BaseCard(
-      title:    'TOP PICKS',
-      trailing: _pill('${_items.length} ITEMS', _gold),
+      title: 'TOP PICKS',
+      trailing: _pill('${menuItems.length} ITEMS', _gold),
       child: GridView.builder(
         physics: const BouncingScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -413,8 +653,11 @@ class _TopPicksCard extends StatelessWidget {
           crossAxisSpacing: 8,
           childAspectRatio: 3.6,
         ),
-        itemCount: _items.length,
-        itemBuilder: (_, i) => _PickTile(item: _items[i]),
+        itemCount: menuItems.length,
+        itemBuilder: (_, i) => _PickTile(
+          item: menuItems[i],
+          rank: i + 1,
+        ),
       ),
     );
   }
@@ -431,148 +674,280 @@ class _PickItem {
 }
 
 class _PickTile extends StatelessWidget {
-  final _PickItem item;
-  const _PickTile({required this.item});
+  final dynamic item;
+  final int rank;
+
+  const _PickTile({
+    required this.item,
+    required this.rank,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final String name =
+        item['name']?.toString() ?? 'Unknown Item';
+
+    final int sold =
+        int.tryParse(item['total_sold'].toString()) ?? 0;
+
     return Container(
       decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.6),
-          borderRadius: BorderRadius.circular(10)),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      child: Row(children: [
-        Container(
-          width: 30, height: 30,
-          decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 6,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
               color: _accent.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(7)),
-          child: Center(
-            child: Text('#${item.rank}',
+              borderRadius: BorderRadius.circular(7),
+            ),
+            child: Center(
+              child: Text(
+                '#$rank',
                 style: const TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 9,
-                    color: _accent)),
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 9,
+                  color: _accent,
+                ),
+              ),
+            ),
           ),
-        ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(item.name,
+
+          const SizedBox(width: 6),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
+              children: [
+                Text(
+                  name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                      fontFamily: 'Urbanist',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 10,
-                      color: _dark)),
-              const SizedBox(height: 1),
-              Row(children: [
-                Text('Sold: ${item.sold}',
-                    style: TextStyle(
-                        fontFamily: 'Urbanist', fontSize: 9, color: _muted)),
-                const SizedBox(width: 4),
-                Text('₱${item.price}',
-                    style: const TextStyle(
-                        fontFamily: 'Urbanist',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 9,
-                        color: _gold)),
-              ]),
-            ],
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 10,
+                    color: _dark,
+                  ),
+                ),
+
+                const SizedBox(height: 2),
+
+                Text(
+                  'Sold: $sold',
+                  style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontSize: 9,
+                    color: _muted,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOP CUSTOMERS CARD
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _TopCustomersCard extends StatelessWidget {
-  static const _customers = [
-    _CustItem(name: 'Maria Santos',   initials: 'MS', amount: 3200),
-    _CustItem(name: 'Jose Reyes',     initials: 'JR', amount: 2750),
-    _CustItem(name: 'Ana de Leon',    initials: 'AD', amount: 2100),
-    _CustItem(name: 'Carlo Bautista', initials: 'CB', amount: 1800),
-  ];
+  final List<dynamic> customers;
 
-  const _TopCustomersCard();
+  const _TopCustomersCard({
+    required this.customers,
+  });
+
+  String getInitials(String name) {
+    if (name.trim().isEmpty) return '?';
+
+    final parts = name.trim().split(' ');
+
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+
+    return parts[0][0].toUpperCase();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final top = _customers.first.amount.toDouble();
+    if (customers.isEmpty) {
+      try{
+        return const _BaseCard(
+          title: 'TOP CUSTOMERS',
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.people_outline,
+                  size: 42,
+                  color: _muted,
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'No customer purchases found',
+                  style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'No completed orders were recorded during this period.',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        );
+      }catch (e, stack) {
+        print(e);
+        print(stack);
+
+        return const Center(
+          child: Text('Error loading customers'),
+        );
+      }
+     
+    }
+
+    final topAmount =
+        double.parse(customers.first['total_spent'].toString());
+
     return _BaseCard(
       title: 'TOP CUSTOMERS',
       child: Column(
-        children: List.generate(_customers.length, (i) {
-          final c      = _customers[i];
-          final ratio  = c.amount / top;
-          final isLast = i == _customers.length - 1;
+        children: List.generate(customers.length, (i) {
+          final customer = customers[i];
+
+          final String customerName =
+              customer['customer_name'] ?? 'Unknown Customer';
+
+          final double amount =
+              double.parse(customer['total_spent'].toString());
+
+          final double ratio =
+              topAmount > 0 ? amount / topAmount : 0;
+
+          final bool isLast =
+              i == customers.length - 1;
+
           return Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 10),
-              child: Row(children: [
-                Container(
-                  width: 36, height: 36,
-                  decoration: BoxDecoration(
+              padding: EdgeInsets.only(
+                bottom: isLast ? 0 : 10,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
                       color: _primary.withOpacity(0.12),
-                      shape: BoxShape.circle),
-                  child: Center(
-                    child: Text(c.initials,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        getInitials(customerName),
                         style: const TextStyle(
-                            fontFamily: 'Urbanist',
-                            fontWeight: FontWeight.w900,
-                            fontSize: 11,
-                            color: _primary)),
+                          fontFamily: 'Urbanist',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 11,
+                          color: _primary,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(c.name,
+
+                  const SizedBox(width: 10),
+
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                      mainAxisAlignment:
+                          MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          customerName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                              fontFamily: 'Urbanist',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 11,
-                              color: _dark)),
-                      const SizedBox(height: 4),
-                      LayoutBuilder(builder: (_, box) {
-                        return Stack(children: [
-                          Container(
-                              height: 4, width: box.maxWidth,
-                              decoration: BoxDecoration(
-                                  color: _accent.withOpacity(0.12),
-                                  borderRadius: BorderRadius.circular(10))),
-                          Container(
-                              height: 4, width: box.maxWidth * ratio,
-                              decoration: BoxDecoration(
-                                  color: _accent,
-                                  borderRadius: BorderRadius.circular(10))),
-                        ]);
-                      }),
-                    ],
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                            color: _dark,
+                          ),
+                        ),
+
+                        const SizedBox(height: 4),
+
+                        LayoutBuilder(
+                          builder: (_, box) {
+                            return Stack(
+                              children: [
+                                Container(
+                                  height: 4,
+                                  width: box.maxWidth,
+                                  decoration: BoxDecoration(
+                                    color: _accent.withOpacity(
+                                      0.12,
+                                    ),
+                                    borderRadius:
+                                        BorderRadius.circular(
+                                      10,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  height: 4,
+                                  width:
+                                      box.maxWidth * ratio,
+                                  decoration: BoxDecoration(
+                                    color: _accent,
+                                    borderRadius:
+                                        BorderRadius.circular(
+                                      10,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text('₱${c.amount}',
+
+                  const SizedBox(width: 8),
+
+                  Text(
+                    '₱${amount.toStringAsFixed(2)}',
                     style: const TextStyle(
-                        fontFamily: 'Urbanist',
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12,
-                        color: _gold)),
-              ]),
+                      fontFamily: 'Urbanist',
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12,
+                      color: _gold,
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         }),
@@ -580,6 +955,7 @@ class _TopCustomersCard extends StatelessWidget {
     );
   }
 }
+
 
 class _CustItem {
   final String name, initials;

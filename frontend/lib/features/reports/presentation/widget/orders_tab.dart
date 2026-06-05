@@ -1,14 +1,35 @@
 import 'package:flutter/material.dart';
 
 class OrdersTab extends StatelessWidget {
-  const OrdersTab({super.key});
+  final Map<String, dynamic> ordersData;
+
+  const OrdersTab({
+    super.key,
+    required this.ordersData,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Row: stats on left, breakdown on right — fills available height
+    final int totalOrders =
+        int.tryParse(ordersData['total_orders']?.toString() ?? '0') ?? 0;
+
+    final int dineInOrders =
+        int.tryParse(ordersData['dine_in_orders']?.toString() ?? '0') ?? 0;
+
+    final int takeoutOrders =
+        int.tryParse(ordersData['takeout_orders']?.toString() ?? '0') ?? 0;
+
+    final int deliveryOrders =
+        int.tryParse(ordersData['delivery_orders']?.toString() ?? '0') ?? 0;
+
+    final int orderGrowth =
+        int.tryParse(ordersData['order_growth']?.toString() ?? '0') ?? 0;
+
+    final String peakOrderTime =
+        ordersData['peak_order_time']?.toString() ?? 'N/A';
+   
     return Row(
-      // ✅ stretch so both sides fill the same height, letting us
-      // align the bottom cards to each other at the end of each column
+  
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // ── Left: total + trend ───────────────────────────────────────────
@@ -21,9 +42,9 @@ class OrdersTab extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
-                children: const [
+                children: [
                   Text(
-                    '150',
+                    '$totalOrders',
                     style: TextStyle(
                       fontSize: 40,
                       fontWeight: FontWeight.w900,
@@ -32,9 +53,11 @@ class OrdersTab extends StatelessWidget {
                   ),
                   SizedBox(width: 8),
                   Text(
-                    '+9 vs yesterday',
+                      '${orderGrowth >= 0 ? '+' : ''}$orderGrowth vs previous period',
                     style: TextStyle(
-                        color: Color(0xFF7BC67E), fontSize: 11),
+                        color: orderGrowth >= 0
+                          ? const Color(0xFF7BC67E)
+                          : Colors.redAccent, fontSize: 11),
                   ),
                 ],
               ),
@@ -54,12 +77,21 @@ class OrdersTab extends StatelessWidget {
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: const [
-                    _OrderTypeCol(label: 'Dine in',  value: '50'),
-                    _VDivider(),
-                    _OrderTypeCol(label: 'Takeout',  value: '50'),
-                    _VDivider(),
-                    _OrderTypeCol(label: 'Delivery', value: '50'),
+                  children: [
+                    _OrderTypeCol(
+                      label: 'Dine in',
+                      value: dineInOrders.toString(),
+                    ),
+                    const _VDivider(),
+                    _OrderTypeCol(
+                      label: 'Takeout',
+                      value: takeoutOrders.toString(),
+                    ),
+                    const _VDivider(),
+                    _OrderTypeCol(
+                      label: 'Delivery',
+                      value: deliveryOrders.toString(),
+                    ),
                   ],
                 ),
               ),
@@ -84,14 +116,14 @@ class OrdersTab extends StatelessWidget {
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text(
                       'Peak Order Time',
                       style: TextStyle(fontSize: 11, color: Colors.black54),
                     ),
                     SizedBox(height: 4),
                     Text(
-                      '2–4pm',
+                      peakOrderTime,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,

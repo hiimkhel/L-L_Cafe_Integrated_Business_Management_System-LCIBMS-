@@ -1180,7 +1180,7 @@ class _MenuGrid extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              // ✅ Grid: on mobile 2-column Wrap — no fixed height so nothing clips
+            
               LayoutBuilder(
                 builder: (_, cc) {
                   const gap = 16.0;
@@ -1410,8 +1410,7 @@ class _ReviewsSectionState extends State<_ReviewsSection> {
               ),
               const SizedBox(height: 20),
 
-              // ✅ Mobile: stacked Column — no fixed height, cards expand naturally
-              // Desktop: horizontal Wrap with 3 columns
+             
               if (isMobile)
                 Column(
                   children:
@@ -1566,7 +1565,7 @@ class _RevCard extends StatelessWidget {
               fontWeight: FontWeight.w700,
               fontSize: 14,
               height: 1.5,
-              color: Color(0xFF2D2A26),
+              color: AppColors.textDark,
             ),
           ),
           const SizedBox(height: 14),

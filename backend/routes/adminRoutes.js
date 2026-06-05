@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const { fetchAllCustomer, fetchMenuItems, fetchMenuCategories,
-    addMenuCategory, addMenuItem, deleteMenuItem, getItemById, updateMenuItem, getCustomerReviews, publishReview, archiveReview, deleteReview, republishReview
+    addMenuCategory, addMenuItem, deleteMenuItem, getItemById, updateMenuItem, getCustomerReviews, publishReview, archiveReview, deleteReview, republishReview,
+    getTopCustomer, getMenuSales, getRevenueReport, getOrdersReport, getSalesDistributionReport, getSalesSummaryReport, getOrders
  } = require("../controllers/adminControllers.js");
 
 router.get("/customers", fetchAllCustomer);
@@ -9,6 +10,9 @@ router.get("/customers", fetchAllCustomer);
 // Menu Items
 router.get("/menu-items", fetchMenuItems);
 router.post("/menu-items", addMenuItem);
+
+// Orders
+router.get("/orders", getOrders);
 
 // Individual Menu Item
 router.get("/menu-items/:id", getItemById);
@@ -19,6 +23,15 @@ router.delete("/menu-items/:id", deleteMenuItem);
 // // Menu Items Categories
 router.get("/menu/category", fetchMenuCategories );
 router.post("/menu/category", addMenuCategory);
+
+// Sales & Report Screen
+router.get("/reports/revenue", getRevenueReport);
+router.get("/reports/orders", getOrdersReport);
+router.get("/reports/sales", getSalesDistributionReport);
+router.get("/reports/menu", getMenuSales);
+router.get("/reports/customer", getTopCustomer);
+router.get("/reports/chart", getSalesSummaryReport);
+
 
 // Reviews Screen
 router.get("/reviews", getCustomerReviews);

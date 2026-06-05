@@ -1023,41 +1023,63 @@ class _FieldLabel extends StatelessWidget {
 class _StyledField extends StatelessWidget {
   final TextEditingController ctrl;
   final String hint;
+  final String? label; // Added label integration
   final int maxLines;
   final TextInputType? keyboardType;
 
   const _StyledField({
     required this.ctrl,
     required this.hint,
+    this.label,
     this.maxLines = 1,
     this.keyboardType,
   });
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: ctrl,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      style: TextStyle(fontSize: 13, color: AppColors.primary),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(fontSize: 12, color: AppColors.primary.withOpacity(0.3)),
-        filled: true,
-        fillColor: AppColors.background,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(9),
-            borderSide: const BorderSide(color: _kBorder)),
-        focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(9),
-            borderSide: BorderSide(color: AppColors.primary, width: 1.5)),
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (label != null) ...[
+          Text(
+            label!.toUpperCase(), // Caps for a more "Admin" look
+            style: TextStyle(
+              fontSize: 10, 
+              letterSpacing: 0.5,
+              fontWeight: FontWeight.w800, 
+              color: AppColors.primary.withOpacity(0.5)
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+        TextField(
+          controller: ctrl,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.primary),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(fontSize: 13, color: AppColors.primary.withOpacity(0.2)),
+            filled: true,
+            fillColor: AppColors.background.withOpacity(0.5),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: _kBorder),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _FilledBtn extends StatelessWidget {
+class _FilledBtn extends StatefulWidget {
   final String label;
   final IconData? icon;
   final VoidCallback? onTap;
@@ -1065,25 +1087,48 @@ class _FilledBtn extends StatelessWidget {
   const _FilledBtn({required this.label, this.icon, this.onTap});
 
   @override
+  State<_FilledBtn> createState() => _FilledBtnState();
+}
+
+class _FilledBtnState extends State<_FilledBtn> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(9),
-          boxShadow: [
-            BoxShadow(color: AppColors.primary.withOpacity(0.25), blurRadius: 8, offset: const Offset(0, 3)),
-          ],
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: BoxDecoration(
+            color: _isHovered ? AppColors.primary.withOpacity(0.9) : AppColors.primary,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withOpacity(_isHovered ? 0.35 : 0.2), 
+                blurRadius: _isHovered ? 12 : 8, 
+                offset: const Offset(0, 4)
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min, 
+            children: [
+              if (widget.icon != null) ...[
+                Icon(widget.icon, size: 16, color: Colors.white),
+                const SizedBox(width: 8),
+              ],
+              Text(
+                widget.label, 
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)
+              ),
+            ],
+          ),
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          if (icon != null) ...[
-            Icon(icon, size: 14, color: Colors.white),
-            const SizedBox(width: 6),
-          ],
-          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
-        ]),
       ),
     );
   }
