@@ -476,13 +476,15 @@ class _ReviewCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: _green2.withOpacity(0.1)),
               ),
-              child: Text(
-                review.content,
-                style: TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontSize: 13,
-                    height: 1.6,
-                    color: _dark.withOpacity(0.75)),
+              child: SelectableText( // Use SelectableText for better admin usability
+                review.content.isEmpty ? "No review text provided." : review.content,
+                style: const TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontSize: 14, // Increased size slightly
+                  height: 1.5,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF1A1A1A), // Deep black/grey for readability
+                ),
               ),
             ),
           ),

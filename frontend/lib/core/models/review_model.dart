@@ -55,7 +55,7 @@ class ReviewModel {
             e['submitted_at']?.toString() ?? '',
           ) ??
           DateTime.now(),
-      content: e['content']?.toString() ?? '',
+      content: e['review_text']?.toString() ?? '',
       rating: (e['rating'] as num?)?.toDouble() ?? 0.0,
       status: reviewStatusFromString(e['status']?.toString() ?? ''),
       avatarUrl: e['profile_picture']?.toString(),
