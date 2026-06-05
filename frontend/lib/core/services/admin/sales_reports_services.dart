@@ -1,6 +1,5 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class ReportsService {
   static const String baseUrl = "http://localhost:3006/api/admin/reports";
@@ -31,6 +30,48 @@ class ReportsService {
 
     final data = jsonDecode(response.body);
 
+    return data['data'];
+  }
+
+  Future<Map<String, dynamic>> getRevenueReport(
+    String startDate,
+    String endDate,
+  ) async {
+    final response = await http.get(
+      Uri.parse(
+        '$baseUrl/revenue?startDate=$startDate&endDate=$endDate',
+      ),
+    );
+
+    final data = jsonDecode(response.body);
+    return data['data'];
+  }
+
+  Future<Map<String, dynamic>> getOrdersReport(
+    String startDate,
+    String endDate,
+  ) async {
+    final response = await http.get(
+      Uri.parse(
+        '$baseUrl/orders?startDate=$startDate&endDate=$endDate',
+      ),
+    );
+
+    final data = jsonDecode(response.body);
+    return data['data'];
+  }
+
+  Future<Map<String, dynamic>> getSalesDistributionReport(
+    String startDate,
+    String endDate,
+  ) async {
+    final response = await http.get(
+      Uri.parse(
+        '$baseUrl/sales?startDate=$startDate&endDate=$endDate',
+      ),
+    );
+
+    final data = jsonDecode(response.body);
     return data['data'];
   }
 }
