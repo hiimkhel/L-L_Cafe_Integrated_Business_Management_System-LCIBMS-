@@ -337,13 +337,6 @@ class _OrderScreenState extends State<OrderScreen> {
   void _clearDateRange() =>
       setState(() { _customRange = null; _quickFilter = 'TODAY'; });
 
-  void _updateStatus(AdminOrder order, OrderStatus newStatus) {
-    setState(() {
-      final idx = _orders.indexWhere((o) => o.id == order.id);
-      if (idx != -1) _orders[idx] = _orders[idx].copyWith(status: newStatus);
-    });
-    // TODO: await orderService.updateStatus(order.id, newStatus);
-  }
 
   @override
   void dispose() { _searchCtrl.dispose(); super.dispose(); }
@@ -709,14 +702,12 @@ class _OrderScreenState extends State<OrderScreen> {
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
 
-        // DATE / TIME  flex:3
         Expanded(flex: _kCols[0].flex, child: Padding(
           padding: const EdgeInsets.only(left: 4),
           child: Text(_fmt(order.datetime),
               style: TextStyle(fontSize: 11, color: AppColors.tertiary.withOpacity(0.75))),
         )),
 
-        // ORDER ID  flex:2
         Expanded(flex: _kCols[1].flex, child: Padding(
           padding: const EdgeInsets.only(left: 4),
           child: FittedBox(
@@ -736,7 +727,6 @@ class _OrderScreenState extends State<OrderScreen> {
           ),
         )),
 
-        // CUSTOMER  flex:3
         Expanded(flex: _kCols[2].flex, child: Padding(
           padding: const EdgeInsets.only(left: 4),
           child: Column(
@@ -753,14 +743,13 @@ class _OrderScreenState extends State<OrderScreen> {
           ),
         )),
 
-        // ITEMS  flex:1
         Expanded(flex: _kCols[3].flex, child: Padding(
           padding: const EdgeInsets.only(left: 4),
           child: Text('${order.itemCount}',
               style: TextStyle(fontSize: 12, color: AppColors.tertiary.withOpacity(0.8))),
         )),
 
-        // TYPE  flex:2
+
         Expanded(flex: _kCols[4].flex, child: Padding(
           padding: const EdgeInsets.only(left: 4),
           child: FittedBox(
@@ -787,18 +776,18 @@ class _OrderScreenState extends State<OrderScreen> {
           ),
         )),
 
-        // STATUS  flex:3  ← widened so "OUT FOR DELIVERY" never bleeds
-        // AFTER
-        Expanded(flex: _kCols[5].flex, child: Padding(
-          padding: const EdgeInsets.only(left: 4, right: 8),
-          child: Align(
-          alignment: Alignment.centerLeft,
-          child: _StatusDropdown(
-          order: order, onChanged: (s) => _updateStatus(order, s)),
+        Expanded(
+          flex: _kCols[5].flex,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 4, right: 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: _StatusBadge(status: order.status),
+            ),
           ),
-        )),
+        ),
 
-        // TOTAL  flex:2
+
         Expanded(flex: _kCols[6].flex, child: Padding(
           padding: const EdgeInsets.only(left: 4),
           child: Text('₱${order.total.toStringAsFixed(2)}',
@@ -806,7 +795,7 @@ class _OrderScreenState extends State<OrderScreen> {
                   color: Color(0xFF4a3520))),
         )),
 
-        // ACTIONS  flex:2
+
         Expanded(flex: _kCols[7].flex, child: Align(
           alignment: Alignment.centerRight,
           child: OutlinedButton.icon(
@@ -845,143 +834,6 @@ class _OrderScreenState extends State<OrderScreen> {
 
   void _viewReceipt(AdminOrder order) {
     showDialog(context: context, builder: (_) => _ReceiptDialog(order: order));
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// STATUS DROPDOWN
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _StatusDropdown extends StatelessWidget {
-  final AdminOrder order;
-  final ValueChanged<OrderStatus> onChanged;
-  const _StatusDropdown({required this.order, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final s = order.status;
-    return GestureDetector(
-      onTap: () => _showStatusMenu(context, s),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: s.bg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: s.color.withOpacity(0.4)),
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Container(width: 6, height: 6,
-              decoration: BoxDecoration(color: s.color, shape: BoxShape.circle)),
-          const SizedBox(width: 6),
-          // ✅ Flexible + overflow ellipsis so long labels never overflow
-          Flexible(child: Text(s.label,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800,
-                  letterSpacing: 0.3, color: s.color))),
-          const SizedBox(width: 4),
-          Icon(Icons.keyboard_arrow_down_rounded, size: 13, color: s.color),
-        ]),
-      ),
-    );
-  }
-
-  Future<void> _showStatusMenu(BuildContext context, OrderStatus current) async {
-    final renderBox  = context.findRenderObject() as RenderBox;
-    final offset     = renderBox.localToGlobal(Offset.zero);
-    final size       = renderBox.size;
-    final screenH    = MediaQuery.of(context).size.height;
-
-    // Each status row ≈ 42px, header ≈ 48px, bottom padding 6px
-    const menuHeight = 5 * 42.0 + 48.0 + 6.0;
-    final spaceBelow = screenH - (offset.dy + size.height);
-    final showAbove  = spaceBelow < menuHeight + 16;
-
-    await showDialog(
-      context: context,
-      barrierColor: Colors.transparent,
-      barrierDismissible: true,
-      builder: (ctx) {
-        return Stack(children: [
-          Positioned.fill(child: GestureDetector(
-            onTap: () => Navigator.pop(ctx),
-            child: Container(color: Colors.transparent),
-          )),
-          Positioned(
-            left: offset.dx,
-            // ✅ If not enough space below, anchor the bottom of the menu
-            // to just above the pill instead of going off screen
-            top:  showAbove ? null : offset.dy + size.height + 6,
-            bottom: showAbove
-                ? screenH - offset.dy + 6
-                : null,
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                width: 210,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.12),
-                        blurRadius: 20, offset: const Offset(0, 6)),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text('UPDATE STATUS',
-                            style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900,
-                                letterSpacing: 1.2,
-                                color: AppColors.tertiary.withOpacity(0.5))),
-                      ),
-                    ),
-                    Divider(height: 1, color: AppColors.tertiary.withOpacity(0.08)),
-                    ...OrderStatus.values.map((status) {
-                      final isActive = status == current;
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.pop(ctx);
-                          if (status != current) onChanged(status);
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 11),
-                          color: isActive ? status.bg : Colors.transparent,
-                          child: Row(children: [
-                            Container(width: 8, height: 8,
-                                decoration: BoxDecoration(
-                                    color: status.color,
-                                    shape: BoxShape.circle)),
-                            const SizedBox(width: 10),
-                            Expanded(child: Text(status.label,
-                                style: TextStyle(fontSize: 12,
-                                    fontWeight: isActive
-                                        ? FontWeight.w800
-                                        : FontWeight.w500,
-                                    color: isActive
-                                        ? status.color
-                                        : const Color(0xFF4a3520)))),
-                            if (isActive)
-                              Icon(Icons.check_rounded, size: 14,
-                                  color: status.color),
-                          ]),
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 6),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ]);
-      },
-    );
   }
 }
 
@@ -1245,4 +1097,44 @@ class _Col {
   final String label;
   final int flex;
   const _Col(this.label, {required this.flex});
+}
+
+class _StatusBadge extends StatelessWidget {
+  final OrderStatus status;
+  const _StatusBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: status.bg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: status.color.withOpacity(0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: status.color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            status.label,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              color: status.color,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
