@@ -649,16 +649,36 @@ const getOrdersReport = async (req, res) => {
     }
 };
 
-const getAverageOrderReport = async (req, res) => {
+const getSalesDistributionReport = async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
 
-        const [rows] = await db.query(
+        const [categoryRows] = await db.query(
+            `
+            SELECT
+                mc.id,
+                mc.name,
+                COALESCE(SUM(oi.subtotal), 0) AS sales
+            FROM menu_categories mc
+            LEFT JOIN menu_items mi
+                ON mc.id = mi.category_id
+            LEFT JOIN order_items oi
+                ON mi.id = oi.menu_item_id
+            LEFT JOIN orders o
+                ON oi.order_id = o.id
+                AND o.status = 'completed'
+                AND o.created_at BETWEEN ? AND ?
+            GROUP BY mc.id, mc.name
+            ORDER BY sales DESC
+            `,
+            [startDate, endDate]
+        );
+
+        const [summaryRows] = await db.query(
             `
             SELECT
                 COUNT(*) AS total_orders,
-                SUM(total) AS total_revenue,
-                AVG(total) AS average_order_value
+                COALESCE(SUM(total), 0) AS total_sales
             FROM orders
             WHERE status = 'completed'
             AND created_at BETWEEN ? AND ?
@@ -668,16 +688,30 @@ const getAverageOrderReport = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            data: rows[0]
+            data: {
+                total_sales:
+                    Number(summaryRows[0].total_sales) || 0,
+
+                total_orders:
+                    Number(summaryRows[0].total_orders) || 0,
+
+                categories: categoryRows.map(category => ({
+                    name: category.name.toUpperCase(),
+                    sales: Number(category.sales) || 0,
+                })),
+            },
         });
 
     } catch (err) {
+        console.error(err);
+
         return res.status(500).json({
             success: false,
-            error: err.message
+            error: err.message,
         });
     }
 };
+
 
 module.exports = { fetchAllCustomer, 
     fetchMenuItems,
@@ -696,5 +730,5 @@ module.exports = { fetchAllCustomer,
     getTopCustomer,
     getRevenueReport,
     getOrdersReport,
-    getAverageOrderReport
+    getSalesDistributionReport
  };

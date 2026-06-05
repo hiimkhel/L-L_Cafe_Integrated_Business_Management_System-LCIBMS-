@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { fetchAllCustomer, fetchMenuItems, fetchMenuCategories,
     addMenuCategory, addMenuItem, deleteMenuItem, getItemById, updateMenuItem, getCustomerReviews, publishReview, archiveReview, deleteReview, republishReview,
-    getTopCustomer, getMenuSales, getRevenueReport, getOrdersReport, getAverageOrderReport
+    getTopCustomer, getMenuSales, getRevenueReport, getOrdersReport, getSalesDistributionReport
  } = require("../controllers/adminControllers.js");
 
 router.get("/customers", fetchAllCustomer);
@@ -24,7 +24,7 @@ router.post("/menu/category", addMenuCategory);
 // Sales & Report Screen
 router.get("/reports/revenue", getRevenueReport);
 router.get("/reports/orders", getOrdersReport);
-router.get("/reports/avg-orders", getAverageOrderReport);
+router.get("/reports/sales", getSalesDistributionReport);
 router.get("/reports/menu", getMenuSales);
 router.get("/reports/customer", getTopCustomer);
 router.get("/reports/chart", getCustomerReviews);
