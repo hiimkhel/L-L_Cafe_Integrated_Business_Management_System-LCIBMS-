@@ -2,25 +2,45 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
 class RevenueTab extends StatelessWidget {
-  const RevenueTab({super.key});
+  final Map<String, dynamic> revenueData;
+
+  const RevenueTab({
+    super.key,
+    required this.revenueData,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Row: stats on left, gauge on right — fills all available height
+    final double totalRevenue =
+        double.tryParse(revenueData['total_revenue']?.toString() ?? '0') ?? 0;
+
+    final double onlineRevenue =
+        double.tryParse(revenueData['online_revenue']?.toString() ?? '0') ?? 0;
+
+    final double walkinRevenue =
+        double.tryParse(revenueData['walkin_revenue']?.toString() ?? '0') ?? 0;
+
+    final double monthlyTarget =
+        double.tryParse(revenueData['monthly_target']?.toString() ?? '1') ?? 1;
+
+    final double growthRate =
+        double.tryParse(revenueData['growth_rate']?.toString() ?? '0') ?? 0;
+
+    final double progress =
+        monthlyTarget > 0 ? (totalRevenue / monthlyTarget).clamp(0.0, 1.0) : 0;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // ── Left: stats ──────────────────────────────────────────────────
         Expanded(
           flex: 4,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Revenue amount
-              const Text(
-                '₱2,660',
-                style: TextStyle(
+              Text(
+                '₱${totalRevenue.toStringAsFixed(2)}',
+                style: const TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.w900,
                   color: Colors.white,
@@ -28,66 +48,97 @@ class RevenueTab extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
+
               const Text(
                 'Total Revenue',
-                style: TextStyle(color: Colors.white60, fontSize: 13),
+                style: TextStyle(
+                  color: Colors.white60,
+                  fontSize: 13,
+                ),
               ),
+
               const SizedBox(height: 20),
 
-              // Stat row
               Row(
                 children: [
                   _StatPill(
                     icon: Icons.trending_up_rounded,
-                    label: '+5% vs yesterday',
-                    color: const Color(0xFF7BC67E),
+                    label:
+                        '${growthRate >= 0 ? '+' : ''}${growthRate.toStringAsFixed(0)}% vs previous period',
+                    color: growthRate >= 0
+                        ? const Color(0xFF7BC67E)
+                        : Colors.redAccent,
                   ),
                 ],
               ),
+
               const SizedBox(height: 12),
 
-              // Mini breakdown
-              _BreakdownRow(label: 'Online Orders', value: '₱2,000', ratio: 0.625),
+              _BreakdownRow(
+                label: 'Online Orders',
+                value: '₱${onlineRevenue.toStringAsFixed(2)}',
+                ratio: totalRevenue > 0
+                    ? onlineRevenue / totalRevenue
+                    : 0,
+              ),
+
               const SizedBox(height: 8),
-              _BreakdownRow(label: 'Walk-in',       value: '₱660',  ratio: 0.375),
+
+              _BreakdownRow(
+                label: 'Walk-in',
+                value: '₱${walkinRevenue.toStringAsFixed(2)}',
+                ratio: totalRevenue > 0
+                    ? walkinRevenue / totalRevenue
+                    : 0,
+              ),
             ],
           ),
         ),
 
         const SizedBox(width: 20),
 
-        // ── Right: gauge ─────────────────────────────────────────────────
         Expanded(
           flex: 3,
-          child: LayoutBuilder(builder: (_, c) {
-            // Make the gauge square based on available width
-            final size = c.maxWidth.clamp(80.0, 200.0);
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: size,
-                  height: size / 2 + 16,
-                  child: CustomPaint(
-                    painter: GaugePainter(progress: 0.8),
+          child: LayoutBuilder(
+            builder: (_, c) {
+              final size =
+                  c.maxWidth.clamp(80.0, 200.0);
+
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: size,
+                    height: size / 2 + 16,
+                    child: CustomPaint(
+                      painter: GaugePainter(
+                        progress: progress,
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  '80%',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
+
+                  const SizedBox(height: 8),
+
+                  Text(
+                    '${(progress * 100).toStringAsFixed(0)}%',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                const Text(
-                  'of monthly target',
-                  style: TextStyle(color: Colors.white54, fontSize: 10),
-                ),
-              ],
-            );
-          }),
+
+                  const Text(
+                    'of monthly target',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ],
     );
