@@ -11,10 +11,9 @@ import 'package:frontend/features/orders/presentation/pos/screens/order_queue_sc
 import 'package:frontend/core/models/menu_category.dart';
 import 'package:frontend/core/utils/order_num_utils.dart';
 import 'package:frontend/core/services/pos/order_service.dart';
-import 'package:frontend/features/orders/presentation/pos/screens/order_history_screen.dart';
 
 class POSOrderScreen extends StatefulWidget {
-  POSOrderScreen({super.key});
+  const POSOrderScreen({super.key});
 
   @override
   State<POSOrderScreen> createState() => _POSOrderScreenState();
@@ -181,7 +180,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                       style: TextStyle(color: AppColors.primary),
                     ),
                     TextSpan(
-                      text: "\nMAKING GOOD FOOD FOR PEOPLE\'S HAPPINESS",
+                      text: "\nMAKING GOOD FOOD FOR PEOPLE'S HAPPINESS",
                       style: TextStyle(
                         fontSize: 10,
                         //fontWeight: FontWeight.normal,
@@ -215,14 +214,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
               size: 13,
             ),
             label: 'REGISTRY',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => OrderHistoryScreen(),
-                ),
-              );
-            },
+            onTap: () {},
           ),
           const SizedBox(width: 11),
           _headerBtns(
@@ -981,7 +973,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   Widget _qtyBtn(IconData icon, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: SizedBox(
         width: 28,
         height: 28,
         child: Icon(icon, size: 16, color: AppColors.primary),

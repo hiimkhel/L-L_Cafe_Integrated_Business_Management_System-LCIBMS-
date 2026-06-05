@@ -16,19 +16,16 @@ import 'core/constants/notification_provider.dart';
 import 'package:frontend/features/customers/presentation/admin/customer_order_screen.dart';
 import 'features/home/presentation/customer/landing_screen.dart';
 import 'features/home/presentation/customer/home_screen.dart';
-import 'features/home/presentation/rider/home_screen.dart';
 import 'features/customers/presentation/admin/menu_screen.dart';
 import 'features/home/presentation/customer/contact_screen.dart';
 import 'features/home/presentation/customer/about_screen.dart';
 import 'features/home/presentation/customer/profile_screen.dart';
 import 'features/customers/presentation/admin/cart_screen.dart';
-import 'features/checkout/customer/presentation/cart_checkout_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
 import 'features/dashboard/presentation/admin/dashboard_screen.dart';
 import 'features/dashboard/presentation/rider/dashboard_screen.dart';
 import 'features/dashboard/presentation/pos/order_entry.dart';
-import 'core/constants/cart_provider.dart' show CartProvider;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
