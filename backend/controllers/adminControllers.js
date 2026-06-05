@@ -496,27 +496,50 @@ const getMenuSales = async (req, res) => {
 }
 
 const getTopCustomer = async (req, res) => {
-    try{
+    try {
+
         const { startDate, endDate } = req.query;
 
-        const [rows] = await db.query(`
-            SELECT u.id, u.full_name AS customer_name,
-                SUM(o.total) AS total_spent        
-                FROM users u INNER JOIN orders o
-                ON u.id = o.user_id             
-                WHERE o.status = 'completed'
-                AND o.created_at BETWEEN ? AND ?
-                GROUP BY u.id ORDER BY total_spent DESC LIMIT 10;
-            `,[ startDate, endDate])
+        let sql = `
+            SELECT
+                u.id,
+                u.full_name AS customer_name,
+                SUM(o.total) AS total_spent
+            FROM users u
+            INNER JOIN orders o
+                ON u.id = o.user_id
+            WHERE o.status = 'completed'
+        `;
 
-            return res.status(200).json({
-                success: true,
-                data: rows
-            })
-    }catch(err){
-        res.status(500).json({error: err.message})
+        const params = [];
+
+        if (startDate && endDate) {
+            sql += `
+                AND o.created_at BETWEEN ? AND ?
+            `;
+
+            params.push(startDate, endDate);
+        }
+
+        sql += `
+            GROUP BY u.id
+            ORDER BY total_spent DESC
+            LIMIT 10
+        `;
+
+        const [rows] = await db.query(sql, params);
+
+        return res.status(200).json({
+            success: true,
+            data: rows,
+        });
+
+    } catch (err) {
+        return res.status(500).json({
+            error: err.message,
+        });
     }
-}
+};
 
 const getRevenueReport = async (req, res) => {
   try {
