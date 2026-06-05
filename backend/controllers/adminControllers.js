@@ -713,6 +713,60 @@ const getSalesDistributionReport = async (req, res) => {
 };
 
 
+const getSalesSummaryReport = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                DAYOFWEEK(created_at) AS day_order,
+                SUM(total) AS sales
+            FROM orders
+            WHERE status = 'completed'
+            AND created_at BETWEEN ? AND ?
+            GROUP BY DAYOFWEEK(created_at)
+            `,
+            [startDate, endDate]
+        );
+
+        const days = [
+            'Sun',
+            'Mon',
+            'Tue',
+            'Wed',
+            'Thu',
+            'Fri',
+            'Sat'
+        ];
+
+        const salesMap = {};
+
+        rows.forEach(row => {
+            salesMap[row.day_order] =
+                Number(row.sales) || 0;
+        });
+
+        const data = days.map((day, index) => ({
+            label: day,
+            sales: salesMap[index + 1] || 0,
+        }));
+
+        return res.status(200).json({
+            success: true,
+            data,
+        });
+
+    } catch (err) {
+        console.error(err);
+
+        return res.status(500).json({
+            success: false,
+            error: err.message,
+        });
+    }
+};
+
 module.exports = { fetchAllCustomer, 
     fetchMenuItems,
     fetchMenuCategories,
@@ -730,5 +784,6 @@ module.exports = { fetchAllCustomer,
     getTopCustomer,
     getRevenueReport,
     getOrdersReport,
-    getSalesDistributionReport
+    getSalesDistributionReport,
+    getSalesSummaryReport
  };
