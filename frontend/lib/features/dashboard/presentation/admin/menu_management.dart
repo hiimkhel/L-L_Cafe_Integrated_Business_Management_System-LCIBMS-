@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'dart:typed_data'; // REQUIRED FOR Uint8List
-import 'package:flutter/foundation.dart'; // REQUIRED FOR kIsWeb
+import 'dart:typed_data'; 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart'; // REQUIRED FOR FilePicker
+import 'package:file_picker/file_picker.dart'; 
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/core/widgets/admin_sidebar.dart';
