@@ -29,6 +29,11 @@ class SalesReportScreen extends StatefulWidget {
 class _SalesReportScreenState extends State<SalesReportScreen> {
   List<dynamic> topCustomers = [];
   List<dynamic> topMenuItems = [];
+
+  Map<String, dynamic> revenueData = {};
+  Map<String, dynamic> ordersData = {};
+  Map<String, dynamic> salesData = {};
+
   bool isLoading = true;
   static const List<String> _ranges = [
     'Last 24 hours',
@@ -77,9 +82,34 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
     final menuItems =
         await reportsService.getTopMenuItems("2026-03-30", "2026-06-30");
 
+     final revenue =
+          await reportsService.getRevenueReport(
+              "2026-03-30", "2026-06-30");
+
+      final orders =
+          await reportsService.getOrdersReport(
+              "2026-03-30", "2026-06-30");
+
+      final sales =
+          await reportsService.getSalesDistributionReport(
+              "2026-03-30", "2026-06-30");
+    print("Revenue:");
+    print(revenue);
+
+    print("Orders:");
+    print(orders);
+
+    print("Average Order:");
+    print(sales);
+
     setState(() {
       topCustomers = customers;
       topMenuItems = menuItems;
+
+      revenueData = revenue;
+      ordersData = orders;
+      salesData = sales;
+
       isLoading = false;
     });
   }
@@ -123,7 +153,11 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Expanded(
-                                child: const BusinessPerformanceCard(),
+                                child: BusinessPerformanceCard(
+                                  revenueData: revenueData,
+                                  ordersData: ordersData,
+                                  salesData: salesData,
+                                )
                               ),
                               const SizedBox(width: 16),
                               Expanded(
