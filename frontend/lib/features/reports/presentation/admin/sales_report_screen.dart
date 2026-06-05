@@ -34,6 +34,8 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
   Map<String, dynamic> ordersData = {};
   Map<String, dynamic> salesData = {};
 
+  List<dynamic> salesSummaryData = [];
+
   bool isLoading = true;
   static const List<String> _ranges = [
     'Last 24 hours',
@@ -43,25 +45,6 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
     'This year',
   ];
   String _selectedRange = _ranges[1];
-
-  static const Map<String, List<double>> _barData = {
-    'Last 24 hours': [1200, 900, 1500, 800, 2100, 1700, 1300],
-    'Last 7 days':   [7200, 9800, 11500, 13400, 15800, 18200, 19500],
-    'Last 30 days':  [45000, 52000, 48000, 61000, 70000, 66000, 74000],
-    'Last 3 months': [180000, 210000, 195000, 230000, 255000, 240000, 270000],
-    'This year':     [320000, 410000, 390000, 450000, 500000, 480000, 530000],
-  };
-
-  static const Map<String, List<String>> _barLabels = {
-    'Last 24 hours': ['1am', '4am', '8am', '12pm', '4pm', '8pm', '11pm'],
-    'Last 7 days':   ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    'Last 30 days':  ['W1',  'W2',  'W3',  'W4',  'W5',  'W6',  'W7'],
-    'Last 3 months': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-    'This year':     ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-  };
-
-  List<double> get _currentValues => _barData[_selectedRange]!;
-  List<String> get _currentLabels => _barLabels[_selectedRange]!;
 
   void _handleExport() {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -93,6 +76,12 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
       final sales =
           await reportsService.getSalesDistributionReport(
               "2026-03-30", "2026-06-30");
+
+      final salesSummary =
+        await reportsService.getSalesSummaryReport(
+          "2026-03-30",
+          "2026-06-30",
+        );
     print("Revenue:");
     print(revenue);
 
@@ -103,6 +92,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
     print(sales);
 
     setState(() {
+      salesSummaryData = salesSummary;
       topCustomers = customers;
       topMenuItems = menuItems;
 
@@ -162,8 +152,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                               const SizedBox(width: 16),
                               Expanded(
                                 child: _SalesSummaryCard(
-                                  values: _currentValues,
-                                  labels: _currentLabels,
+                                  salesSummaryData: salesSummaryData,
                                   rangeLabel: _selectedRange.toUpperCase(),
                                 ),
                               ),
@@ -336,13 +325,11 @@ class _ExportButton extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _SalesSummaryCard extends StatelessWidget {
-  final List<double> values;
-  final List<String> labels;
+  final List<dynamic> salesSummaryData;
   final String rangeLabel;
 
   const _SalesSummaryCard({
-    required this.values,
-    required this.labels,
+    required this.salesSummaryData,
     required this.rangeLabel,
   });
 
@@ -354,6 +341,31 @@ class _SalesSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final values = salesSummaryData
+      .map(
+        (e) => double.tryParse(
+              e['sales'].toString(),
+            ) ??
+            0,
+      )
+      .toList();
+
+  final labels = salesSummaryData
+      .map(
+        (e) => e['label'].toString(),
+      )
+      .toList();
+
+  if (values.isEmpty) {
+    return _BaseCard(
+      title: 'SALES SUMMARY',
+      child: const Center(
+        child: Text(
+          'No sales data available',
+        ),
+      ),
+    );
+  }
     final maxVal = values.reduce((a, b) => a > b ? a : b);
     final step   = (maxVal / 4).ceilToDouble();
     final ticks  = List.generate(5, (i) => step * i);

@@ -74,4 +74,18 @@ class ReportsService {
     final data = jsonDecode(response.body);
     return data['data'];
   }
+
+    Future<List<dynamic>> getSalesSummaryReport(
+    String startDate,
+    String endDate,
+  ) async {
+    final response = await http.get(
+      Uri.parse(
+        '$baseUrl/chart?startDate=$startDate&endDate=$endDate',
+      ),
+    );
+
+    final data = jsonDecode(response.body);
+    return data['data'];
+  }
 }
