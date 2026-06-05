@@ -24,20 +24,28 @@ class ReportsService {
     return data['data'];
   }
 
+
   Future<List<dynamic>> getTopMenuItems(
-    String startDate,
-    String endDate,
+    String? startDate,
+    String? endDate,
   ) async {
+
+    String url = '$baseUrl/menu';
+
+    if (startDate != null && endDate != null) {
+      url +=
+          '?startDate=$startDate&endDate=$endDate';
+    }
+
     final response = await http.get(
-      Uri.parse(
-        '$baseUrl/menu?startDate=$startDate&endDate=$endDate',
-      ),
+      Uri.parse(url),
     );
 
     final data = jsonDecode(response.body);
 
     return data['data'];
   }
+
 
   Future<Map<String, dynamic>> getRevenueReport(
     String startDate,

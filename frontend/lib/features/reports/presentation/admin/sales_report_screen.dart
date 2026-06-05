@@ -148,7 +148,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
         await reportsService.getTopCustomers(startDate, endDate);
 
     final menuItems =
-        await reportsService.getTopMenuItems("2026-03-30", "2026-06-30");
+        await reportsService.getTopMenuItems(startDate, endDate);
 
      final revenue =
           await reportsService.getRevenueReport(
@@ -567,12 +567,29 @@ class _TopPicksCard extends StatelessWidget {
       return const _BaseCard(
         title: 'TOP PICKS',
         child: Center(
-          child: Text(
-            'No menu data available',
-            style: TextStyle(
-              fontFamily: 'Urbanist',
-              fontWeight: FontWeight.w600,
-            ),
+          child: Column(
+            mainAxisAlignment:
+                MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.restaurant_menu_outlined,
+                size: 42,
+                color: _muted,
+              ),
+              SizedBox(height: 12),
+              Text(
+                'No menu sales found',
+                style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                'No completed orders were recorded during this period.',
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
       );
