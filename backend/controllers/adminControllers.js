@@ -559,10 +559,35 @@ const getOrdersReport = async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
 
-        const [rows] = await db.query(
+        const [summaryRows] = await db.query(
             `
             SELECT
-                COUNT(*) AS total_orders
+                COUNT(*) AS total_orders,
+
+                SUM(
+                    CASE
+                        WHEN order_type = 'dine-in'
+                        THEN 1
+                        ELSE 0
+                    END
+                ) AS dine_in_orders,
+
+                SUM(
+                    CASE
+                        WHEN order_type = 'takeout'
+                        THEN 1
+                        ELSE 0
+                    END
+                ) AS takeout_orders,
+
+                SUM(
+                    CASE
+                        WHEN order_type IN ('delivery', 'pickup')
+                        THEN 1
+                        ELSE 0
+                    END
+                ) AS delivery_orders
+
             FROM orders
             WHERE status = 'completed'
             AND created_at BETWEEN ? AND ?
@@ -570,20 +595,59 @@ const getOrdersReport = async (req, res) => {
             [startDate, endDate]
         );
 
+        const [peakRows] = await db.query(
+            `
+            SELECT
+                HOUR(created_at) AS hour_bucket,
+                COUNT(*) AS total_orders
+            FROM orders
+            WHERE status = 'completed'
+            AND created_at BETWEEN ? AND ?
+            GROUP BY HOUR(created_at)
+            ORDER BY total_orders DESC
+            LIMIT 1
+            `,
+            [startDate, endDate]
+        );
+
+        let peakOrderTime = 'N/A';
+
+        if (peakRows.length > 0) {
+            const hour = peakRows[0].hour_bucket;
+
+            const formatHour = (h) => {
+                const period = h >= 12 ? 'PM' : 'AM';
+                const display = h % 12 || 12;
+                return `${display}${period}`;
+            };
+
+            peakOrderTime =
+                `${formatHour(hour)} - ${formatHour((hour + 2) % 24)}`;
+        }
+
+        const data = {
+            total_orders: Number(summaryRows[0].total_orders) || 0,
+            dine_in_orders: Number(summaryRows[0].dine_in_orders) || 0,
+            takeout_orders: Number(summaryRows[0].takeout_orders) || 0,
+            delivery_orders: Number(summaryRows[0].delivery_orders) || 0,
+            order_growth: 0,
+            peak_order_time: peakOrderTime,
+        };
+
         return res.status(200).json({
             success: true,
-            data: rows[0]
+            data,
         });
 
     } catch (err) {
+        console.error(err);
+
         return res.status(500).json({
             success: false,
-            error: err.message
+            error: err.message,
         });
     }
 };
-
-
 
 const getAverageOrderReport = async (req, res) => {
     try {
