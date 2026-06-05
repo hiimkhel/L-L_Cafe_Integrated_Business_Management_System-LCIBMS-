@@ -4,6 +4,7 @@ import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/core/widgets/admin_sidebar.dart';
 import 'package:frontend/features/reports/presentation/widget/business_performance_card.dart';
 import 'package:frontend/core/services/admin/sales_reports_services.dart';
+import 'package:frontend/core/services/admin/pdf_admin_export.dart';
 
 const Color _cardBg  = AppColors.background;
 const Color _primary = Color(0xFF3D5A45);
@@ -126,17 +127,45 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
     }
   }
 
-  void _handleExport() {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Exporting CSV for "$_selectedRange"…',
-          style: const TextStyle(
-              fontFamily: 'Urbanist', fontWeight: FontWeight.w600)),
-      backgroundColor: _primary,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      duration: const Duration(seconds: 2),
-    ));
+void _handleExport() async {
+
+  try {
+    setState(() => isLoading = true);
+
+    final pdfBytes = await PdfExportService.generateSalesReportPdf(
+      range: _selectedRange,
+      topCustomers: topCustomers,
+      topMenuItems: topMenuItems,
+      revenueData: revenueData,
+      ordersData: ordersData,
+      salesData: salesData,
+    );
+
+    await PdfExportService.printPdf(pdfBytes);
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('PDF exported successfully')),
+    );
+
+  } catch (e) {
+    debugPrint("EXPORT ERROR: $e");
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Export failed: $e'),
+        backgroundColor: Colors.red,
+      ),
+    );
+
+  } finally {
+    if (mounted) setState(() => isLoading = false);
   }
+}
+
   Future<void> loadReports() async {
     final range = getDateRange();
     
@@ -390,7 +419,7 @@ class _ExportButton extends StatelessWidget {
         child: Row(mainAxisSize: MainAxisSize.min, children: const [
           Icon(Icons.download_rounded, size: 16, color: Colors.white),
           SizedBox(width: 8),
-          Text('EXPORT CSV',
+          Text('EXPORT PDF',
               style: TextStyle(
                   fontFamily: 'Urbanist',
                   fontWeight: FontWeight.w900,
