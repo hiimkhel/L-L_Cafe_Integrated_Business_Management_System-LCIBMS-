@@ -45,7 +45,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
     'This year',
     'All Time'
   ];
-  String _selectedRange = _ranges[1];
+  String _selectedRange = _ranges[2];
 
   Map<String, String?> getDateRange() {
     final now = DateTime.now();
@@ -152,29 +152,20 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
 
      final revenue =
           await reportsService.getRevenueReport(
-              "2026-03-30", "2026-06-30");
+              startDate, endDate);
 
       final orders =
           await reportsService.getOrdersReport(
-              "2026-03-30", "2026-06-30");
+            startDate, endDate);
 
       final sales =
           await reportsService.getSalesDistributionReport(
-              "2026-03-30", "2026-06-30");
+            startDate, endDate);
 
       final salesSummary =
         await reportsService.getSalesSummaryReport(
-          "2026-03-30",
-          "2026-06-30",
+          startDate, endDate
         );
-    print("Revenue:");
-    print(revenue);
-
-    print("Orders:");
-    print(orders);
-
-    print("Average Order:");
-    print(sales);
 
     setState(() {
       salesSummaryData = salesSummary;
@@ -448,16 +439,43 @@ class _SalesSummaryCard extends StatelessWidget {
       )
       .toList();
 
-  if (values.isEmpty) {
-    return _BaseCard(
-      title: 'SALES SUMMARY',
-      child: const Center(
-        child: Text(
-          'No sales data available',
-        ),
-      ),
+  final totalSales =
+    values.fold<double>(
+      0,
+      (sum, value) => sum + value,
     );
-  }
+
+if (totalSales == 0) {
+  return _BaseCard(
+    title: 'SALES SUMMARY',
+    child: const Center(
+      child: Column(
+        mainAxisAlignment:
+            MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.bar_chart,
+            size: 42,
+            color: _muted,
+          ),
+          SizedBox(height: 12),
+          Text(
+            'No sales recorded',
+            style: TextStyle(
+              fontFamily: 'Urbanist',
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            'No completed orders were recorded during this period.',
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    ),
+  );
+}
     final maxVal = values.reduce((a, b) => a > b ? a : b);
     final step   = (maxVal / 4).ceilToDouble();
     final ticks  = List.generate(5, (i) => step * i);

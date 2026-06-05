@@ -48,58 +48,86 @@ class ReportsService {
 
 
   Future<Map<String, dynamic>> getRevenueReport(
-    String startDate,
-    String endDate,
+    String? startDate,
+    String? endDate,
   ) async {
+
+    String url = '$baseUrl/revenue';
+
+    if (startDate != null && endDate != null) {
+      url +=
+          '?startDate=$startDate&endDate=$endDate';
+    }
+
     final response = await http.get(
-      Uri.parse(
-        '$baseUrl/revenue?startDate=$startDate&endDate=$endDate',
-      ),
+      Uri.parse(url),
     );
 
     final data = jsonDecode(response.body);
+
     return data['data'];
   }
 
   Future<Map<String, dynamic>> getOrdersReport(
-    String startDate,
-    String endDate,
+    String? startDate,
+    String? endDate,
   ) async {
+
+    String url = '$baseUrl/orders';
+
+    if (startDate != null && endDate != null) {
+      url +=
+          '?startDate=$startDate&endDate=$endDate';
+    }
+
     final response = await http.get(
-      Uri.parse(
-        '$baseUrl/orders?startDate=$startDate&endDate=$endDate',
-      ),
+      Uri.parse(url),
     );
 
     final data = jsonDecode(response.body);
+
     return data['data'];
   }
 
   Future<Map<String, dynamic>> getSalesDistributionReport(
-    String startDate,
-    String endDate,
+    String? startDate,
+    String? endDate,
   ) async {
+
+    String url = '$baseUrl/sales';
+
+    if (startDate != null && endDate != null) {
+      url +=
+          '?startDate=$startDate&endDate=$endDate';
+    }
+
     final response = await http.get(
-      Uri.parse(
-        '$baseUrl/sales?startDate=$startDate&endDate=$endDate',
-      ),
+      Uri.parse(url),
     );
 
     final data = jsonDecode(response.body);
+
     return data['data'];
   }
 
-    Future<List<dynamic>> getSalesSummaryReport(
-    String startDate,
-    String endDate,
+  Future<List<dynamic>> getSalesSummaryReport(
+    String? startDate,
+    String? endDate,
   ) async {
+
+    String url = '$baseUrl/chart';
+
+    if (startDate != null && endDate != null) {
+      url +=
+          '?startDate=$startDate&endDate=$endDate';
+    }
+
     final response = await http.get(
-      Uri.parse(
-        '$baseUrl/chart?startDate=$startDate&endDate=$endDate',
-      ),
+      Uri.parse(url),
     );
 
     final data = jsonDecode(response.body);
+
     return data['data'];
   }
 }
