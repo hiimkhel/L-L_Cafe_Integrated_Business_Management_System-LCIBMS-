@@ -107,9 +107,37 @@ const getRevenueTrend = async (req, res) => {
   }
 };
 
+const getTopMenus = async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT
+          mi.id,
+          mi.name,
+          SUM(oi.quantity) AS sold
+      FROM order_items oi
+      INNER JOIN menu_items mi
+          ON oi.menu_item_id = mi.id
+      INNER JOIN orders o
+          ON oi.order_id = o.id
+      WHERE o.status = 'completed'
+      GROUP BY mi.id
+      ORDER BY sold DESC
+      LIMIT 5
+    `);
 
+    return res.status(200).json({
+      success: true,
+      data: rows,
+    });
+  } catch (err) {
+    console.error(err);
 
-
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+};
 
 
 const fetchAllCustomer = async (req, res) => {
@@ -995,6 +1023,7 @@ const getSalesSummaryReport = async (req, res) => {
 module.exports = { 
     getDashboardSummary,
     getRevenueTrend,
+    getTopMenus,
     fetchAllCustomer, 
     fetchMenuItems,
     fetchMenuCategories,
