@@ -589,7 +589,6 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                     child: Switch(
                       value: isAvailable,
                       onChanged: (v) => setState(() => isAvailable = v),
-                      activeThumbColor: const Color(0xFF4CAF50),
                       inactiveThumbColor: Colors.redAccent,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -1145,7 +1144,7 @@ class _FilledBtnState extends State<_FilledBtn> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
@@ -1159,11 +1158,11 @@ class _FilledBtnState extends State<_FilledBtn> {
           ],
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          if (icon != null) ...[
-            Icon(icon, size: 14, color: Colors.white),
+          if (widget.icon != null) ...[
+            Icon(widget.icon, size: 14, color: Colors.white),
             const SizedBox(width: 6),
           ],
-          Text(label,
+          Text(widget.label,
               style: const TextStyle(
                   fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
         ]),
