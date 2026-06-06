@@ -5,7 +5,81 @@
 */
 const db = require("../config/dbConnection.js");
 
-// [1] Customers API
+const getDashboardSummary = async (req, res) => {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+
+    const [revenueRows] = await db.query(
+      `
+      SELECT
+          COALESCE(SUM(total),0) AS revenue,
+          COUNT(*) AS total_sales
+      FROM orders
+      WHERE status = 'completed'
+      AND DATE(created_at) = ?
+      `,
+      [today]
+    );
+
+    const [customerRows] = await db.query(
+      `
+      SELECT
+          COUNT(DISTINCT user_id) AS total_customers
+      FROM orders
+      WHERE status = 'completed'
+      AND DATE(created_at) = ?
+      `,
+      [today]
+    );
+
+    const [targetRows] = await db.query(
+      `
+      SELECT daily_revenue_target
+      FROM business_settings
+      LIMIT 1
+      `
+    );
+
+    const revenue =
+      Number(revenueRows[0]?.revenue || 0);
+
+    const sales =
+      Number(revenueRows[0]?.total_sales || 0);
+
+    const customers =
+      Number(customerRows[0]?.total_customers || 0);
+
+    const target =
+      Number(
+        targetRows[0]?.daily_revenue_target || 0
+      );
+
+    const progress =
+      target > 0 ? revenue / target : 0;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        daily_target: {
+          target,
+          current: revenue,
+          progress,
+        },
+        customers,
+        sales,
+        revenue,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+};
+
 const fetchAllCustomer = async (req, res) => {
     try {
         const { search = "" } = req.query;
@@ -886,7 +960,9 @@ const getSalesSummaryReport = async (req, res) => {
     }
 };
 
-module.exports = { fetchAllCustomer, 
+module.exports = { 
+    getDashboardSummary,
+    fetchAllCustomer, 
     fetchMenuItems,
     fetchMenuCategories,
     addMenuCategory,
