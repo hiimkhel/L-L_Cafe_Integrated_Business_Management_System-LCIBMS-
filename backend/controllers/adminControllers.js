@@ -139,6 +139,35 @@ const getTopMenus = async (req, res) => {
   }
 };
 
+const getRecentOrders = async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT
+          id,
+          order_number,
+          customer_name,
+          order_type,
+          status,
+          total,
+          created_at
+      FROM orders
+      ORDER BY created_at DESC
+      LIMIT 5
+    `);
+
+    return res.status(200).json({
+      success: true,
+      data: rows,
+    });
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+};
 
 const fetchAllCustomer = async (req, res) => {
     try {
@@ -1024,6 +1053,7 @@ module.exports = {
     getDashboardSummary,
     getRevenueTrend,
     getTopMenus,
+    getRecentOrders,
     fetchAllCustomer, 
     fetchMenuItems,
     fetchMenuCategories,

@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { getDashboardSummary, getRevenueTrend, getTopMenus, fetchAllCustomer, fetchMenuItems, fetchMenuCategories,
+const { getDashboardSummary, getRevenueTrend, getTopMenus, getRecentOrders, fetchAllCustomer, fetchMenuItems, fetchMenuCategories,
     addMenuCategory, addMenuItem, deleteMenuItem, getItemById, updateMenuItem, getCustomerReviews, publishReview, archiveReview, deleteReview, republishReview,
     getTopCustomer, getMenuSales, getRevenueReport, getOrdersReport, getSalesDistributionReport, getSalesSummaryReport, getOrders
  } = require("../controllers/adminControllers.js");
@@ -11,6 +11,7 @@ router.get("/customers", fetchAllCustomer);
 router.get("/dashboard/summary", getDashboardSummary);
 router.get("/dashboard/revenue-trend", getRevenueTrend);
 router.get("/dashboard/top-menus", getTopMenus);
+router.get("/dashboard/recent-orders", getRecentOrders);
 
 // Menu Items
 router.get("/menu-items", fetchMenuItems);
