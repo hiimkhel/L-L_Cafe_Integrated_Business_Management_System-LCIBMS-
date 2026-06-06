@@ -80,6 +80,38 @@ const getDashboardSummary = async (req, res) => {
   }
 };
 
+const getRevenueTrend = async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT
+          DATE(created_at) AS date,
+          COALESCE(SUM(total),0) AS revenue
+      FROM orders
+      WHERE status = 'completed'
+      AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+      GROUP BY DATE(created_at)
+      ORDER BY DATE(created_at)
+    `);
+
+    return res.status(200).json({
+      success: true,
+      data: rows,
+    });
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+};
+
+
+
+
+
+
 const fetchAllCustomer = async (req, res) => {
     try {
         const { search = "" } = req.query;
@@ -962,6 +994,7 @@ const getSalesSummaryReport = async (req, res) => {
 
 module.exports = { 
     getDashboardSummary,
+    getRevenueTrend,
     fetchAllCustomer, 
     fetchMenuItems,
     fetchMenuCategories,
