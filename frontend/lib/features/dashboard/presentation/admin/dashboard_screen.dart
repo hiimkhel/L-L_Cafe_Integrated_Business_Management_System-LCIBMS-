@@ -11,30 +11,7 @@ import './widgets/card_header.dart';
 import './widgets/show_set_target_dialog.dart';
 import './widgets/menu_card.dart';
 import './widgets/orders_card.dart';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PALETTE
-// ─────────────────────────────────────────────────────────────────────────────
-
-const Color _green1 = Color(0xFF3D5A45);
-const Color _green2 = Color(0xFF758C6D);
-const Color _gold   = Color(0xFFA98258);
-const Color _beige  = Color(0xFFEFE2C9);
-const Color _white  = Colors.white;
-const Color _dark   = Color(0xFF2D2A26);
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MODELS
-// ─────────────────────────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────────────────────
-// DATA  (replace with API calls)
-// ─────────────────────────────────────────────────────────────────────────────
-
-const _summaryCards = <SummaryCardData>[
-  SummaryCardData(label: 'TOTAL CUSTOMERS', value: '389',      delta: '+1.2%', deltaPositive: true,  icon: Icons.people_outline_rounded,          accent: Color(0xFF4CAF50)),
-  SummaryCardData(label: 'TOTAL SALES',     value: '43,112',   delta: '+1.2%', deltaPositive: true,  icon: Icons.show_chart_rounded,              accent: Color(0xFF2196F3)),
-  SummaryCardData(label: 'TOTAL INCOME',    value: '₱244,219', delta: '+1.2%', deltaPositive: true,  icon: Icons.account_balance_wallet_outlined,  accent: Color(0xFFA98258)),
-];
+import 'package:frontend/core/services/admin/dashboard_service.dart';
 
 const _menuItems = <TopMenuItem>[
   TopMenuItem(rank: 1, name: 'Breaded Pork Red Pesto Pasta', price: '₱120', sold: 312),
@@ -83,6 +60,53 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+    final DashboardService dashboardService = DashboardService();
+
+  bool isLoading = false;
+
+  RevenueSummary? revenueSummary;
+  DashboardSummary? dashboardSummary;
+
+  List<TopMenuItem> topMenus = [];
+  List<DashboardOrderRow> recentOrders = [];
+  List<RevenueBarData> revenueTrend = [];
+
+  List<SummaryCardData> get summaryCards {
+    return [
+      SummaryCardData(
+        label: 'TOTAL CUSTOMERS',
+        value:
+            '${dashboardSummary?.customers ?? 0}',
+        delta: '+0%',
+        deltaPositive: true,
+        icon: Icons.people_outline_rounded,
+        accent: const Color(0xFF4CAF50),
+      ),
+      SummaryCardData(
+        label: 'TOTAL SALES',
+        value:
+            '${dashboardSummary?.sales ?? 0}',
+        delta: '+0%',
+        deltaPositive: true,
+        icon: Icons.show_chart_rounded,
+        accent: const Color(0xFF2196F3),
+      ),
+      SummaryCardData(
+        label: 'TOTAL INCOME',
+        value:
+            '₱${dashboardSummary?.revenue.toStringAsFixed(0) ?? "0"}',
+        delta:
+            '${revenueSummary?.growthRate ?? 0}%',
+        deltaPositive:
+            (revenueSummary?.growthRate ?? 0) >= 0,
+        icon:
+            Icons.account_balance_wallet_outlined,
+        accent: const Color(0xFFA98258),
+      ),
+    ];
+  }
+
+
   double _targetProgress = 0.75;
   String _targetAmount   = '₱ 7,000.56';
   String _targetMax      = '₱10,100';
@@ -108,6 +132,48 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     // await dashboardService.updateTarget(value);
   }
 
+  Future<void> loadDashboard() async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
+
+      final results = await Future.wait([
+        dashboardService.getRevenueSummary(),
+        dashboardService.getDashboardSummary(),
+        dashboardService.getTopMenus(),
+        dashboardService.getRecentOrders(),
+        dashboardService.getRevenueTrend(),
+      ]);
+
+      revenueSummary =
+          results[0] as RevenueSummary;
+
+      dashboardSummary =
+          results[1] as DashboardSummary;
+
+      topMenus =
+          results[2] as List<TopMenuItem>;
+
+      recentOrders =
+          results[3] as List<DashboardOrderRow>;
+
+      revenueTrend =
+          results[4] as List<RevenueBarData>;
+
+      setState(() {});
+
+    } catch (e) {
+      debugPrint(
+        'Dashboard Load Error: $e',
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   String _fmtK(double v) => v >= 1000
       ? '${(v / 1000).toStringAsFixed(v % 1000 == 0 ? 0 : 1)}k'
       : v.toStringAsFixed(0);
@@ -117,6 +183,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       MaterialPageRoute(
           builder: (_) =>
               OrderScreen(activeIndex: 1, onLogout: widget.onLogout)));
+  
+  @override
+  void initState() {
+    super.initState();
+    loadDashboard();
+  }
 
   // ── Build ─────────────────────────────────────────────────────────────────
   @override
@@ -132,8 +204,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 AdminHeader(title: 'DASHBOARD', onLogout: widget.onLogout),
-                // ✅ Expanded + LayoutBuilder — no IntrinsicHeight, no
-                //    unconstrained height conflicts.
                 Expanded(
                   child: LayoutBuilder(builder: (context, constraints) {
                     return _buildContent(constraints);
@@ -175,7 +245,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   onSetTarget: _showSetTargetDialog,
                 ),
                 const SizedBox(height: gap),
-                MenusCard(items: _menuItems),
+                MenusCard(
+                  items: topMenus.isEmpty
+                      ? _menuItems
+                      : topMenus,
+                ),
               ],
             ),
           ),
@@ -188,12 +262,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SummaryRow(cards: _summaryCards),
+                SummaryRow(cards: summaryCards),
                 const SizedBox(height: gap),
-                RevenueMapCard(bars: _revenueBars),
+                RevenueMapCard(
+                  bars: revenueTrend.isEmpty
+                      ? _revenueBars
+                      : revenueTrend,
+                ),
                 const SizedBox(height: gap),
                 OrdersCard(
-                  orders: _orders,
+                  orders: recentOrders.isEmpty
+                      ? _orders
+                      : recentOrders,
                   onViewAll: _goToOrders,
                 ),
               ],
