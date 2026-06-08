@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/models/dashboard_models.dart';
 import 'package:frontend/features/dashboard/presentation/admin/widgets/summary_card.dart';
 
-const Color _green1 = Color(0xFF3D5A45);
-
 class SummaryRow extends StatelessWidget {
   final List<SummaryCardData> cards;
 
