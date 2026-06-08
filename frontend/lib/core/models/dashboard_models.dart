@@ -91,10 +91,20 @@ class RevenueBarData {
   factory RevenueBarData.fromJson(
     Map<String, dynamic> json,
   ) {
+    final rawRevenue = json['revenue'];
+
+    final revenueValue = rawRevenue is num
+        ? rawRevenue.toDouble()
+        : double.tryParse(
+              rawRevenue?.toString() ?? '0',
+          ) ??
+          0.0;
+
     return RevenueBarData(
-      month: json['date'] ?? '',
-      value: (json['revenue'] ?? 0).toDouble(),
-      rawLabel: '₱${json['revenue'] ?? 0}',
+      month: json['month'] ?? '',
+      value: revenueValue,
+      rawLabel:
+          '₱${revenueValue.toStringAsFixed(0)}',
     );
   }
 }
