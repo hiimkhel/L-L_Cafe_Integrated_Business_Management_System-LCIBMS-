@@ -16,7 +16,6 @@ const getDashboardSummary = async (req, res) => {
           COUNT(*) AS total_sales
       FROM orders
       WHERE status = 'completed'
-      AND DATE(created_at) = ?
       `,
       [today]
     );
@@ -27,9 +26,7 @@ const getDashboardSummary = async (req, res) => {
           COUNT(DISTINCT user_id) AS total_customers
       FROM orders
       WHERE status = 'completed'
-      AND DATE(created_at) = ?
       `,
-      [today]
     );
 
     const [targetRows] = await db.query(
@@ -84,13 +81,13 @@ const getRevenueTrend = async (req, res) => {
   try {
     const [rows] = await db.query(`
       SELECT
-          DATE(created_at) AS date,
-          COALESCE(SUM(total),0) AS revenue
+          DATE_FORMAT(created_at, '%Y-%m') AS month,
+          COALESCE(SUM(total), 0) AS revenue
       FROM orders
       WHERE status = 'completed'
-      AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
-      GROUP BY DATE(created_at)
-      ORDER BY DATE(created_at)
+        AND created_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+      GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+      ORDER BY DATE_FORMAT(created_at, '%Y-%m')
     `);
 
     return res.status(200).json({
