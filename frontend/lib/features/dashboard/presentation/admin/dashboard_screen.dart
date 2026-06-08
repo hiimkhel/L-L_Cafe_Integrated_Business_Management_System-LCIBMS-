@@ -4,6 +4,7 @@ import '../../../../core/widgets/admin_header.dart';
 import '../../../../config/theme/app_colors.dart';
 import '../../../../features/dashboard/presentation/admin/order_screen.dart';
 import "package:frontend/core/models/dashboard_models.dart";
+import './widgets/summary_row.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PALETTE
@@ -243,7 +244,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _SummaryRow(cards: _summaryCards),
+                SummaryRow(cards: _summaryCards),
                 const SizedBox(height: gap),
                 _RevenueMapCard(bars: _revenueBars),
                 const SizedBox(height: gap),
@@ -256,110 +257,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ],
       ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SUMMARY ROW
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _SummaryRow extends StatelessWidget {
-  final List<SummaryCardData> cards;
-  const _SummaryRow({required this.cards});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: List.generate(
-        cards.length,
-        (i) => Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(right: i < cards.length - 1 ? 12 : 0),
-            child: _SummaryCard(data: cards[i]),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SummaryCard extends StatelessWidget {
-  final SummaryCardData data;
-  const _SummaryCard({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: _beige,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: data.accent.withOpacity(0.18)),
-        boxShadow: [
-          BoxShadow(
-              color: data.accent.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4))
-        ],
-      ),
-      child: Row(children: [
-        Container(
-          width: 44, height: 44,
-          decoration: BoxDecoration(
-              color: data.accent.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(12)),
-          child: Icon(data.icon, color: data.accent, size: 22),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Flexible(
-                  child: Text(data.value,
-                      style: const TextStyle(
-                          fontFamily: 'Urbanist',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 24,
-                          color: _green1)),
-                ),
-                const SizedBox(width: 5),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 2),
-                  child: Row(children: [
-                    Icon(
-                      data.deltaPositive
-                          ? Icons.arrow_upward_rounded
-                          : Icons.arrow_downward_rounded,
-                      size: 10,
-                      color: data.deltaPositive
-                          ? const Color(0xFF4CAF50)
-                          : Colors.redAccent,
-                    ),
-                    Text(data.delta,
-                        style: TextStyle(
-                            fontFamily: 'Urbanist',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: data.deltaPositive
-                                ? const Color(0xFF4CAF50)
-                                : Colors.redAccent)),
-                  ]),
-                ),
-              ]),
-              Text(data.label,
-                  style: TextStyle(
-                      fontFamily: 'Urbanist',
-                      fontSize: 12,
-                      letterSpacing: 0.8,
-                      fontWeight: FontWeight.w600,
-                      color: _green1.withOpacity(0.55))),
-            ],
-          ),
-        ),
-      ]),
     );
   }
 }
