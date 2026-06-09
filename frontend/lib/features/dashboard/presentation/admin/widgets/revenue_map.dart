@@ -28,9 +28,19 @@ class _RevenueMapCardState extends State<RevenueMapCard> {
     return maxValue * 1.2;
   }
 
-  static const _yLabels = ['125k+', '100k', '75k', '50k', '25k', '0'];
+  List<String> getYAxisLabels(double maxValue) {
+    final step = maxValue / 5;
 
-  // 🔥 Track the index of the bar currently being hovered (null if none)
+    return [
+      formatPeso(maxValue),
+      formatPeso(step * 4),
+      formatPeso(step * 3),
+      formatPeso(step * 2),
+      formatPeso(step),
+      '₱0',
+    ];
+  }
+
   int? _hoveredIndex;
 
   List<RevenueBarData> _normalize(List<RevenueBarData> input) {
@@ -85,6 +95,7 @@ class _RevenueMapCardState extends State<RevenueMapCard> {
     // Access widget.bars instead of bars since we are in a State class
     final safeBars = _normalize(widget.bars); 
     final chartMax = getChartMax(safeBars);
+    final yLabels = getYAxisLabels(chartMax);
 
     return Container(
       width: double.infinity,
@@ -118,7 +129,7 @@ class _RevenueMapCardState extends State<RevenueMapCard> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
-                    children: _yLabels
+                    children: yLabels
                         .map(
                           (l) => Text(
                             l,
@@ -136,8 +147,6 @@ class _RevenueMapCardState extends State<RevenueMapCard> {
 
                 // CHART
                 Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: List.generate(safeBars.length, (index) {
@@ -148,13 +157,19 @@ class _RevenueMapCardState extends State<RevenueMapCard> {
                             ? 0.0
                             : (b.value / chartMax).clamp(0.0, 1.0);
 
-                        final height = (normalized * 160).clamp(4.0, 160.0);
+                        final height = b.value > 0
+                          ? (normalized * 160).clamp(12.0, 160.0)
+                          : 8.0;
                         final isTop = b.value >= chartMax;
                         
                         // Check if this specific bar is being hovered
                         final isHovered = _hoveredIndex == index;
 
-                        return MouseRegion(
+                        return Expanded(
+                          child: Tooltip(
+                            message: 'Revenue: ${formatPeso(b.value)}',
+                            preferBelow: false,
+                            child: MouseRegion(
                           cursor: SystemMouseCursors.click,
                           onEnter: (_) => setState(() => _hoveredIndex = index),
                           onExit: (_) => setState(() => _hoveredIndex = null),
@@ -163,12 +178,11 @@ class _RevenueMapCardState extends State<RevenueMapCard> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                // VALUE LABEL (Shows if b.value > 0 AND the bar is hovered)
                                 AnimatedOpacity(
                                   duration: const Duration(milliseconds: 150),
                                   opacity: (b.value > 0 && isHovered) ? 1.0 : 0.0,
                                   child: SizedBox(
-                                    height: 14, 
+                                    height: 14,
                                     child: Text(
                                       formatPeso(b.value),
                                       style: TextStyle(
@@ -179,67 +193,58 @@ class _RevenueMapCardState extends State<RevenueMapCard> {
                                     ),
                                   ),
                                 ),
+
                                 const SizedBox(height: 4),
 
                                 // BAR
-                                AnimatedContainer(
-                                  duration: const Duration(milliseconds: 250),
-                                  curve: Curves.easeOut,
+                               AnimatedContainer(
+                                duration: const Duration(milliseconds: 250),
+                                curve: Curves.easeOut,
 
-                                  width: isHovered ? 34 : 28,
+                                width: double.infinity,
 
-                                  height: isHovered
-                                      ? (height + 8).clamp(4.0, 170.0)
-                                      : height,
+                                height: height,
 
-                                  decoration: BoxDecoration(
-                                    borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(8),
-                                    ),
-
-                                    gradient: isTop
-                                        ? const LinearGradient(
-                                            begin: Alignment.topCenter,
-                                            end: Alignment.bottomCenter,
-                                            colors: [
-                                              Color(0xFF3D5A45),
-                                              Color(0xFF1C2419),
-                                            ],
-                                          )
-                                        : LinearGradient(
-                                            begin: Alignment.topCenter,
-                                            end: Alignment.bottomCenter,
-                                            colors: [
-                                              _gold.withOpacity(
-                                                isHovered
-                                                    ? 1.0
-                                                    : (b.value > 0 ? 0.7 : 0.1),
-                                              ),
-                                              _gold.withOpacity(
-                                                isHovered
-                                                    ? 0.7
-                                                    : (b.value > 0 ? 0.3 : 0.05),
-                                              ),
-                                            ],
-                                          ),
-
-                                    boxShadow: (isTop || isHovered)
-                                        ? [
-                                            BoxShadow(
-                                              color: isHovered
-                                                  ? _gold.withOpacity(0.45)
-                                                  : _green2.withOpacity(0.35),
-                                              blurRadius: isHovered ? 16 : 10,
-                                              spreadRadius: isHovered ? 2 : 0,
-                                              offset: Offset(
-                                                0,
-                                                isHovered ? 1 : 3,
-                                              ),
-                                            ),
-                                          ]
-                                        : [],
+                                decoration: BoxDecoration(
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(8),
                                   ),
+
+                                  gradient: isTop
+                                      ? const LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Color(0xFF3D5A45),
+                                            Color(0xFF1C2419),
+                                          ],
+                                        )
+                                      : LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            _gold.withOpacity(
+                                              isHovered ? 1.0 : (b.value > 0 ? 0.75 : 0.15),
+                                            ),
+                                            _gold.withOpacity(
+                                              isHovered ? 0.7 : (b.value > 0 ? 0.35 : 0.05),
+                                            ),
+                                          ],
+                                        ),
+
+                                  boxShadow: isHovered
+                                      ? [
+                                          BoxShadow(
+                                            color: _gold.withOpacity(0.4),
+                                            blurRadius: 14,
+                                            spreadRadius: 2,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ]
+                                      : [],
                                 ),
+                              ),
+                                const SizedBox(height: 6),
 
                                 const SizedBox(height: 8),
 
@@ -263,11 +268,13 @@ class _RevenueMapCardState extends State<RevenueMapCard> {
                               ],
                             ),
                           ),
+                        ),
+                      ),
                         );
+                          
                       }),
                     ),
                   ),
-                ),
               ],
             ),
           ),
