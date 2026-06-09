@@ -77,6 +77,39 @@ const getDashboardSummary = async (req, res) => {
   }
 };
 
+const updateDailyTarget = async (req, res) => {
+  const { target } = req.body;
+
+  if (!target || target <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Target must be greater than zero",
+    });
+  }
+
+  try {
+    await db.query(
+      `
+      UPDATE business_settings
+      SET daily_revenue_target = ?
+      `,
+      [target]
+    );
+
+    res.json({
+      success: true,
+      message: "Daily revenue target updated",
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to update target",
+    });
+  }
+};
+
 const getRevenueTrend = async (req, res) => {
   try {
     const [rows] = await db.query(`
@@ -1048,6 +1081,7 @@ const getSalesSummaryReport = async (req, res) => {
 
 module.exports = { 
     getDashboardSummary,
+    updateDailyTarget,
     getRevenueTrend,
     getTopMenus,
     getRecentOrders,

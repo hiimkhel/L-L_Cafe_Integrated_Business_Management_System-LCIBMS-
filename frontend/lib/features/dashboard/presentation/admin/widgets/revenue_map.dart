@@ -41,6 +41,8 @@ class _RevenueMapCardState extends State<RevenueMapCard> {
     ];
   }
 
+  
+
   int? _hoveredIndex;
 
   List<RevenueBarData> _normalize(List<RevenueBarData> input) {

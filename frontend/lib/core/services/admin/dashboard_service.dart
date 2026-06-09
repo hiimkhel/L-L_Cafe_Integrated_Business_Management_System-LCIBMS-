@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 
 import 'package:http/http.dart' as http;
 
 import 'package:frontend/core/models/dashboard_models.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DashboardService {
 
@@ -20,6 +22,33 @@ class DashboardService {
     return RevenueSummary.fromJson(
       jsonDecode(response.body),
     );
+  }
+
+  Future<bool> updateDailyTarget(double target) async {
+    try {
+      final token = await FirebaseAuth.instance.currentUser?.getIdToken();
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/dashboard/daily-target'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'target': target,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      }
+
+      debugPrint('Update target failed: ${response.body}');
+      return false;
+    } catch (e) {
+      debugPrint('Update target error: $e');
+      return false;
+    }
   }
 
   Future<DashboardSummary> getDashboardSummary() async {

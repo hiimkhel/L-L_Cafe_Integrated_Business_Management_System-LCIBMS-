@@ -92,25 +92,54 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   double _targetRawMax   = 10100;
   double _targetRawCur   = 7000.56;
 
-  Future<void> _showSetTargetDialog() async {
-    final value = await showSetTargetDialog(
-      context,
-      _targetRawMax,
+  Future<void> showTargetDialog() async {
+    final controller = TextEditingController();
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Set Daily Target'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            hintText: 'Enter target amount',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(
+                context,
+                controller.text,
+              );
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
     );
 
-    if (value == null || value <= 0) return;
+    if (result == null) return;
 
-    setState(() {
-      _targetRawMax = value;
-      _targetMax = '₱${_fmtK(value)}';
-      _targetProgress =
-          (_targetRawCur / value).clamp(0.0, 1.0);
-    });
+    final target = double.tryParse(result);
 
-    // TODO:
-    // await dashboardService.updateTarget(value);
+    if (target == null || target <= 0) return;
+
+    final success =
+        await DashboardService()
+            .updateDailyTarget(target);
+
+    if (success) {
+      await loadDashboard();
+    }
   }
 
+  
   Future<void> loadDashboard() async {
     try {
       setState(() {
@@ -130,6 +159,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
       dashboardSummary =
           results[1] as DashboardSummary;
+
+      _targetRawMax = dashboardSummary!.target;
+      _targetRawCur = dashboardSummary!.current;
+      _targetProgress = dashboardSummary!.progress;
+
+      _targetAmount =
+          '₱${_targetRawCur.toStringAsFixed(2)}';
+
+      _targetMax =
+          '₱${_targetRawMax.toStringAsFixed(0)}';
 
       topMenus =
           results[2] as List<TopMenuItem>;
@@ -217,11 +256,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TargetIncomeCard(
+                TargetRevenueCard(
                   amount: _targetAmount,
                   progress: _targetProgress,
                   maxLabel: _targetMax,
-                  onSetTarget: _showSetTargetDialog,
+                  onSetTarget: showTargetDialog,
                 ),
                 const SizedBox(height: gap),
                 MenusCard(

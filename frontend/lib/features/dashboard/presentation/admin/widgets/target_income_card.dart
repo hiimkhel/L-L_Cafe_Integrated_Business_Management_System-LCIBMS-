@@ -6,11 +6,11 @@ const Color _gold   = Color(0xFFA98258);
 const Color _beige  = Color(0xFFEFE2C9);
 const Color _white  = Colors.white;
 
-class TargetIncomeCard extends StatelessWidget {
+class TargetRevenueCard extends StatelessWidget {
   final String amount, maxLabel;
   final double progress;
   final VoidCallback onSetTarget;
-  const TargetIncomeCard({
+  const TargetRevenueCard({
     required this.amount,
     required this.progress,
     required this.maxLabel,
@@ -47,7 +47,7 @@ class TargetIncomeCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(2)),
                   ),
                   const SizedBox(width: 8),
-                  Text('DAILY TARGET INCOME',
+                  Text('DAILY TARGET REVENUE',
                       style: TextStyle(
                           fontFamily: 'Urbanist',
                           fontSize: 18,
