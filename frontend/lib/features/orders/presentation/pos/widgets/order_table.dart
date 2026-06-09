@@ -24,6 +24,39 @@ class _OrderTableState extends State<OrderTable> {
   }
 
   
+  Future<void> _updateOrder(dynamic order) async {
+    final String orderSource = order['source'] ?? '';
+
+    String nextStatus;
+
+    if (orderSource == 'pos') {
+      nextStatus = 'completed';
+    } else {
+      nextStatus = 'ready';
+    }
+
+    final success = await _orderService.updateOrderStatus(
+      order['id'],
+      nextStatus,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      await _fetchOrders();
+      widget.onOrderUpdated?.call();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            nextStatus == 'completed'
+                ? 'Order completed!'
+                : 'Order marked as ready!',
+          ),
+        ),
+      );
+    }
+  }
 
   Future<void> _fetchOrders() async {
     setState(() => _isLoading = true);
@@ -32,22 +65,6 @@ class _OrderTableState extends State<OrderTable> {
       _orders = data;
       _isLoading = false;
     });
-  }
-
-  Future<void> _markAsReady(int id) async {
-    final success = await _orderService.updateOrderStatus(id, 'ready');
-
-    if (!mounted) return;
-  
-    if (success) {
-      // Refresh list: the order will disappear because status is no longer 'preparing'
-      await _fetchOrders();
-      widget.onOrderUpdated?.call();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Order marked as Ready!")),
-      );
-    }
   }
 
   @override
@@ -69,6 +86,10 @@ class _OrderTableState extends State<OrderTable> {
                         itemCount: _orders.length,
                         itemBuilder: (context, index) {
                           final order = _orders[index];
+                          print("Order #${order['order_number']}");
+                          print("Source: ${order['source']}");
+                          print("Status: ${order['status']}");
+                         
                           return OrderRow(
                             id: "#${order['order_number']}",
                             customer: order['customer_name'] ?? "Guest",
@@ -77,7 +98,11 @@ class _OrderTableState extends State<OrderTable> {
                                 .toList(),
                             status: order['status'],
                             time: order['updated_at'], 
-                            onActionPressed: () => _markAsReady(order['id']),
+                            actionText: order['source'] == 'pos'
+                              ? 'MARK AS COMPLETE'
+                              : 'MARK AS READY',
+                            onActionPressed: () => _updateOrder(order),
+                  
                           );
                         },
                       ),

@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'revenue_tab.dart';
 import 'orders_tab.dart';
-import 'avg_order_tab.dart';
+import 'sales_tab.dart';
 
 enum BusinessTab { revenue, orders, avgOrder }
 
 class BusinessPerformanceCard extends StatefulWidget {
-  const BusinessPerformanceCard({super.key});
+  final Map<String, dynamic> revenueData;
+  final Map<String, dynamic> ordersData;
+  final Map<String, dynamic> salesData;
+  const BusinessPerformanceCard({super.key, required this.revenueData, required this.ordersData, required this.salesData});
 
   @override
   State<BusinessPerformanceCard> createState() =>
@@ -44,7 +47,7 @@ class _BusinessPerformanceCardState extends State<BusinessPerformanceCard> {
           const SizedBox(height: 14),
           _buildTabBar(),
           const SizedBox(height: 16),
-          // ✅ Expanded so the tab content fills all remaining vertical space
+
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
@@ -70,7 +73,7 @@ class _BusinessPerformanceCardState extends State<BusinessPerformanceCard> {
         children: [
           _tabButton('REVENUE',   BusinessTab.revenue),
           _tabButton('ORDERS',    BusinessTab.orders),
-          _tabButton('AVG ORDER', BusinessTab.avgOrder),
+          _tabButton('SALES CHART', BusinessTab.avgOrder),
         ],
       ),
     );
@@ -105,11 +108,19 @@ class _BusinessPerformanceCardState extends State<BusinessPerformanceCard> {
   Widget _buildTabContent() {
     switch (_activeTab) {
       case BusinessTab.revenue:
-        return const RevenueTab();
+        return RevenueTab(
+          revenueData: widget.revenueData,
+        );
+
       case BusinessTab.orders:
-        return const OrdersTab();
+        return OrdersTab(
+          ordersData: widget.ordersData,
+        );
+
       case BusinessTab.avgOrder:
-        return const AvgOrderTab();
+        return SalesTab(
+          salesData: widget.salesData,
+        );
     }
   }
 }

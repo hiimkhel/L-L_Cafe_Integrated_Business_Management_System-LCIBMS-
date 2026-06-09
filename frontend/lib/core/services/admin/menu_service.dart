@@ -112,4 +112,15 @@ class MenuService {
       throw Exception("Failed to update item");
     }
   }
+
+  // In your menu_service.dart, add this method:
+static Future<void> deleteCategory(int id) async {
+  final response = await http.delete(
+    Uri.parse('$baseUrl/categories/$id'),
+    headers: {'Content-Type': 'application/json'},
+  );
+  if (response.statusCode != 200) {
+    throw Exception('Failed to delete category');
+  }
+}
 }
