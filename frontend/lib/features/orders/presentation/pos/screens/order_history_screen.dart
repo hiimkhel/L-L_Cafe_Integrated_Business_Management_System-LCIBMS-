@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/features/orders/presentation/pos/widgets/header_bar2.dart';
 import 'package:frontend/features/orders/presentation/pos/widgets/order_table2.dart';
-import 'package:frontend/core/services/pos/order_service.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});

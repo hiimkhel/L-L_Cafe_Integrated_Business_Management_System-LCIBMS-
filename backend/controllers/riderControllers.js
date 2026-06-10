@@ -139,7 +139,7 @@ const updateDeliveryStatus = async (req, res) => {
             });
         }
 
-        const sql = "UPDATE orders SET status = ? WHERE id = ?";
+        const sql = "UPDATE orders SET status = ?, payment_status = 'paid' WHERE id = ?";
         const [result] = await db.query(sql, [newStatus, id]);
 
         if (result.affectedRows === 0) {

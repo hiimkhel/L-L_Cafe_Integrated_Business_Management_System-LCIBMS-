@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
-import 'package:frontend/config/theme/app_text_styles.dart';
 import 'package:frontend/features/orders/presentation/pos/screens/order_history_screen.dart ';
 import 'package:frontend/features/dashboard/presentation/pos/order_entry.dart';
 

@@ -169,8 +169,6 @@ class _DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
 
   Widget _orderDetails(Map<String, dynamic> order) {
     final List items = (order['items'] ?? order['order'] ?? []) as List;
-    double deliveryFee =
-    double.tryParse(order['deliveryFee']?.toString() ?? "0") ?? 0.0;
 
     return Container(
       width: double.infinity,
