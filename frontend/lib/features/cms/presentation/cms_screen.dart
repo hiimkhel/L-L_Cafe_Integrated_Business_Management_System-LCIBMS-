@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:frontend/core/widgets/admin_sidebar.dart';
-import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/core/services/customer/cms_service.dart';
 import 'package:file_picker/file_picker.dart';
@@ -41,7 +40,7 @@ class _CMSScreenState extends State<CMSScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: _kBg,
       body: Row(
         children: [
           Sidebar(activeIndex: widget.activeIndex, onLogout: widget.onLogout),
@@ -270,7 +269,6 @@ class _CMSBodyState extends State<_CMSBody> {
 
   @override
   Widget build(BuildContext context) {
-    
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -797,7 +795,6 @@ class _ImageUploadTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     final uploaded = uploadedImgId != null;
     return GestureDetector(
       onTap: isUploading ? null : (uploaded ? null : onUpload),
