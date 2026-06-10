@@ -6,6 +6,7 @@ import 'package:frontend/features/checkout/admin/presentation/checkout_screen.da
 import 'package:frontend/features/dashboard/presentation/pos/online_orders_screen.dart';
 import 'package:frontend/core/models/menu_item.dart';
 import 'package:frontend/core/services/menu_service.dart';
+import 'package:frontend/features/orders/presentation/pos/screens/order_history_screen.dart';
 import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 import 'package:frontend/core/models/menu_category.dart';
 import 'package:frontend/core/utils/order_num_utils.dart';
@@ -213,7 +214,14 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
               size: 13,
             ),
             label: 'REGISTRY',
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => OrderHistoryScreen(),
+                ),
+              );
+            },
           ),
           const SizedBox(width: 11),
           _headerBtns(
