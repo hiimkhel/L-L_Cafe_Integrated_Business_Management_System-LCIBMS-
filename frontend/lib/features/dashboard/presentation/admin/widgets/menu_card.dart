@@ -55,15 +55,14 @@ class MenusCard extends StatelessWidget {
             ),
           ]),
           const SizedBox(height: 16),
-          // ✅ Column of items with intrinsic sizing — no Expanded inside Column
           ...top5.asMap().entries.map((e) {
             final ratio = e.value.sold / maxSold;
             return Padding(
               padding: EdgeInsets.only(
                   bottom: e.key < top5.length - 1 ? 16 : 0),
               child: _MenuItemTile(
-                  item: e.value, ratio: ratio, isFirst: e.key == 0),
-            );
+                  item: e.value, ratio: ratio, rank: e.key + 1, isFirst: e.key == 0),
+            ); 
           }),
         ],
       ),
@@ -73,11 +72,13 @@ class MenusCard extends StatelessWidget {
 
 class _MenuItemTile extends StatelessWidget {
   final TopMenuItem item;
+  final int rank;
   final double ratio;
   final bool isFirst;
   const _MenuItemTile({
     required this.item,
     required this.ratio,
+    required this.rank,
     required this.isFirst,
   });
 
@@ -94,7 +95,7 @@ class _MenuItemTile extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: Text('#${item.rank}',
+              child: Text('#$rank',
                   style: TextStyle(
                       fontFamily: 'Urbanist',
                       fontWeight: FontWeight.w900,

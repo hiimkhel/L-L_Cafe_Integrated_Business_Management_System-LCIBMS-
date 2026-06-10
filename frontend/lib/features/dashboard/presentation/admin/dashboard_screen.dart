@@ -6,7 +6,6 @@ import "package:frontend/core/models/dashboard_models.dart";
 import './widgets/summary_row.dart';
 import './widgets/target_income_card.dart';
 import './widgets/revenue_map.dart';
-import './widgets/show_set_target_dialog.dart';
 import './widgets/menu_card.dart';
 import './widgets/orders_card.dart';
 import 'package:frontend/core/services/admin/dashboard_service.dart';
@@ -191,10 +190,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       });
     }
   }
-
-  String _fmtK(double v) => v >= 1000
-      ? '${(v / 1000).toStringAsFixed(v % 1000 == 0 ? 0 : 1)}k'
-      : v.toStringAsFixed(0);
 
   void _goToOrders() => Navigator.push(
       context,
