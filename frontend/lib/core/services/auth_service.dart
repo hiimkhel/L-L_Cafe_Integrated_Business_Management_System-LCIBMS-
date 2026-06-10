@@ -30,6 +30,8 @@ class AuthService {
 
     final idToken = await firebaseUser.getIdToken();
 
+    print("🔥 FIREBASE ID TOKEN:");
+    print(idToken);
 
     final response = await http.post(
       Uri.parse('$baseUrl/$endpoint'),

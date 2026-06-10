@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/widgets/admin_sidebar.dart';
 import 'package:frontend/core/widgets/admin_header.dart';
-import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/models/review_model.dart';
 import 'package:frontend/core/services/admin/reviews_service.dart';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // PALETTE
 // ─────────────────────────────────────────────────────────────────────────────
 
+const Color _beige   = Color(0xFFEFE2C9);
 const Color _card    = Color(0xFFF7F0E4);
 const Color _green1  = Color(0xFF3D5A45);
 const Color _green2  = Color(0xFF758C6D);
@@ -184,7 +185,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: _beige,
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -473,15 +474,13 @@ class _ReviewCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: _green2.withOpacity(0.1)),
               ),
-              child: SelectableText( // Use SelectableText for better admin usability
-                review.content.isEmpty ? "No review text provided." : review.content,
-                style: const TextStyle(
-                  fontFamily: 'Urbanist',
-                  fontSize: 14, // Increased size slightly
-                  height: 1.5,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF1A1A1A), // Deep black/grey for readability
-                ),
+              child: Text(
+                review.content,
+                style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontSize: 13,
+                    height: 1.6,
+                    color: _dark.withOpacity(0.75)),
               ),
             ),
           ),
