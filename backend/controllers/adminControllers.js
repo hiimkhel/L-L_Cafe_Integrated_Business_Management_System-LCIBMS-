@@ -973,27 +973,52 @@ const getRevenueReport = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 
-    const [rows] = await db.query(
-      `
-      SELECT
-        SUM(total) AS total_revenue
-      FROM orders
-      WHERE status = 'completed'
-      AND created_at BETWEEN ? AND ?
-      `,
-      [startDate, endDate]
-    );
+    const [rows] = await db.query(`
+        SELECT
+            COALESCE(SUM(total), 0) AS total_revenue,
 
-    const totalRevenue = rows[0].total_revenue || 0;
+            COALESCE(
+                SUM(
+                    CASE
+                        WHEN source = 'online'
+                        THEN total
+                        ELSE 0
+                    END
+                ),
+                0
+            ) AS online_revenue,
+
+            COALESCE(
+                SUM(
+                    CASE
+                        WHEN source = 'pos'
+                        THEN total
+                        ELSE 0
+                    END
+                ),
+                0
+            ) AS walkin_revenue
+
+        FROM orders
+        WHERE status = 'completed'
+        AND created_at >= ?
+        AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
+    `, [startDate, endDate]);
+
+    const [[settings]] = await db.query(`
+        SELECT monthly_revenue_target
+        FROM business_settings
+        LIMIT 1
+    `);
 
     res.status(200).json({
       success: true,
       data: {
-        total_revenue: totalRevenue,
-        online_revenue: totalRevenue * 0.75,
-        walkin_revenue: totalRevenue * 0.25,
-        monthly_target: 5000,
-        growth_rate: 5
+        total_revenue: Number(rows[0].total_revenue),
+        online_revenue: Number(rows[0].online_revenue),
+        walkin_revenue: Number(rows[0].walkin_revenue),
+        monthly_target: settings?.monthly_revenue_target || 0, // fetch from settings
+        growth_rate: 0 // calculate from previous period
       }
     });
 
@@ -1003,7 +1028,7 @@ const getRevenueReport = async (req, res) => {
       error: err.message
     });
   }
-}; 
+};
 
 
 const getOrdersReport = async (req, res) => {
