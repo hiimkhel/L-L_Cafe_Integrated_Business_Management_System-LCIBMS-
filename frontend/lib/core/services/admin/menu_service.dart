@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
 class MenuService {
@@ -123,4 +124,6 @@ static Future<void> deleteCategory(int id) async {
     throw Exception('Failed to delete category');
   }
 }
+
+  static Future<int?> uploadImage(Uint8List bytes, String s) async {}
 }
