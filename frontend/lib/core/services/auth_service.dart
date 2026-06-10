@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
 import '../models/user.dart';
@@ -31,8 +30,6 @@ class AuthService {
 
     final idToken = await firebaseUser.getIdToken();
 
-    print("🔥 FIREBASE ID TOKEN:");
-    print(idToken);
 
     final response = await http.post(
       Uri.parse('$baseUrl/$endpoint'),

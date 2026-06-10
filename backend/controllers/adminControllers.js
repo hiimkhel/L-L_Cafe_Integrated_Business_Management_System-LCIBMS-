@@ -5,7 +5,339 @@
 */
 const db = require("../config/dbConnection.js");
 
-// [1] Customers API
+const getDashboardSummary = async (req, res) => {
+    try {
+        const calculateChange = (current, previous) => {
+            if (previous <= 0) {
+                return current > 0 ? 100 : 0;
+            }
+
+            return Number(
+                (((current - previous) / previous) * 100).toFixed(1)
+            );
+        };
+
+        // =========================
+        // ALL-TIME BUSINESS METRICS
+        // =========================
+
+        const [revenueRows] = await db.query(`
+            SELECT
+                COALESCE(SUM(total), 0) AS revenue
+            FROM orders
+            WHERE status = 'completed'
+        `);
+
+        const [salesRows] = await db.query(`
+            SELECT
+                COUNT(*) AS total_sales
+            FROM orders
+            WHERE status = 'completed'
+        `);
+
+        const [customerRows] = await db.query(`
+            SELECT
+                COUNT(DISTINCT user_id) AS total_customers
+            FROM orders
+            WHERE status = 'completed'
+        `);
+
+        // =========================
+        // CURRENT MONTH METRICS
+        // =========================
+
+        const [currentMonthRevenueRows] = await db.query(`
+            SELECT
+                COALESCE(SUM(total), 0) AS revenue
+            FROM orders
+            WHERE status = 'completed'
+              AND YEAR(created_at) = YEAR(CURDATE())
+              AND MONTH(created_at) = MONTH(CURDATE())
+        `);
+
+        const [currentMonthSalesRows] = await db.query(`
+            SELECT
+                COUNT(*) AS total_sales
+            FROM orders
+            WHERE status = 'completed'
+              AND YEAR(created_at) = YEAR(CURDATE())
+              AND MONTH(created_at) = MONTH(CURDATE())
+        `);
+
+        const [currentMonthCustomerRows] = await db.query(`
+            SELECT
+                COUNT(DISTINCT user_id) AS total_customers
+            FROM orders
+            WHERE status = 'completed'
+              AND YEAR(created_at) = YEAR(CURDATE())
+              AND MONTH(created_at) = MONTH(CURDATE())
+        `);
+
+        // =========================
+        // PREVIOUS MONTH METRICS
+        // =========================
+
+        const [previousMonthRevenueRows] = await db.query(`
+            SELECT
+                COALESCE(SUM(total), 0) AS revenue
+            FROM orders
+            WHERE status = 'completed'
+              AND YEAR(created_at) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+              AND MONTH(created_at) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+        `);
+
+        const [previousMonthSalesRows] = await db.query(`
+            SELECT
+                COUNT(*) AS total_sales
+            FROM orders
+            WHERE status = 'completed'
+              AND YEAR(created_at) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+              AND MONTH(created_at) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+        `);
+
+        const [previousMonthCustomerRows] = await db.query(`
+            SELECT
+                COUNT(DISTINCT user_id) AS total_customers
+            FROM orders
+            WHERE status = 'completed'
+              AND YEAR(created_at) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+              AND MONTH(created_at) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+        `);
+
+        // =========================
+        // TODAY'S REVENUE TARGET
+        // =========================
+
+        const [todayRevenueRows] = await db.query(`
+            SELECT
+                COALESCE(SUM(total), 0) AS revenue
+            FROM orders
+            WHERE status = 'completed'
+              AND DATE(created_at) = CURDATE()
+        `);
+
+        const [settingsRows] = await db.query(`
+            SELECT daily_revenue_target
+            FROM business_settings
+            LIMIT 1
+        `);
+
+        // =========================
+        // VALUES
+        // =========================
+
+        const revenue =
+            Number(revenueRows[0]?.revenue || 0);
+
+        const sales =
+            Number(salesRows[0]?.total_sales || 0);
+
+        const customers =
+            Number(customerRows[0]?.total_customers || 0);
+
+        const currentMonthRevenue =
+            Number(currentMonthRevenueRows[0]?.revenue || 0);
+
+        const previousMonthRevenue =
+            Number(previousMonthRevenueRows[0]?.revenue || 0);
+
+        const currentMonthSales =
+            Number(currentMonthSalesRows[0]?.total_sales || 0);
+
+        const previousMonthSales =
+            Number(previousMonthSalesRows[0]?.total_sales || 0);
+
+        const currentMonthCustomers =
+            Number(currentMonthCustomerRows[0]?.total_customers || 0);
+
+        const previousMonthCustomers =
+            Number(previousMonthCustomerRows[0]?.total_customers || 0);
+
+        const revenueChange =
+            calculateChange(
+                currentMonthRevenue,
+                previousMonthRevenue
+            );
+
+        const salesChange =
+            calculateChange(
+                currentMonthSales,
+                previousMonthSales
+            );
+
+        const customerChange =
+            calculateChange(
+                currentMonthCustomers,
+                previousMonthCustomers
+            );
+
+        const dailyTarget =
+            Number(
+                settingsRows[0]?.daily_revenue_target || 0
+            );
+
+        const todayRevenue =
+            Number(todayRevenueRows[0]?.revenue || 0);
+
+        const progress =
+            dailyTarget > 0
+                ? todayRevenue / dailyTarget
+                : 0;
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                daily_target: {
+                    target: dailyTarget,
+                    current: todayRevenue,
+                    progress,
+                },
+
+                revenue,
+                revenue_change: revenueChange,
+
+                sales,
+                sales_change: salesChange,
+
+                customers,
+                customer_change: customerChange,
+            },
+        });
+    } catch (error) {
+        console.error("Dashboard Summary Error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to fetch dashboard summary",
+            error: error.message,
+        });
+    }
+};
+
+const updateDailyTarget = async (req, res) => {
+  const { target } = req.body;
+
+  if (!target || target <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Target must be greater than zero",
+    });
+  }
+
+  try {
+    await db.query(
+      `
+      UPDATE business_settings
+      SET daily_revenue_target = ?
+      `,
+      [target]
+    );
+
+    res.json({
+      success: true,
+      message: "Daily revenue target updated",
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to update target",
+    });
+  }
+};
+
+const getRevenueTrend = async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT
+          DATE_FORMAT(created_at, '%Y-%m') AS month,
+          COALESCE(SUM(total), 0) AS revenue
+      FROM orders
+      WHERE status = 'completed'
+        AND created_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+      GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+      ORDER BY DATE_FORMAT(created_at, '%Y-%m')
+    `);
+
+    return res.status(200).json({
+      success: true,
+      data: rows,
+    });
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+};
+
+const getTopMenus = async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT
+          mi.id,
+          mi.name,
+          mi.price,
+          SUM(oi.quantity) AS sold
+      FROM order_items oi
+      INNER JOIN menu_items mi
+          ON oi.menu_item_id = mi.id
+      INNER JOIN orders o
+          ON oi.order_id = o.id
+      WHERE o.status = 'completed'
+      GROUP BY mi.id
+      ORDER BY sold DESC
+      LIMIT 5
+    `);
+
+    return res.status(200).json({
+      success: true,
+      data: rows,
+    });
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+};
+
+const getRecentOrders = async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT
+          id,
+          order_number,
+          customer_name,
+          order_type,
+          status,
+          payment_status,
+          total,
+          created_at
+      FROM orders
+      ORDER BY created_at DESC
+      LIMIT 5
+    `);
+
+    return res.status(200).json({
+      success: true,
+      data: rows,
+    });
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+    });
+  }
+};
+
 const fetchAllCustomer = async (req, res) => {
     try {
         const { search = "" } = req.query;
@@ -886,7 +1218,13 @@ const getSalesSummaryReport = async (req, res) => {
     }
 };
 
-module.exports = { fetchAllCustomer, 
+module.exports = { 
+    getDashboardSummary,
+    updateDailyTarget,
+    getRevenueTrend,
+    getTopMenus,
+    getRecentOrders,
+    fetchAllCustomer, 
     fetchMenuItems,
     fetchMenuCategories,
     addMenuCategory,

@@ -9,8 +9,6 @@ import 'core/models/user.dart';
 import 'core/providers/auth_provider.dart';
 import 'core/constants/cart_provider.dart';
 import 'core/constants/routes.dart';
-
-// ✅ Import the NotificationProvider and its controller
 import 'core/constants/notification_provider.dart';
 
 import 'package:frontend/features/customers/presentation/admin/customer_order_screen.dart';

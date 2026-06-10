@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart' show canLaunchUrl, launchUrl, LaunchMode;
+import 'package:url_launcher/url_launcher.dart' show launchUrl, LaunchMode;
 import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';
 import 'package:frontend/core/widgets/bamboo_background.dart';
@@ -11,7 +11,6 @@ const double _kDesktopMaxWidth = 1280;
 // L&L Cafe exact coordinates from Google Maps
 const double _kLat = 10.8228406;
 const double _kLng = 122.4315635;
-const String _kPlaceName = 'L&L Cafe';
 const String _kAddress =
     'RCFJ+4JP, Cabaluna Street, Alimodian, 5028 Iloilo';
 const String _kPhone = '+63 998 308 7848';
