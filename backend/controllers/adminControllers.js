@@ -1216,46 +1216,61 @@ const getSalesSummaryReport = async (req, res) => {
 
         switch (range) {
             case "last24hours":
+                    query = `
+                        SELECT
+                            LPAD(hour_num, 2, '0') AS label,
+                            SUM(total) AS sales
+                        FROM (
+                            SELECT
+                                HOUR(created_at) AS hour_num,
+                                total
+                            FROM orders
+                            WHERE status = 'completed'
+                            AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+                        ) t
+                        GROUP BY hour_num
+                        ORDER BY hour_num
+                    `;
+                break;
+
+           case "last7days":
                 query = `
                     SELECT
-                        HOUR(created_at) AS label,
+                        DATE_FORMAT(day_date, '%a') AS label,
                         SUM(total) AS sales
-                    FROM orders
-                    WHERE status = 'completed'
-                    AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
-                    GROUP BY HOUR(created_at)
-                    ORDER BY HOUR(created_at)
+                    FROM (
+                        SELECT
+                            DATE(created_at) AS day_date,
+                            total
+                        FROM orders
+                        WHERE status = 'completed'
+                        AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+                    ) t
+                    GROUP BY day_date
+                    ORDER BY day_date
                 `;
                 break;
 
-            case "last7days":
+           case "last30days":
                 query = `
                     SELECT
-                        DATE(created_at) AS label,
+                        CONCAT('W', week_num) AS label,
                         SUM(total) AS sales
-                    FROM orders
-                    WHERE status = 'completed'
-                    AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
-                    GROUP BY DATE(created_at)
-                    ORDER BY DATE(created_at)
-                `;
-                break;
-
-            case "last30days":
-                query = `
-                    SELECT
-                        FLOOR(
-                            DATEDIFF(
-                                created_at,
-                                DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                            ) / 7
-                        ) + 1 AS label,
-                        SUM(total) AS sales
-                    FROM orders
-                    WHERE status = 'completed'
-                    AND created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                    GROUP BY label
-                    ORDER BY label
+                    FROM (
+                        SELECT
+                            FLOOR(
+                                DATEDIFF(
+                                    created_at,
+                                    DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                                ) / 7
+                            ) + 1 AS week_num,
+                            total
+                        FROM orders
+                        WHERE status = 'completed'
+                        AND created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                    ) t
+                    GROUP BY week_num
+                    ORDER BY week_num
                 `;
                 break;
 
