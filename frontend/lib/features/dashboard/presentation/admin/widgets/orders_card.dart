@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/models/dashboard_models.dart';
 import './card_header.dart';
+import 'package:intl/intl.dart';
 
 const Color _green1 = Color(0xFF3D5A45);
 const Color _green2 = Color(0xFF758C6D);
@@ -203,6 +204,18 @@ class _OrderTableRow extends StatelessWidget {
     }
   }
 
+   String formatOrderTime(String rawTime){
+    try{
+      final dateTime = DateTime.parse(rawTime);
+
+      return DateFormat(
+        'MMM d, yyyy * h:mm a',
+      ).format(dateTime);
+    }catch(_){
+      return rawTime;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final base = TextStyle(
@@ -289,7 +302,7 @@ class _OrderTableRow extends StatelessWidget {
               flex: 22,
               child: Padding(
                 padding: const EdgeInsets.only(left: 8),
-                child: Text(order.orderTime, style: base),
+                child: Text(formatOrderTime(order.orderTime), style: base),
               )),
           Expanded(
               flex: 15,
