@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/admin_header.dart';
+import 'dart:math' as math;
 import 'package:frontend/core/widgets/admin_sidebar.dart';
 import 'package:frontend/features/reports/presentation/widget/business_performance_card.dart';
 import 'package:frontend/core/services/admin/sales_reports_services.dart';
@@ -127,6 +128,31 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
     }
   }
 
+  String getChartRange() {
+    switch (_selectedRange) {
+      case 'Last 24 hours':
+        return 'last24hours';
+
+      case 'Last 7 days':
+        return 'last7days';
+
+      case 'Last 30 days':
+        return 'last30days';
+
+      case 'Last 3 months':
+        return 'last3months';
+
+      case 'This year':
+        return 'thisyear';
+
+      case 'All Time':
+        return 'alltime';
+
+      default:
+        return 'last24hours';
+    }
+  }
+
 void _handleExport() async {
 
   try {
@@ -193,7 +219,7 @@ void _handleExport() async {
 
       final salesSummary =
         await reportsService.getSalesSummaryReport(
-          startDate, endDate
+          getChartRange()
         );
 
     setState(() {
@@ -258,7 +284,7 @@ void _handleExport() async {
                               Expanded(
                                 child: _SalesSummaryCard(
                                   salesSummaryData: salesSummaryData,
-                                  rangeLabel: _selectedRange.toUpperCase(),
+                                  rangeLabel: _selectedRange,
                                 ),
                               ),
                             ],
@@ -451,22 +477,93 @@ class _SalesSummaryCard extends StatelessWidget {
     return v.toStringAsFixed(0);
   }
 
+  List<Map<String, dynamic>> _normalizeData() {
+    final map = {
+      for (final item in salesSummaryData)
+        item['label'].toString(): item
+    };
+
+    switch (rangeLabel) {
+      case 'Last 24 hours':
+        return List.generate(24, (i) {
+          final label = i.toString().padLeft(2, '0');
+
+          return {
+            'label': label,
+            'sales': double.tryParse(
+                  map[label]?['sales']?.toString() ?? '0',
+                ) ??
+                0,
+          };
+        });
+
+      case 'Last 7 days':
+        const days = [
+          'Mon',
+          'Tue',
+          'Wed',
+          'Thu',
+          'Fri',
+          'Sat',
+          'Sun',
+        ];
+
+        return days.map((day) {
+          return {
+            'label': day,
+            'sales': double.tryParse(
+                  map[day]?['sales']?.toString() ?? '0',
+                ) ??
+                0,
+          };
+        }).toList();
+
+      case 'Last 30 days':
+        const weeks = [
+          'W1',
+          'W2',
+          'W3',
+          'W4',
+          'W5',
+        ];
+
+        return weeks.map((week) {
+          return {
+            'label': week,
+            'sales': double.tryParse(
+                  map[week]?['sales']?.toString() ?? '0',
+                ) ??
+                0,
+          };
+        }).toList();
+
+      default:
+        return salesSummaryData
+            .map((e) => {
+                  'label': e['label'],
+                  'sales': double.tryParse(
+                        e['sales'].toString(),
+                      ) ??
+                      0,
+                })
+            .toList();
+    }
+  }
+
+  
+
   @override
   Widget build(BuildContext context) {
-    final values = salesSummaryData
-      .map(
-        (e) => double.tryParse(
-              e['sales'].toString(),
-            ) ??
-            0,
-      )
-      .toList();
+    
+    final normalizedData = _normalizeData();
 
-  final labels = salesSummaryData
-      .map(
-        (e) => e['label'].toString(),
-      )
-      .toList();
+    final values = normalizedData
+        .map((e) => e['sales'] as double)
+        .toList();
+
+    final labels = normalizedData
+        .map((e) => e['label'].toString())
+        .toList();
 
   final totalSales =
     values.fold<double>(
@@ -504,8 +601,18 @@ if (totalSales == 0) {
       ),
     ),
   );
+
 }
-    final maxVal = values.reduce((a, b) => a > b ? a : b);
+  final maxVal = values.reduce((a, b) => a > b ? a : b);
+    if (salesSummaryData.isEmpty) {
+    return _BaseCard(
+      title: 'SALES SUMMARY',
+      child: const Center(
+        child: Text('No sales data available'),
+      ),
+    );
+  }
+   
     final step   = (maxVal / 4).ceilToDouble();
     final ticks  = List.generate(5, (i) => step * i);
 
@@ -533,15 +640,23 @@ if (totalSales == 0) {
           ),
           const SizedBox(width: 8),
           // Bars + x-labels
-          Flexible(
-            child: Column(children: [
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: math.max(
+                  labels.length * 35.0,
+                  300,
+                ),
+                child: Column(children: [
               Expanded(
                 child: LayoutBuilder(builder: (_, box) {
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: List.generate(values.length, (i) {
                       final ratio  = maxVal > 0 ? values[i] / maxVal : 0.0;
-                      final isMax  = values[i] == maxVal;
+                      final maxIndex = values.indexOf(maxVal);
+                      final isMax = i == maxIndex;
                       final barH   = (box.maxHeight * ratio)
                           .clamp(0.0, box.maxHeight - (isMax ? 20.0 : 0.0));
                       return Expanded(
@@ -591,6 +706,8 @@ if (totalSales == 0) {
               ),
             ]),
           ),
+            ),
+          )
         ],
       ),
     );

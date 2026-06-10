@@ -940,6 +940,10 @@ const getTopCustomer = async (req, res) => {
         `;
 
         const params = [];
+        params.push(
+            `${startDate} 00:00:00`,
+            `${endDate} 23:59:59`
+        );
 
         if (startDate && endDate) {
             sql += `
@@ -973,38 +977,81 @@ const getRevenueReport = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 
-    const [rows] = await db.query(
-      `
-      SELECT
-        SUM(total) AS total_revenue
-      FROM orders
-      WHERE status = 'completed'
-      AND created_at BETWEEN ? AND ?
-      `,
-      [startDate, endDate]
-    );
+    let query;
+    let params = [];
 
-    const totalRevenue = rows[0].total_revenue || 0;
+    const isAllTime =
+      !startDate ||
+      !endDate ||
+      startDate === "null" ||
+      endDate === "null";
+
+    if (isAllTime) {
+      query = `
+        SELECT
+          COALESCE(SUM(total), 0) AS total_revenue,
+          COALESCE(
+            SUM(CASE WHEN source = 'online' THEN total ELSE 0 END),
+            0
+          ) AS online_revenue,
+          COALESCE(
+            SUM(CASE WHEN source = 'pos' THEN total ELSE 0 END),
+            0
+          ) AS walkin_revenue
+        FROM orders
+        WHERE status = 'completed'
+      `;
+    } else {
+      query = `
+        SELECT
+          COALESCE(SUM(total), 0) AS total_revenue,
+          COALESCE(
+            SUM(CASE WHEN source = 'online' THEN total ELSE 0 END),
+            0
+          ) AS online_revenue,
+          COALESCE(
+            SUM(CASE WHEN source = 'pos' THEN total ELSE 0 END),
+            0
+          ) AS walkin_revenue
+        FROM orders
+        WHERE status = 'completed'
+        AND created_at >= ?
+        AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
+      `;
+
+      params = [startDate, endDate];
+    }
+
+    const [rows] = await db.query(query, params);
+
+    const [[settings]] = await db.query(`
+      SELECT monthly_revenue_target
+      FROM business_settings
+      LIMIT 1
+    `);
 
     res.status(200).json({
       success: true,
       data: {
-        total_revenue: totalRevenue,
-        online_revenue: totalRevenue * 0.75,
-        walkin_revenue: totalRevenue * 0.25,
-        monthly_target: 5000,
-        growth_rate: 5
+        total_revenue: Number(rows[0].total_revenue),
+        online_revenue: Number(rows[0].online_revenue),
+        walkin_revenue: Number(rows[0].walkin_revenue),
+        monthly_target: Number(
+          settings?.monthly_revenue_target || 0
+        ),
+        growth_rate: 0
       }
     });
 
   } catch (err) {
+    console.error("REVENUE REPORT ERROR:", err);
+
     res.status(500).json({
       success: false,
       error: err.message
     });
   }
-}; 
-
+};
 
 const getOrdersReport = async (req, res) => {
     try {
@@ -1041,7 +1088,8 @@ const getOrdersReport = async (req, res) => {
 
             FROM orders
             WHERE status = 'completed'
-            AND created_at BETWEEN ? AND ?
+            AND created_at >= ?
+            AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
             `,
             [startDate, endDate]
         );
@@ -1053,10 +1101,9 @@ const getOrdersReport = async (req, res) => {
                 COUNT(*) AS total_orders
             FROM orders
             WHERE status = 'completed'
-            AND created_at BETWEEN ? AND ?
+            AND created_at >= ?
+            AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
             GROUP BY HOUR(created_at)
-            ORDER BY total_orders DESC
-            LIMIT 1
             `,
             [startDate, endDate]
         );
@@ -1117,8 +1164,8 @@ const getSalesDistributionReport = async (req, res) => {
                 ON mi.id = oi.menu_item_id
             LEFT JOIN orders o
                 ON oi.order_id = o.id
-                AND o.status = 'completed'
-                AND o.created_at BETWEEN ? AND ?
+                AND o.created_at >= ?
+                AND o.created_at < DATE_ADD(?, INTERVAL 1 DAY)
             GROUP BY mc.id, mc.name
             ORDER BY sales DESC
             `,
@@ -1132,7 +1179,8 @@ const getSalesDistributionReport = async (req, res) => {
                 COALESCE(SUM(total), 0) AS total_sales
             FROM orders
             WHERE status = 'completed'
-            AND created_at BETWEEN ? AND ?
+            AND created_at >= ?
+            AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
             `,
             [startDate, endDate]
         );
@@ -1166,46 +1214,130 @@ const getSalesDistributionReport = async (req, res) => {
 
 const getSalesSummaryReport = async (req, res) => {
     try {
-        const { startDate, endDate } = req.query;
+        const { range = "last24hours" } = req.query;
 
-        const [rows] = await db.query(
-            `
-            SELECT
-                DAYOFWEEK(created_at) AS day_order,
-                SUM(total) AS sales
-            FROM orders
-            WHERE status = 'completed'
-            AND created_at BETWEEN ? AND ?
-            GROUP BY DAYOFWEEK(created_at)
-            `,
-            [startDate, endDate]
-        );
+        let query = "";
+        let params = [];
 
-        const days = [
-            'Sun',
-            'Mon',
-            'Tue',
-            'Wed',
-            'Thu',
-            'Fri',
-            'Sat'
-        ];
+        switch (range) {
+            case "last24hours":
+                    query = `
+                        SELECT
+                            LPAD(hour_num, 2, '0') AS label,
+                            SUM(total) AS sales
+                        FROM (
+                            SELECT
+                                HOUR(created_at) AS hour_num,
+                                total
+                            FROM orders
+                            WHERE status = 'completed'
+                            AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+                        ) t
+                        GROUP BY hour_num
+                        ORDER BY hour_num
+                    `;
+                break;
 
-        const salesMap = {};
+           case "last7days":
+                query = `
+                    SELECT
+                        DATE_FORMAT(day_date, '%a') AS label,
+                        SUM(total) AS sales
+                    FROM (
+                        SELECT
+                            DATE(created_at) AS day_date,
+                            total
+                        FROM orders
+                        WHERE status = 'completed'
+                        AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+                    ) t
+                    GROUP BY day_date
+                    ORDER BY day_date
+                `;
+                break;
 
-        rows.forEach(row => {
-            salesMap[row.day_order] =
-                Number(row.sales) || 0;
-        });
+           case "last30days":
+                query = `
+                    SELECT
+                        CONCAT('W', week_num) AS label,
+                        SUM(total) AS sales
+                    FROM (
+                        SELECT
+                            FLOOR(
+                                DATEDIFF(
+                                    created_at,
+                                    DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                                ) / 7
+                            ) + 1 AS week_num,
+                            total
+                        FROM orders
+                        WHERE status = 'completed'
+                        AND created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                    ) t
+                    GROUP BY week_num
+                    ORDER BY week_num
+                `;
+                break;
 
-        const data = days.map((day, index) => ({
-            label: day,
-            sales: salesMap[index + 1] || 0,
-        }));
+            case "last3months":
+                query = `
+                    SELECT
+                        DATE_FORMAT(
+                            MIN(created_at),
+                            '%b'
+                        ) AS label,
+                        SUM(total) AS sales
+                    FROM orders
+                    WHERE status = 'completed'
+                    AND created_at >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+                    GROUP BY YEAR(created_at), MONTH(created_at)
+                    ORDER BY YEAR(created_at), MONTH(created_at)
+                `;
+                break;
+
+            case "thisyear":
+                query = `
+                    SELECT
+                        DATE_FORMAT(
+                            MIN(created_at),
+                            '%b'
+                        ) AS label,
+                        SUM(total) AS sales
+                    FROM orders
+                    WHERE status = 'completed'
+                    AND YEAR(created_at) = YEAR(CURDATE())
+                    GROUP BY YEAR(created_at), MONTH(created_at)
+                    ORDER BY YEAR(created_at), MONTH(created_at)
+                `;
+                break;
+
+            case "alltime":
+                query = `
+                    SELECT
+                        DATE_FORMAT(
+                            MIN(created_at),
+                            '%b %Y'
+                        ) AS label,
+                        SUM(total) AS sales
+                    FROM orders
+                    WHERE status = 'completed'
+                    GROUP BY YEAR(created_at), MONTH(created_at)
+                    ORDER BY YEAR(created_at), MONTH(created_at)
+                `;
+                break;
+
+            default:
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid range"
+                });
+        }
+
+        const [rows] = await db.query(query, params);
 
         return res.status(200).json({
             success: true,
-            data,
+            data: rows
         });
 
     } catch (err) {
@@ -1213,7 +1345,7 @@ const getSalesSummaryReport = async (req, res) => {
 
         return res.status(500).json({
             success: false,
-            error: err.message,
+            error: err.message
         });
     }
 };

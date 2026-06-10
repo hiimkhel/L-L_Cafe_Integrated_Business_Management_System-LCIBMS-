@@ -110,21 +110,19 @@ class ReportsService {
     return data['data'];
   }
 
-  Future<List<dynamic>> getSalesSummaryReport(
-    String? startDate,
-    String? endDate,
+Future<List<dynamic>> getSalesSummaryReport(
+    String range,
   ) async {
 
-    String url = '$baseUrl/chart';
-
-    if (startDate != null && endDate != null) {
-      url +=
-          '?startDate=$startDate&endDate=$endDate';
-    }
-
-    final response = await http.get(
-      Uri.parse(url),
+    final uri = Uri.parse(
+      '$baseUrl/chart',
+    ).replace(
+      queryParameters: {
+        'range': range,
+      },
     );
+
+    final response = await http.get(uri);
 
     final data = jsonDecode(response.body);
 
