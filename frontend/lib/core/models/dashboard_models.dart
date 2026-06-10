@@ -153,6 +153,9 @@ class DashboardSummary {
   final int customers;
   final int sales;
   final double revenue;
+  final double customersChange;
+  final double salesChange;
+  final double revenueChange;
 
   const DashboardSummary({
     required this.target,
@@ -161,6 +164,9 @@ class DashboardSummary {
     required this.customers,
     required this.sales,
     required this.revenue,
+    required this.customersChange,
+    required this.revenueChange,
+    required this.salesChange
   });
 
   factory DashboardSummary.fromJson(
@@ -176,6 +182,9 @@ class DashboardSummary {
       customers: json['customers'] ?? 0,
       sales: json['sales'] ?? 0,
       revenue: (json['revenue'] ?? 0).toDouble(),
+      customersChange: (json['customer_change']?? 0).toDouble(),
+      revenueChange: (json['revenue_change'] ?? 0).toDouble(),
+      salesChange: (json['sales_change'] ?? 0).toDouble(),
     );
   }
 }

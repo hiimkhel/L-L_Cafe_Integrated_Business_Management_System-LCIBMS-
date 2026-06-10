@@ -6,75 +6,212 @@
 const db = require("../config/dbConnection.js");
 
 const getDashboardSummary = async (req, res) => {
-  try {
-    const today = new Date().toISOString().split("T")[0];
+    try {
+        const calculateChange = (current, previous) => {
+            if (previous <= 0) {
+                return current > 0 ? 100 : 0;
+            }
 
-    const [revenueRows] = await db.query(
-      `
-      SELECT
-          COALESCE(SUM(total),0) AS revenue,
-          COUNT(*) AS total_sales
-      FROM orders
-      WHERE status = 'completed'
-      `,
-      [today]
-    );
+            return Number(
+                (((current - previous) / previous) * 100).toFixed(1)
+            );
+        };
 
-    const [customerRows] = await db.query(
-      `
-      SELECT
-          COUNT(DISTINCT user_id) AS total_customers
-      FROM orders
-      WHERE status = 'completed'
-      `,
-    );
+        // =========================
+        // ALL-TIME BUSINESS METRICS
+        // =========================
 
-    const [targetRows] = await db.query(
-      `
-      SELECT daily_revenue_target
-      FROM business_settings
-      LIMIT 1
-      `
-    );
+        const [revenueRows] = await db.query(`
+            SELECT
+                COALESCE(SUM(total), 0) AS revenue
+            FROM orders
+            WHERE status = 'completed'
+        `);
 
-    const revenue =
-      Number(revenueRows[0]?.revenue || 0);
+        const [salesRows] = await db.query(`
+            SELECT
+                COUNT(*) AS total_sales
+            FROM orders
+            WHERE status = 'completed'
+        `);
 
-    const sales =
-      Number(revenueRows[0]?.total_sales || 0);
+        const [customerRows] = await db.query(`
+            SELECT
+                COUNT(DISTINCT user_id) AS total_customers
+            FROM orders
+            WHERE status = 'completed'
+        `);
 
-    const customers =
-      Number(customerRows[0]?.total_customers || 0);
+        // =========================
+        // CURRENT MONTH METRICS
+        // =========================
 
-    const target =
-      Number(
-        targetRows[0]?.daily_revenue_target || 0
-      );
+        const [currentMonthRevenueRows] = await db.query(`
+            SELECT
+                COALESCE(SUM(total), 0) AS revenue
+            FROM orders
+            WHERE status = 'completed'
+              AND YEAR(created_at) = YEAR(CURDATE())
+              AND MONTH(created_at) = MONTH(CURDATE())
+        `);
 
-    const progress =
-      target > 0 ? revenue / target : 0;
+        const [currentMonthSalesRows] = await db.query(`
+            SELECT
+                COUNT(*) AS total_sales
+            FROM orders
+            WHERE status = 'completed'
+              AND YEAR(created_at) = YEAR(CURDATE())
+              AND MONTH(created_at) = MONTH(CURDATE())
+        `);
 
-    return res.status(200).json({
-      success: true,
-      data: {
-        daily_target: {
-          target,
-          current: revenue,
-          progress,
-        },
-        customers,
-        sales,
-        revenue,
-      },
-    });
-  } catch (err) {
-    console.error(err);
+        const [currentMonthCustomerRows] = await db.query(`
+            SELECT
+                COUNT(DISTINCT user_id) AS total_customers
+            FROM orders
+            WHERE status = 'completed'
+              AND YEAR(created_at) = YEAR(CURDATE())
+              AND MONTH(created_at) = MONTH(CURDATE())
+        `);
 
-    return res.status(500).json({
-      success: false,
-      error: err.message,
-    });
-  }
+        // =========================
+        // PREVIOUS MONTH METRICS
+        // =========================
+
+        const [previousMonthRevenueRows] = await db.query(`
+            SELECT
+                COALESCE(SUM(total), 0) AS revenue
+            FROM orders
+            WHERE status = 'completed'
+              AND YEAR(created_at) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+              AND MONTH(created_at) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+        `);
+
+        const [previousMonthSalesRows] = await db.query(`
+            SELECT
+                COUNT(*) AS total_sales
+            FROM orders
+            WHERE status = 'completed'
+              AND YEAR(created_at) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+              AND MONTH(created_at) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+        `);
+
+        const [previousMonthCustomerRows] = await db.query(`
+            SELECT
+                COUNT(DISTINCT user_id) AS total_customers
+            FROM orders
+            WHERE status = 'completed'
+              AND YEAR(created_at) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+              AND MONTH(created_at) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+        `);
+
+        // =========================
+        // TODAY'S REVENUE TARGET
+        // =========================
+
+        const [todayRevenueRows] = await db.query(`
+            SELECT
+                COALESCE(SUM(total), 0) AS revenue
+            FROM orders
+            WHERE status = 'completed'
+              AND DATE(created_at) = CURDATE()
+        `);
+
+        const [settingsRows] = await db.query(`
+            SELECT daily_revenue_target
+            FROM business_settings
+            LIMIT 1
+        `);
+
+        // =========================
+        // VALUES
+        // =========================
+
+        const revenue =
+            Number(revenueRows[0]?.revenue || 0);
+
+        const sales =
+            Number(salesRows[0]?.total_sales || 0);
+
+        const customers =
+            Number(customerRows[0]?.total_customers || 0);
+
+        const currentMonthRevenue =
+            Number(currentMonthRevenueRows[0]?.revenue || 0);
+
+        const previousMonthRevenue =
+            Number(previousMonthRevenueRows[0]?.revenue || 0);
+
+        const currentMonthSales =
+            Number(currentMonthSalesRows[0]?.total_sales || 0);
+
+        const previousMonthSales =
+            Number(previousMonthSalesRows[0]?.total_sales || 0);
+
+        const currentMonthCustomers =
+            Number(currentMonthCustomerRows[0]?.total_customers || 0);
+
+        const previousMonthCustomers =
+            Number(previousMonthCustomerRows[0]?.total_customers || 0);
+
+        const revenueChange =
+            calculateChange(
+                currentMonthRevenue,
+                previousMonthRevenue
+            );
+
+        const salesChange =
+            calculateChange(
+                currentMonthSales,
+                previousMonthSales
+            );
+
+        const customerChange =
+            calculateChange(
+                currentMonthCustomers,
+                previousMonthCustomers
+            );
+
+        const dailyTarget =
+            Number(
+                settingsRows[0]?.daily_revenue_target || 0
+            );
+
+        const todayRevenue =
+            Number(todayRevenueRows[0]?.revenue || 0);
+
+        const progress =
+            dailyTarget > 0
+                ? todayRevenue / dailyTarget
+                : 0;
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                daily_target: {
+                    target: dailyTarget,
+                    current: todayRevenue,
+                    progress,
+                },
+
+                revenue,
+                revenue_change: revenueChange,
+
+                sales,
+                sales_change: salesChange,
+
+                customers,
+                customer_change: customerChange,
+            },
+        });
+    } catch (error) {
+        console.error("Dashboard Summary Error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to fetch dashboard summary",
+            error: error.message,
+        });
+    }
 };
 
 const updateDailyTarget = async (req, res) => {

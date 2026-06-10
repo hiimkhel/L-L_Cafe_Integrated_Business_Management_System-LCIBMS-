@@ -50,33 +50,43 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   List<RevenueBarData> revenueTrend = [];
 
   List<SummaryCardData> get summaryCards {
+    final summary = dashboardSummary;
+
+    if (summary == null) {
+      return [];
+    }
+
     return [
       SummaryCardData(
         label: 'TOTAL CUSTOMERS',
-        value:
-            '${dashboardSummary?.customers ?? 0}',
-        delta: '+0%',
-        deltaPositive: true,
+        value: summary.customers.toString(),
+        delta:
+            '${summary.customersChange.abs().toStringAsFixed(1)}%',
+        deltaPositive:
+            summary.customersChange >= 0,
         icon: Icons.people_outline_rounded,
         accent: const Color(0xFF4CAF50),
       ),
+
       SummaryCardData(
         label: 'TOTAL SALES',
-        value:
-            '${dashboardSummary?.sales ?? 0}',
-        delta: '+0%',
-        deltaPositive: true,
+        value: summary.sales.toString(),
+        delta:
+            '${summary.salesChange.abs().toStringAsFixed(1)}%',
+        deltaPositive:
+            summary.salesChange >= 0,
         icon: Icons.show_chart_rounded,
         accent: const Color(0xFF2196F3),
       ),
+
       SummaryCardData(
         label: 'TOTAL INCOME',
         value:
-            '₱${dashboardSummary?.revenue.toStringAsFixed(0) ?? "0"}',
+            '₱${summary.revenue.toStringAsFixed(0)}',
         delta:
-            '${revenueSummary?.growthRate ?? 0}%',
+            '${summary.revenueChange.abs().toStringAsFixed(1)}%',
         deltaPositive:
-            (revenueSummary?.growthRate ?? 0) >= 0,
+            summary.revenueChange >= 0,
         icon:
             Icons.account_balance_wallet_outlined,
         accent: const Color(0xFFA98258),
