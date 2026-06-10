@@ -940,6 +940,10 @@ const getTopCustomer = async (req, res) => {
         `;
 
         const params = [];
+        params.push(
+            `${startDate} 00:00:00`,
+            `${endDate} 23:59:59`
+        );
 
         if (startDate && endDate) {
             sql += `
