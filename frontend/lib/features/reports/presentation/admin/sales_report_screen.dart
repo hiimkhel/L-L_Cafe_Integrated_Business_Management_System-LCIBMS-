@@ -947,14 +947,6 @@ class _TopCustomersCard extends StatelessWidget {
   }
 }
 
-
-class _CustItem {
-  final String name, initials;
-  final int amount;
-  const _CustItem(
-      {required this.name, required this.initials, required this.amount});
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // BASE CARD
 // ─────────────────────────────────────────────────────────────────────────────

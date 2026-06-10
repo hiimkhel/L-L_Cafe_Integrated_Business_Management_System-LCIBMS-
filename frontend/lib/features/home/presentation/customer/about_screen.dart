@@ -21,7 +21,6 @@ const _kPasta         = 'assets/images/hero_pasta.png';
 const _kWaffle        = 'assets/images/hero_kitkat_waffle.png';
 const _kNutella       = 'assets/images/best_nutella_frappe.png';
 const _kBiscoff       = 'assets/images/best_biscoff_frappe.png';
-const _kRedVelvet     = 'assets/images/best_redvelvet_frappe.png';
 
 // Film strip: 6 real images
 const _filmImages = <String>[
