@@ -177,6 +177,32 @@ class _OrderTableRow extends StatelessWidget {
     }
   }
 
+  IconData get _statusIcon {
+    switch (order.status.toLowerCase()) {
+      case 'pending':
+        return Icons.schedule_rounded;
+
+      case 'confirmed':
+        return Icons.fact_check_rounded;
+
+      case 'preparing':
+        return Icons.restaurant_rounded;
+
+      case 'ready':
+        return Icons.notifications_active_rounded;
+
+      case 'completed':
+      case 'done':
+        return Icons.check_circle_rounded;
+
+      case 'cancelled':
+        return Icons.cancel_rounded;
+
+      default:
+        return Icons.info_outline_rounded;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final base = TextStyle(
@@ -226,20 +252,35 @@ class _OrderTableRow extends StatelessWidget {
               ])),
           Expanded(
             flex: 16,
-            child: Center(
+            child: Align(
+              alignment: Alignment.centerLeft,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: _statusBg,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text(
-                  order.status,
-                  style: base.copyWith(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: _statusColor,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _statusIcon,
+                      size: 12,
+                      color: _statusColor,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      order.status.toUpperCase(),
+                      style: base.copyWith(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: _statusColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

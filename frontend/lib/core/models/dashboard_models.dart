@@ -166,9 +166,6 @@ class DashboardSummary {
   factory DashboardSummary.fromJson(
     Map<String, dynamic> json,
   ) {
-    debugPrint(
-      'DashboardSummary.fromJson received: $json',
-    );
 
     final dailyTarget = json['daily_target'];
 
