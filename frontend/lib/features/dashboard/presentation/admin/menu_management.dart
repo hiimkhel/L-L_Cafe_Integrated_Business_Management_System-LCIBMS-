@@ -168,11 +168,6 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       setState(() {
         selectedItem     = fresh;
         selectedItemName = fresh['name'];
-        debugPrint('====================');
-        debugPrint('Selected Item: ${fresh['name']}');
-        debugPrint('Image URL: ${fresh['image_url']}');
-        debugPrint('Full Item: $fresh');
-        debugPrint('====================');
 
         // Temporarily remove listeners so loading values doesn't mark dirty
         _nameCtrl.removeListener(_onFieldChanged);
