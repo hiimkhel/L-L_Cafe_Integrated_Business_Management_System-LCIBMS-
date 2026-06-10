@@ -484,7 +484,7 @@ class _OrderScreenState extends State<OrderScreen> {
   // ── Filters ───────────────────────────────────────────────────────────────
   Widget _buildFilterRow() {
     const quickFilters  = ['TODAY', 'YESTERDAY', 'LAST 7 DAYS'];
-    const statusFilters = ['ALL', 'PENDING', 'PREPARING', 'OUT FOR DELIVERY', 'COMPLETED', 'CANCELLED'];
+    const statusFilters = ['ALL', 'PENDING', 'PREPARING', 'READY','OUT FOR DELIVERY', 'COMPLETED', 'REJECTED', 'CANCELLED'];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
