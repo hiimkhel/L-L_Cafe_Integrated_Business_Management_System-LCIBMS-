@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/services/pos/order_service.dart';
 import 'package:frontend/config/theme/app_colors.dart';
-import 'package:dotted_border/dotted_border.dart';
 
 class OnlineOrdersScreen extends StatefulWidget {
   const OnlineOrdersScreen({super.key});

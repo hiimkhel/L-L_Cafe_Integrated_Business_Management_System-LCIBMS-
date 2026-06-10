@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
 import 'package:frontend/core/widgets/bamboo_background.dart';
 import 'package:frontend/core/widgets/customer_footer.dart';

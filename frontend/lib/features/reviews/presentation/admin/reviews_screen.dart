@@ -4,13 +4,10 @@ import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/models/review_model.dart';
 import 'package:frontend/core/services/admin/reviews_service.dart';
-import 'package:frontend/config/theme/app_colors.dart';
-
 // ─────────────────────────────────────────────────────────────────────────────
 // PALETTE
 // ─────────────────────────────────────────────────────────────────────────────
 
-const Color _beige   = Color(0xFFEFE2C9);
 const Color _card    = Color(0xFFF7F0E4);
 const Color _green1  = Color(0xFF3D5A45);
 const Color _green2  = Color(0xFF758C6D);

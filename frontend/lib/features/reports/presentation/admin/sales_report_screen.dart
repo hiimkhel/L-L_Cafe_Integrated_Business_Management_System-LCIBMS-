@@ -663,15 +663,6 @@ class _TopPicksCard extends StatelessWidget {
   }
 }
 
-class _PickItem {
-  final String name;
-  final int sold, price, rank;
-  const _PickItem(
-      {required this.name,
-      required this.sold,
-      required this.price,
-      required this.rank});
-}
 
 class _PickTile extends StatelessWidget {
   final dynamic item;
