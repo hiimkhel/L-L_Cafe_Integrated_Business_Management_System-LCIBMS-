@@ -75,53 +75,116 @@ class OrderLineItem {
       );
 }
 
-enum OrderStatus { pending, preparing, outForDelivery, completed, cancelled }
+enum OrderStatus {
+  pending,
+  preparing,
+  ready,
+  outForDelivery,
+  completed,
+  rejected,
+  cancelled,
+}
 
 extension OrderStatusX on OrderStatus {
   String get label {
     switch (this) {
-      case OrderStatus.pending:        return 'PENDING';
-      case OrderStatus.preparing:      return 'PREPARING';
-      case OrderStatus.outForDelivery: return 'OUT FOR DELIVERY';
-      case OrderStatus.completed:      return 'COMPLETED';
-      case OrderStatus.cancelled:      return 'CANCELLED';
+      case OrderStatus.pending:
+        return 'PENDING';
+
+      case OrderStatus.preparing:
+        return 'PREPARING';
+
+      case OrderStatus.ready:
+        return 'READY';
+
+      case OrderStatus.outForDelivery:
+        return 'OUT FOR DELIVERY';
+
+      case OrderStatus.completed:
+        return 'COMPLETED';
+
+      case OrderStatus.rejected:
+        return 'REJECTED';
+
+      case OrderStatus.cancelled:
+        return 'CANCELLED';
     }
   }
 
   Color get color {
     switch (this) {
-      case OrderStatus.pending:        return const Color(0xFFE6A817);
-      case OrderStatus.preparing:      return const Color(0xFF2196F3);
-      case OrderStatus.outForDelivery: return const Color(0xFF9C27B0);
-      case OrderStatus.completed:      return const Color(0xFF4CAF50);
-      case OrderStatus.cancelled:      return const Color(0xFFF44336);
+      case OrderStatus.pending:
+        return const Color(0xFFE6A817);
+
+      case OrderStatus.preparing:
+        return const Color(0xFF2196F3);
+
+      case OrderStatus.ready:
+        return const Color(0xFF00C853);
+
+      case OrderStatus.outForDelivery:
+        return const Color(0xFF9C27B0);
+
+      case OrderStatus.completed:
+        return const Color(0xFF4CAF50);
+
+      case OrderStatus.rejected:
+        return const Color(0xFFD32F2F);
+
+      case OrderStatus.cancelled:
+        return const Color(0xFF757575);
     }
   }
 
   Color get bg {
     switch (this) {
-      case OrderStatus.pending:        return const Color(0xFFFFF8E1);
-      case OrderStatus.preparing:      return const Color(0xFFE3F2FD);
-      case OrderStatus.outForDelivery: return const Color(0xFFF3E5F5);
-      case OrderStatus.completed:      return const Color(0xFFE8F5E9);
-      case OrderStatus.cancelled:      return const Color(0xFFFFEBEE);
+      case OrderStatus.pending:
+        return const Color(0xFFFFF8E1);
+
+      case OrderStatus.preparing:
+        return const Color(0xFFE3F2FD);
+
+      case OrderStatus.ready:
+        return const Color(0xFFE8F5E9);
+
+      case OrderStatus.outForDelivery:
+        return const Color(0xFFF3E5F5);
+
+      case OrderStatus.completed:
+        return const Color(0xFFE8F5E9);
+
+      case OrderStatus.rejected:
+        return const Color(0xFFFFEBEE);
+
+      case OrderStatus.cancelled:
+        return const Color(0xFFF5F5F5);
     }
   }
 }
+
 OrderStatus _parseStatus(String raw) {
   switch (raw.toLowerCase()) {
     case 'pending':
       return OrderStatus.pending;
+
     case 'preparing':
       return OrderStatus.preparing;
+
+    case 'ready':
+      return OrderStatus.ready;
+
     case 'out_for_delivery':
       return OrderStatus.outForDelivery;
+
     case 'completed':
       return OrderStatus.completed;
+
+    case 'rejected':
+      return OrderStatus.rejected;
+
     case 'cancelled':
       return OrderStatus.cancelled;
-    case 'rejected':
-      return OrderStatus.cancelled; 
+
     default:
       return OrderStatus.pending;
   }

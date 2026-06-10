@@ -96,6 +96,13 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     super.dispose();
   }
 
+  String getImageUrl(String? imageName) {
+    if (imageName == null || imageName.isEmpty) {
+      return '';
+    }
+    return '${MenuService.imageUrl}/$imageName';
+  }
+
   // ── Data ──────────────────────────────────────────────────────────────────
 
   Future<void> _loadCategories() async {
@@ -161,6 +168,11 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       setState(() {
         selectedItem     = fresh;
         selectedItemName = fresh['name'];
+        debugPrint('====================');
+        debugPrint('Selected Item: ${fresh['name']}');
+        debugPrint('Image URL: ${fresh['image_url']}');
+        debugPrint('Full Item: $fresh');
+        debugPrint('====================');
 
         // Temporarily remove listeners so loading values doesn't mark dirty
         _nameCtrl.removeListener(_onFieldChanged);
@@ -738,13 +750,31 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
             // ── Item header ──────────────────────────────────────────────
             Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
               Container(
-                width: 48, height: 48,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   color: _kPrimary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.fastfood_rounded,
-                    color: _kPrimary, size: 24),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: selectedItem['image_url'] != null &&
+                        selectedItem['image_url'].toString().isNotEmpty
+                    ? Image.network(
+                        getImageUrl(selectedItem['image_url']),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.fastfood_rounded,
+                          color: _kPrimary,
+                          size: 24,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.fastfood_rounded,
+                        color: _kPrimary,
+                        size: 24,
+                      ),
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -868,7 +898,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                 ),
                 child: _pickedFileName != null
                     ? _buildImagePreview()
-                    : _buildUploadPlaceholder(),
+                    :  _buildExistingImageOrPlaceholder(),
               ),
             ),
 
@@ -921,7 +951,103 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     ]);
   }
 
+  Widget _buildExistingImageOrPlaceholder() {
+    final imageName = selectedItem?['image_url'];
+
+    if (imageName == null || imageName.toString().isEmpty) {
+      return _buildUploadPlaceholder();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              getImageUrl(imageName),
+              width: 88,
+              height: 88,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) return child;
+
+                return Container(
+                  width: 88,
+                  height: 88,
+                  color: _kPrimary.withOpacity(0.08),
+                  child: const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                );
+              },
+              errorBuilder: (_, __, ___) {
+                return Container(
+                  width: 88,
+                  height: 88,
+                  color: _kPrimary.withOpacity(0.08),
+                  child: const Icon(
+                    Icons.broken_image_outlined,
+                    color: _kPrimary,
+                    size: 32,
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(width: 14),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Click "Replace Image" to upload a new one',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: _kDark.withOpacity(0.35),
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                const SizedBox(height: 8),
+
+                GestureDetector(
+                  onTap: _pickFile,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _kPrimary.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: _kPrimary.withOpacity(0.25),
+                      ),
+                    ),
+                    child: const Text(
+                      'Replace Image',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: _kPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
   // ── Image widgets ─────────────────────────────────────────────────────────
+
 
   Widget _buildImagePreview() {
     return Padding(

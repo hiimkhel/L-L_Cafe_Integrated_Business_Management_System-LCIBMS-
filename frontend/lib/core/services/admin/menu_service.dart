@@ -3,12 +3,13 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
 class MenuService {
-  static const String baseUrl = "http://localhost:3006/api/admin";
+  static const String baseUrl = "http://localhost:3006/api";
+  static const String imageUrl = "http://localhost:3006/uploads/menu-items";
   static String? token;
   
   // ---------------- CATEGORIES ----------------
   static Future<List<dynamic>> fetchCategories() async {
-    final res = await http.get(Uri.parse('$baseUrl/menu/category'));
+    final res = await http.get(Uri.parse('$baseUrl/admin/menu/category'));
 
     if (res.statusCode == 200) {
       return jsonDecode(res.body);
@@ -21,7 +22,7 @@ class MenuService {
   // ---------------- MENU ITEMS ----------------
   static Future<List<dynamic>> fetchMenuItems(int categoryId) async {
     final res = await http.get(
-      Uri.parse('$baseUrl/menu-items?category_id=$categoryId'),
+      Uri.parse('$baseUrl/admin/menu-items?category_id=$categoryId'),
     );  
 
     if (res.statusCode == 200) {
@@ -35,7 +36,7 @@ class MenuService {
   // Handle sending API for adding category
   static Future<void> addCategory(String name) async {
     final res = await http.post(
-      Uri.parse('$baseUrl/menu/category'),
+      Uri.parse('$baseUrl/admin/menu/category'),
       headers: {
         "Content-Type": "application/json",
         if (token != null) "Authorization": "Bearer $token",
@@ -52,7 +53,7 @@ class MenuService {
   // Handle sending API for adding item
   static Future<void> addItem(Map<String, dynamic> data) async{
     final res = await http.post(
-      Uri.parse('$baseUrl/menu-items'),
+      Uri.parse('$baseUrl/admin/menu-items'),
       headers: {
         "Content-Type": "application/json",
         if (token != null) "Authorization": "Bearer $token",
@@ -68,7 +69,7 @@ class MenuService {
   }
 
   static Future<void> deleteMenuItem(int id) async{
-    final res = await http.delete(Uri.parse('$baseUrl/menu-items/$id'),
+    final res = await http.delete(Uri.parse('$baseUrl/admin/menu-items/$id'),
       headers: {
         "Content-Type": "application/json",
         if (token != null) "Authorization": "Bearer $token",
@@ -87,7 +88,7 @@ class MenuService {
   // Fetch specific menu item by id 
   static Future<dynamic> fetchMenuItemById(int id) async {
     final res = await http.get(
-      Uri.parse('$baseUrl/menu-items/$id'),
+      Uri.parse('$baseUrl/admin/menu-items/$id'),
       headers: {
         "Content-Type": "application/json",
         if (token != null) "Authorization": "Bearer $token",
@@ -104,7 +105,7 @@ class MenuService {
   // Call Backend API for updating menu item
   static Future<void> updateMenuItem(int id, Map<String, dynamic> data) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/menu-items/$id'),
+      Uri.parse('$baseUrl/admin/menu-items/$id'),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode(data),
     );
@@ -117,7 +118,7 @@ class MenuService {
   // In your menu_service.dart, add this method:
 static Future<void> deleteCategory(int id) async {
   final response = await http.delete(
-    Uri.parse('$baseUrl/categories/$id'),
+    Uri.parse('$baseUrl/admin/categories/$id'),
     headers: {'Content-Type': 'application/json'},
   );
   if (response.statusCode != 200) {
