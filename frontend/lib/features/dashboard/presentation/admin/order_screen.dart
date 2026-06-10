@@ -2,194 +2,12 @@ import 'package:flutter/material.dart';
 import '../../../../core/widgets/admin_header.dart';
 import '../../../../core/widgets/admin_sidebar.dart';
 import '../../../../config/theme/app_colors.dart';
+import 'package:frontend/core/models/admin_order.dart';
+import 'package:frontend/core/services/admin/order_service.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ENUMS & CONSTANTS
-// ─────────────────────────────────────────────────────────────────────────────
-
-enum OrderStatus { pending, preparing, outForDelivery, completed, cancelled }
-
-extension OrderStatusX on OrderStatus {
-  String get label {
-    switch (this) {
-      case OrderStatus.pending:        return 'PENDING';
-      case OrderStatus.preparing:      return 'PREPARING';
-      case OrderStatus.outForDelivery: return 'OUT FOR DELIVERY';
-      case OrderStatus.completed:      return 'COMPLETED';
-      case OrderStatus.cancelled:      return 'CANCELLED';
-    }
-  }
-
-  Color get color {
-    switch (this) {
-      case OrderStatus.pending:        return const Color(0xFFE6A817);
-      case OrderStatus.preparing:      return const Color(0xFF2196F3);
-      case OrderStatus.outForDelivery: return const Color(0xFF9C27B0);
-      case OrderStatus.completed:      return const Color(0xFF4CAF50);
-      case OrderStatus.cancelled:      return const Color(0xFFF44336);
-    }
-  }
-
-  Color get bg {
-    switch (this) {
-      case OrderStatus.pending:        return const Color(0xFFFFF8E1);
-      case OrderStatus.preparing:      return const Color(0xFFE3F2FD);
-      case OrderStatus.outForDelivery: return const Color(0xFFF3E5F5);
-      case OrderStatus.completed:      return const Color(0xFFE8F5E9);
-      case OrderStatus.cancelled:      return const Color(0xFFFFEBEE);
-    }
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ORDER MODEL
-// ─────────────────────────────────────────────────────────────────────────────
-
-class AdminOrder {
-  final String id;
-  final DateTime datetime;
-  final String customer;
-  final String? customerPhone;
-  final int itemCount;
-  final String entryType;
-  final double total;
-  final List<OrderLineItem> items;
-  final OrderStatus status;
-  final String? note;
-
-  const AdminOrder({
-    required this.id,
-    required this.datetime,
-    required this.customer,
-    this.customerPhone,
-    required this.itemCount,
-    required this.entryType,
-    required this.total,
-    this.items = const [],
-    this.status = OrderStatus.pending,
-    this.note,
-  });
-
-  factory AdminOrder.fromJson(Map<String, dynamic> json) => AdminOrder(
-        id:            json['id']           as String,
-        datetime:      DateTime.parse(json['datetime'] as String),
-        customer:      json['customer']     as String,
-        customerPhone: json['phone']        as String?,
-        itemCount:     (json['itemCount']   as num).toInt(),
-        entryType:     json['entryType']    as String,
-        total:         (json['total']       as num).toDouble(),
-        items:         (json['items'] as List<dynamic>? ?? [])
-                           .map((e) => OrderLineItem.fromJson(e as Map<String, dynamic>))
-                           .toList(),
-        status:        OrderStatus.values.firstWhere(
-                           (s) => s.label == (json['status'] as String? ?? ''),
-                           orElse: () => OrderStatus.pending),
-        note:          json['note'] as String?,
-      );
-
-  AdminOrder copyWith({OrderStatus? status}) => AdminOrder(
-        id: id, datetime: datetime, customer: customer,
-        customerPhone: customerPhone, itemCount: itemCount,
-        entryType: entryType, total: total, items: items,
-        status: status ?? this.status, note: note,
-      );
-}
-
-class OrderLineItem {
-  final String name;
-  final int qty;
-  final double unitPrice;
-
-  const OrderLineItem({required this.name, required this.qty, required this.unitPrice});
-  double get subtotal => qty * unitPrice;
-
-  factory OrderLineItem.fromJson(Map<String, dynamic> json) => OrderLineItem(
-        name: json['name'] as String,
-        qty: (json['qty'] as num).toInt(),
-        unitPrice: (json['unitPrice'] as num).toDouble(),
-      );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DEMO DATA
-// ─────────────────────────────────────────────────────────────────────────────
 
 final _now = DateTime.now();
 
-List<AdminOrder> get _demoOrders => [
-  AdminOrder(id: 'LL-401', datetime: _now.subtract(const Duration(minutes: 14)),
-    customer: 'MARIA S.', customerPhone: '+63 912 345 6789',
-    itemCount: 3, entryType: 'ONLINE', total: 520.00, status: OrderStatus.pending,
-    items: [const OrderLineItem(name: 'Nutella Frappe', qty: 2, unitPrice: 120.00),
-            const OrderLineItem(name: 'Kitkat Waffle',  qty: 1, unitPrice: 280.00)]),
-  AdminOrder(id: 'LL-400', datetime: _now.subtract(const Duration(minutes: 40)),
-    customer: 'JOSE R.', customerPhone: '+63 917 654 3210',
-    itemCount: 2, entryType: 'ONLINE', total: 345.00, status: OrderStatus.preparing,
-    items: [const OrderLineItem(name: 'Red Velvet Frappe', qty: 1, unitPrice: 150.00),
-            const OrderLineItem(name: 'Butter Croissant',  qty: 1, unitPrice: 195.00)],
-    note: 'Extra sugar please'),
-  AdminOrder(id: 'LL-399', datetime: _now.subtract(const Duration(hours: 1, minutes: 10)),
-    customer: 'WALK-IN', itemCount: 5, entryType: 'WALK-IN', total: 980.00,
-    status: OrderStatus.completed,
-    items: [const OrderLineItem(name: 'Double Patty Burger', qty: 2, unitPrice: 280.00),
-            const OrderLineItem(name: 'Iced Americano',      qty: 2, unitPrice: 120.00),
-            const OrderLineItem(name: "S'mores Waffle",      qty: 1, unitPrice: 180.00)]),
-  AdminOrder(id: 'LL-398', datetime: _now.subtract(const Duration(hours: 2, minutes: 5)),
-    customer: 'RICO B.', customerPhone: '+63 908 111 2222',
-    itemCount: 3, entryType: 'WALK-IN', total: 420.00, status: OrderStatus.completed,
-    items: [const OrderLineItem(name: 'Nutella Frappe', qty: 1, unitPrice: 120.00),
-            const OrderLineItem(name: 'Kitkat Waffle',  qty: 1, unitPrice: 180.00),
-            const OrderLineItem(name: 'Iced Americano', qty: 1, unitPrice: 120.00)]),
-  AdminOrder(id: 'LL-397', datetime: _now.subtract(const Duration(hours: 3, minutes: 20)),
-    customer: 'LIZA M.', customerPhone: '+63 915 987 6543',
-    itemCount: 1, entryType: 'ONLINE', total: 185.50, status: OrderStatus.outForDelivery,
-    items: [const OrderLineItem(name: 'Red Velvet Frappe', qty: 1, unitPrice: 185.50)],
-    note: 'Deliver to gate 3'),
-  AdminOrder(id: 'LL-396', datetime: _now.subtract(const Duration(hours: 4, minutes: 45)),
-    customer: 'ANA G.', customerPhone: '+63 999 321 4567',
-    itemCount: 4, entryType: 'PICKUP', total: 650.00, status: OrderStatus.completed,
-    items: [const OrderLineItem(name: 'Caramel Macchiato', qty: 2, unitPrice: 155.00),
-            const OrderLineItem(name: 'Butter Toast',      qty: 1, unitPrice: 120.00),
-            const OrderLineItem(name: 'Oreo Waffle',       qty: 1, unitPrice: 220.00)]),
-  AdminOrder(id: 'LL-395', datetime: _now.subtract(const Duration(days: 1, hours: 2)),
-    customer: 'ELENA S.', customerPhone: '+63 928 555 0000',
-    itemCount: 1, entryType: 'ONLINE', total: 120.00, status: OrderStatus.cancelled,
-    items: [const OrderLineItem(name: 'Nutella Frappe', qty: 1, unitPrice: 120.00)],
-    note: 'Customer requested cancellation'),
-  AdminOrder(id: 'LL-394', datetime: _now.subtract(const Duration(days: 1, hours: 5, minutes: 30)),
-    customer: 'MARCUS D.', customerPhone: '+63 939 777 8888',
-    itemCount: 5, entryType: 'WALK-IN', total: 890.00, status: OrderStatus.completed,
-    items: [const OrderLineItem(name: 'Kitkat Waffle',       qty: 2, unitPrice: 180.00),
-            const OrderLineItem(name: 'Double Patty Burger', qty: 1, unitPrice: 280.00),
-            const OrderLineItem(name: 'Iced Americano',      qty: 2, unitPrice: 125.00)]),
-  AdminOrder(id: 'LL-393', datetime: _now.subtract(const Duration(days: 2, hours: 1)),
-    customer: 'CARLO B.', customerPhone: '+63 905 444 3333',
-    itemCount: 3, entryType: 'ONLINE', total: 560.00, status: OrderStatus.completed,
-    items: [const OrderLineItem(name: 'Matcha Frappe',  qty: 2, unitPrice: 145.00),
-            const OrderLineItem(name: 'Cheese Danish',  qty: 1, unitPrice: 270.00)]),
-  AdminOrder(id: 'LL-392', datetime: _now.subtract(const Duration(days: 3, hours: 3)),
-    customer: 'WALK-IN', itemCount: 2, entryType: 'WALK-IN', total: 310.00,
-    status: OrderStatus.completed,
-    items: [const OrderLineItem(name: 'Matcha Frappe',    qty: 1, unitPrice: 145.00),
-            const OrderLineItem(name: 'Butter Croissant', qty: 1, unitPrice: 165.00)]),
-  AdminOrder(id: 'LL-391', datetime: _now.subtract(const Duration(days: 4, hours: 2)),
-    customer: 'PETRA L.', customerPhone: '+63 911 222 3344',
-    itemCount: 4, entryType: 'ONLINE', total: 760.00, status: OrderStatus.completed,
-    items: [const OrderLineItem(name: "S'mores Waffle", qty: 2, unitPrice: 180.00),
-            const OrderLineItem(name: 'Cold Brew',      qty: 2, unitPrice: 200.00)]),
-  AdminOrder(id: 'LL-390', datetime: _now.subtract(const Duration(days: 5, hours: 4)),
-    customer: 'DAN A.', customerPhone: '+63 920 000 9999',
-    itemCount: 1, entryType: 'PICKUP', total: 280.00, status: OrderStatus.completed,
-    items: [const OrderLineItem(name: 'Double Patty Burger', qty: 1, unitPrice: 280.00)]),
-];
-
-// ─────────────────────────────────────────────────────────────────────────────
-// COLUMN DEFINITIONS  ← single source of truth for flex values
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ✅ STATUS gets flex:3 so "OUT FOR DELIVERY" never overflows into TOTAL.
-// ACTIONS gets flex:2 for the VIEW RECEIPT button.
-// Everything else is tuned so widths feel balanced.
 const _kCols = [
   _Col('DATE / TIME', flex: 3), // e.g. 05/03/2026  3:37 PM
   _Col('ORDER ID',    flex: 2),
@@ -221,41 +39,30 @@ class _OrderScreenState extends State<OrderScreen> {
   String _searchQuery = '';
   String _statusFilter = 'ALL';
   final _searchCtrl = TextEditingController();
+  final orderService = OrderService();
 
-  final List<AdminOrder> _orders = List.from(_demoOrders);
 
-  List<AdminOrder> get _filtered {
-    final q = _searchQuery.toLowerCase().trim();
-    return _orders.where((o) {
-      if (_customRange != null) {
-        final start = DateTime(_customRange!.start.year, _customRange!.start.month, _customRange!.start.day);
-        final end   = DateTime(_customRange!.end.year,   _customRange!.end.month,   _customRange!.end.day, 23, 59, 59);
-        if (o.datetime.isBefore(start) || o.datetime.isAfter(end)) return false;
-      } else {
-        final now = DateTime.now();
-        switch (_quickFilter) {
-          case 'TODAY':
-            if (!(o.datetime.year == now.year && o.datetime.month == now.month && o.datetime.day == now.day)) return false;
-            break;
-          case 'YESTERDAY':
-            final y = now.subtract(const Duration(days: 1));
-            if (!(o.datetime.year == y.year && o.datetime.month == y.month && o.datetime.day == y.day)) return false;
-            break;
-          case 'LAST 7 DAYS':
-            if (o.datetime.isBefore(now.subtract(const Duration(days: 7)))) return false;
-            break;
-        }
-      }
-      if (_statusFilter != 'ALL' && o.status.label != _statusFilter) return false;
-      if (q.isNotEmpty && !o.id.toLowerCase().contains(q) && !o.customer.toLowerCase().contains(q)) return false;
-      return true;
-    }).toList()..sort((a, b) => b.datetime.compareTo(a.datetime));
-  }
+  List<AdminOrder> _orders = [];
+  bool isLoading = true;
+  String? errorMessage;
 
-  int    get _totalOrders    => _filtered.length;
-  double get _totalRevenue   => _filtered.fold(0, (s, o) => s + o.total);
-  int    get _pendingCount   => _filtered.where((o) => o.status == OrderStatus.pending || o.status == OrderStatus.preparing).length;
-  int    get _completedCount => _filtered.where((o) => o.status == OrderStatus.completed).length;
+  
+  int get _totalOrders => _orders.length;
+
+  double get _totalRevenue =>
+      _orders.fold(0, (sum, o) => sum + o.total);
+
+  int get _pendingCount =>
+      _orders.where(
+        (o) =>
+            o.status == OrderStatus.pending ||
+            o.status == OrderStatus.preparing,
+      ).length;
+
+  int get _completedCount =>
+      _orders.where(
+        (o) => o.status == OrderStatus.completed,
+      ).length;
 
   String _fmt(DateTime dt) {
     final h    = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
@@ -487,11 +294,12 @@ class _OrderScreenState extends State<OrderScreen> {
                         const SizedBox(width: 10),
                         ElevatedButton(
                           onPressed: startDate != null && endDate != null
-                              ? () {
+                              ? () async {
                                   setState(() {
                                     _customRange = DateTimeRange(start: startDate!, end: endDate!);
                                     _quickFilter = '';
                                   });
+                                  await loadOrders();
                                   Navigator.pop(ctx);
                                 }
                               : null,
@@ -529,22 +337,102 @@ class _OrderScreenState extends State<OrderScreen> {
   void _clearDateRange() =>
       setState(() { _customRange = null; _quickFilter = 'TODAY'; });
 
-  void _updateStatus(AdminOrder order, OrderStatus newStatus) {
-    setState(() {
-      final idx = _orders.indexWhere((o) => o.id == order.id);
-      if (idx != -1) _orders[idx] = _orders[idx].copyWith(status: newStatus);
-    });
-    // TODO: await orderService.updateStatus(order.id, newStatus);
-  }
 
   @override
   void dispose() { _searchCtrl.dispose(); super.dispose(); }
+
+  Future<void> loadOrders() async {
+    try {
+      setState(() {
+        isLoading = true;
+        errorMessage = null;
+      });
+
+      String? startDate;
+      String? endDate;
+
+      if (_customRange != null) {
+        startDate =
+            _customRange!.start.toIso8601String().split('T')[0];
+
+        endDate =
+            _customRange!.end.toIso8601String().split('T')[0];
+      } else {
+        final now = DateTime.now();
+
+        switch (_quickFilter) {
+          case 'TODAY':
+            startDate =
+                DateTime(now.year, now.month, now.day)
+                    .toIso8601String()
+                    .split('T')[0];
+
+            endDate = startDate;
+            break;
+
+          case 'YESTERDAY':
+            final y =
+                now.subtract(const Duration(days: 1));
+
+            startDate =
+                DateTime(y.year, y.month, y.day)
+                    .toIso8601String()
+                    .split('T')[0];
+
+            endDate = startDate;
+            break;
+
+          case 'LAST 7 DAYS':
+            startDate =
+                now.subtract(const Duration(days: 7))
+                    .toIso8601String()
+                    .split('T')[0];
+
+            endDate =
+                now.toIso8601String().split('T')[0];
+            break;
+        }
+      }
+
+      final orders = await orderService.getOrders(
+        startDate: startDate,
+        endDate: endDate,
+        status:
+            _statusFilter == 'ALL'
+                ? null
+                : _statusFilter,
+        search:
+            _searchQuery.trim().isEmpty
+                ? null
+                : _searchQuery.trim(),
+      );
+      print("Orders:");
+      print(orders);
+      setState(() {
+        _orders = orders;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        errorMessage = e.toString();
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      loadOrders();
+    });
+  }
 
   // ── Build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.white,
       body: Row(
         children: [
           Sidebar(activeIndex: 1, onLogout: widget.onLogout),
@@ -610,7 +498,14 @@ class _OrderScreenState extends State<OrderScreen> {
           ...quickFilters.map((f) {
             final active = _customRange == null && _quickFilter == f;
             return GestureDetector(
-              onTap: () => setState(() { _quickFilter = f; _customRange = null; }),
+              onTap: () async {
+                setState(() {
+                  _quickFilter = f;
+                  _customRange = null;
+                });
+
+                await loadOrders();
+              },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 margin: const EdgeInsets.only(right: 6),
@@ -672,7 +567,7 @@ class _OrderScreenState extends State<OrderScreen> {
             width: 230, height: 36,
             child: TextField(
               controller: _searchCtrl,
-              onChanged: (v) => setState(() => _searchQuery = v),
+              onSubmitted: (_) => loadOrders(),
               style: TextStyle(fontSize: 12, color: AppColors.tertiary),
               decoration: InputDecoration(
                 hintText: 'SEARCH ID OR CUSTOMER...',
@@ -710,7 +605,13 @@ class _OrderScreenState extends State<OrderScreen> {
                 : OrderStatus.values.firstWhere((e) => e.label == s,
                     orElse: () => OrderStatus.pending);
             return GestureDetector(
-              onTap: () => setState(() => _statusFilter = s),
+              onTap: () async {
+                setState(() {
+                  _statusFilter = s;
+                });
+
+                await loadOrders();
+              },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 margin: const EdgeInsets.only(right: 6),
@@ -734,7 +635,7 @@ class _OrderScreenState extends State<OrderScreen> {
             );
           }),
           const Spacer(),
-          Text('${_filtered.length} ORDER${_filtered.length == 1 ? '' : 'S'} FOUND',
+          Text('${_orders.length} ORDER${_orders.length == 1 ? '' : 'S'} FOUND',
               style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700,
                   letterSpacing: 0.8, color: AppColors.tertiary.withOpacity(0.5))),
         ]),
@@ -744,7 +645,7 @@ class _OrderScreenState extends State<OrderScreen> {
 
   // ── Table ─────────────────────────────────────────────────────────────────
   Widget _buildTable() {
-    final orders = _filtered;
+    final orders = _orders;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -801,14 +702,12 @@ class _OrderScreenState extends State<OrderScreen> {
       ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
 
-        // DATE / TIME  flex:3
         Expanded(flex: _kCols[0].flex, child: Padding(
           padding: const EdgeInsets.only(left: 4),
           child: Text(_fmt(order.datetime),
               style: TextStyle(fontSize: 11, color: AppColors.tertiary.withOpacity(0.75))),
         )),
 
-        // ORDER ID  flex:2
         Expanded(flex: _kCols[1].flex, child: Padding(
           padding: const EdgeInsets.only(left: 4),
           child: FittedBox(
@@ -828,7 +727,6 @@ class _OrderScreenState extends State<OrderScreen> {
           ),
         )),
 
-        // CUSTOMER  flex:3
         Expanded(flex: _kCols[2].flex, child: Padding(
           padding: const EdgeInsets.only(left: 4),
           child: Column(
@@ -845,14 +743,13 @@ class _OrderScreenState extends State<OrderScreen> {
           ),
         )),
 
-        // ITEMS  flex:1
         Expanded(flex: _kCols[3].flex, child: Padding(
           padding: const EdgeInsets.only(left: 4),
           child: Text('${order.itemCount}',
               style: TextStyle(fontSize: 12, color: AppColors.tertiary.withOpacity(0.8))),
         )),
 
-        // TYPE  flex:2
+
         Expanded(flex: _kCols[4].flex, child: Padding(
           padding: const EdgeInsets.only(left: 4),
           child: FittedBox(
@@ -879,18 +776,18 @@ class _OrderScreenState extends State<OrderScreen> {
           ),
         )),
 
-        // STATUS  flex:3  ← widened so "OUT FOR DELIVERY" never bleeds
-        // AFTER
-        Expanded(flex: _kCols[5].flex, child: Padding(
-          padding: const EdgeInsets.only(left: 4, right: 8),
-          child: Align(
-          alignment: Alignment.centerLeft,
-          child: _StatusDropdown(
-          order: order, onChanged: (s) => _updateStatus(order, s)),
+        Expanded(
+          flex: _kCols[5].flex,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 4, right: 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: _StatusBadge(status: order.status),
+            ),
           ),
-        )),
+        ),
 
-        // TOTAL  flex:2
+
         Expanded(flex: _kCols[6].flex, child: Padding(
           padding: const EdgeInsets.only(left: 4),
           child: Text('₱${order.total.toStringAsFixed(2)}',
@@ -898,7 +795,7 @@ class _OrderScreenState extends State<OrderScreen> {
                   color: Color(0xFF4a3520))),
         )),
 
-        // ACTIONS  flex:2
+
         Expanded(flex: _kCols[7].flex, child: Align(
           alignment: Alignment.centerRight,
           child: OutlinedButton.icon(
@@ -937,143 +834,6 @@ class _OrderScreenState extends State<OrderScreen> {
 
   void _viewReceipt(AdminOrder order) {
     showDialog(context: context, builder: (_) => _ReceiptDialog(order: order));
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// STATUS DROPDOWN
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _StatusDropdown extends StatelessWidget {
-  final AdminOrder order;
-  final ValueChanged<OrderStatus> onChanged;
-  const _StatusDropdown({required this.order, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final s = order.status;
-    return GestureDetector(
-      onTap: () => _showStatusMenu(context, s),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: s.bg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: s.color.withOpacity(0.4)),
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Container(width: 6, height: 6,
-              decoration: BoxDecoration(color: s.color, shape: BoxShape.circle)),
-          const SizedBox(width: 6),
-          // ✅ Flexible + overflow ellipsis so long labels never overflow
-          Flexible(child: Text(s.label,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800,
-                  letterSpacing: 0.3, color: s.color))),
-          const SizedBox(width: 4),
-          Icon(Icons.keyboard_arrow_down_rounded, size: 13, color: s.color),
-        ]),
-      ),
-    );
-  }
-
-  Future<void> _showStatusMenu(BuildContext context, OrderStatus current) async {
-    final renderBox  = context.findRenderObject() as RenderBox;
-    final offset     = renderBox.localToGlobal(Offset.zero);
-    final size       = renderBox.size;
-    final screenH    = MediaQuery.of(context).size.height;
-
-    // Each status row ≈ 42px, header ≈ 48px, bottom padding 6px
-    const menuHeight = 5 * 42.0 + 48.0 + 6.0;
-    final spaceBelow = screenH - (offset.dy + size.height);
-    final showAbove  = spaceBelow < menuHeight + 16;
-
-    await showDialog(
-      context: context,
-      barrierColor: Colors.transparent,
-      barrierDismissible: true,
-      builder: (ctx) {
-        return Stack(children: [
-          Positioned.fill(child: GestureDetector(
-            onTap: () => Navigator.pop(ctx),
-            child: Container(color: Colors.transparent),
-          )),
-          Positioned(
-            left: offset.dx,
-            // ✅ If not enough space below, anchor the bottom of the menu
-            // to just above the pill instead of going off screen
-            top:  showAbove ? null : offset.dy + size.height + 6,
-            bottom: showAbove
-                ? screenH - offset.dy + 6
-                : null,
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                width: 210,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.12),
-                        blurRadius: 20, offset: const Offset(0, 6)),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text('UPDATE STATUS',
-                            style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900,
-                                letterSpacing: 1.2,
-                                color: AppColors.tertiary.withOpacity(0.5))),
-                      ),
-                    ),
-                    Divider(height: 1, color: AppColors.tertiary.withOpacity(0.08)),
-                    ...OrderStatus.values.map((status) {
-                      final isActive = status == current;
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.pop(ctx);
-                          if (status != current) onChanged(status);
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 11),
-                          color: isActive ? status.bg : Colors.transparent,
-                          child: Row(children: [
-                            Container(width: 8, height: 8,
-                                decoration: BoxDecoration(
-                                    color: status.color,
-                                    shape: BoxShape.circle)),
-                            const SizedBox(width: 10),
-                            Expanded(child: Text(status.label,
-                                style: TextStyle(fontSize: 12,
-                                    fontWeight: isActive
-                                        ? FontWeight.w800
-                                        : FontWeight.w500,
-                                    color: isActive
-                                        ? status.color
-                                        : const Color(0xFF4a3520)))),
-                            if (isActive)
-                              Icon(Icons.check_rounded, size: 14,
-                                  color: status.color),
-                          ]),
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 6),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ]);
-      },
-    );
   }
 }
 
@@ -1337,4 +1097,44 @@ class _Col {
   final String label;
   final int flex;
   const _Col(this.label, {required this.flex});
+}
+
+class _StatusBadge extends StatelessWidget {
+  final OrderStatus status;
+  const _StatusBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: status.bg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: status.color.withOpacity(0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: status.color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            status.label,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              color: status.color,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
