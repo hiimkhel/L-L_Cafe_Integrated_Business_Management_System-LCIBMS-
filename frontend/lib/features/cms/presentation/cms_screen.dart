@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
 import 'package:frontend/core/widgets/admin_sidebar.dart';
-import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/core/services/customer/cms_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:typed_data';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PALETTE
+// PALETTE  — matches reviews_screen.dart
 // ─────────────────────────────────────────────────────────────────────────────
 
-const _kBg     = Color(0xFFEFE2C9);
-const _kCard   = Color(0xFFFAF6F0);
-const _kGreen  = Color(0xFF758C6D);
-const _kGreen1 = Color(0xFF3D5A45);
-const _kBrown  = Color(0xFFA98258);
-const _kDark   = Color(0xFF2D2A26);
-const _kWhite  = Colors.white;
+const _white   = Color(0xFFFFFFFF);
+const _surface = Color(0xFFF7F3EE);   // warm tinted panel bg
+const _border  = Color(0xFFE8DDD0);   // beige-tinted border
+const _beige   = Color(0xFFEFE2C9);   // segment control / header tint
+const _green1  = Color(0xFF3D5A45);
+const _green2  = Color(0xFF758C6D);
+const _gold    = Color(0xFFA98258);
+const _dark    = Color(0xFF2D2A26);
+const _sub     = Color(0xFF7A7067);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SCREEN SHELL
@@ -41,7 +41,7 @@ class _CMSScreenState extends State<CMSScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: _white,
       body: Row(
         children: [
           Sidebar(activeIndex: widget.activeIndex, onLogout: widget.onLogout),
@@ -73,7 +73,7 @@ class _CMSBody extends StatefulWidget {
 class _CMSBodyState extends State<_CMSBody> {
   final _titleCtrl = TextEditingController();
   final _descCtrl  = TextEditingController();
-  final _btnCtrl   = TextEditingController();
+  // ✅ Button text controller REMOVED
 
   Map<String, dynamic>? _promo;
   String     _cardType     = 'primary';
@@ -83,9 +83,6 @@ class _CMSBodyState extends State<_CMSBody> {
   Uint8List? _pickedBytes;
   String?    _existingUrl;
 
-  // ── Draft persistence ─────────────────────────────────────────────────────
-  // Stores unsaved edits keyed by card type so switching tabs never loses work.
-  // Cleared only after a successful publish.
   final Map<String, Map<String, dynamic>> _drafts = {};
 
   bool get _isPrimary => _cardType == 'primary';
@@ -100,10 +97,9 @@ class _CMSBodyState extends State<_CMSBody> {
   @override
   void initState() {
     super.initState();
-    // Auto-save a draft on every keystroke so switching tabs never discards work
     _titleCtrl.addListener(_saveDraft);
     _descCtrl.addListener(_saveDraft);
-    _btnCtrl.addListener(_saveDraft);
+    // ✅ _btnCtrl listener REMOVED
     _loadPromo(_cardType);
   }
 
@@ -111,37 +107,35 @@ class _CMSBodyState extends State<_CMSBody> {
   void dispose() {
     _titleCtrl.dispose();
     _descCtrl.dispose();
-    _btnCtrl.dispose();
+    // ✅ _btnCtrl dispose REMOVED
     super.dispose();
   }
 
   // ── Draft helpers ─────────────────────────────────────────────────────────
 
-  /// Snapshot the current editor state into _drafts[_cardType].
   void _saveDraft() {
     _drafts[_cardType] = {
       'title':         _titleCtrl.text,
       'description':   _descCtrl.text,
-      'buttonText':    _btnCtrl.text,
+      // ✅ buttonText removed from draft
       'uploadedImgId': _uploadedImgId,
       'pickedBytes':   _pickedBytes,
       'existingUrl':   _existingUrl,
     };
   }
 
-  /// Restore a previously saved draft for [type] into the controllers.
   void _restoreDraft(String type) {
     final draft = _drafts[type];
     if (draft == null) return;
     _titleCtrl.text = draft['title']       as String? ?? '';
     _descCtrl.text  = draft['description'] as String? ?? '';
-    _btnCtrl.text   = draft['buttonText']  as String? ?? '';
+    // ✅ buttonText restore REMOVED
     _uploadedImgId  = draft['uploadedImgId'] as int?;
     _pickedBytes    = draft['pickedBytes']   as Uint8List?;
     _existingUrl    = draft['existingUrl']   as String?;
   }
 
-  // ── Data ─────────────────────────────────────────────────────────────────
+  // ── Data ──────────────────────────────────────────────────────────────────
 
   Future<void> _loadPromo(String type) async {
     try {
@@ -149,15 +143,10 @@ class _CMSBodyState extends State<_CMSBody> {
       if (!mounted) return;
       setState(() {
         _promo = data;
-
         if (_drafts.containsKey(type)) {
-          // ✅ User has unsaved edits for this card — restore them
-          //    instead of blowing them away with API values.
           _restoreDraft(type);
         } else {
-          // No draft yet — seed the editor from API data
           _titleCtrl.text = data?['Title']      ?? '';
-          _btnCtrl.text   = data?['buttonText'] ?? '';
           _descCtrl.text  = CmsService.extractDescription(data?['description']);
           final rawUrl    = data?['image']?['url'];
           _existingUrl    = rawUrl != null ? CmsService.getFullImageUrl(rawUrl) : null;
@@ -179,8 +168,8 @@ class _CMSBodyState extends State<_CMSBody> {
     try {
       final id = _promo!['documentId'] ?? _promo!['id'];
       final payload = <String, dynamic>{
-        'Title':      _titleCtrl.text,
-        'buttonText': _btnCtrl.text,
+        'Title': _titleCtrl.text,
+        // ✅ buttonText removed from payload
         'description': [
           {
             'type': 'paragraph',
@@ -197,14 +186,20 @@ class _CMSBodyState extends State<_CMSBody> {
       messenger
         ..removeCurrentSnackBar()
         ..showSnackBar(SnackBar(
-          content: Text(ok ? '✓  Promotion published!' : '✗  Publish failed. Try again.'),
-          backgroundColor: ok ? _kGreen1 : Colors.redAccent,
+          content: Row(children: [
+            Icon(ok ? Icons.check_circle_outline_rounded : Icons.error_outline_rounded,
+                color: _white, size: 15),
+            const SizedBox(width: 8),
+            Text(ok ? 'Promotion published!' : 'Publish failed. Try again.',
+                style: const TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w600)),
+          ]),
+          backgroundColor: ok ? _green1 : Colors.redAccent,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          duration: const Duration(seconds: 2),
         ));
 
       if (ok) {
-        // ✅ Clear draft — published content is now the source of truth
         _drafts.remove(_cardType);
         setState(() { _uploadedImgId = null; _pickedBytes = null; });
         await _loadPromo(_cardType);
@@ -216,44 +211,43 @@ class _CMSBodyState extends State<_CMSBody> {
     }
   }
 
-  // ── Image upload ──────────────────────────────────────────────────────────
+  // ── Image ─────────────────────────────────────────────────────────────────
 
   Future<void> _uploadImage() async {
     const maxBytes = 10 * 1024 * 1024;
     try {
       final result = await FilePicker.pickFiles(type: FileType.image, withData: true);
       if (result == null) return;
-
       final file = result.files.single;
       if (file.size > maxBytes) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('File too large (${(file.size / 1024 / 1024).toStringAsFixed(1)} MB). Max 10 MB.'),
+            content: Text(
+                'File too large (${(file.size / 1024 / 1024).toStringAsFixed(1)} MB). Max 10 MB.'),
             backgroundColor: Colors.orange,
             behavior: SnackBarBehavior.floating,
           ));
         }
         return;
       }
-
       setState(() { _isUploading = true; _pickedBytes = file.bytes; });
-
       final id = await CmsService.uploadFile(file.bytes!, file.name);
       if (!mounted) return;
-      setState(() {
-        _uploadedImgId = id;
-        _isUploading   = false;
-      });
-      // Save image into draft immediately so a card switch doesn't lose it
+      setState(() { _uploadedImgId = id; _isUploading = false; });
       _saveDraft();
-
       ScaffoldMessenger.of(context)
         ..removeCurrentSnackBar()
         ..showSnackBar(SnackBar(
-          content: const Text('Image uploaded — press Publish to save.'),
-          backgroundColor: _kGreen,
+          content: Row(children: [
+            const Icon(Icons.check_circle_outline_rounded, color: _white, size: 15),
+            const SizedBox(width: 8),
+            const Text('Image uploaded — press Publish to save.',
+                style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w600)),
+          ]),
+          backgroundColor: _green2,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          duration: const Duration(seconds: 2),
         ));
     } catch (e) {
       debugPrint('Upload error: $e');
@@ -263,16 +257,15 @@ class _CMSBodyState extends State<_CMSBody> {
 
   void _clearImage() {
     setState(() { _uploadedImgId = null; _pickedBytes = null; });
-    _saveDraft(); // persist the cleared image into the draft
+    _saveDraft();
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -284,7 +277,6 @@ class _CMSBodyState extends State<_CMSBody> {
             canPublish:   _promo != null,
             onCardChange: (v) {
               if (v == null || v == _cardType) return;
-              // ✅ Save current edits BEFORE switching cards
               _saveDraft();
               setState(() => _cardType = v);
               _loadPromo(v);
@@ -298,12 +290,12 @@ class _CMSBodyState extends State<_CMSBody> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Edit panel
                 Expanded(
                   flex: 4,
                   child: _EditPanel(
                     titleCtrl:     _titleCtrl,
                     descCtrl:      _descCtrl,
-                    btnCtrl:       _btnCtrl,
                     isUploading:   _isUploading,
                     uploadedImgId: _uploadedImgId,
                     onUpload:      _uploadImage,
@@ -311,14 +303,14 @@ class _CMSBodyState extends State<_CMSBody> {
                   ),
                 ),
 
-                const SizedBox(width: 24),
+                const SizedBox(width: 20),
 
+                // Preview panel
                 Expanded(
                   flex: 6,
                   child: _PreviewPanel(
                     titleCtrl:   _titleCtrl,
                     descCtrl:    _descCtrl,
-                    btnCtrl:     _btnCtrl,
                     pickedBytes: _pickedBytes,
                     existingUrl: _existingUrl,
                     isPrimary:   _isPrimary,
@@ -356,108 +348,123 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Row(children: [
-          Container(
-            width: 4, height: 22,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter, colors: [_kGreen, _kGreen1]),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(width: 10),
-          const Text('PROMOTION EDITOR',
-              style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-                  fontSize: 15, letterSpacing: 0.5, color: _kGreen1)),
-        ]),
+    final publishEnabled = canPublish && !isPublishing && !isUploading;
 
-        const SizedBox(width: 24),
-
+    return Row(children: [
+      // Section label
+      Row(children: [
         Container(
-          height: 44,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          width: 4, height: 22,
           decoration: BoxDecoration(
-            color: _kWhite,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: _kGreen.withOpacity(0.3)),
-            boxShadow: [BoxShadow(color: _kDark.withOpacity(0.05),
-                blurRadius: 6, offset: const Offset(0, 2))],
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: cardType,
-              isDense: true,
-              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: _kGreen, size: 18),
-              style: const TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w700,
-                  fontSize: 13, color: _kDark),
-              items: cardTypes.entries.map((e) => DropdownMenuItem(
-                value: e.key,
-                child: Row(children: [
-                  Icon(e.key == 'primary' ? Icons.web_rounded : Icons.view_sidebar_rounded,
-                      size: 16, color: _kGreen),
-                  const SizedBox(width: 8),
-                  Text(e.value),
-                ]),
-              )).toList(),
-              onChanged: isPublishing ? null : onCardChange,
-            ),
+            gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [_green2, _green1]),
+            borderRadius: BorderRadius.circular(2),
           ),
         ),
+        const SizedBox(width: 10),
+        const Text('PROMOTION EDITOR',
+            style: TextStyle(
+                fontFamily: 'Urbanist',
+                fontWeight: FontWeight.w900,
+                fontSize: 15,
+                letterSpacing: 0.5,
+                color: _green1)),
+      ]),
 
-        const Spacer(),
+      const SizedBox(width: 20),
 
-        if (isUploading)
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Row(children: [
-              const SizedBox(width: 14, height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: _kBrown)),
-              const SizedBox(width: 8),
-              Text('Uploading image…', style: TextStyle(fontFamily: 'Urbanist',
-                  fontSize: 12, color: _kBrown.withOpacity(0.8))),
-            ]),
+      // Card type dropdown — beige-tinted, matches segmented control style
+      Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: _beige,
+          borderRadius: BorderRadius.circular(9),
+          border: Border.all(color: _border),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: cardType,
+            isDense: true,
+            icon: Icon(Icons.keyboard_arrow_down_rounded, color: _sub, size: 18),
+            style: const TextStyle(
+                fontFamily: 'Urbanist',
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: _dark),
+            dropdownColor: _white,
+            items: cardTypes.entries.map((e) => DropdownMenuItem(
+              value: e.key,
+              child: Row(children: [
+                Icon(
+                    e.key == 'primary'
+                        ? Icons.web_rounded
+                        : Icons.view_sidebar_rounded,
+                    size: 15, color: _green2),
+                const SizedBox(width: 8),
+                Text(e.value),
+              ]),
+            )).toList(),
+            onChanged: isPublishing ? null : onCardChange,
           ),
+        ),
+      ),
 
-        GestureDetector(
-          onTap: (canPublish && !isPublishing && !isUploading) ? onPublish : null,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-            decoration: BoxDecoration(
-              gradient: (canPublish && !isPublishing && !isUploading)
-                  ? const LinearGradient(colors: [_kGreen, _kGreen1]) : null,
-              color: (canPublish && !isPublishing && !isUploading)
-                  ? null : _kDark.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: (canPublish && !isPublishing && !isUploading)
-                  ? [BoxShadow(color: _kGreen.withOpacity(0.35),
-                      blurRadius: 10, offset: const Offset(0, 4))]
-                  : [],
+      const Spacer(),
+
+      // Uploading indicator
+      if (isUploading)
+        Padding(
+          padding: const EdgeInsets.only(right: 16),
+          child: Row(children: [
+            SizedBox(
+              width: 13, height: 13,
+              child: CircularProgressIndicator(strokeWidth: 2, color: _gold),
             ),
-            child: isPublishing
-                ? const SizedBox(width: 18, height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2.5, color: _kWhite))
-                : Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.publish_rounded, size: 16,
-                        color: (canPublish && !isUploading)
-                            ? _kWhite : _kDark.withOpacity(0.3)),
-                    const SizedBox(width: 8),
-                    Text('PUBLISH',
-                        style: TextStyle(
+            const SizedBox(width: 8),
+            Text('Uploading image…',
+                style: TextStyle(
+                    fontFamily: 'Urbanist', fontSize: 12, color: _gold.withOpacity(0.9))),
+          ]),
+        ),
+
+      // Publish button — green1 filled, same style as reviews action buttons
+      GestureDetector(
+        onTap: publishEnabled ? onPublish : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+          decoration: BoxDecoration(
+            color: publishEnabled ? _green1 : _border,
+            borderRadius: BorderRadius.circular(9),
+            boxShadow: publishEnabled
+                ? [BoxShadow(
+                    color: _green1.withOpacity(0.28),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3))]
+                : [],
+          ),
+          child: isPublishing
+              ? const SizedBox(
+                  width: 16, height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2.5, color: _white))
+              : Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.publish_rounded, size: 15,
+                      color: publishEnabled ? _white : _sub),
+                  const SizedBox(width: 7),
+                  Text('PUBLISH',
+                      style: TextStyle(
                           fontFamily: 'Urbanist',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 13,
-                          letterSpacing: 1.2,
-                          color: (canPublish && !isUploading)
-                              ? _kWhite : _kDark.withOpacity(0.3),
-                        )),
-                  ]),
-          ),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                          letterSpacing: 1.0,
+                          color: publishEnabled ? _white : _sub)),
+                ]),
         ),
-      ],
-    );
+      ),
+    ]);
   }
 }
 
@@ -466,7 +473,8 @@ class _TopBar extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _EditPanel extends StatelessWidget {
-  final TextEditingController titleCtrl, descCtrl, btnCtrl;
+  final TextEditingController titleCtrl, descCtrl;
+  // ✅ btnCtrl REMOVED
   final bool isUploading;
   final int? uploadedImgId;
   final VoidCallback onUpload, onClearImage;
@@ -474,7 +482,6 @@ class _EditPanel extends StatelessWidget {
   const _EditPanel({
     required this.titleCtrl,
     required this.descCtrl,
-    required this.btnCtrl,
     required this.isUploading,
     required this.uploadedImgId,
     required this.onUpload,
@@ -486,41 +493,49 @@ class _EditPanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: _kCard,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _kGreen.withOpacity(0.12)),
-        boxShadow: [BoxShadow(color: _kDark.withOpacity(0.05),
-            blurRadius: 14, offset: const Offset(0, 4))],
+        color: _white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _border),
+        boxShadow: [
+          BoxShadow(color: _dark.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 3))
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Panel heading — matches reviews panel header style
           _PanelHeading(icon: Icons.edit_note_rounded, label: 'EDIT CONTENT'),
-          const SizedBox(height: 22),
+          const SizedBox(height: 20),
+          Divider(color: _border, height: 1),
+          const SizedBox(height: 20),
 
           _FieldLabel(label: 'TITLE'),
           const SizedBox(height: 6),
-          _InputBox(controller: titleCtrl, hint: 'Enter promotion title…',
-              maxLines: 1, fontSize: 16),
+          _InputBox(
+              controller: titleCtrl,
+              hint: 'Enter promotion title…',
+              maxLines: 1,
+              fontSize: 15),
+
           const SizedBox(height: 16),
 
           _FieldLabel(label: 'DESCRIPTION'),
           const SizedBox(height: 6),
           Expanded(
-            child: _InputBox(controller: descCtrl,
+            child: _InputBox(
+                controller: descCtrl,
                 hint: 'Enter promotion description…',
-                maxLines: null, expands: true, fontSize: 13),
+                maxLines: null,
+                expands: true,
+                fontSize: 13),
           ),
-          const SizedBox(height: 16),
 
-          _FieldLabel(label: 'BUTTON TEXT'),
-          const SizedBox(height: 6),
-          _InputBox(controller: btnCtrl, hint: 'e.g. ORDER NOW',
-              maxLines: 1, fontSize: 14),
+          // ✅ BUTTON TEXT field + SizedBox REMOVED entirely
+
           const SizedBox(height: 16),
 
           _FieldLabel(label: 'BANNER IMAGE'),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           _ImageUploadTile(
             isUploading:   isUploading,
             uploadedImgId: uploadedImgId,
@@ -538,7 +553,8 @@ class _EditPanel extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _PreviewPanel extends StatelessWidget {
-  final TextEditingController titleCtrl, descCtrl, btnCtrl;
+  final TextEditingController titleCtrl, descCtrl;
+  // ✅ btnCtrl REMOVED
   final Uint8List? pickedBytes;
   final String? existingUrl;
   final bool isPrimary;
@@ -546,7 +562,6 @@ class _PreviewPanel extends StatelessWidget {
   const _PreviewPanel({
     required this.titleCtrl,
     required this.descCtrl,
-    required this.btnCtrl,
     required this.pickedBytes,
     required this.existingUrl,
     required this.isPrimary,
@@ -557,57 +572,72 @@ class _PreviewPanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: _kCard,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _kGreen.withOpacity(0.12)),
-        boxShadow: [BoxShadow(color: _kDark.withOpacity(0.05),
-            blurRadius: 14, offset: const Offset(0, 4))],
+        color: _white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _border),
+        boxShadow: [
+          BoxShadow(color: _dark.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 3))
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Heading row
           Row(children: [
-            _PanelHeading(icon: Icons.preview_rounded, label: 'LIVE PREVIEW'),
+            const _PanelHeading(icon: Icons.preview_rounded, label: 'LIVE PREVIEW'),
             const Spacer(),
+            // Card type badge — gold for secondary, green for primary
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: _kGreen.withOpacity(0.1),
+                color: isPrimary ? _green1.withOpacity(0.08) : _gold.withOpacity(0.10),
                 borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color: isPrimary ? _green1.withOpacity(0.2) : _gold.withOpacity(0.25)),
               ),
-              child: Text(isPrimary ? 'MAIN CARD' : 'SECONDARY CARD',
-                  style: const TextStyle(fontFamily: 'Urbanist', fontSize: 9,
-                      fontWeight: FontWeight.w700, letterSpacing: 1.0, color: _kGreen1)),
+              child: Text(
+                isPrimary ? 'MAIN CARD' : 'SECONDARY CARD',
+                style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.0,
+                    color: isPrimary ? _green1 : _gold),
+              ),
             ),
           ]),
 
           const SizedBox(height: 16),
 
+          // Info banner — uses beige from palette
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
             decoration: BoxDecoration(
-              color: _kGreen.withOpacity(0.06),
+              color: _beige,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: _kGreen.withOpacity(0.15)),
+              border: Border.all(color: _border),
             ),
             child: Row(children: [
-              Icon(Icons.info_outline_rounded, size: 13, color: _kGreen.withOpacity(0.7)),
+              Icon(Icons.info_outline_rounded, size: 13, color: _sub),
               const SizedBox(width: 8),
               Text('This is exactly how the card appears on the landing page.',
-                  style: TextStyle(fontFamily: 'Urbanist', fontSize: 11,
-                      color: _kDark.withOpacity(0.55))),
+                  style: TextStyle(
+                      fontFamily: 'Urbanist', fontSize: 11, color: _dark.withOpacity(0.6))),
             ]),
           ),
 
           const SizedBox(height: 20),
 
+          Divider(color: _border, height: 1),
+          const SizedBox(height: 20),
+
+          // Live preview — listens to title + desc only (no button)
           Expanded(
             child: ListenableBuilder(
-              listenable: Listenable.merge([titleCtrl, descCtrl, btnCtrl]),
+              listenable: Listenable.merge([titleCtrl, descCtrl]),
               builder: (_, __) => _LandingCardPreview(
                 title:       titleCtrl.text,
                 description: descCtrl.text,
-                buttonText:  btnCtrl.text,
                 pickedBytes: pickedBytes,
                 existingUrl: existingUrl,
                 isPrimary:   isPrimary,
@@ -617,12 +647,13 @@ class _PreviewPanel extends StatelessWidget {
 
           const SizedBox(height: 12),
 
+          // Footer hint
           Row(children: [
-            Icon(Icons.auto_fix_high_rounded, size: 13, color: _kDark.withOpacity(0.3)),
+            Icon(Icons.auto_fix_high_rounded, size: 12, color: _sub.withOpacity(0.5)),
             const SizedBox(width: 6),
             Text('Updates live as you type. Press Publish to save changes.',
-                style: TextStyle(fontFamily: 'Urbanist', fontSize: 11,
-                    color: _kDark.withOpacity(0.35))),
+                style: TextStyle(
+                    fontFamily: 'Urbanist', fontSize: 11, color: _sub.withOpacity(0.6))),
           ]),
         ],
       ),
@@ -631,11 +662,12 @@ class _PreviewPanel extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LANDING CARD PREVIEW
+// LANDING CARD PREVIEW  — button text section removed
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _LandingCardPreview extends StatelessWidget {
-  final String title, description, buttonText;
+  final String title, description;
+  // ✅ buttonText REMOVED
   final Uint8List? pickedBytes;
   final String? existingUrl;
   final bool isPrimary;
@@ -643,7 +675,6 @@ class _LandingCardPreview extends StatelessWidget {
   const _LandingCardPreview({
     required this.title,
     required this.description,
-    required this.buttonText,
     required this.isPrimary,
     this.pickedBytes,
     this.existingUrl,
@@ -660,89 +691,60 @@ class _LandingCardPreview extends StatelessWidget {
           width: cardW,
           height: cardH,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Stack(
-              children: [
-                Positioned.fill(child: _buildBg()),
-                Positioned.fill(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.centerRight,
-                        end: Alignment.centerLeft,
-                        colors: [Color(0x44000000), Color(0xDD1C2419)],
-                        stops: [0.0, 1.0],
-                      ),
+            borderRadius: BorderRadius.circular(16),
+            child: Stack(children: [
+              Positioned.fill(child: _buildBg()),
+              // Dark gradient overlay
+              Positioned.fill(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerRight,
+                      end: Alignment.centerLeft,
+                      colors: [Color(0x44000000), Color(0xDD1C2419)],
                     ),
                   ),
                 ),
-                Positioned(
-                  left: 28,
-                  bottom: 28,
-                  right: cardW * 0.35,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
+              ),
+              // Text content — no button
+              Positioned(
+                left: 28, bottom: 28, right: cardW * 0.35,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title.isEmpty ? 'Promotion Title' : title.toUpperCase(),
+                      style: TextStyle(
+                        fontFamily: 'Urbanist',
+                        fontWeight: FontWeight.w900,
+                        fontSize: cardW > 500 ? 26 : 20,
+                        color: title.isEmpty
+                            ? const Color(0xFFFFFFFF).withOpacity(0.3)
+                            : const Color(0xFFFFFFFF),
+                        height: 1.15,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    if (description.isNotEmpty) ...[
+                      SizedBox(height: cardH * 0.04),
                       Text(
-                        title.isEmpty ? 'Promotion Title' : title.toUpperCase(),
+                        description,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontFamily: 'Urbanist',
-                          fontWeight: FontWeight.w900,
-                          fontSize: cardW > 500 ? 26 : 20,
-                          color: title.isEmpty ? _kWhite.withOpacity(0.3) : _kWhite,
-                          height: 1.15,
-                          letterSpacing: 0.5,
+                          fontSize: cardW > 500 ? 13 : 11,
+                          height: 1.5,
+                          color: const Color(0xFFFFFFFF).withOpacity(0.8),
                         ),
                       ),
-                      if (description.isNotEmpty) ...[
-                        SizedBox(height: cardH * 0.04),
-                        Text(
-                          description,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: 'Urbanist',
-                            fontSize: cardW > 500 ? 13 : 11,
-                            height: 1.5,
-                            color: _kWhite.withOpacity(0.8),
-                          ),
-                        ),
-                      ],
-                      SizedBox(height: cardH * 0.06),
-                      if (buttonText.isNotEmpty)
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: cardW > 500 ? 28 : 20,
-                            vertical: cardW > 500 ? 12 : 9,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isPrimary ? _kWhite : _kBrown,
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: (isPrimary ? _kWhite : _kBrown).withOpacity(0.35),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Text(
-                            buttonText,
-                            style: TextStyle(
-                              fontFamily: 'Urbanist',
-                              fontWeight: FontWeight.w800,
-                              fontSize: cardW > 500 ? 13 : 11,
-                              letterSpacing: 0.5,
-                              color: isPrimary ? _kGreen1 : _kWhite,
-                            ),
-                          ),
-                        ),
                     ],
-                  ),
+                    // ✅ Button preview block REMOVED
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ]),
           ),
         ),
       );
@@ -768,11 +770,13 @@ class _LandingCardPreview extends StatelessWidget {
       color: const Color(0xFF2C3A2C),
       child: Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.image_outlined, size: 40, color: _kWhite.withOpacity(0.12)),
+          Icon(Icons.image_outlined, size: 40, color: Colors.white.withOpacity(0.12)),
           const SizedBox(height: 8),
           Text('No image selected',
-              style: TextStyle(fontFamily: 'Urbanist', fontSize: 11,
-                  color: _kWhite.withOpacity(0.2))),
+              style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontSize: 11,
+                  color: Colors.white.withOpacity(0.2))),
         ]),
       ),
     );
@@ -797,8 +801,8 @@ class _ImageUploadTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     final uploaded = uploadedImgId != null;
+
     return GestureDetector(
       onTap: isUploading ? null : (uploaded ? null : onUpload),
       child: AnimatedContainer(
@@ -806,71 +810,102 @@ class _ImageUploadTile extends StatelessWidget {
         height: 72,
         decoration: BoxDecoration(
           color: uploaded
-              ? const Color(0xFF4CAF50).withOpacity(0.06)
-              : isUploading ? _kBrown.withOpacity(0.05) : _kWhite,
-          borderRadius: BorderRadius.circular(12),
+              ? _green1.withOpacity(0.05)
+              : isUploading
+                  ? _gold.withOpacity(0.05)
+                  : _surface,
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: uploaded
-                ? const Color(0xFF4CAF50).withOpacity(0.5)
-                : isUploading ? _kBrown.withOpacity(0.4) : _kGreen.withOpacity(0.25),
+                ? _green1.withOpacity(0.35)
+                : isUploading
+                    ? _gold.withOpacity(0.4)
+                    : _border,
             width: uploaded ? 1.5 : 1,
           ),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(children: [
+            // Icon container
             Container(
-              width: 38, height: 38,
+              width: 36, height: 36,
               decoration: BoxDecoration(
                 color: uploaded
-                    ? const Color(0xFF4CAF50).withOpacity(0.1)
-                    : isUploading ? _kBrown.withOpacity(0.08) : _kGreen.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(10),
+                    ? _green1.withOpacity(0.1)
+                    : isUploading
+                        ? _gold.withOpacity(0.08)
+                        : _beige,
+                borderRadius: BorderRadius.circular(9),
               ),
               child: isUploading
                   ? Padding(
                       padding: const EdgeInsets.all(9),
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2.5, color: _kBrown.withOpacity(0.7)))
-                  : Icon(uploaded ? Icons.check_circle_rounded : Icons.cloud_upload_outlined,
-                      size: 20, color: uploaded ? const Color(0xFF4CAF50) : _kGreen),
+                      child: CircularProgressIndicator(strokeWidth: 2.5, color: _gold))
+                  : Icon(
+                      uploaded
+                          ? Icons.check_circle_rounded
+                          : Icons.cloud_upload_outlined,
+                      size: 18,
+                      color: uploaded ? _green1 : _green2),
             ),
             const SizedBox(width: 12),
+
+            // Labels
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    uploaded ? 'Image uploaded'
-                        : isUploading ? 'Uploading…'
-                        : 'Click to upload image',
+                    uploaded
+                        ? 'Image uploaded'
+                        : isUploading
+                            ? 'Uploading…'
+                            : 'Click to upload image',
                     style: TextStyle(
-                      fontFamily: 'Urbanist', fontWeight: FontWeight.w700, fontSize: 12,
-                      color: uploaded ? const Color(0xFF4CAF50)
-                          : isUploading ? _kBrown : _kDark,
-                    ),
+                        fontFamily: 'Urbanist',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: uploaded
+                            ? _green1
+                            : isUploading
+                                ? _gold
+                                : _dark),
                   ),
+                  const SizedBox(height: 2),
                   Text(
-                    uploaded ? 'ID #$uploadedImgId — will link on Publish'
+                    uploaded
+                        ? 'ID #$uploadedImgId — will link on Publish'
                         : 'PNG, JPG or WEBP, max 10 MB',
-                    style: TextStyle(fontFamily: 'Urbanist', fontSize: 10,
-                        color: _kDark.withOpacity(0.4)),
+                    style: const TextStyle(
+                        fontFamily: 'Urbanist', fontSize: 10, color: _sub),
                   ),
                 ],
               ),
             ),
+
+            // Action buttons
             if (uploaded)
               Row(children: [
-                _SmallBtn(label: 'CHANGE', icon: Icons.swap_horiz_rounded,
-                    color: _kGreen, onTap: onUpload),
+                _SmallBtn(
+                    label: 'CHANGE',
+                    icon: Icons.swap_horiz_rounded,
+                    color: _green2,
+                    onTap: onUpload),
                 const SizedBox(width: 8),
-                _SmallBtn(label: 'REMOVE', icon: Icons.close_rounded,
-                    color: Colors.redAccent, onTap: onClear),
+                _SmallBtn(
+                    label: 'REMOVE',
+                    icon: Icons.close_rounded,
+                    color: Colors.redAccent,
+                    onTap: onClear),
               ])
             else if (!isUploading)
-              _SmallBtn(label: 'BROWSE', icon: Icons.folder_open_rounded,
-                  color: _kGreen, onTap: onUpload),
+              _SmallBtn(
+                  label: 'BROWSE',
+                  icon: Icons.folder_open_rounded,
+                  color: _green2,
+                  onTap: onUpload),
           ]),
         ),
       ),
@@ -879,7 +914,7 @@ class _ImageUploadTile extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SHARED WIDGETS
+// SHARED SMALL WIDGETS
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _PanelHeading extends StatelessWidget {
@@ -890,10 +925,15 @@ class _PanelHeading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      Icon(icon, size: 18, color: _kGreen),
+      Icon(icon, size: 17, color: _green2),
       const SizedBox(width: 8),
-      Text(label, style: const TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w900,
-          fontSize: 12, letterSpacing: 1.5, color: _kGreen1)),
+      Text(label,
+          style: const TextStyle(
+              fontFamily: 'Urbanist',
+              fontWeight: FontWeight.w900,
+              fontSize: 12,
+              letterSpacing: 1.4,
+              color: _green1)),
     ]);
   }
 }
@@ -905,8 +945,12 @@ class _FieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(label,
-        style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w800,
-            fontSize: 10, letterSpacing: 1.2, color: _kDark.withOpacity(0.45)));
+        style: const TextStyle(
+            fontFamily: 'Urbanist',
+            fontWeight: FontWeight.w800,
+            fontSize: 10,
+            letterSpacing: 1.2,
+            color: _sub));
   }
 }
 
@@ -929,24 +973,29 @@ class _InputBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: _kWhite,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _kGreen.withOpacity(0.2)),
-        boxShadow: [BoxShadow(color: _kDark.withOpacity(0.04),
-            blurRadius: 6, offset: const Offset(0, 2))],
+        color: _surface,
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: _border),
       ),
       child: TextField(
         controller: controller,
         maxLines: maxLines,
         expands: expands,
-        textAlignVertical: expands ? TextAlignVertical.top : TextAlignVertical.center,
-        style: TextStyle(fontFamily: 'Urbanist', fontWeight: FontWeight.w600,
-            fontSize: fontSize, color: _kDark),
+        textAlignVertical:
+            expands ? TextAlignVertical.top : TextAlignVertical.center,
+        style: TextStyle(
+            fontFamily: 'Urbanist',
+            fontWeight: FontWeight.w600,
+            fontSize: fontSize,
+            color: _dark),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(fontFamily: 'Urbanist', fontSize: fontSize,
-              color: _kDark.withOpacity(0.28)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          hintStyle: TextStyle(
+              fontFamily: 'Urbanist',
+              fontSize: fontSize,
+              color: _sub.withOpacity(0.5)),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           border: InputBorder.none,
         ),
       ),
@@ -961,8 +1010,10 @@ class _SmallBtn extends StatelessWidget {
   final VoidCallback onTap;
 
   const _SmallBtn({
-    required this.label, required this.icon,
-    required this.color, required this.onTap,
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
   });
 
   @override
@@ -972,16 +1023,20 @@ class _SmallBtn extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withOpacity(0.25)),
+          color: color.withOpacity(0.07),
+          borderRadius: BorderRadius.circular(7),
+          border: Border.all(color: color.withOpacity(0.22)),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon, size: 12, color: color),
           const SizedBox(width: 4),
-          Text(label, style: TextStyle(fontFamily: 'Urbanist',
-              fontWeight: FontWeight.w800, fontSize: 10,
-              letterSpacing: 0.5, color: color)),
+          Text(label,
+              style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w800,
+                  fontSize: 10,
+                  letterSpacing: 0.5,
+                  color: color)),
         ]),
       ),
     );

@@ -8,7 +8,6 @@ class OrderRow extends StatefulWidget {
   final List<String> items;
   final String status;
   final String time;
-  final String actionText;
   final VoidCallback onActionPressed;
 
   const OrderRow({
@@ -18,8 +17,7 @@ class OrderRow extends StatefulWidget {
     required this.items,
     required this.status,
     required this.time,
-    required this.actionText,
-    required this.onActionPressed,
+    required this.onActionPressed, required String actionText,
   });
 
   @override
@@ -297,18 +295,18 @@ class _OrderRowState extends State<OrderRow> {
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-          child: Row(
+          child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.check_circle,
                 size: 15,
                 color: Colors.white,
               ),
-              const SizedBox(width: 5),
+              SizedBox(width: 5),
               Text(
-                widget.actionText,
-                style: const TextStyle(
+                "MARK AS READY",
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.4,

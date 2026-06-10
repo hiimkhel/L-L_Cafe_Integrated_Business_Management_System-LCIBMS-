@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/services/pos/order_service.dart';
-import 'package:frontend/config/theme/app_colors.dart';
 
 class OnlineOrdersScreen extends StatefulWidget {
   const OnlineOrdersScreen({super.key});
@@ -338,7 +337,7 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'POS ONLINE ORDER DASHBOARD',
+                'ORDER VERIFICATION CONSOLE',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
@@ -347,7 +346,7 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
                 ),
               ),
               Text(
-                'MANUAL PAYMENT VERIFICATION',
+                'MANUAL PAYMENT & FRAUD CHECK',
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
@@ -539,73 +538,13 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
           headingRowHeight: 50,
           dataRowMaxHeight: 60,
           headingRowColor: WidgetStateProperty.all(_bg.withOpacity(0.3)),
-          columns: [
-            DataColumn(
-              label: Text(
-                'ORDER #',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.secondary,
-                  letterSpacing: 1.1,
-                ),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'CUSTOMER',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.secondary,
-                  letterSpacing: 1.1,
-                ),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'TOTAL',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.secondary,
-                  letterSpacing: 1.1,
-                ),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'PAYMENT',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.secondary,
-                  letterSpacing: 1.1,
-                ),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'STATUS',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.secondary,
-                  letterSpacing: 1.1,
-                ),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'QUICK ACTION',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.secondary,
-                  letterSpacing: 1.1,
-                ),
-              ),
-            ),
+          columns: const [
+            DataColumn(label: Text('ORDER #')),
+            DataColumn(label: Text('CUSTOMER')),
+            DataColumn(label: Text('TOTAL')),
+            DataColumn(label: Text('PAYMENT')),
+            DataColumn(label: Text('STATUS')),
+            DataColumn(label: Text('QUICK ACTION')),
           ],
           rows:
               orders.map((order) {
@@ -617,35 +556,9 @@ class _OnlineOrdersScreenState extends State<OnlineOrdersScreen> {
                       (_) => setState(() => _selectedOrderId = order['id']),
                   cells: [
                     DataCell(
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: _darkBrown.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: _darkBrown.withOpacity(0.15),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.receipt_long_rounded,
-                              size: 14,
-                              color: _darkBrown,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              order['id'],
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 12,
-                                color: _darkBrown,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
+                      Text(
+                        order['id'],
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                     DataCell(Text(order['customer'])),

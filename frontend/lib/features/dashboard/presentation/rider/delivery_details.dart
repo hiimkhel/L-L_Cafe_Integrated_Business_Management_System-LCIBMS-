@@ -30,8 +30,9 @@ class _DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
 
   void _handleStatusUpdate(String currentStatus) async {
     String nextStatus = '';
-    if (currentStatus == 'PREPARING') nextStatus = 'ready';
-    else if (currentStatus == 'READY') nextStatus = 'out_for_delivery';
+    if (currentStatus == 'PREPARING') {
+      nextStatus = 'ready';
+    } else if (currentStatus == 'READY') nextStatus = 'out_for_delivery';
     else if (currentStatus == 'OUT_FOR_DELIVERY') nextStatus = 'completed';
 
 
@@ -98,8 +99,9 @@ class _DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
     Color statusColor;
     String status = order['status'];
 
-    if (status == "PREPARING") statusColor = AppColors.preparingColor;
-    else if (status == "OUT_FOR_DELIVERY") statusColor = AppColors.deliveringColor;
+    if (status == "PREPARING") {
+      statusColor = AppColors.preparingColor;
+    } else if (status == "OUT_FOR_DELIVERY") statusColor = AppColors.deliveringColor;
     else if (status == "COMPLETED") statusColor = Colors.green;
     else if (status == "DELIVERED") statusColor = AppColors.deliveredColor;
     else statusColor = Colors.grey;
@@ -169,6 +171,8 @@ class _DeliveryDetailsScreenState extends State<DeliveryDetailsScreen> {
 
   Widget _orderDetails(Map<String, dynamic> order) {
     final List items = (order['items'] ?? order['order'] ?? []) as List;
+    double deliveryFee =
+    double.tryParse(order['deliveryFee']?.toString() ?? "0") ?? 0.0;
 
     return Container(
       width: double.infinity,

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:frontend/core/widgets/admin_header.dart';
 import 'package:frontend/core/widgets/admin_sidebar.dart';
-import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/services/admin/customers_service.dart';
 
 const _kBg    = Color(0xFFEFE2C9);
@@ -158,7 +157,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: _kBg,
       body: SizedBox.expand(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
