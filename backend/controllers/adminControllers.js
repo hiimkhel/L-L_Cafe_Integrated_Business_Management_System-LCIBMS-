@@ -143,6 +143,7 @@ const getTopMenus = async (req, res) => {
       SELECT
           mi.id,
           mi.name,
+          mi.price,
           SUM(oi.quantity) AS sold
       FROM order_items oi
       INNER JOIN menu_items mi
