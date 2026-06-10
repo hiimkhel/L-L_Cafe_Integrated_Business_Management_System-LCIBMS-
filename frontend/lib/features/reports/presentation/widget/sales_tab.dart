@@ -59,7 +59,7 @@ class SalesTab extends StatelessWidget {
                   ),
                   SizedBox(width: 6),
                   Text(
-                    'Number of Sales',
+                    'Revenue Breakdown',
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 12,

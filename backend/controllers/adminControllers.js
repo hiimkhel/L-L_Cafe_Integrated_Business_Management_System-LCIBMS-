@@ -1088,7 +1088,8 @@ const getOrdersReport = async (req, res) => {
 
             FROM orders
             WHERE status = 'completed'
-            AND created_at BETWEEN ? AND ?
+            AND created_at >= ?
+            AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
             `,
             [startDate, endDate]
         );
@@ -1100,10 +1101,9 @@ const getOrdersReport = async (req, res) => {
                 COUNT(*) AS total_orders
             FROM orders
             WHERE status = 'completed'
-            AND created_at BETWEEN ? AND ?
+            AND created_at >= ?
+            AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
             GROUP BY HOUR(created_at)
-            ORDER BY total_orders DESC
-            LIMIT 1
             `,
             [startDate, endDate]
         );
@@ -1164,8 +1164,8 @@ const getSalesDistributionReport = async (req, res) => {
                 ON mi.id = oi.menu_item_id
             LEFT JOIN orders o
                 ON oi.order_id = o.id
-                AND o.status = 'completed'
-                AND o.created_at BETWEEN ? AND ?
+                AND o.created_at >= ?
+                AND o.created_at < DATE_ADD(?, INTERVAL 1 DAY)
             GROUP BY mc.id, mc.name
             ORDER BY sales DESC
             `,
@@ -1179,7 +1179,8 @@ const getSalesDistributionReport = async (req, res) => {
                 COALESCE(SUM(total), 0) AS total_sales
             FROM orders
             WHERE status = 'completed'
-            AND created_at BETWEEN ? AND ?
+            AND created_at >= ?
+            AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
             `,
             [startDate, endDate]
         );
