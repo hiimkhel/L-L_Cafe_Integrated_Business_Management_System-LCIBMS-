@@ -35,7 +35,7 @@ class DashboardOrderRow {
     return DashboardOrderRow(
       orderId: json['order_number'] ?? '',
       customerName: json['customer_name'] ?? '',
-      payment: 'Paid',
+      payment: json['payment_status'] ?? '',
       status: json['status'] ?? '',
       orderTime: json['created_at'] ?? '',
       amount: '₱${json['total'] ?? 0}',

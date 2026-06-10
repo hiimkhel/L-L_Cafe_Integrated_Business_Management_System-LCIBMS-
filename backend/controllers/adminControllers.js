@@ -179,6 +179,7 @@ const getRecentOrders = async (req, res) => {
           customer_name,
           order_type,
           status,
+          payment_status,
           total,
           created_at
       FROM orders

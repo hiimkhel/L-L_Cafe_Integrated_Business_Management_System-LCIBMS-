@@ -216,6 +216,45 @@ class _OrderTableRow extends StatelessWidget {
     }
   }
 
+  Color get _paymentColor {
+    switch (order.payment.toLowerCase()) {
+      case 'paid':
+        return const Color(0xFF15803D);
+
+      case 'unpaid':
+        return const Color(0xFFDC2626);
+
+      default:
+        return _green2;
+    }
+  }
+
+  Color get _paymentBg {
+    switch (order.payment.toLowerCase()) {
+      case 'paid':
+        return const Color(0xFFF0FDF4);
+
+      case 'unpaid':
+        return const Color(0xFFFEF2F2);
+
+      default:
+        return _beige;
+    }
+  }
+
+  IconData get _paymentIcon {
+    switch (order.payment.toLowerCase()) {
+      case 'paid':
+        return Icons.check_circle_rounded;
+
+      case 'unpaid':
+        return Icons.pending_rounded;
+
+      default:
+        return Icons.help_outline_rounded;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final base = TextStyle(
@@ -249,20 +288,40 @@ class _OrderTableRow extends StatelessWidget {
                   style: base.copyWith(
                       fontWeight: FontWeight.w700, color: _dark))),
           Expanded(
-              flex: 13,
-              child: Row(children: [
-                Icon(
-                  order.payment.toLowerCase() == 'paid'
-                      ? Icons.check_circle_outline_rounded
-                      : Icons.radio_button_unchecked_rounded,
-                  size: 13,
-                  color: order.payment.toLowerCase() == 'paid'
-                      ? const Color(0xFF4CAF50)
-                      : Colors.redAccent,
-                ),
-                const SizedBox(width: 4),
-                Text(order.payment, style: base),
-              ])),
+          flex: 13,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 5,
+              ),
+              decoration: BoxDecoration(
+                color: _paymentBg,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _paymentIcon,
+                    size: 12,
+                    color: _paymentColor,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    order.payment.toUpperCase(),
+                    style: base.copyWith(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: _paymentColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
           Expanded(
             flex: 16,
             child: Align(
