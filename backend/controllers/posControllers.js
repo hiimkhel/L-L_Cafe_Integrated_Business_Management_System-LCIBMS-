@@ -145,37 +145,101 @@ const getOnlineOrders = async (req, res ) => {
 }
 
 const acceptOrder = async (req, res) => {
-    try{
-         const { id } = req.params;
+    
+    const { id } = req.params;
 
-        await db.query(
-            `UPDATE orders SET status = 'preparing' WHERE id = ?`,
+    try {
+        const [orders] = await db.query(
+            `
+            SELECT payment_method
+            FROM orders
+            WHERE id = ?
+            `,
             [id]
         );
 
-        res.json({ success: true });
-    }catch(err){
-        console.error(err);
-        res.status(500).json({error: err.message})
+        if (orders.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Order not found"
+            });
+        }
+
+        const paymentMethod =
+            orders[0].payment_method;
+
+        const paymentStatus = paymentMethod.toLowerCase() === "cash" ? "unpaid" : "paid";
+
+        const [result] = await db.query(
+            `
+            UPDATE orders
+            SET
+                status = 'preparing',
+                payment_status = ?
+            WHERE id = ?
+            `,
+            [paymentStatus, id]
+        );
+
+        return res.json({
+            success: true
+        });
+    } catch (error) {
+        console.error("ACCEPT ORDER ERROR:");
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
-}
+};
 
 
 const rejectOrder = async (req, res) => {
-    try{
-        const { id } = req.params;
+    const { id } = req.params;
 
-        await db.query(
-            `UPDATE orders SET status = 'rejected' WHERE id = ?`,
+    try {
+        const [orders] = await db.query(
+            `
+            SELECT id
+            FROM orders
+            WHERE id = ?
+            `,
             [id]
         );
 
-        res.json({ success: true });
-    }catch(err){
-        console.error(err);
-        res.status(500).json({error: err.message})
+        if (orders.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Order not found"
+            });
+        }
+
+        const [result] = await db.query(
+            `
+            UPDATE orders
+            SET status = 'rejected'
+            WHERE id = ?
+            `,
+            [id]
+        );
+
+        console.log("REJECT ORDER RESULT:", result);
+
+        return res.json({
+            success: true,
+            message: "Order rejected successfully"
+        });
+    } catch (error) {
+        console.error("REJECT ORDER ERROR:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
-}
+};
 
 
 const fetchPreparingOrders = async (req, res) => {
