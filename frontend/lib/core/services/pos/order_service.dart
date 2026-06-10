@@ -121,11 +121,39 @@ class OrderService {
   }
 
   Future<bool> acceptOrder(int id) async {
-    return await updateOrderStatus(id, 'preparing');
+    try {
+      final response = await http.patch(
+        Uri.parse(
+          '$baseUrl/pos/orders/online/$id/accept',
+        ),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Accept Order Error: $e');
+      return false;
+    }
   }
 
   Future<bool> rejectOrder(int id) async {
-    return await updateOrderStatus(id, 'rejected');
+    try {
+      final response = await http.patch(
+        Uri.parse(
+          '$baseUrl/pos/orders/online/$id/reject',
+        ),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Reject Order Error: $e');
+      return false;
+    }
   }
 
   Future<int> getPreparingCount() async {
