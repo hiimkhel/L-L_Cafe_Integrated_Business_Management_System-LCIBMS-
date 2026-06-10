@@ -1209,46 +1209,115 @@ const getSalesDistributionReport = async (req, res) => {
 
 const getSalesSummaryReport = async (req, res) => {
     try {
-        const { startDate, endDate } = req.query;
+        const { range = "last24hours" } = req.query;
 
-        const [rows] = await db.query(
-            `
-            SELECT
-                DAYOFWEEK(created_at) AS day_order,
-                SUM(total) AS sales
-            FROM orders
-            WHERE status = 'completed'
-            AND created_at BETWEEN ? AND ?
-            GROUP BY DAYOFWEEK(created_at)
-            `,
-            [startDate, endDate]
-        );
+        let query = "";
+        let params = [];
 
-        const days = [
-            'Sun',
-            'Mon',
-            'Tue',
-            'Wed',
-            'Thu',
-            'Fri',
-            'Sat'
-        ];
+        switch (range) {
+            case "last24hours":
+                query = `
+                    SELECT
+                        HOUR(created_at) AS label,
+                        SUM(total) AS sales
+                    FROM orders
+                    WHERE status = 'completed'
+                    AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+                    GROUP BY HOUR(created_at)
+                    ORDER BY HOUR(created_at)
+                `;
+                break;
 
-        const salesMap = {};
+            case "last7days":
+                query = `
+                    SELECT
+                        DATE(created_at) AS label,
+                        SUM(total) AS sales
+                    FROM orders
+                    WHERE status = 'completed'
+                    AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+                    GROUP BY DATE(created_at)
+                    ORDER BY DATE(created_at)
+                `;
+                break;
 
-        rows.forEach(row => {
-            salesMap[row.day_order] =
-                Number(row.sales) || 0;
-        });
+            case "last30days":
+                query = `
+                    SELECT
+                        FLOOR(
+                            DATEDIFF(
+                                created_at,
+                                DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                            ) / 7
+                        ) + 1 AS label,
+                        SUM(total) AS sales
+                    FROM orders
+                    WHERE status = 'completed'
+                    AND created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                    GROUP BY label
+                    ORDER BY label
+                `;
+                break;
 
-        const data = days.map((day, index) => ({
-            label: day,
-            sales: salesMap[index + 1] || 0,
-        }));
+            case "last3months":
+                query = `
+                    SELECT
+                        DATE_FORMAT(
+                            MIN(created_at),
+                            '%b'
+                        ) AS label,
+                        SUM(total) AS sales
+                    FROM orders
+                    WHERE status = 'completed'
+                    AND created_at >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+                    GROUP BY YEAR(created_at), MONTH(created_at)
+                    ORDER BY YEAR(created_at), MONTH(created_at)
+                `;
+                break;
+
+            case "thisyear":
+                query = `
+                    SELECT
+                        DATE_FORMAT(
+                            MIN(created_at),
+                            '%b'
+                        ) AS label,
+                        SUM(total) AS sales
+                    FROM orders
+                    WHERE status = 'completed'
+                    AND YEAR(created_at) = YEAR(CURDATE())
+                    GROUP BY YEAR(created_at), MONTH(created_at)
+                    ORDER BY YEAR(created_at), MONTH(created_at)
+                `;
+                break;
+
+            case "alltime":
+                query = `
+                    SELECT
+                        DATE_FORMAT(
+                            MIN(created_at),
+                            '%b %Y'
+                        ) AS label,
+                        SUM(total) AS sales
+                    FROM orders
+                    WHERE status = 'completed'
+                    GROUP BY YEAR(created_at), MONTH(created_at)
+                    ORDER BY YEAR(created_at), MONTH(created_at)
+                `;
+                break;
+
+            default:
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid range"
+                });
+        }
+
+        const [rows] = await db.query(query, params);
 
         return res.status(200).json({
             success: true,
-            data,
+            data: rows
         });
 
     } catch (err) {
@@ -1256,7 +1325,7 @@ const getSalesSummaryReport = async (req, res) => {
 
         return res.status(500).json({
             success: false,
-            error: err.message,
+            error: err.message
         });
     }
 };
