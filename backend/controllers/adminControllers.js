@@ -933,6 +933,7 @@ const getTopCustomer = async (req, res) => {
         let sql = `
             SELECT
                 u.id,
+                u.profile_picture,
                 u.full_name AS customer_name,
                 SUM(o.total) AS total_spent
             FROM users u

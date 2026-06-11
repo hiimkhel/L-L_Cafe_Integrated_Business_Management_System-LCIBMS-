@@ -6,6 +6,7 @@ import 'package:frontend/core/widgets/admin_sidebar.dart';
 import 'package:frontend/features/reports/presentation/widget/business_performance_card.dart';
 import 'package:frontend/core/services/admin/sales_reports_services.dart';
 import 'package:frontend/core/services/admin/pdf_admin_export.dart';
+import 'package:frontend/features/customers/presentation/admin/customers_screen.dart';
 
 const Color _cardBg  = AppColors.background;
 const Color _primary = Color(0xFF3D5A45);
@@ -301,7 +302,17 @@ void _handleExport() async {
                             children: [
                               Expanded(flex: 3, child: _TopPicksCard( menuItems: topMenuItems)),
                               const SizedBox(width: 16),
-                              Expanded(flex: 1, child: _TopCustomersCard( customers: topCustomers)),
+                              Expanded(flex: 1, child: _TopCustomersCard( customers: topCustomers, 
+                              onViewAll: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => CustomersScreen(
+                                        onLogout: widget.onLogout,
+                                      ),
+                                    ),
+                                  );
+                                },)),
                             ],
                           ),
                         ),
@@ -998,9 +1009,11 @@ class _PickTile extends StatelessWidget {
 
 class _TopCustomersCard extends StatelessWidget {
   final List<dynamic> customers;
+    final VoidCallback? onViewAll;
 
   const _TopCustomersCard({
     required this.customers,
+    this.onViewAll
   });
 
   String getInitials(String name) {
@@ -1019,8 +1032,12 @@ class _TopCustomersCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (customers.isEmpty) {
       try{
-        return const _BaseCard(
+        return _BaseCard(
           title: 'TOP CUSTOMERS',
+            trailing: GestureDetector(
+              onTap: onViewAll,
+              child: _pill('ALL', _primary),
+            ),
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1058,130 +1075,133 @@ class _TopCustomersCard extends StatelessWidget {
      
     }
 
-    final topAmount =
-        double.parse(customers.first['total_spent'].toString());
-
     return _BaseCard(
       title: 'TOP CUSTOMERS',
-      child: Column(
-        children: List.generate(customers.length, (i) {
+      trailing: GestureDetector(
+        onTap: onViewAll,
+        child: _pill('ALL', _primary),
+      ),
+      child: ListView.separated(
+        physics: const BouncingScrollPhysics(),
+        itemCount: customers.length,
+        separatorBuilder: (_, __) =>
+            const SizedBox(height: 10),
+        itemBuilder: (_, i) {
           final customer = customers[i];
 
           final String customerName =
-              customer['customer_name'] ?? 'Unknown Customer';
+              customer['customer_name'] ??
+              'Unknown Customer';
+
+          final String profilePicture =
+              customer['profile_picture'] ?? '';
 
           final double amount =
-              double.parse(customer['total_spent'].toString());
+              double.tryParse(
+                    customer['total_spent'].toString(),
+                  ) ??
+                  0;
 
-          final double ratio =
-              topAmount > 0 ? amount / topAmount : 0;
+          return Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.55),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
 
-          final bool isLast =
-              i == customers.length - 1;
+                _rankBadge(i + 1),
 
-          return Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(
-                bottom: isLast ? 0 : 10,
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: _primary.withOpacity(0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        getInitials(customerName),
+                const SizedBox(width: 10),
+
+                _buildAvatar(
+                  customerName,
+                  profilePicture,
+                ),
+
+                const SizedBox(width: 10),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        customerName,
+                        maxLines: 1,
+                        overflow:
+                            TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontFamily: 'Urbanist',
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w700,
                           fontSize: 11,
-                          color: _primary,
+                          color: _dark,
                         ),
                       ),
-                    ),
+
+                      const SizedBox(height: 2),
+                    ],
                   ),
+                ),
 
-                  const SizedBox(width: 10),
-
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
-                      mainAxisAlignment:
-                          MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          customerName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontFamily: 'Urbanist',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 11,
-                            color: _dark,
-                          ),
-                        ),
-
-                        const SizedBox(height: 4),
-
-                        LayoutBuilder(
-                          builder: (_, box) {
-                            return Stack(
-                              children: [
-                                Container(
-                                  height: 4,
-                                  width: box.maxWidth,
-                                  decoration: BoxDecoration(
-                                    color: _accent.withOpacity(
-                                      0.12,
-                                    ),
-                                    borderRadius:
-                                        BorderRadius.circular(
-                                      10,
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  height: 4,
-                                  width:
-                                      box.maxWidth * ratio,
-                                  decoration: BoxDecoration(
-                                    color: _accent,
-                                    borderRadius:
-                                        BorderRadius.circular(
-                                      10,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ],
-                    ),
+                Text(
+                  '₱${amount.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                    color: _gold,
                   ),
-
-                  const SizedBox(width: 8),
-
-                  Text(
-                    '₱${amount.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontFamily: 'Urbanist',
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12,
-                      color: _gold,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           );
-        }),
+        },
+      ),
+    );
+  }
+
+
+  Widget _buildAvatar(
+    String customerName,
+    String profilePicture,
+  ) {
+    if (profilePicture.isNotEmpty) {
+      return CircleAvatar(
+        radius: 18,
+        backgroundImage: NetworkImage(profilePicture),
+        backgroundColor: Colors.grey.shade200,
+      );
+    }
+
+    return CircleAvatar(
+      radius: 18,
+      backgroundColor: _primary.withOpacity(0.12),
+      child: Text(
+        getInitials(customerName),
+        style: const TextStyle(
+          fontFamily: 'Urbanist',
+          fontWeight: FontWeight.w900,
+          fontSize: 11,
+          color: _primary,
+        ),
+      ),
+    );
+  }
+
+  Widget _rankBadge(int rank) {
+    return SizedBox(
+      width: 24,
+      child: Text(
+        '#$rank',
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontFamily: 'Urbanist',
+          fontWeight: FontWeight.w900,
+          fontSize: 12,
+          color: _primary,
+        ),
       ),
     );
   }
