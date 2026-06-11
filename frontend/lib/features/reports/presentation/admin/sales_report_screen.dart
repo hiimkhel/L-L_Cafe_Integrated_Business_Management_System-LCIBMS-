@@ -8,6 +8,7 @@ import 'package:frontend/core/services/admin/sales_reports_services.dart';
 import 'package:frontend/core/services/admin/pdf_admin_export.dart';
 import 'package:frontend/features/customers/presentation/admin/customers_screen.dart';
 import '../widget/sales_summary_card.dart';
+import '../widget/base_card.dart';
 
 const Color _cardBg  = AppColors.background;
 const Color _primary = Color(0xFF3D5A45);
@@ -484,7 +485,7 @@ class _TopPicksCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (menuItems.isEmpty) {
-      return const _BaseCard(
+      return const BaseCard(
         title: 'TOP PICKS',
         child: Center(
           child: Column(
@@ -517,7 +518,7 @@ class _TopPicksCard extends StatelessWidget {
     // Limit to exactly 10 items maximum if it's a Top 10 list
     final displayItems = menuItems.take(10).toList();
 
-    return _BaseCard(
+    return BaseCard(
       title: 'TOP PICKS',
       trailing: _pill('${displayItems.length} ITEMS', _gold),
       child: GridView.builder(
@@ -777,7 +778,7 @@ class _TopCustomersCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (customers.isEmpty) {
       try{
-        return _BaseCard(
+        return BaseCard(
           title: 'TOP CUSTOMERS',
             trailing: GestureDetector(
               onTap: onViewAll,
@@ -820,7 +821,7 @@ class _TopCustomersCard extends StatelessWidget {
      
     }
 
-    return _BaseCard(
+    return BaseCard(
       title: 'TOP CUSTOMERS',
       trailing: GestureDetector(
         onTap: onViewAll,
@@ -952,52 +953,7 @@ class _TopCustomersCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BASE CARD
-// ─────────────────────────────────────────────────────────────────────────────
 
-class _BaseCard extends StatelessWidget {
-  final String title;
-  final Widget? trailing;
-  final Widget child;
-
-  const _BaseCard(
-      {required this.title, required this.child, this.trailing});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _cardBg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _accent.withOpacity(0.12)),
-        boxShadow: [BoxShadow(
-            color: _dark.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [
-            Text(title,
-                style: const TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                    letterSpacing: 1.5,
-                    color: _dark)),
-            const Spacer(),
-            if (trailing != null) trailing!,
-          ]),
-          const SizedBox(height: 14),
-          Expanded(child: ClipRect(child: child)),
-        ],
-      ),
-    );
-  }
-}
 
 Widget _pill(String label, Color color) {
   return Container(
