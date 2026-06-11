@@ -19,165 +19,96 @@ class OrderSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(16.0), // Reduced from 32 for better tablet support
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // HEADER OUTSIDE CARD
-          
           Row(
             children: [
-              const SizedBox(width: 20),
+              const SizedBox(width: 8),
               Container(
-                width: 60,
-                height: 60,
+                width: 50, height: 50,
                 decoration: BoxDecoration(
                   color: AppColors.secondary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(
-                  Icons.receipt_long,
-                  size: 30,
-                  color: AppColors.secondary,
-                ),
+                child: const Icon(Icons.receipt_long, size: 26, color: AppColors.secondary),
               ),
-              const SizedBox(width: 20),
-              const Text(
-                "ORDER SUMMARY",
-                style: AppTextStyles.title,
-              ),
+              const SizedBox(width: 16),
+              const Expanded(child: Text("ORDER SUMMARY", style: AppTextStyles.title)),
             ],
           ),
-          const SizedBox(height: 10),
-
-          // CARD
+          const SizedBox(height: 16),
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 42.00, horizontal: 36.00),
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(40),
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 15)]
               ),
               child: Column(
                 children: [
                   Container(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: AppColors.background,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          orderType == 'DINE IN'
-                              ? Icons.restaurant
-                              : Icons.shopping_bag,
-                          size: 16,
-                          color: AppColors.primary,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          orderType,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
+                        Icon(orderType.toUpperCase().contains('DINE') ? Icons.restaurant : Icons.shopping_bag, size: 16, color: AppColors.primary),
+                        const SizedBox(width: 8),
+                        Text(orderType.toUpperCase(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary)),
                       ],
                     ),
                   ),
-                  // Scrollable Items
                   Expanded(
                     child: ListView.builder(
                       itemCount: orderItems.length,
                       itemBuilder: (context, index) {
                         final item = orderItems[index];
-
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                          decoration: BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(
-                                color: AppColors.receiptBg,
-                                width: 1.5,
-                              ),
-                            ),
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                          decoration: const BoxDecoration(
+                            border: Border(bottom: BorderSide(color: AppColors.receiptBg, width: 1)),
                           ),
                           child: Row(
                             children: [
-                              // Quantity
                               Container(
-                                width: 40,
-                                height: 40,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: AppColors.background,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  "${item["qty"]}x",
-                                  style: AppTextStyles.subtitle.copyWith(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                                width: 36, height: 36, alignment: Alignment.center,
+                                decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(8)),
+                                child: Text("${item["qty"]}x", style: AppTextStyles.subtitle.copyWith(color: AppColors.primary, fontWeight: FontWeight.w800)),
                               ),
-
                               const SizedBox(width: 16),
-
-                              // Name (takes remaining space)
                               Expanded(
-                                child: Text(
-                                  item["name"],
-                                  style: AppTextStyles.subtitle.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(item["name"], style: AppTextStyles.subtitle.copyWith(fontWeight: FontWeight.w700), maxLines: 2, overflow: TextOverflow.ellipsis),
+                                    Text("₱${(item["price"] as double).toStringAsFixed(2)}", style: AppTextStyles.body.copyWith(color: AppColors.tertiary, fontSize: 12)),
+                                  ],
                                 ),
                               ),
-
-                              // Total price
-                              Text(
-                                "₱${(item["price"] * item["qty"]).toStringAsFixed(2)}",
-                                style: AppTextStyles.subtitle.copyWith(
-                                  color: AppColors.secondary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                              Text("₱${((item["price"] as double) * (item["qty"] as int)).toStringAsFixed(2)}", style: AppTextStyles.subtitle.copyWith(color: AppColors.primary, fontWeight: FontWeight.w800)),
                             ],
                           ),
                         );
                       },
                     ),
                   ),
-
-                  const SizedBox(height: 16),
-                  Divider(color: AppColors.receiptBg, thickness: 1.5),
-                  const SizedBox(height: 16),
-
-                  _priceRow("Subtotal", subtotal),
-                  const SizedBox(height: 8),
-
+                  const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        top: BorderSide(color: AppColors.receiptBg, width: 1.5),
-                      ),
-                    ),
+                    padding: const EdgeInsets.only(top: 16),
+                    decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.receiptBg, width: 2))),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          "GRAND TOTAL",
-                          style: AppTextStyles.title.copyWith(fontWeight: FontWeight.w900),
-                        ),
-                        Text(
-                          "₱${total.toStringAsFixed(2)}",
-                          style: AppTextStyles.title.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w900)
-                        ),
+                        Text("GRAND TOTAL", style: AppTextStyles.title.copyWith(fontWeight: FontWeight.w900)),
+                        Text("₱${total.toStringAsFixed(2)}", style: AppTextStyles.title.copyWith(color: AppColors.secondary, fontWeight: FontWeight.w900)),
                       ],
                     ),
                   )
@@ -187,17 +118,6 @@ class OrderSummary extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  // Helper
-  Widget _priceRow(String label, double value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: AppTextStyles.subtitle.copyWith(color: AppColors.tertiary)),
-        Text("₱${value.toStringAsFixed(2)}", style: AppTextStyles.subtitle.copyWith(color: AppColors.tertiary)),
-      ],
     );
   }
 }
