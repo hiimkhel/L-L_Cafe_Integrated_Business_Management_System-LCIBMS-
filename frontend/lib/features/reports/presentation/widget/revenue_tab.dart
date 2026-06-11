@@ -116,25 +116,59 @@ class RevenueTab extends StatelessWidget {
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: 8),
+                  
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 4),
+                        Text(
+                          '₱${monthlyTarget.toStringAsFixed(0)}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
 
                   Text(
                     '${(progress * 100).toStringAsFixed(0)}%',
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontFamily: 'Urbanist',
+                      fontSize: 28,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
+                      height: 1,
                     ),
                   ),
 
+                  const SizedBox(height: 4),
+
                   const Text(
-                    'of monthly target',
+                    'Monthly Target Progress',
                     style: TextStyle(
-                      color: Colors.white54,
-                      fontSize: 10,
+                      fontFamily: 'Urbanist',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white60,
+                      letterSpacing: 0.2,
                     ),
                   ),
+
+                  const SizedBox(height: 12),
                 ],
               );
             },
