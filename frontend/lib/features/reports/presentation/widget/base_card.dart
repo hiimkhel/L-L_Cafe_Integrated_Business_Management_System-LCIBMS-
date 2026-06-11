@@ -4,6 +4,8 @@ import 'package:frontend/config/theme/app_colors.dart';
 const Color _cardBg  = AppColors.background;
 const Color _accent  = Color(0xFF758C6D);
 const Color _dark    = Color(0xFF2D2A26);
+const Color _green1 = Color(0xFF3D5A45);
+const Color _green2 = Color(0xFF758C6D);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BASE CARD
@@ -34,13 +36,24 @@ class BaseCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
+            Container(
+              width: 4, height: 20,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [_green2, _green1]),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+            const SizedBox(width: 9),
             Text(title,
                 style: const TextStyle(
                     fontFamily: 'Urbanist',
+                    fontSize: 18,
                     fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                    letterSpacing: 1.5,
-                    color: _dark)),
+                    letterSpacing: 0.3,
+                    color: _green1)),
             const Spacer(),
             if (trailing != null) trailing!,
           ]),

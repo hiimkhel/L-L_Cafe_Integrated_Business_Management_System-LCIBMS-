@@ -7,13 +7,11 @@ import 'package:frontend/core/services/admin/sales_reports_services.dart';
 import 'package:frontend/core/services/admin/pdf_admin_export.dart';
 import 'package:frontend/features/customers/presentation/admin/customers_screen.dart';
 import '../widget/sales_summary_card.dart';
-import '../widget/base_card.dart';
 import '../widget/top_picks_card.dart';
 import '../widget/top_customer_card.dart';
 
 const Color _primary = Color(0xFF3D5A45);
 const Color _accent  = Color(0xFF758C6D);
-const Color _gold    = Color(0xFFA98258);
 const Color _dark    = Color(0xFF2D2A26);
 const Color _muted   = Color(0xFF8A8070);
 

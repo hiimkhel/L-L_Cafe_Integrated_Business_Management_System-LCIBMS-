@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import './base_card.dart';
+import 'card_header.dart';
 
 const Color _primary = Color(0xFF3D5A45);
 const Color _gold    = Color(0xFFA98258);
@@ -32,7 +33,7 @@ class TopCustomersCard extends StatelessWidget {
     if (customers.isEmpty) {
       try{
         return BaseCard(
-          title: 'TOP CUSTOMERS',
+          title: "TOP CUSTOMER",
             trailing: GestureDetector(
               onTap: onViewAll,
               child: _pill('ALL', _primary),
@@ -78,7 +79,26 @@ class TopCustomersCard extends StatelessWidget {
       title: 'TOP CUSTOMERS',
       trailing: GestureDetector(
         onTap: onViewAll,
-        child: _pill('ALL', _primary),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: _primary,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [BoxShadow(
+                color: _primary.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 3))],
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: const [
+            Text('ALL',
+                style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                    letterSpacing: 1.5,
+                    color: Colors.white)),
+          ]),
+        ),            
       ),
       child: ListView.separated(
         physics: const BouncingScrollPhysics(),
