@@ -1107,6 +1107,8 @@ const getOrdersReport = async (req, res) => {
             AND created_at >= ?
             AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
             GROUP BY HOUR(created_at)
+            ORDER BY total_orders DESC
+            LIMIT 1
             `,
             [startDate, endDate]
         );
