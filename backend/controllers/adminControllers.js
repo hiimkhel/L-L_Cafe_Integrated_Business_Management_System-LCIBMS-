@@ -1315,17 +1315,14 @@ const getSalesSummaryReport = async (req, res) => {
                 break;
 
             case "alltime":
-                query = `
+                 query = `
                     SELECT
-                        DATE_FORMAT(
-                            MIN(created_at),
-                            '%b %Y'
-                        ) AS label,
+                        YEAR(created_at) AS label,
                         SUM(total) AS sales
                     FROM orders
                     WHERE status = 'completed'
-                    GROUP BY YEAR(created_at), MONTH(created_at)
-                    ORDER BY YEAR(created_at), MONTH(created_at)
+                    GROUP BY YEAR(created_at)
+                    ORDER BY YEAR(created_at)
                 `;
                 break;
 
