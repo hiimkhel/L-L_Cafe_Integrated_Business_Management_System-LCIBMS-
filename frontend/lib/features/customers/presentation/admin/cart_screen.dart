@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/customer_navbar.dart';
