@@ -27,72 +27,142 @@ class CheckoutConfirmationScreen extends StatefulWidget {
 class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>{
   double cashGiven = 0;
 
+  // Safe arithmetic processing for JSON objects
   double get subtotal => widget.orderItems.fold(
-    0,
-    (sum, item) => sum + (item["price"] * item["qty"]),
+    0.0,
+    (sum, item) => sum + ((item["price"] as num).toDouble() * (item["qty"] as num).toInt()),
   );
 
   double get total => subtotal;
   double get change => cashGiven - total;
-  bool get isPaymentValid => cashGiven >= total;
 
   @override
   Widget build(BuildContext context) {
     final String formattedOrderNumber = "WALK-${widget.orderOrderId.toString().padLeft(5, '0')}";
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          _buildHeader(context),
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                // Responsive threshold: 850px width
-                if (constraints.maxWidth < 850) {
-                  // Stack vertically for smaller/narrower screens
-                  return SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        OrderSummary(
-                          orderItems: widget.orderItems,
-                          subtotal: subtotal,
-                          total: total,
-                          orderType: widget.orderType
-                        ),
-                        SizedBox(
-                          height: 600, // Ensure PaymentEntry has bounded height
-                          child: _buildPaymentEntry(formattedOrderNumber),
-                        ),
-                      ],
-                    ),
-                  );
-                } else {
-                  // Side-by-side for widescreen monitors
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        flex: 4, 
-                        child: OrderSummary(
-                          orderItems: widget.orderItems,
-                          subtotal: subtotal,
-                          total: total,
-                          orderType: widget.orderType
-                        )
+      backgroundColor: AppColors.background, 
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(context),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (constraintsContext, constraints) {
+                  final bool isTablet = constraints.maxWidth >= 900;
+                  
+                  if (!isTablet) {
+                    // Modern Fluid Mobile View (Scrollable & Spaced)
+                    return SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withOpacity(0.04),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: OrderSummary(
+                              orderItems: widget.orderItems,
+                              subtotal: subtotal,
+                              total: total,
+                              orderType: widget.orderType,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withOpacity(0.04),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: _buildPaymentEntry(formattedOrderNumber),
+                            ),
+                          ),
+                        ],
                       ),
-                      Expanded(
-                        flex: 6, 
-                        child: _buildPaymentEntry(formattedOrderNumber)
+                    );
+                  } else {
+                    // Ultra-Modern Split Monitor View for POS
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 24.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            flex: 5, 
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(28),
+                                border: Border.all(color: AppColors.tertiary.withOpacity(0.08)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primary.withOpacity(0.03),
+                                    blurRadius: 30,
+                                    offset: const Offset(0, 12),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(28),
+                                child: OrderSummary(
+                                  orderItems: widget.orderItems,
+                                  subtotal: subtotal,
+                                  total: total,
+                                  orderType: widget.orderType,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 24),
+                          Expanded(
+                            flex: 6, 
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(28),
+                                border: Border.all(color: AppColors.tertiary.withOpacity(0.08)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primary.withOpacity(0.03),
+                                    blurRadius: 30,
+                                    offset: const Offset(0, 12),
+                                  ),
+                                ],
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(32.0),
+                                child: _buildPaymentEntry(formattedOrderNumber),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  );
-                }
-              },
+                    );
+                  }
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -105,12 +175,14 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
       orderItems: widget.orderItems,
       onSubmit: () async {
         final databaseItems = widget.orderItems.map((item) {
+          final price = (item["price"] as num).toDouble();
+          final qty = (item["qty"] as num).toInt();
           return {
             "menu_item_id": item["id"],
             "name": item["name"],
-            "quantity": item["qty"],
-            "unit_price": item["price"],
-            "subtotal": (item["price"] as double) * (item["qty"] as int),
+            "quantity": qty,
+            "unit_price": price,
+            "subtotal": price * qty,
           };
         }).toList();
 
@@ -131,6 +203,8 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
 
         bool success = await OrderService().createOrder(orderRequest);
 
+        if (!mounted) return;
+
         if (success) {
           final receiptData = ReceiptData(
             orderNumber: formattedOrderNumber,
@@ -141,72 +215,117 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
             items: widget.orderItems.map((item) {
               return OrderItem(
                 name: item["name"],
-                quantity: item["qty"],
-                unitPrice: item["price"],
+                quantity: (item["qty"] as num).toInt(),
+                unitPrice: (item["price"] as num).toDouble(),
               );
             }).toList(),
           );
-          if(context.mounted) _showReceipt(context, receiptData);
+          _showReceipt(context, receiptData);
         } else {
-          if(context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Failed to process payment. Please try again.'), backgroundColor: Colors.redAccent)
-            );
-          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Failed to process payment. Please try again.'), 
+              backgroundColor: Colors.redAccent.shade700,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            )
+          );
         }
       },
     );
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Padding(
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+      color: Colors.transparent,
       child: Row(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]
-            ),
-            child: IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back, color: AppColors.primary, size: 28),
+          Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            shadowColor: AppColors.primary.withOpacity(0.1),
+            elevation: 2,
+            child: InkWell(
+              onTap: () => Navigator.pop(context),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.tertiary.withOpacity(0.1)),
+                ),
+                child: const Icon(Icons.arrow_back_rounded, color: AppColors.primary, size: 24),
+              ),
             ),
           ),
-          const SizedBox(width: 20),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "CHECKOUT CONFIRMATION",
-                style: AppTextStyles.title.copyWith(color: AppColors.secondary, fontSize: 24)
-              ),
-              Text(
-                "FINAL PHASE OF TRANSACTION",
-                style: AppTextStyles.body.copyWith(color: AppColors.tertiary, fontWeight: FontWeight.w600)
-              ),
-            ],
+          const SizedBox(width: 24),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Checkout Confirmation",
+                  style: AppTextStyles.title.copyWith(
+                    color: AppColors.primary, 
+                    fontSize: 26, 
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5
+                  )
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.secondary.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        "POS SYSTEM",
+                        style: AppTextStyles.body.copyWith(
+                          color: AppColors.secondary, 
+                          fontWeight: FontWeight.w900, 
+                          fontSize: 10,
+                          letterSpacing: 1.0
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      "FINAL PHASE OF TRANSACTION",
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.tertiary.withOpacity(0.8), 
+                        fontWeight: FontWeight.w700, 
+                        fontSize: 11, 
+                        letterSpacing: 0.5
+                      )
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       )
     );
   }
 
-  void _showReceipt(BuildContext context, ReceiptData data) {
+  void _showReceipt(BuildContext parentContext, ReceiptData data) {
     showDialog(
-      context: context,
+      context: parentContext,
       barrierDismissible: false,
-      builder: (context) {
+      builder: (dialogContext) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(16),
+          insetPadding: const EdgeInsets.all(24),
           child: LLCafeReceipt(
             data: data,
             onPrint: () {
-              Navigator.pop(context); // Close dialog
-              Navigator.pushAndRemoveUntil(
-                context,
+              final navigator = Navigator.of(parentContext);
+              Navigator.pop(dialogContext); 
+              navigator.pushAndRemoveUntil(
                 MaterialPageRoute(builder: (context) => const OrderQueueScreen()),
                 (route) => false, 
               );
