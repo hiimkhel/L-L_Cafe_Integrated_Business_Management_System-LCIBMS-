@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import './base_card.dart';
-import 'card_header.dart';
 
 const Color _primary = Color(0xFF3D5A45);
 const Color _gold    = Color(0xFFA98258);

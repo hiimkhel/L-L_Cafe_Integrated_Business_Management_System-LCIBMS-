@@ -7,28 +7,36 @@ const Color _primary = Color(0xFF3D5A45);
 const Color _accent  = Color(0xFF758C6D);
 const Color _muted   = Color(0xFF8A8070);
 
-class SalesSummaryCard extends StatelessWidget {
+class SalesSummaryCard extends StatefulWidget {
   final List<dynamic> salesSummaryData;
   final String rangeLabel;
 
   const SalesSummaryCard({
+    super.key,
     required this.salesSummaryData,
     required this.rangeLabel,
   });
 
+  @override
+  State<SalesSummaryCard> createState() => _SalesSummaryCardState();
+}
+
+class _SalesSummaryCardState extends State<SalesSummaryCard> {
+  int? hoveredIndex;
+
   String _fmt(double v) {
     if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
-    if (v >= 1000)    return '${(v / 1000).toStringAsFixed(0)}k';
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)}k';
     return v.toStringAsFixed(0);
   }
 
   List<Map<String, dynamic>> _normalizeData() {
     final map = {
-      for (final item in salesSummaryData)
+      for (final item in widget.salesSummaryData)
         item['label'].toString(): item
     };
 
-    switch (rangeLabel) {
+    switch (widget.rangeLabel) {
       case 'Last 24 hours':
         return List.generate(24, (i) {
           final label = i.toString().padLeft(2, '0');
@@ -83,7 +91,7 @@ class SalesSummaryCard extends StatelessWidget {
         }).toList();
 
       default:
-        return salesSummaryData
+        return widget.salesSummaryData
             .map((e) => {
                   'label': e['label'],
                   'sales': double.tryParse(
@@ -149,7 +157,7 @@ if (totalSales == 0) {
 
 }
   final maxVal = values.reduce((a, b) => a > b ? a : b);
-    if (salesSummaryData.isEmpty) {
+    if (widget.salesSummaryData.isEmpty) {
     return BaseCard(
       title: 'SALES SUMMARY',
       child: const Center(
@@ -163,7 +171,7 @@ if (totalSales == 0) {
 
     return BaseCard(
       title: 'SALES SUMMARY',
-      trailing: _pill(rangeLabel, _accent),
+      trailing: _pill(widget.rangeLabel, _accent),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -201,34 +209,56 @@ if (totalSales == 0) {
                     children: List.generate(values.length, (i) {
                       final ratio  = maxVal > 0 ? values[i] / maxVal : 0.0;
                       final maxIndex = values.indexOf(maxVal);
+                      final isHovered = hoveredIndex == i;
                       final isMax = i == maxIndex;
+                      final showValue = isHovered || isMax;
                       final barH   = (box.maxHeight * ratio)
                           .clamp(0.0, box.maxHeight - (isMax ? 20.0 : 0.0));
                       return Expanded(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 3),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              if (isMax)
-                                Text(_fmt(values[i]),
-                                    style: const TextStyle(
+                          child: MouseRegion(
+                            onEnter: (_) {
+                              setState(() {
+                                hoveredIndex = i;
+                              });
+                            },
+                            onExit: (_) {
+                              setState(() {
+                                hoveredIndex = null;
+                              });
+                            },
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                AnimatedOpacity(
+                                    opacity: showValue ? 1 : 0,
+                                    duration: const Duration(milliseconds: 150),
+                                    child: Text(
+                                      _fmt(values[i]),
+                                      style: TextStyle(
                                         fontFamily: 'Urbanist',
                                         fontSize: 9,
                                         fontWeight: FontWeight.w700,
-                                        color: _primary)),
-                              const SizedBox(height: 2),
-                              Container(
-                                height: barH,
-                                decoration: BoxDecoration(
-                                  color: isMax
-                                      ? _primary
-                                      : _accent.withOpacity(0.55),
-                                  borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(6)),
+                                        color: isHovered ? _primary : _primary,
+                                      ),
+                                    ),
+                                  ),
+                                const SizedBox(height: 2),
+                                Container(
+                                  height: barH,
+                                  decoration: BoxDecoration(
+                                    color: isHovered
+                                        ? _primary
+                                        : isMax
+                                            ? _primary.withOpacity(0.85)
+                                            : _accent.withOpacity(0.55),
+                                    borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(6)),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       );
