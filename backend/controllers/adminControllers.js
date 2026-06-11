@@ -879,6 +879,8 @@ const getMenuSales = async (req, res) => {
         let sql = `
             SELECT
                 mi.name,
+                mi.price,
+                mi.image_url,
                 SUM(oi.quantity) AS total_sold
             FROM order_items oi
             INNER JOIN orders o
