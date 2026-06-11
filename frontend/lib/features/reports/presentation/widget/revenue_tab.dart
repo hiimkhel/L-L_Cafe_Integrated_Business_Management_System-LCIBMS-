@@ -28,6 +28,7 @@ class RevenueTab extends StatelessWidget {
 
     final double progress =
         monthlyTarget > 0 ? (totalRevenue / monthlyTarget).clamp(0.0, 1.0) : 0;
+    final bool isAllTime = revenueData['is_all_time'] == true;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -61,14 +62,37 @@ class RevenueTab extends StatelessWidget {
 
               Row(
                 children: [
-                  _StatPill(
-                    icon: Icons.trending_up_rounded,
-                    label:
-                        '${growthRate >= 0 ? '+' : ''}${growthRate.toStringAsFixed(0)}% vs previous period',
-                    color: growthRate >= 0
-                        ? const Color(0xFF7BC67E)
-                        : Colors.redAccent,
-                  ),
+                  if (!isAllTime)
+                    _StatPill(
+                      icon: growthRate >= 0
+                          ? Icons.trending_up_rounded
+                          : Icons.trending_down_rounded,
+                      label:
+                          '${growthRate >= 0 ? '+' : ''}${growthRate.toStringAsFixed(1)}% vs previous period',
+                      color: growthRate >= 0
+                          ? const Color(0xFF7BC67E)
+                          : Colors.redAccent,
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'No comparison available',
+                        style: TextStyle(
+                          fontFamily: 'Urbanist',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white60,
+                        ),
+                      ),
+                    ),
                 ],
               ),
 
@@ -116,7 +140,7 @@ class RevenueTab extends StatelessWidget {
                       ),
                     ),
                   ),
-                  
+
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
