@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/core/widgets/admin_header.dart';
-import 'dart:math' as math;
 import 'package:frontend/core/widgets/admin_sidebar.dart';
 import 'package:frontend/features/reports/presentation/widget/business_performance_card.dart';
 import 'package:frontend/core/services/admin/sales_reports_services.dart';
@@ -10,8 +9,8 @@ import 'package:frontend/features/customers/presentation/admin/customers_screen.
 import '../widget/sales_summary_card.dart';
 import '../widget/base_card.dart';
 import '../widget/top_picks_card.dart';
+import '../widget/top_customer_card.dart';
 
-const Color _cardBg  = AppColors.background;
 const Color _primary = Color(0xFF3D5A45);
 const Color _accent  = Color(0xFF758C6D);
 const Color _gold    = Color(0xFFA98258);
@@ -305,7 +304,7 @@ void _handleExport() async {
                             children: [
                               Expanded(flex: 3, child: TopPicksCard( menuItems: topMenuItems)),
                               const SizedBox(width: 16),
-                              Expanded(flex: 1, child: _TopCustomersCard( customers: topCustomers, 
+                              Expanded(flex: 1, child: TopCustomersCard( customers: topCustomers, 
                               onViewAll: () {
                                   Navigator.push(
                                     context,
@@ -472,224 +471,4 @@ class _ExportButton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TOP CUSTOMERS CARD
-// ─────────────────────────────────────────────────────────────────────────────
 
-class _TopCustomersCard extends StatelessWidget {
-  final List<dynamic> customers;
-    final VoidCallback? onViewAll;
-
-  const _TopCustomersCard({
-    required this.customers,
-    this.onViewAll
-  });
-
-  String getInitials(String name) {
-    if (name.trim().isEmpty) return '?';
-
-    final parts = name.trim().split(' ');
-
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-
-    return parts[0][0].toUpperCase();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (customers.isEmpty) {
-      try{
-        return BaseCard(
-          title: 'TOP CUSTOMERS',
-            trailing: GestureDetector(
-              onTap: onViewAll,
-              child: _pill('ALL', _primary),
-            ),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.people_outline,
-                  size: 42,
-                  color: _muted,
-                ),
-                SizedBox(height: 12),
-                Text(
-                  'No customer purchases found',
-                  style: TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'No completed orders were recorded during this period.',
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        );
-      }catch (e, stack) {
-        print(e);
-        print(stack);
-
-        return const Center(
-          child: Text('Error loading customers'),
-        );
-      }
-     
-    }
-
-    return BaseCard(
-      title: 'TOP CUSTOMERS',
-      trailing: GestureDetector(
-        onTap: onViewAll,
-        child: _pill('ALL', _primary),
-      ),
-      child: ListView.separated(
-        physics: const BouncingScrollPhysics(),
-        itemCount: customers.length,
-        separatorBuilder: (_, __) =>
-            const SizedBox(height: 10),
-        itemBuilder: (_, i) {
-          final customer = customers[i];
-
-          final String customerName =
-              customer['customer_name'] ??
-              'Unknown Customer';
-
-          final String profilePicture =
-              customer['profile_picture'] ?? '';
-
-          final double amount =
-              double.tryParse(
-                    customer['total_spent'].toString(),
-                  ) ??
-                  0;
-
-          return Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.55),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-
-                _rankBadge(i + 1),
-
-                const SizedBox(width: 10),
-
-                _buildAvatar(
-                  customerName,
-                  profilePicture,
-                ),
-
-                const SizedBox(width: 10),
-
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        customerName,
-                        maxLines: 1,
-                        overflow:
-                            TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontFamily: 'Urbanist',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 11,
-                          color: _dark,
-                        ),
-                      ),
-
-                      const SizedBox(height: 2),
-                    ],
-                  ),
-                ),
-
-                Text(
-                  '₱${amount.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontFamily: 'Urbanist',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                    color: _gold,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-
-  Widget _buildAvatar(
-    String customerName,
-    String profilePicture,
-  ) {
-    if (profilePicture.isNotEmpty) {
-      return CircleAvatar(
-        radius: 18,
-        backgroundImage: NetworkImage(profilePicture),
-        backgroundColor: Colors.grey.shade200,
-      );
-    }
-
-    return CircleAvatar(
-      radius: 18,
-      backgroundColor: _primary.withOpacity(0.12),
-      child: Text(
-        getInitials(customerName),
-        style: const TextStyle(
-          fontFamily: 'Urbanist',
-          fontWeight: FontWeight.w900,
-          fontSize: 11,
-          color: _primary,
-        ),
-      ),
-    );
-  }
-
-  Widget _rankBadge(int rank) {
-    return SizedBox(
-      width: 24,
-      child: Text(
-        '#$rank',
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontFamily: 'Urbanist',
-          fontWeight: FontWeight.w900,
-          fontSize: 12,
-          color: _primary,
-        ),
-      ),
-    );
-  }
-}
-
-
-
-Widget _pill(String label, Color color) {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-    decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(20)),
-    child: Text(label,
-        style: TextStyle(
-            fontFamily: 'Urbanist',
-            fontWeight: FontWeight.w700,
-            fontSize: 9,
-            letterSpacing: 1.2,
-            color: color)),
-  );
-}

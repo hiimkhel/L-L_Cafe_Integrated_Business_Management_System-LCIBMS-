@@ -121,13 +121,6 @@ class _CustomersScreenState extends State<CustomersScreen> {
         : 'INACTIVE';
   }
 
-  Color _accountStatusColor(Map<String, dynamic> c) {
-    final s = _accountStatus(c);
-    if (s == 'ACTIVE')   return const Color(0xFF4CAF50);
-    if (s == 'INACTIVE') return const Color(0xFFF44336);
-    return _kDark.withOpacity(0.35);
-  }
-
   String _phone(Map<String, dynamic> c) =>
       c['phone']?.toString().isNotEmpty == true
           ? c['phone'].toString()
