@@ -27,6 +27,15 @@ class PaymentEntry extends StatefulWidget {
 class _PaymentEntryState extends State<PaymentEntry> {
   double cashGiven = 0;
   int selectedMethod = 0; // 0 = Cash, 1 = Card, 2 = E-Wallet
+  
+  // 1. Added a controller to manually control the text inside the TextField
+  final TextEditingController _cashController = TextEditingController();
+
+  @override
+  void dispose() {
+    _cashController.dispose(); // Always dispose controllers to prevent memory leaks
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,12 +93,12 @@ class _PaymentEntryState extends State<PaymentEntry> {
           
           const SizedBox(height: 16),
 
-          // Dynamic Content Area (Safely constrained to prevent overflow)
+          // Dynamic Content Area
           widget.isStacked 
             ? _buildDynamicContent(isCashless)
             : Expanded(child: _buildDynamicContent(isCashless)),
 
-          // Bottom Action Area (Clean & Integrated)
+          // Bottom Action Area
           Container(
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
@@ -197,6 +206,7 @@ class _PaymentEntryState extends State<PaymentEntry> {
             borderRadius: BorderRadius.circular(16),
           ),
           child: TextField(
+            controller: _cashController, // 2. Attached the controller here
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             style: AppTextStyles.title.copyWith(fontSize: 28, color: AppColors.primary),
             decoration: InputDecoration(
@@ -219,7 +229,11 @@ class _PaymentEntryState extends State<PaymentEntry> {
             return InkWell(
               borderRadius: BorderRadius.circular(12),
               onTap: () {
-                setState(() => cashGiven = amount.toDouble());
+                setState(() {
+                  cashGiven = amount.toDouble();
+                  // 3. Update the text field visually when a button is pressed
+                  _cashController.text = amount.toString(); 
+                });
                 widget.onCashChanged(cashGiven);
               },
               child: Container(
@@ -248,9 +262,12 @@ class _PaymentEntryState extends State<PaymentEntry> {
           selectedMethod = index;
           if (index != 0) {
             cashGiven = widget.total;
+            // 4. Optionally clear the text box when shifting away from cash
+            _cashController.clear(); 
             widget.onCashChanged(cashGiven);
           } else {
             cashGiven = 0; 
+            _cashController.clear(); // Reset text when coming back to cash
             widget.onCashChanged(cashGiven);
           }
         });
