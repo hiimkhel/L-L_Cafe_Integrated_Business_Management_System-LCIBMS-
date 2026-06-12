@@ -622,7 +622,9 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                     fontSize: 18,
                   ),
                 ),
+
                 const Spacer(),
+
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
@@ -645,7 +647,42 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
           const SizedBox(height: 1),
 
           Expanded(
-            child: ListView.builder(
+            child: orderItems.isEmpty 
+            ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(
+                      Icons.shopping_cart_outlined,
+                      size: 48,
+                      color: Colors.grey,
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Start creating an order',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Add items from the menu to begin',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ) 
+          :
+            ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: orderItems.length,
               itemBuilder: (context, index) {
