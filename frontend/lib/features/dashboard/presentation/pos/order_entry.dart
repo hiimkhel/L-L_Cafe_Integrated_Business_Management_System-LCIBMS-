@@ -169,7 +169,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
             children: [
               RichText(
                 text: TextSpan(
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
                   children: [
                     TextSpan(
                       text: "L&L CAFE ",
@@ -182,7 +182,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                     TextSpan(
                       text: "\nMAKING GOOD FOOD FOR PEOPLE'S HAPPINESS",
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 12,
                         //fontWeight: FontWeight.normal,
                         color: Colors.black,
                         letterSpacing: .9,
@@ -516,7 +516,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
           Text(
             getCategoryName(item.categoryId).toUpperCase(),
             style: TextStyle(
-              fontSize: 9,
+              fontSize: 12,
               color: AppColors.primary,
               fontWeight: FontWeight.w600,
             ),
@@ -526,7 +526,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
           Text(
             item.name,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: AppColors.receiptDark,
             ),
@@ -540,7 +540,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
               Text(
                 "₱${item.price}",
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 21,
                   fontWeight: FontWeight.bold,
                   color: AppColors.secondary,
                 ),
@@ -566,8 +566,8 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                   });
                 },
                 child: Container(
-                  width: 34,
-                  height: 34,
+                  width: 50,
+                  height: 50,
                   decoration: BoxDecoration(
                     color: AppColors.background,
                     borderRadius: BorderRadius.circular(8),
