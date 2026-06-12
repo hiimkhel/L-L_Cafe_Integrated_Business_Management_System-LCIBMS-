@@ -269,9 +269,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 const SizedBox(height: gap),
                 MenusCard(
-                  items: topMenus.isEmpty
-                      ? _menuItems
-                      : topMenus,
+                  items: topMenus
                 ),
               ],
             ),
