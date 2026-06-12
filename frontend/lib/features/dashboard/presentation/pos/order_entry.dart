@@ -496,92 +496,185 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     );
   }
 
-  Widget _itemCard(MenuItem item) {
-    return Container(
-      padding: const EdgeInsets.all(19),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.receiptDark.withOpacity(0.08),
-            offset: Offset(0, 2),
-            blurRadius: 8,
-          ),
-        ],
+Widget _itemCard(MenuItem item) {
+
+  final currentOrderIndex = orderItems.indexWhere((e) => e['id'] == item.id);
+  final currentQty = currentOrderIndex >= 0 ? orderItems[currentOrderIndex]['qty'] as int : 0;
+  final isSelected = currentQty > 0;
+
+  // Formatting utility inside the layout scope
+  String formatMoney(dynamic value) {
+    final v = double.tryParse(value.toString()) ?? 0.0;
+    return '₱${v.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}';
+  }
+
+  return Container(
+    decoration: BoxDecoration(
+      color: AppColors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: isSelected ? AppColors.secondary : Colors.transparent,
+        width: 1.5,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            getCategoryName(item.categoryId).toUpperCase(),
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.primary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-
-          Text(
-            item.name,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.receiptDark,
-            ),
-          ),
-
-          const Spacer(),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      boxShadow: [
+        BoxShadow(
+          color: AppColors.receiptDark.withOpacity(isSelected ? 0.1 : 0.04),
+          offset: const Offset(0, 4),
+          blurRadius: 12,
+        ),
+      ],
+    ),
+    child: Stack(
+      children: [
+       
+        Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start, 
             children: [
-              Text(
-                "₱${item.price}",
-                style: TextStyle(
-                  fontSize: 21,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.secondary,
+              const SizedBox(height: 6),
+              
+
+              Align(
+                alignment: Alignment.center, 
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? AppColors.secondary.withOpacity(0.3) : Colors.grey.shade200,
+                      width: 2,
+                    ),
+                    image: (item.imageUrl != null && item.imageUrl!.isNotEmpty)
+                        ? DecorationImage(
+                            image: NetworkImage(item.imageUrl!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: (item.imageUrl == null || item.imageUrl!.isEmpty)
+                      ? Icon(
+                          Icons.fastfood_rounded,
+                          size: 32,
+                          color: Colors.grey.shade400,
+                        )
+                      : null,
                 ),
               ),
 
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    final index = orderItems.indexWhere(
-                      (e) => e['id'] == item.id,
-                    );
+              const Spacer(),
 
-                    if (index >= 0) {
-                      orderItems[index]['qty'] += 1;
-                    } else {
-                      orderItems.add({
-                        'id': item.id,
-                        'name': item.name,
-                        'price': double.parse(item.price.toString()),
-                        'qty': 1,
-                      });
-                    }
-                  });
-                },
-                child: Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.add, size: 20),
+              Expanded(
+                flex: 0, // Prevents unexpected vertical text stretching
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.left,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.receiptDark,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      formatMoney(item.price),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? AppColors.secondary : AppColors.receiptDark.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
                 ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // ── SECONDARY ACTION BUTTON CONTROLS ──────────────
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                child: !isSelected
+                    ? SizedBox(
+                        key: const ValueKey('add_btn'),
+                        width: double.infinity,
+                        height: 38,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.secondary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: EdgeInsets.zero,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              orderItems.add({
+                                'id': item.id,
+                                'name': item.name,
+                                'price': double.parse(item.price.toString()),
+                                'qty': 1,
+                                'image_url': item.imageUrl,
+                              });
+                            });
+                          },
+                          child: const Text(
+                            "ADD TO CART",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold, 
+                              fontSize: 12, 
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      )
+                    : Container(
+                        key: const ValueKey('added_state'),
+                        width: double.infinity,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary.withOpacity(0.12), // Elegant tint fallback
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.secondary, width: 1),
+                        ),
+                        child: Center(
+                          child: Text(
+                            "ADDED TO CART",
+                            style: TextStyle(
+                              color: AppColors.secondary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
 
+        if (isSelected)
+          Positioned(
+            top: 10,
+            right: 10,
+            child: CircleAvatar(
+              radius: 9,
+              backgroundColor: AppColors.secondary,
+              child: const Icon(Icons.check, color: Colors.white, size: 11),
+            ),
+          ),
+      ],
+    ),
+  );
+}
   //----------------------------------------Finalize Order Section-----------------------------------------------------------
   Widget _finaizeOrderSection() {
 
