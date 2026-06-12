@@ -27,7 +27,6 @@ class CheckoutConfirmationScreen extends StatefulWidget {
 class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>{
   double cashGiven = 0;
 
-  // Safe arithmetic processing for JSON objects
   double get subtotal => widget.orderItems.fold(
     0.0,
     (sum, item) => sum + ((item["price"] as num).toDouble() * (item["qty"] as num).toInt()),
@@ -52,25 +51,32 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
                   final bool isTablet = constraints.maxWidth >= 900;
                   
                   if (!isTablet) {
-                    // Modern Fluid Mobile View (Scrollable & Spaced)
                     return SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
                       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(24),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primary.withOpacity(0.04),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
-                            ),
+                          OrderSummary(
+                            orderItems: widget.orderItems,
+                            subtotal: subtotal,
+                            total: total,
+                            orderType: widget.orderType,
+                            isStacked: true,
+                          ),
+                          const SizedBox(height: 20),
+                          _buildPaymentEntry(formattedOrderNumber, true),
+                        ],
+                      ),
+                    );
+                  } else {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            flex: 4, 
                             child: OrderSummary(
                               orderItems: widget.orderItems,
                               subtotal: subtotal,
@@ -78,81 +84,10 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
                               orderType: widget.orderType,
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(24),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primary.withOpacity(0.04),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(20.0),
-                              child: _buildPaymentEntry(formattedOrderNumber),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  } else {
-                    // Ultra-Modern Split Monitor View for POS
-                    return Padding(
-                      padding: const EdgeInsets.fromLTRB(24.0, 12.0, 24.0, 24.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                            flex: 5, 
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(28),
-                                border: Border.all(color: AppColors.tertiary.withOpacity(0.08)),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.03),
-                                    blurRadius: 30,
-                                    offset: const Offset(0, 12),
-                                  ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(28),
-                                child: OrderSummary(
-                                  orderItems: widget.orderItems,
-                                  subtotal: subtotal,
-                                  total: total,
-                                  orderType: widget.orderType,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 24),
+                          const SizedBox(width: 32),
                           Expanded(
                             flex: 6, 
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(28),
-                                border: Border.all(color: AppColors.tertiary.withOpacity(0.08)),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.03),
-                                    blurRadius: 30,
-                                    offset: const Offset(0, 12),
-                                  ),
-                                ],
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(32.0),
-                                child: _buildPaymentEntry(formattedOrderNumber),
-                              ),
-                            ),
+                            child: _buildPaymentEntry(formattedOrderNumber, false),
                           ),
                         ],
                       ),
@@ -167,13 +102,26 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
     );
   }
 
-  Widget _buildPaymentEntry(String formattedOrderNumber) {
+  Widget _buildPaymentEntry(String formattedOrderNumber, bool isStacked) {
     return PaymentEntry(
       total: total,
       change: change,
+      isStacked: isStacked,
       onCashChanged: (value) => setState(() => cashGiven = value),
       orderItems: widget.orderItems,
-      onSubmit: () async {
+      onSubmit: (int selectedMethod) async {
+        
+        String paymentMethodStr = "CASH";
+        PaymentMethod receiptMethod = PaymentMethod.cash;
+        
+        if (selectedMethod == 1) {
+          paymentMethodStr = "CARD";
+          receiptMethod = PaymentMethod.card;
+        } else if (selectedMethod == 2) {
+          paymentMethodStr = "E-WALLET";
+          receiptMethod = PaymentMethod.gcash; 
+        }
+
         final databaseItems = widget.orderItems.map((item) {
           final price = (item["price"] as num).toDouble();
           final qty = (item["qty"] as num).toInt();
@@ -193,7 +141,7 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
           subtotal: subtotal,
           deliveryFee: 0.0,
           total: total,
-          paymentMethod: "CASH", 
+          paymentMethod: paymentMethodStr, 
           paymentStatus: "PAID",
           customerName: "WALK-IN CUSTOMER",
           customerPhone: "N/A",
@@ -206,12 +154,16 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
         if (!mounted) return;
 
         if (success) {
+          OrderType parsedOrderType = OrderType.walkIn;
+          if (widget.orderType.toLowerCase().contains("dine")) parsedOrderType = OrderType.dineIn;
+          if (widget.orderType.toLowerCase().contains("take")) parsedOrderType = OrderType.takeOut;
+
           final receiptData = ReceiptData(
             orderNumber: formattedOrderNumber,
             clientName: "WALK-IN CUSTOMER",
             dateTime: DateTime.now(),
-            orderType: OrderType.walkIn,
-            paymentMethod: PaymentMethod.cash,
+            orderType: parsedOrderType,
+            paymentMethod: receiptMethod,
             items: widget.orderItems.map((item) {
               return OrderItem(
                 name: item["name"],
@@ -224,7 +176,7 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Failed to process payment. Please try again.'), 
+              content: const Text('Failed to process payment.', style: TextStyle(fontWeight: FontWeight.w600)), 
               backgroundColor: Colors.redAccent.shade700,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -238,25 +190,28 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
   Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-      color: Colors.transparent,
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: AppColors.primary.withOpacity(0.15), // Subtle, soft border line
+            width: 1.5,
+          ),
+        ),
+      ),
       child: Row(
         children: [
-          Material(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            shadowColor: AppColors.primary.withOpacity(0.1),
-            elevation: 2,
-            child: InkWell(
-              onTap: () => Navigator.pop(context),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.tertiary.withOpacity(0.1)),
-                ),
-                child: const Icon(Icons.arrow_back_rounded, color: AppColors.primary, size: 24),
-              ),
+              boxShadow: [
+                BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
+              ]
+            ),
+            child: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.primary, size: 24),
+              padding: const EdgeInsets.all(14),
             ),
           ),
           const SizedBox(width: 24),
@@ -265,44 +220,17 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Checkout Confirmation",
+                  "Checkout",
                   style: AppTextStyles.title.copyWith(
                     color: AppColors.primary, 
-                    fontSize: 26, 
+                    fontSize: 28, 
                     fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5
                   )
                 ),
                 const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.secondary.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        "POS SYSTEM",
-                        style: AppTextStyles.body.copyWith(
-                          color: AppColors.secondary, 
-                          fontWeight: FontWeight.w900, 
-                          fontSize: 10,
-                          letterSpacing: 1.0
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      "FINAL PHASE OF TRANSACTION",
-                      style: AppTextStyles.body.copyWith(
-                        color: AppColors.tertiary.withOpacity(0.8), 
-                        fontWeight: FontWeight.w700, 
-                        fontSize: 11, 
-                        letterSpacing: 0.5
-                      )
-                    ),
-                  ],
+                Text(
+                  "Finalize transaction and payment",
+                  style: AppTextStyles.body.copyWith(color: AppColors.tertiary, fontWeight: FontWeight.w500, fontSize: 13)
                 ),
               ],
             ),
