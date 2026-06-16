@@ -7,6 +7,7 @@ import 'package:frontend/config/theme/app_text_styles.dart';
 import 'package:frontend/core/services/pos/order_service.dart';
 import 'package:frontend/core/models/order_request.dart';
 import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
+import 'package:frontend/core/models/receipt_model.dart';
 
 class CheckoutConfirmationScreen extends StatefulWidget {
   const CheckoutConfirmationScreen({super.key, required this.orderType, required this.orderItems, required this.orderOrderId});
@@ -104,6 +105,8 @@ class CheckoutConfirmationScreen extends StatefulWidget {
                             unitPrice: item["price"],
                           );
                         }).toList(),
+                        cashReceived: 0,
+                        change: change
                       );
 
                       // 4. Show the receipt only after successful DB entry
