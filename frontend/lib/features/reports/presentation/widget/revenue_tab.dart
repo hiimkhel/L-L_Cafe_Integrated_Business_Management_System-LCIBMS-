@@ -28,6 +28,7 @@ class RevenueTab extends StatelessWidget {
 
     final double progress =
         monthlyTarget > 0 ? (totalRevenue / monthlyTarget).clamp(0.0, 1.0) : 0;
+    final bool isAllTime = revenueData['is_all_time'] == true;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -61,14 +62,37 @@ class RevenueTab extends StatelessWidget {
 
               Row(
                 children: [
-                  _StatPill(
-                    icon: Icons.trending_up_rounded,
-                    label:
-                        '${growthRate >= 0 ? '+' : ''}${growthRate.toStringAsFixed(0)}% vs previous period',
-                    color: growthRate >= 0
-                        ? const Color(0xFF7BC67E)
-                        : Colors.redAccent,
-                  ),
+                  if (!isAllTime)
+                    _StatPill(
+                      icon: growthRate >= 0
+                          ? Icons.trending_up_rounded
+                          : Icons.trending_down_rounded,
+                      label:
+                          '${growthRate >= 0 ? '+' : ''}${growthRate.toStringAsFixed(1)}% vs previous period',
+                      color: growthRate >= 0
+                          ? const Color(0xFF7BC67E)
+                          : Colors.redAccent,
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'No comparison available',
+                        style: TextStyle(
+                          fontFamily: 'Urbanist',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white60,
+                        ),
+                      ),
+                    ),
                 ],
               ),
 
@@ -117,24 +141,58 @@ class RevenueTab extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 4),
+                        Text(
+                          '₱${monthlyTarget.toStringAsFixed(0)}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
 
                   Text(
                     '${(progress * 100).toStringAsFixed(0)}%',
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontFamily: 'Urbanist',
+                      fontSize: 28,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
+                      height: 1,
                     ),
                   ),
 
+                  const SizedBox(height: 4),
+
                   const Text(
-                    'of monthly target',
+                    'Monthly Target Progress',
                     style: TextStyle(
-                      color: Colors.white54,
-                      fontSize: 10,
+                      fontFamily: 'Urbanist',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white60,
+                      letterSpacing: 0.2,
                     ),
                   ),
+
+                  const SizedBox(height: 12),
                 ],
               );
             },

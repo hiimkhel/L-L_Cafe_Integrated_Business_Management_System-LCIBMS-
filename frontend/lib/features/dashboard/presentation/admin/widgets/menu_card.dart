@@ -55,15 +55,46 @@ class MenusCard extends StatelessWidget {
             ),
           ]),
           const SizedBox(height: 16),
-          ...top5.asMap().entries.map((e) {
-            final ratio = e.value.sold / maxSold;
-            return Padding(
-              padding: EdgeInsets.only(
-                  bottom: e.key < top5.length - 1 ? 16 : 0),
-              child: _MenuItemTile(
-                  item: e.value, ratio: ratio, rank: e.key + 1, isFirst: e.key == 0),
-            ); 
-          }),
+
+          if (top5.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 32),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.restaurant_menu_outlined,
+                    size: 40,
+                    color: _green2.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'No menu sales recorded',
+                    style: TextStyle(
+                      fontFamily: 'Urbanist',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: _green1.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            ...top5.asMap().entries.map((e) {
+              final ratio = e.value.sold / maxSold;
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: e.key < top5.length - 1 ? 16 : 0,
+                ),
+                child: _MenuItemTile(
+                  item: e.value,
+                  ratio: ratio,
+                  rank: e.key + 1,
+                  isFirst: e.key == 0,
+                ),
+              );
+            }),
         ],
       ),
     );

@@ -3,6 +3,8 @@ import 'revenue_tab.dart';
 import 'orders_tab.dart';
 import 'sales_tab.dart';
 
+const Color _beige = Color(0xFFEFE2C9);
+
 enum BusinessTab { revenue, orders, avgOrder }
 
 class BusinessPerformanceCard extends StatefulWidget {
@@ -35,14 +37,27 @@ class _BusinessPerformanceCardState extends State<BusinessPerformanceCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'BUSINESS PERFORMANCE',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.2,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: _beige.withOpacity(0.85),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'BUSINESS PERFORMANCE',
+                style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                  color: _beige.withOpacity(0.85),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 14),
           _buildTabBar(),

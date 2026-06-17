@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
-
 // ─────────────────────────────────────────────
 // DATA MODELS
 // ─────────────────────────────────────────────
