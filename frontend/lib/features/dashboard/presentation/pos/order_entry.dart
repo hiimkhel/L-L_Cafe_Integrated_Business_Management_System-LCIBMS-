@@ -37,18 +37,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   int _pendingOnlineCount = 0;
   bool _loadingCount = false;
 
-  // Breakpoint below which the menu/cart layout stacks instead of
-  // sitting side-by-side. Anything narrower than this can't comfortably
-  // fit both panels at once. Raised from 760 to 900: the cart panel
-  // needs roughly 320-360px of usable width for its order-type buttons,
-  // subtotal row, and the delete + finalize button row to sit
-  // comfortably without their text clipping or wrapping awkwardly.
   static const double _stackBreakpoint = 900;
-
-  // Minimum width the cart panel is allowed to shrink to in the
-  // side-by-side layout. Below this, "FINALIZE ORDER" and the subtotal
-  // figures start to crowd each other even though nothing technically
-  // overflows.
   static const double _cartPanelMinWidth = 320;
 
   @override
@@ -72,8 +61,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
 
       final items = results[0] as List<MenuItem>;
       final cats = results[1] as List<MenuCategory>;
-
-
 
       setState(() {
         menuItems = items;
@@ -115,7 +102,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
         .name;
   }
 
-  // Handle calculation of subtotal price from cart items
   double getSubtotal() {
     double subtotal = 0;
     for (var item in orderItems) {
@@ -123,7 +109,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     }
     return subtotal;
   }
-
 
   double getTotal() {
     return getSubtotal();
@@ -152,9 +137,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                     _searchBar(),
                     _categoriesRow(),
                     const SizedBox(height: 10),
-                    // On narrow screens the menu can't be an Expanded
-                    // inside a scrolling Column (unbounded height), so
-                    // give it a fixed viewport height instead.
                     isNarrow
                         ? SizedBox(
                             height: 520,
@@ -165,9 +147,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                 );
 
                 final cartPanel = _finaizeOrderSection(
-                  // On narrow/stacked layouts the cart section also needs
-                  // a bounded height since it's no longer inside an
-                  // Expanded flex row.
                   fixedHeight: isNarrow ? 640 : null,
                 );
 
@@ -182,14 +161,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                   );
                 }
 
-                // Compute explicit pixel widths instead of trusting flex
-                // ratios alone, so the cart panel can never be squeezed
-                // below its usable minimum — and so the menu panel takes
-                // up exactly what's left, never more than the viewport
-                // actually has. ClipRect is a defensive safety net: even
-                // if some future change makes a child report a larger
-                // intrinsic width than its slot, this guarantees nothing
-                // visually bleeds past the screen edge.
                 final cartWidthUpperBound =
                     (constraints.maxWidth * 0.45).clamp(_cartPanelMinWidth, double.infinity);
                 final cartWidth = (constraints.maxWidth / 3)
@@ -215,7 +186,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
 
   //----------------------------------------Order Header-----------------------------------------------------------
   Widget _orderHeader() {
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 17),
@@ -223,202 +193,101 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
         color: AppColors.background,
         border: Border(bottom: BorderSide(color: AppColors.primary)),
       ),
-      child: Row(
+      // Wrap replaces the inflexible Row/SizedBox logic
+      child: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 20,
+        runSpacing: 15,
         children: [
-          // Zone 1: title. flex:5 so it isn't artificially squeezed to
-          // a tiny fraction of the row by the trailing cluster's much
-          // higher flex weight (see note below) — it still shrinks with
-          // ellipsis if the title's natural width genuinely exceeds its
-          // share, but normally just takes the space its content needs.
-          Flexible(
-            flex: 5,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+          // Title Section
+          RichText(
+            text: TextSpan(
+              style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
               children: [
-                RichText(
-                  overflow: TextOverflow.ellipsis,
-                  text: TextSpan(
-                    style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
-                    children: [
-                      TextSpan(
-                        text: "L&L CAFE ",
-                        style: TextStyle(color: AppColors.secondary),
-                      ),
-                      TextSpan(
-                        text: "MAIN COUNTER",
-                        style: TextStyle(color: AppColors.primary),
-                      ),
-                      TextSpan(
-                        text: "\nMAKING GOOD FOOD FOR PEOPLE'S HAPPINESS",
-                        style: TextStyle(
-                          fontSize: 12,
-                          //fontWeight: FontWeight.normal,
-                          color: Colors.black,
-                          letterSpacing: .9,
-                        ),
-                      ),
-                    ],
-                  ),
+                TextSpan(text: "L&L CAFE ", style: TextStyle(color: AppColors.secondary)),
+                TextSpan(text: "MAIN COUNTER", style: TextStyle(color: AppColors.primary)),
+                const TextSpan(
+                  text: "\nMAKING GOOD FOOD FOR PEOPLE'S HAPPINESS",
+                  style: TextStyle(fontSize: 12, color: Colors.black, letterSpacing: .9),
                 ),
               ],
             ),
           ),
 
-          // flex:1 here only consumes whatever space the trailing
-          // cluster doesn't need — see the note on the cluster's
-          // Flexible below for why the flex weights are set this way.
-          const Spacer(flex: 1),
-
-          // Trailing cluster: nav buttons + divider + logo + cashier
-          // info, all grouped as one unit at the far right.
-          //
-          // Previously this used a horizontally-scrolling row with
-          // reverse:true as the overflow fallback. The problem: when the
-          // cluster didn't fully fit, the scroll defaulted to showing
-          // the *end* of the content (logo/cashier) and silently
-          // scrolled "ORDER QUEUE" mostly out of view with no scroll
-          // indicator — it looked clipped/broken rather than
-          // responsive, and the button was still there but effectively
-          // hidden and hard to tap.
-          //
-          // Fixed by measuring available width and switching the nav
-          // buttons to icon-only (label hidden) once space is tight.
-          // This reclaims width without ever hiding a button entirely —
-          // every control stays visible and tappable at any size.
-          //
-          // flex:20 (vs Spacer's flex:1) matters: Flexible defaults to
-          // FlexFit.loose, so a Row divides remaining space between
-          // flex children by their ratio and each child's *maximum*
-          // available width is its share of that split — it can still
-          // be smaller (loose), but never larger. With both this and
-          // Spacer at flex:1, the cluster would be capped at half the
-          // remaining space even when the title leaves much more room
-          // free, forcing icon-only mode (and scrolling) far sooner
-          // than necessary. flex:20 means Spacer only ever claims
-          // genuine leftover space, while the cluster can claim nearly
-          // all of it when needed.
-          Flexible(
-            flex: 20,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                // Rough width budget: full labels need ~330px for the
-                // three buttons; below that, drop to icon-only buttons
-                // (~140px) which still comfortably fits alongside the
-                // divider and logo block down to fairly narrow widths.
-                final bool compact = constraints.maxWidth < 330;
-
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _headerBtns(
-                        icon: Icon(Icons.queue, color: AppColors.primary, size: 13),
-                        label: 'ORDER QUEUE',
-                        compact: compact,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => OrderQueueScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 11),
-                      _headerBtns(
-                        icon: Icon(
-                          Icons.description_outlined,
-                          color: AppColors.primary,
-                          size: 13,
-                        ),
-                        label: 'REGISTRY',
-                        compact: compact,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => OrderHistoryScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 11),
-                      _headerBtns(
-                        icon: Icon(
-                          Icons.laptop_mac_outlined,
-                          color: AppColors.primary,
-                          size: 13,
-                        ),
-                        label: 'ONLINE ORDERS',
-                        badgeCount: _pendingOnlineCount,
-                        compact: compact,
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (_) => const OnlineOrdersScreen(),
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 19),
-                      Container(width: 1.5, height: 32, color: AppColors.tertiary),
-                      const SizedBox(width: 19),
-                      Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Image.asset("assets/images/lnl.jpg", fit: BoxFit.cover),
-                        ),
-                      ),
-                      const SizedBox(width: 11),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            "L&L CASHIER",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.receiptDark,
-                              fontSize: 12,
-                            ),
-                          ),
-                          Text(
-                            "SHIFT ACTIVE",
-                            style: TextStyle(
-                              fontWeight: FontWeight.normal,
-                              color: AppColors.secondary,
-                              fontSize: 9,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+          // Trailing cluster (Buttons and User Profile)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _headerBtns(
+                icon: const Icon(Icons.queue, color: AppColors.primary, size: 13),
+                label: 'ORDER QUEUE',
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderQueueScreen())),
+              ),
+              const SizedBox(width: 11),
+              _headerBtns(
+                icon: const Icon(Icons.description_outlined, color: AppColors.primary, size: 13),
+                label: 'REGISTRY',
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderHistoryScreen())),
+              ),
+              const SizedBox(width: 11),
+              _headerBtns(
+                icon: const Icon(Icons.laptop_mac_outlined, color: AppColors.primary, size: 13),
+                label: 'ONLINE ORDERS',
+                // Assuming _pendingOnlineCount is declared in your state variables
+                badgeCount: _pendingOnlineCount, 
+                onTap: () => showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) => const OnlineOrdersScreen(),
+                ),
+              ),
+              const SizedBox(width: 19),
+              Container(width: 1.5, height: 32, color: AppColors.tertiary),
+              const SizedBox(width: 19),
+              
+              // Profile Image
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.asset("assets/images/lnl.jpg", fit: BoxFit.cover),
+                ),
+              ),
+              const SizedBox(width: 11),
+              
+              // Profile Text
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "L&L CASHIER",
+                    style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.receiptDark, fontSize: 12),
                   ),
-                );
-              },
-            ),
+                  Text(
+                    "SHIFT ACTIVE",
+                    style: TextStyle(fontWeight: FontWeight.normal, color: AppColors.secondary, fontSize: 9),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  //---------------------------------------HeadBtn-----------------------------------------------------------
- //--------------------------------------- Header Button -----------------------------------------------------------
   Widget _headerBtns({
     Icon? icon,
     required String label,
     required VoidCallback onTap,
-    int? badgeCount, // optional notification badge
-    bool compact = false, // icon-only mode for tight widths
+    int? badgeCount,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -426,10 +295,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
         clipBehavior: Clip.none,
         children: [
           Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: compact ? 9 : 12,
-              vertical: 8,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: AppColors.white,
               border: Border.all(color: AppColors.primary),
@@ -440,28 +306,20 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
               children: [
                 if (icon != null) ...[
                   icon,
-                  if (!compact) const SizedBox(width: 4),
+                  const SizedBox(width: 4),
                 ],
-                // Label is hidden (not just shrunk) in compact mode —
-                // the icon alone still makes the button recognizable
-                // and fully tappable, which is what matters; this is
-                // the key change from the old scroll-based approach,
-                // where the button was still "there" but effectively
-                // invisible and hard to reach.
-                if (!compact)
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
                   ),
+                ),
               ],
             ),
           ),
 
-          // Notification badge
           if (badgeCount != null && badgeCount > 0)
             Positioned(
               top: -6,
@@ -502,7 +360,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
       ),
     );
   }
-  //----------------------------------------Search Bar-----------------------------------------------------------
+
   Widget _searchBar() {
     return Container(
       margin: const EdgeInsets.all(24),
@@ -517,7 +375,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
           const SizedBox(width: 7),
           Expanded(
             child: TextField(
-              // Search  logic
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value.toLowerCase();
@@ -540,7 +397,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     );
   }
 
-  //----------------------------------------Categories Row-----------------------------------------------------------
   Widget _categoriesRow() {
     return SizedBox(
       height: 48,
@@ -596,7 +452,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     );
   }
 
-  //----------------------------------------Item Buttons-----------------------------------------------------------
   Widget _itemButtons() {
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -619,9 +474,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Pick a column count that keeps each card at a reasonable
-        // minimum width, instead of always forcing 4 columns regardless
-        // of how much space is actually available.
         const double minCardWidth = 170;
         const double gridPadding = 24 * 2;
         const double spacing = 20;
@@ -634,13 +486,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
         final cardWidth =
             (usableWidth - spacing * (crossAxisCount - 1)) / crossAxisCount;
 
-        // Compute the row height directly from what the card content
-        // actually needs, instead of guessing via a fixed aspect ratio.
-        // This is what makes the grid immune to zoom/font-scale: the
-        // moment text or system font size grows, this number grows with
-        // it, so the card is never forced shorter than its content (the
-        // old bug — a Spacer can't go negative, so it silently overflows
-        // by whatever the deficit is).
         final cardHeight = _itemCardHeight(cardWidth, context);
 
         return GridView.builder(
@@ -661,12 +506,6 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     );
   }
 
-  // Measures the height the card content needs at the given width, using
-  // TextPainter to get Flutter's *actual* rendered line height for the
-  // exact TextStyle and textScaler in play — rather than a hand-rolled
-  // "fontSize * height" guess, which doesn't account for font metrics
-  // (ascent/descent/leading) and was the source of the residual ~5px
-  // overflow on two-line item names.
   double _itemCardHeight(double cardWidth, BuildContext context) {
     const double cardPadding = 14 * 2;
     final double imageSize = (cardWidth * 0.62).clamp(56.0, 120.0);
@@ -675,7 +514,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
 
     double measureLineHeight(TextStyle style) {
       final painter = TextPainter(
-        text: TextSpan(text: 'Ay', style: style), // any non-empty text; line height is style-driven, not content-driven
+        text: TextSpan(text: 'Ay', style: style),
         textDirection: TextDirection.ltr,
         textScaler: textScaler,
         maxLines: 1,
@@ -683,30 +522,18 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
       return painter.height;
     }
 
-    // Measure a single line directly rather than guessing a string that
-    // we hope wraps to exactly 2 lines (that was the actual bug: if the
-    // test phrase happened to fit on 1 line at a given cardWidth, the
-    // budget silently undershot again, the same failure mode as before
-    // just relocated). Line height for a fixed TextStyle is constant
-    // regardless of content, so multiplying by the known max line count
-    // is exact, not a guess.
     const nameStyle =
         TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.2);
     const priceStyle = TextStyle(fontSize: 15, fontWeight: FontWeight.bold);
 
-    final double nameBlockHeight = measureLineHeight(nameStyle) * 2; // maxLines: 2 in the actual card
+    final double nameBlockHeight = measureLineHeight(nameStyle) * 2;
     final double priceHeight = measureLineHeight(priceStyle);
 
     const double topGap = 6;
-    const double imageToSpacerGap = 16; // visual breathing room replacing Spacer
+    const double imageToSpacerGap = 16;
     const double nameToPriceGap = 4;
     const double priceToButtonGap = 12;
     const double buttonHeight = 38;
-
-    // Safety margin to absorb any sub-pixel rounding or unaccounted-for
-    // discrepancy between this measurement pass and the actual render
-    // pass — better to have a few pixels of harmless empty space at the
-    // bottom of the card than risk the overflow banner reappearing.
     const double safetyMargin = 6;
 
     return cardPadding +
@@ -727,7 +554,6 @@ Widget _itemCard(MenuItem item, double cardWidth) {
   final currentQty = currentOrderIndex >= 0 ? orderItems[currentOrderIndex]['qty'] as int : 0;
   final isSelected = currentQty > 0;
 
-  // Formatting utility inside the layout scope
   String formatMoney(dynamic value) {
     final v = double.tryParse(value.toString()) ?? 0.0;
     return '₱${v.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}';
@@ -756,12 +582,6 @@ Widget _itemCard(MenuItem item, double cardWidth) {
           padding: const EdgeInsets.all(14),
           child: Builder(
             builder: (context) {
-              // Image scales with the card's own width instead of being
-              // pinned to 120x120, so it no longer overflows on smaller
-              // cards (e.g. when the grid switches to more columns).
-              // cardWidth is passed in from the grid's own column-width
-              // calculation, so this matches _itemCardHeight exactly —
-              // no separate measurement that could drift out of sync.
               final imageSize = (cardWidth * 0.62).clamp(56.0, 120.0);
 
               return Column(
@@ -801,13 +621,6 @@ Widget _itemCard(MenuItem item, double cardWidth) {
                     ),
                   ),
 
-                  // Fixed gap instead of Spacer. A Spacer can't shrink
-                  // below zero, so if content is taller than the row
-                  // (e.g. due to zoom or text scaling), it silently
-                  // overflows by the deficit — this is exactly what was
-                  // happening at 125% zoom. mainAxisExtent on the grid
-                  // now guarantees the row is always tall enough for
-                  // this fixed-budget layout, so no Spacer is needed.
                   const SizedBox(height: 16),
 
                   Column(
@@ -842,7 +655,6 @@ Widget _itemCard(MenuItem item, double cardWidth) {
 
                   const SizedBox(height: 12),
 
-                  // ── SECONDARY ACTION BUTTON CONTROLS ──────────────
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 180),
                     child: !isSelected
@@ -888,7 +700,7 @@ Widget _itemCard(MenuItem item, double cardWidth) {
                             width: double.infinity,
                             height: 38,
                             decoration: BoxDecoration(
-                              color: AppColors.secondary.withOpacity(0.12), // Elegant tint fallback
+                              color: AppColors.secondary.withOpacity(0.12),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(color: AppColors.secondary, width: 1),
                             ),
@@ -928,7 +740,7 @@ Widget _itemCard(MenuItem item, double cardWidth) {
     ),
   );
 }
-  //----------------------------------------Finalize Order Section-----------------------------------------------------------
+
   Widget _finaizeOrderSection({double? fixedHeight}) {
 
     String formattedOrderNum = OrderNumberUtils.formatOrderNumber(_nextOrderId, _orderType);
@@ -955,8 +767,6 @@ Widget _itemCard(MenuItem item, double cardWidth) {
                 ),
               ),
               const SizedBox(width: 15),
-              // Allow the title to shrink instead of pushing the badge
-              // off-screen on narrow widths.
               Expanded(
                 child: Text(
                   'CURRENT ORDER',
@@ -974,7 +784,6 @@ Widget _itemCard(MenuItem item, double cardWidth) {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  // Dynamic background based on order type
                   color: _orderType == 'ONLINE' ? Colors.blue : AppColors.primary,
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -982,7 +791,7 @@ Widget _itemCard(MenuItem item, double cardWidth) {
                   formattedOrderNum,
                   style: const TextStyle(
                     fontSize: 11,
-                    color: Colors.white, // Inverted for better readability
+                    color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1160,7 +969,6 @@ Widget _itemCard(MenuItem item, double cardWidth) {
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    // Navigate to the next screen
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -1210,10 +1018,6 @@ Widget _itemCard(MenuItem item, double cardWidth) {
 
     return Container(
       height: fixedHeight,
-      // Right margin matches the header's horizontal padding (24px) so
-      // the cart card's right edge lines up with the logo block above
-      // it instead of sitting 10px further left, which is what was
-      // reading as "a few extra px of space" on the right side.
       margin: const EdgeInsets.fromLTRB(5, 14, 24, 14),
       decoration: BoxDecoration(
         color: AppColors.white,
@@ -1294,8 +1098,6 @@ Widget _itemCard(MenuItem item, double cardWidth) {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Long item names now truncate instead of overflowing into
-              // the close button.
               Expanded(
                 child: Text(
                   name,
@@ -1440,7 +1242,6 @@ Widget _itemCard(MenuItem item, double cardWidth) {
   }
 }
 
-// Helper Function for overflowing categories
 class _NoGlowScrollBehavior extends ScrollBehavior {
   const _NoGlowScrollBehavior();
 
