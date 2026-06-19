@@ -9,6 +9,7 @@ import 'package:frontend/core/models/order_request.dart';
 import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 import 'package:frontend/core/models/receipt_model.dart';
 import 'package:frontend/core/services/pos/print_services.dart';
+import 'package:frontend/core/services/pos/native_printer_services.dart';
 
 class CheckoutConfirmationScreen extends StatefulWidget {
   const CheckoutConfirmationScreen({super.key, required this.orderType, required this.orderItems, required this.orderOrderId});
@@ -112,6 +113,7 @@ class CheckoutConfirmationScreen extends StatefulWidget {
 
                       // 4. Show the receipt only after successful DB entry
                       _showReceipt(context, receiptData);
+                      await NativePrinterService.printTest();
                     } else {
                       // Handle error (show a SnackBar)
                       ScaffoldMessenger.of(context).showSnackBar(
