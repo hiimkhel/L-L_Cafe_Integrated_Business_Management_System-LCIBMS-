@@ -129,7 +129,7 @@ class PdfExportService {
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
-            pw.Text('Confidential - Internal Business Intelligence', style: style),
+            pw.Text('Confidential: Prepared exclusively for L&L Cafe', style: style),
             pw.Text('Page ${context.pageNumber} of ${context.pagesCount}', style: style),
           ],
         ),
