@@ -70,7 +70,7 @@ class PdfExportService {
           // SECTION 2: SALES DISTRIBUTION
           _buildSectionHeading('Sales Distribution', h2Style),
           pw.SizedBox(height: 8),
-          _buildKpiCard('Channels & Operations', salesData, bodyStyle, bodyBold),
+          // _buildSalesDistributionChart(salesData, bodyStyle, bodyBold),
 
           pw.SizedBox(height: 25),
 
@@ -285,6 +285,17 @@ class PdfExportService {
       ),
     );
   }
+
+  // static pw.Widget _buildSalesDistributionChart(
+  //   Map<String, dynamic> salesData,
+  //   pw.TextStyle bodyStyle,
+  //   pw.TextStyle boldStyle
+  // ){
+  //   // Data
+  //   final categories = (salesData['categories'] as List<dynamic> ?? []);
+
+  //   final totalSales = categories   
+  // }
 
   // --- UTILITIES ---
 
