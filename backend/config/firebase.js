@@ -4,11 +4,18 @@ const path = require("path");
 
 dotenv.config();
 
-const serviceAccountPath = path.resolve(
-  process.env.FIREBASE_SERVICE_ACCOUNT_PATH
-);
+let serviceAccount;
 
-const serviceAccount = require(serviceAccountPath);
+if (process.env.NODE_ENV !== "production") {
+  const serviceAccountPath = path.resolve(
+    process.env.FIREBASE_SERVICE_ACCOUNT_PATH || "./config/firebaseServiceAccount.json"
+  );
+
+  serviceAccount = require(serviceAccountPath);
+}
+else {
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
