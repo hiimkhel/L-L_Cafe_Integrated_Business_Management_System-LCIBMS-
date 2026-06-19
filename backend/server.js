@@ -38,6 +38,9 @@ app.use('/api/admin', require("./routes/adminRoutes.js"));
 
 app.use('/api/reviews', require("./routes/reviewRoutes.js"));
 app.use('/api/menu', require("./routes/menuRoutes.js"));
+app.get('/', (req, res) => {
+  res.send("Welcome to LCIBMS Backend URL")
+})
 app.listen(PORT, () => {
     console.log(`Server is running on ${PORT}`);
 });
