@@ -41,7 +41,7 @@ app.use('/api/menu', require("./routes/menuRoutes.js"));
 app.get('/', (req, res) => {
   res.send("Welcome to LCIBMS Backend URL")
 })
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on ${PORT}`);
 });
 

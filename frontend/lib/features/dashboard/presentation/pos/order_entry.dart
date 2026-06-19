@@ -533,37 +533,7 @@ Widget _itemCard(MenuItem item) {
             crossAxisAlignment: CrossAxisAlignment.start, 
             children: [
               const SizedBox(height: 6),
-              
-
-              Align(
-                alignment: Alignment.center, 
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected ? AppColors.secondary.withOpacity(0.3) : Colors.grey.shade200,
-                      width: 2,
-                    ),
-                    image: (item.imageUrl != null && item.imageUrl!.isNotEmpty)
-                        ? DecorationImage(
-                            image: NetworkImage(item.imageUrl!),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
-                  ),
-                  child: (item.imageUrl == null || item.imageUrl!.isEmpty)
-                      ? Icon(
-                          Icons.fastfood_rounded,
-                          size: 32,
-                          color: Colors.grey.shade400,
-                        )
-                      : null,
-                ),
-              ),
-
+            
               const Spacer(),
 
               Expanded(

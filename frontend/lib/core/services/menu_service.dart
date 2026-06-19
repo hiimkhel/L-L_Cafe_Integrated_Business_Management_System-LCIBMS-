@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:frontend/core/models/menu_item.dart';
 import 'package:frontend/core/models/menu_category.dart';
+import 'package:frontend/core/constants/api_configs.dart';
 
 class MenuService {
-  static const String baseUrl = "http://localhost:3006/api";
+  static String baseUrl = ApiConfig.baseUrl;
 
   static Future<List<MenuCategory>> fetchCategories() async {
     final res = await http.get(

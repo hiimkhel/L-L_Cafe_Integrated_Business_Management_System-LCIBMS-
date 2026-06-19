@@ -1,27 +1,25 @@
-package com.example.lcibms
+package com.example.frontend
 
-import io.flutter.enbedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
-classMainActivity : FlutterActivity(){
-    private val CHANNEL = 'lcibms/printer'
+class MainActivity : FlutterActivity() {
 
-    override fun configureFlutterEngine(flutterEngine: io.flutter.embedding.engine.FlutterEngine){
+    private val CHANNEL = "lcibms/printer"
+
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
-        MethodChannel(
-            flutterEngine.dartExecutor.binaryMessenger,
-            CHANNEL
-        ).setMethodCallHandler { call, result ->
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+            .setMethodCallHandler { call, result ->
 
-            when (call.method){
-                "printTest" -> {
-                    results.success("received")
+                when (call.method) {
+                    "printTest" -> {
+                        result.success("received")
+                    }
+                    else -> result.notImplemented()
                 }
-
-                else -> result.notImplemented()
             }
-
-        }
-    }    
+    }
 }
