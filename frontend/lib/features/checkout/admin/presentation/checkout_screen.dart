@@ -8,6 +8,8 @@ import 'package:frontend/core/services/pos/order_service.dart';
 import 'package:frontend/core/models/order_request.dart';
 import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 import 'package:frontend/core/models/receipt_model.dart';
+import 'package:frontend/core/services/pos/print_services.dart';
+import 'package:frontend/core/services/pos/native_printer_services.dart';
 
 class CheckoutConfirmationScreen extends StatefulWidget {
   const CheckoutConfirmationScreen({super.key, required this.orderType, required this.orderItems, required this.orderOrderId});
@@ -105,12 +107,13 @@ class CheckoutConfirmationScreen extends StatefulWidget {
                             unitPrice: item["price"],
                           );
                         }).toList(),
-                        cashReceived: 0,
+                        cashReceived: cashGiven,
                         change: change
                       );
 
                       // 4. Show the receipt only after successful DB entry
                       _showReceipt(context, receiptData);
+                      await NativePrinterService.printTest();
                     } else {
                       // Handle error (show a SnackBar)
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -196,18 +199,17 @@ class CheckoutConfirmationScreen extends StatefulWidget {
           insetPadding: const EdgeInsets.all(16),
           child: LLCafeReceipt(
             data: data,
-            onPrint: () {
+            onPrint: () async {
+              await PrintService.printReceipt(data);
+
               Navigator.pop(context);
 
-
-                Navigator.pushAndRemoveUntil(
-              context,
-                MaterialPageRoute(
-                  builder: (context) => OrderQueueScreen(),
-                ),
-                (route) => false, 
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => OrderQueueScreen()),
+                (route) => false,
               );
-            },
+            }
           ),
         );
       },
