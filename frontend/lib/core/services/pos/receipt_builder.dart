@@ -3,7 +3,10 @@ class ReceiptBuilder {
     required String storeName,
     required List<Map<String, dynamic>> items,
     required double total,
+    required double cashReceived,
+    required double change,
     String? cashier,
+
   }) {
     final buffer = StringBuffer();
 
@@ -20,6 +23,8 @@ class ReceiptBuilder {
     }
 
     buffer.writeln("--------------------------------");
+    buffer.writeln("CASH: ₱${cashReceived.toStringAsFixed(2)}");
+      buffer.writeln("CHANGE: ₱${change.toStringAsFixed(2)}");
     buffer.writeln("TOTAL: ₱$total");
     buffer.writeln("--------------------------------");
 

@@ -14,6 +14,8 @@ class PrintService {
       }).toList(),
       total: data.grandTotal,
       cashier: "POS SYSTEM",
+      cashReceived: data.cashReceived,
+      change: data.change
     );
 
     // STEP 2: SIMULATE PRINT OUTPUT (NO HARDWARE YET)

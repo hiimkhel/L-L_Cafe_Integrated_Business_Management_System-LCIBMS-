@@ -106,7 +106,7 @@ class CheckoutConfirmationScreen extends StatefulWidget {
                             unitPrice: item["price"],
                           );
                         }).toList(),
-                        cashReceived: 0,
+                        cashReceived: cashGiven,
                         change: change
                       );
 
