@@ -445,7 +445,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                   child: Text(
                     label,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 10,
                       fontWeight: FontWeight.bold,
                       color: isSelected ? AppColors.white : AppColors.primary,
                     ),
@@ -547,7 +547,7 @@ Widget _itemCard(MenuItem item) {
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.left,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: AppColors.receiptDark,
                         height: 1.2,
@@ -557,7 +557,7 @@ Widget _itemCard(MenuItem item) {
                     Text(
                       formatMoney(item.price),
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 10,
                         fontWeight: FontWeight.bold,
                         color: isSelected ? AppColors.secondary : AppColors.receiptDark.withOpacity(0.7),
                       ),
@@ -566,7 +566,7 @@ Widget _itemCard(MenuItem item) {
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
 
               // ── SECONDARY ACTION BUTTON CONTROLS ──────────────
               AnimatedSwitcher(
