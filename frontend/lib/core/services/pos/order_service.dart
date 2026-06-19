@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'package:frontend/core/models/order_request.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:frontend/core/constants/api_configs.dart';
 
 class OrderService {
-  final String baseUrl = "http://localhost:3006/api";
+  final String baseUrl = ApiConfig.baseUrl;
 
   // From ordersRoutes.js rather than posRoutes.js
   Future<bool> createOrder(OrderRequest order) async {
