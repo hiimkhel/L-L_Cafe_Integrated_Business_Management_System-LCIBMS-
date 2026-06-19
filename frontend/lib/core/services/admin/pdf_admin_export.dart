@@ -70,7 +70,7 @@ class PdfExportService {
           // SECTION 2: SALES DISTRIBUTION
           _buildSectionHeading('Sales Distribution', h2Style),
           pw.SizedBox(height: 8),
-          _buildKpiCard('Channels & Operations', salesData, bodyStyle, bodyBold),
+          _buildSalesDistributionChart(salesData, bodyStyle, bodyBold),
 
           pw.SizedBox(height: 25),
 
@@ -129,7 +129,7 @@ class PdfExportService {
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
-            pw.Text('Confidential - Internal Business Intelligence', style: style),
+            pw.Text('Confidential: Prepared exclusively for L&L Cafe', style: style),
             pw.Text('Page ${context.pageNumber} of ${context.pagesCount}', style: style),
           ],
         ),
@@ -217,28 +217,86 @@ class PdfExportService {
     );
   }
 
-  static pw.Widget _buildCustomersTable(List<dynamic> items, pw.TextStyle headerStyle, pw.TextStyle bodyStyle) {
+  static pw.Widget _buildCustomersTable(
+    List<dynamic> items,
+    pw.TextStyle headerStyle,
+    pw.TextStyle bodyStyle,
+  ) {
+    if (items.isEmpty) {
+      return pw.Container(
+        width: double.infinity,
+        padding: const pw.EdgeInsets.all(20),
+        decoration: pw.BoxDecoration(
+          color: bgLight,
+          border: pw.Border.all(
+            color: borderLight,
+          ),
+          borderRadius: pw.BorderRadius.circular(6),
+        ),
+        child: pw.Column(
+          children: [
+            pw.Text(
+              'No customer purchases recorded',
+              style: bodyStyle.copyWith(
+                fontWeight: pw.FontWeight.bold,
+                color: textMain,
+              ),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text(
+              'Customer rankings will appear once registered customers place orders.',
+              textAlign: pw.TextAlign.center,
+              style: bodyStyle.copyWith(
+                color: textMuted,
+                fontSize: 9,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return pw.Table(
-      border: pw.TableBorder.all(color: borderLight, width: 0.5),
+      border: pw.TableBorder.all(
+        color: borderLight,
+        width: 0.5,
+      ),
       columnWidths: const {
         0: pw.FlexColumnWidth(3),
         1: pw.FlexColumnWidth(1.5),
       },
       children: [
-        // Header
         pw.TableRow(
-          decoration: const pw.BoxDecoration(color: primaryColor),
+          decoration: const pw.BoxDecoration(
+            color: primaryColor,
+          ),
           children: [
-            _tableCell('Customer Name', headerStyle, isHeader: true),
-            _tableCell('Total Spent', headerStyle, isHeader: true, alignRight: true),
+            _tableCell(
+              'Customer Name',
+              headerStyle,
+              isHeader: true,
+            ),
+            _tableCell(
+              'Total Spent',
+              headerStyle,
+              isHeader: true,
+              alignRight: true,
+            ),
           ],
         ),
-        // Rows
+
         ...items.map((c) {
           return pw.TableRow(
             children: [
-              _tableCell(c['customer_name'] ?? 'N/A', bodyStyle),
-              _tableCell(_formatMoney(c['total_spent']), bodyStyle, alignRight: true),
+              _tableCell(
+                c['customer_name'] ?? 'N/A',
+                bodyStyle,
+              ),
+              _tableCell(
+                _formatMoney(c['total_spent']),
+                bodyStyle,
+                alignRight: true,
+              ),
             ],
           );
         }).toList(),
@@ -282,6 +340,107 @@ class PdfExportService {
         text,
         style: style,
         textAlign: alignRight ? pw.TextAlign.right : pw.TextAlign.left,
+      ),
+    );
+  }
+
+  static pw.Widget _buildSalesDistributionChart(
+    Map<String, dynamic> salesData,
+    pw.TextStyle bodyStyle,
+    pw.TextStyle boldStyle
+  ){
+    // Data
+    final categories = (salesData['categories'] as List<dynamic> ?? []);
+
+    final totalSales = categories.fold<double>(
+      0,
+      (sum, item) => sum + (double.tryParse(item['sales'].toString(),) ?? 0)
+    );
+
+      final maxSales = categories.isEmpty
+      ? 1.0
+      : categories
+          .map((e) => (e['sales'] as num).toDouble())
+          .reduce((a, b) => a > b ? a : b);
+
+     return pw.Container(
+      padding: const pw.EdgeInsets.all(12),
+      decoration: pw.BoxDecoration(
+        color: bgLight,
+        borderRadius: pw.BorderRadius.circular(6),
+        border: pw.Border.all(
+          color: borderLight,
+        ),
+      ),
+      child: pw.Column(
+        children: categories.map((item) {
+          final sales =
+              (item['sales'] as num).toDouble();
+
+          final ratio =
+              maxSales == 0
+                  ? 0
+                  : sales / maxSales;
+
+          final share =
+              totalSales == 0
+                  ? 0
+                  : (sales / totalSales) * 100;
+
+          return pw.Padding(
+            padding:
+                const pw.EdgeInsets.symmetric(
+                  vertical: 4,
+                ),
+            child: pw.Row(
+              children: [
+                pw.SizedBox(
+                  width: 80,
+                  child: pw.Text(
+                    item['name'],
+                    style: bodyStyle,
+                  ),
+                ),
+
+                pw.Expanded(
+                  child: pw.Container(
+                    height: 10,
+                    decoration:
+                        pw.BoxDecoration(
+                      color: borderLight,
+                      borderRadius:
+                          pw.BorderRadius.circular(
+                        10,
+                      ),
+                    ),
+                    child: pw.Align(
+                      alignment:
+                          pw.Alignment.centerLeft,
+                      child: pw.Container(
+                        width: ratio * 250,
+                        decoration:
+                            pw.BoxDecoration(
+                          color: secondaryColor,
+                          borderRadius:
+                              pw.BorderRadius.circular(
+                            10,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                pw.SizedBox(width: 10),
+
+                pw.Text(
+                  '${share.toStringAsFixed(1)}%',
+                  style: boldStyle,
+                ),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
   }

@@ -1418,19 +1418,19 @@ const getSalesDistributionReport = async (req, res) => {
                 SELECT
                     mc.id,
                     mc.name,
-                    COALESCE(SUM(oi.subtotal), 0) AS sales
-                FROM menu_categories mc
-                LEFT JOIN menu_items mi
-                    ON mc.id = mi.category_id
-                LEFT JOIN order_items oi
-                    ON mi.id = oi.menu_item_id
-                LEFT JOIN orders o
-                    ON oi.order_id = o.id
-                    AND o.status = 'completed'
-                    AND o.created_at >= ?
-                    AND o.created_at < DATE_ADD(?, INTERVAL 1 DAY)
+                    COALESCE(SUM(oi.subtotal),0) AS sales
+                FROM orders o
+                INNER JOIN order_items oi
+                    ON o.id = oi.order_id
+                INNER JOIN menu_items mi
+                    ON oi.menu_item_id = mi.id
+                INNER JOIN menu_categories mc
+                    ON mi.category_id = mc.id
+                WHERE o.status = 'completed'
+                AND o.created_at >= ?
+                AND o.created_at < DATE_ADD(?, INTERVAL 1 DAY)
                 GROUP BY mc.id, mc.name
-                ORDER BY sales DESC
+                ORDER BY sales DESC;
                 `,
                 [startDate, endDate]
             );
