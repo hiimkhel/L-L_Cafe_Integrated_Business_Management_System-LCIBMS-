@@ -70,7 +70,7 @@ class PdfExportService {
           // SECTION 2: SALES DISTRIBUTION
           _buildSectionHeading('Sales Distribution', h2Style),
           pw.SizedBox(height: 8),
-          // _buildSalesDistributionChart(salesData, bodyStyle, bodyBold),
+          _buildSalesDistributionChart(salesData, bodyStyle, bodyBold),
 
           pw.SizedBox(height: 25),
 
@@ -286,16 +286,106 @@ class PdfExportService {
     );
   }
 
-  // static pw.Widget _buildSalesDistributionChart(
-  //   Map<String, dynamic> salesData,
-  //   pw.TextStyle bodyStyle,
-  //   pw.TextStyle boldStyle
-  // ){
-  //   // Data
-  //   final categories = (salesData['categories'] as List<dynamic> ?? []);
+  static pw.Widget _buildSalesDistributionChart(
+    Map<String, dynamic> salesData,
+    pw.TextStyle bodyStyle,
+    pw.TextStyle boldStyle
+  ){
+    // Data
+    final categories = (salesData['categories'] as List<dynamic> ?? []);
 
-  //   final totalSales = categories   
-  // }
+    final totalSales = categories.fold<double>(
+      0,
+      (sum, item) => sum + (double.tryParse(item['sales'].toString(),) ?? 0)
+    );
+
+      final maxSales = categories.isEmpty
+      ? 1.0
+      : categories
+          .map((e) => (e['sales'] as num).toDouble())
+          .reduce((a, b) => a > b ? a : b);
+
+     return pw.Container(
+      padding: const pw.EdgeInsets.all(12),
+      decoration: pw.BoxDecoration(
+        color: bgLight,
+        borderRadius: pw.BorderRadius.circular(6),
+        border: pw.Border.all(
+          color: borderLight,
+        ),
+      ),
+      child: pw.Column(
+        children: categories.map((item) {
+          final sales =
+              (item['sales'] as num).toDouble();
+
+          final ratio =
+              maxSales == 0
+                  ? 0
+                  : sales / maxSales;
+
+          final share =
+              totalSales == 0
+                  ? 0
+                  : (sales / totalSales) * 100;
+
+          return pw.Padding(
+            padding:
+                const pw.EdgeInsets.symmetric(
+                  vertical: 4,
+                ),
+            child: pw.Row(
+              children: [
+                pw.SizedBox(
+                  width: 80,
+                  child: pw.Text(
+                    item['name'],
+                    style: bodyStyle,
+                  ),
+                ),
+
+                pw.Expanded(
+                  child: pw.Container(
+                    height: 10,
+                    decoration:
+                        pw.BoxDecoration(
+                      color: borderLight,
+                      borderRadius:
+                          pw.BorderRadius.circular(
+                        10,
+                      ),
+                    ),
+                    child: pw.Align(
+                      alignment:
+                          pw.Alignment.centerLeft,
+                      child: pw.Container(
+                        width: ratio * 250,
+                        decoration:
+                            pw.BoxDecoration(
+                          color: secondaryColor,
+                          borderRadius:
+                              pw.BorderRadius.circular(
+                            10,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                pw.SizedBox(width: 10),
+
+                pw.Text(
+                  '${share.toStringAsFixed(1)}%',
+                  style: boldStyle,
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
 
   // --- UTILITIES ---
 
