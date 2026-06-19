@@ -28,10 +28,9 @@ import 'features/dashboard/presentation/pos/order_entry.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await dotenv.load(fileName: ".env");
 
   await FacebookAuth.instance.webAndDesktopInitialize(
-    appId: dotenv.env['FACEBOOK_APP_ID']!,
+    appId: "1462606645593730",
     cookie: true,
     xfbml: true,
     version: "v13.0",
