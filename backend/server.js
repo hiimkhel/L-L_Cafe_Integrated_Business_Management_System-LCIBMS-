@@ -40,17 +40,20 @@ app.use('/api/reviews', require("./routes/reviewRoutes.js"));
 app.use('/api/menu', require("./routes/menuRoutes.js"));
 
 app.post("/print", (req, res) => {
-  console.log("PRINT REQUEST RECEIVED");
-  console.log(req.body);
+  console.log("PRINT RECEIVED");
 
-  // IMPORTANT: respond immediately
+  // MUST respond immediately
   res.status(200).send("OK");
 
-  // simulate or forward to printer
-  setTimeout(() => {
-    console.log("Sending to printer...");
-    // printer logic here
-  }, 0);
+  // background printing
+  setImmediate(() => {
+    try {
+      console.log(req.body);
+      // send to PT-210 printer here
+    } catch (err) {
+      console.log(err);
+    }
+  });
 });
 
 app.get('/', (req, res) => {

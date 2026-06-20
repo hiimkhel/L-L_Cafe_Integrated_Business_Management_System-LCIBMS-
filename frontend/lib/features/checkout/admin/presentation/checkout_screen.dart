@@ -204,42 +204,28 @@ class CheckoutConfirmationScreen extends StatefulWidget {
           child: LLCafeReceipt(
             data: data,
             onPrint: () async {
-              print("STARTING PRINT");
-
-              // 1. close dialog FIRST
-              Navigator.pop(context);
-
-              if (context.mounted) {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => OrderQueueScreen()),
-                  (route) => false,
-                );
-              }
-
-              // 2. wait for next frame (VERY IMPORTANT)
-              await Future.delayed(Duration(milliseconds: 100));
+              final navigator = Navigator.of(context);
 
               try {
-                final result = await PrintBridgeService.printReceipt(
-                  '''
-            LCIBMS TEST RECEIPT
+                print("STARTING PRINT");
 
-            Americano        ₱120
-            Latte            ₱150
+                // optional: close dialog first
+                navigator.pop();
 
-            TOTAL            ₱270
+                await Future.delayed(const Duration(milliseconds: 100));
 
-            Thank you!
-            '''
-                );
+                await PrintService.printReceipt(data);
 
-                print("PRINT RESULT: $result");
+                print("PRINT FINISHED");
               } catch (e) {
                 print("PRINT ERROR: $e");
               }
 
-            
+              // ALWAYS go to queue screen (even if print fails)
+              navigator.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => OrderQueueScreen()),
+                (route) => false,
+              );
             }
           ),
         );
