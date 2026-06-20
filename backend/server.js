@@ -38,6 +38,21 @@ app.use('/api/admin', require("./routes/adminRoutes.js"));
 
 app.use('/api/reviews', require("./routes/reviewRoutes.js"));
 app.use('/api/menu', require("./routes/menuRoutes.js"));
+
+app.post("/print", (req, res) => {
+  console.log("PRINT REQUEST RECEIVED");
+  console.log(req.body);
+
+  // IMPORTANT: respond immediately
+  res.status(200).send("OK");
+
+  // simulate or forward to printer
+  setTimeout(() => {
+    console.log("Sending to printer...");
+    // printer logic here
+  }, 0);
+});
+
 app.get('/', (req, res) => {
   res.send("Welcome to LCIBMS Backend URL")
 })
