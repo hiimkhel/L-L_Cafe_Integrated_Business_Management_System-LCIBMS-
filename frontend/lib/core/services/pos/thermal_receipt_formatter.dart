@@ -42,7 +42,7 @@ class ThermalReceiptFormatter {
     buffer.writeln("");
     buffer.writeln(center("THANK YOU FOR ORDERING"));
     buffer.writeln(center("AT L&L CAFE"));
-    buffer.writeln("");
+
 
     return buffer.toString();
   }

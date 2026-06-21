@@ -209,7 +209,6 @@ class CheckoutConfirmationScreen extends StatefulWidget {
               try {
                 print("STARTING PRINT");
 
-                // optional: close dialog first
                 navigator.pop();
 
                 await Future.delayed(const Duration(milliseconds: 100));
