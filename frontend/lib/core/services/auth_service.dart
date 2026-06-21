@@ -3,11 +3,12 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:frontend/core/constants/api_configs.dart';
 
 import '../models/user.dart';
 
 class AuthService {
-  static const String baseUrl = "http://localhost:3006/api/auth";
+  static String baseUrl = ApiConfig.baseUrl;
 
   final fb.FirebaseAuth _auth = fb.FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
@@ -34,7 +35,7 @@ class AuthService {
     print(idToken);
 
     final response = await http.post(
-      Uri.parse('$baseUrl/$endpoint'),
+      Uri.parse('$baseUrl/auth/$endpoint'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $idToken',

@@ -48,6 +48,10 @@ dependencies:
   intl: ^0.20.2
   pdf: ^3.11.3
   printing: ^5.14.3
+  permission_handler: ^12.0.3
+  flutter_blue_plus: ^2.3.9
+  esc_pos_utils_plus: ^2.0.4
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -61,6 +65,12 @@ dev_dependencies:
   flutter_lints: 5.0.0
   http: ^1.6.0
   firebase_core: ^4.7.0
+
+
+flutter_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/lnl.jpg"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -78,6 +88,7 @@ flutter:
     # - images/a_dot_ham.jpeg
     - assets/images/lnl.jpg
     - assets/images/
+    - .env
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

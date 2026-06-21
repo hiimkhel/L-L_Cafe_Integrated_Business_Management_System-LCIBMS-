@@ -19,6 +19,7 @@ class OrdersCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final top5 = orders.take(5).toList();
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -28,81 +29,106 @@ class OrdersCard extends StatelessWidget {
         border: Border.all(color: _green2.withOpacity(0.12)),
         boxShadow: [
           BoxShadow(
-              color: _green1.withOpacity(0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 4))
+            color: _green1.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          )
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── HEADER (always visible)
           Row(children: [
             const CardHeader(title: 'RECENT ORDERS'),
             const Spacer(),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                  color: _green2.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20)),
-              child: const Text('TOP 5',
-                  style: TextStyle(
-                      fontFamily: 'Urbanist',
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
-                      color: _green2)),
+                color: _green2.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text(
+                'TOP 5',
+                style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                  color: _green2,
+                ),
+              ),
             ),
             const SizedBox(width: 10),
             GestureDetector(
               onTap: onViewAll,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 7),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                      colors: [_green2, _green1]),
+                  gradient: const LinearGradient(colors: [_green2, _green1]),
                   borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                        color: _green2.withOpacity(0.3),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3))
-                  ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: const [
-                    Text('VIEW ALL',
-                        style: TextStyle(
-                            fontFamily: 'Urbanist',
-                            fontWeight: FontWeight.w800,
-                            fontSize: 11,
-                            letterSpacing: 0.5,
-                            color: _white)),
+                    Text(
+                      'VIEW ALL',
+                      style: TextStyle(
+                        fontFamily: 'Urbanist',
+                        fontWeight: FontWeight.w800,
+                        fontSize: 11,
+                        color: _white,
+                      ),
+                    ),
                     SizedBox(width: 5),
-                    Icon(Icons.arrow_forward_rounded,
-                        color: _white, size: 13),
+                    Icon(Icons.arrow_forward_rounded, color: _white, size: 13),
                   ],
                 ),
               ),
             ),
           ]),
+
           const SizedBox(height: 14),
+
+          // ── BODY (conditional)
           Container(
-            decoration: BoxDecoration(
-              color: _white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: _green2.withOpacity(0.1)),
-            ),
-            child: Column(children: [
-              const _OrderTableHeader(),
-              ...top5.asMap().entries.map((e) => _OrderTableRow(
-                    order: e.value,
-                    isShaded: e.key.isEven,
-                    isLast: e.key == top5.length - 1,
-                  )),
-            ]),
+            width: double.infinity,
+            child: orders.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.all(30),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(
+                          Icons.receipt_long_rounded,
+                          size: 42,
+                          color: _green2,
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          'No orders recorded',
+                          style: TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: _green2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Column(
+                    children: [
+                      const _OrderTableHeader(),
+                      ...top5.asMap().entries.map(
+                            (e) => _OrderTableRow(
+                              order: e.value,
+                              isShaded: e.key.isEven,
+                              isLast: e.key == top5.length - 1,
+                            ),
+                          ),
+                    ],
+                  ),
           ),
         ],
       ),

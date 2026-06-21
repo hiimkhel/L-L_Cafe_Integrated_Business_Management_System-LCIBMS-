@@ -5,6 +5,35 @@
 */
 const db = require("../config/dbConnection.js");
 
+// Helper Function for calculating the growth rate
+const getPreviousPeriod = (startDate, endDate) => {
+    const currentStart = new Date(startDate);
+    const currentEnd = new Date(endDate);
+
+    const days =
+        Math.ceil(
+            (currentEnd - currentStart) /
+            (1000 * 60 * 60 * 24)
+        ) + 1;
+
+    const previousEnd = new Date(currentStart);
+    previousEnd.setDate(previousEnd.getDate() - 1);
+
+    const previousStart = new Date(previousEnd);
+    previousStart.setDate(
+        previousStart.getDate() - (days - 1)
+    );
+
+    return {
+        previousStart:
+            previousStart.toISOString().split("T")[0],
+        previousEnd:
+            previousEnd.toISOString().split("T")[0],
+    };
+};
+
+
+// CONTROLLERS
 const getDashboardSummary = async (req, res) => {
     try {
         const calculateChange = (current, previous) => {
@@ -879,6 +908,8 @@ const getMenuSales = async (req, res) => {
         let sql = `
             SELECT
                 mi.name,
+                mi.price,
+                mi.image_url,
                 SUM(oi.quantity) AS total_sold
             FROM order_items oi
             INNER JOIN orders o
@@ -931,6 +962,7 @@ const getTopCustomer = async (req, res) => {
         let sql = `
             SELECT
                 u.id,
+                u.profile_picture,
                 u.full_name AS customer_name,
                 SUM(o.total) AS total_spent
             FROM users u
@@ -974,147 +1006,331 @@ const getTopCustomer = async (req, res) => {
 };
 
 const getRevenueReport = async (req, res) => {
-  try {
-    const { startDate, endDate } = req.query;
+    try {
+        const { startDate, endDate } = req.query;
 
-    let query;
-    let params = [];
+        const isAllTime =
+            !startDate ||
+            !endDate ||
+            startDate === "null" ||
+            endDate === "null";
 
-    const isAllTime =
-      !startDate ||
-      !endDate ||
-      startDate === "null" ||
-      endDate === "null";
+        let currentRevenue = 0;
+        let onlineRevenue = 0;
+        let walkinRevenue = 0;
+        let growthRate = null;
 
-    if (isAllTime) {
-      query = `
-        SELECT
-          COALESCE(SUM(total), 0) AS total_revenue,
-          COALESCE(
-            SUM(CASE WHEN source = 'online' THEN total ELSE 0 END),
-            0
-          ) AS online_revenue,
-          COALESCE(
-            SUM(CASE WHEN source = 'pos' THEN total ELSE 0 END),
-            0
-          ) AS walkin_revenue
-        FROM orders
-        WHERE status = 'completed'
-      `;
-    } else {
-      query = `
-        SELECT
-          COALESCE(SUM(total), 0) AS total_revenue,
-          COALESCE(
-            SUM(CASE WHEN source = 'online' THEN total ELSE 0 END),
-            0
-          ) AS online_revenue,
-          COALESCE(
-            SUM(CASE WHEN source = 'pos' THEN total ELSE 0 END),
-            0
-          ) AS walkin_revenue
-        FROM orders
-        WHERE status = 'completed'
-        AND created_at >= ?
-        AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
-      `;
+        if (isAllTime) {
+            const [rows] = await db.query(`
+                SELECT
+                    COALESCE(SUM(total), 0) AS total_revenue,
+                    COALESCE(
+                        SUM(
+                            CASE
+                                WHEN source = 'online'
+                                THEN total
+                                ELSE 0
+                            END
+                        ),
+                        0
+                    ) AS online_revenue,
+                    COALESCE(
+                        SUM(
+                            CASE
+                                WHEN source = 'pos'
+                                THEN total
+                                ELSE 0
+                            END
+                        ),
+                        0
+                    ) AS walkin_revenue
+                FROM orders
+                WHERE status = 'completed'
+            `);
 
-      params = [startDate, endDate];
+            currentRevenue =
+                Number(rows[0].total_revenue) || 0;
+
+            onlineRevenue =
+                Number(rows[0].online_revenue) || 0;
+
+            walkinRevenue =
+                Number(rows[0].walkin_revenue) || 0;
+        } else {
+            const [rows] = await db.query(
+                `
+                SELECT
+                    COALESCE(SUM(total), 0) AS total_revenue,
+                    COALESCE(
+                        SUM(
+                            CASE
+                                WHEN source = 'online'
+                                THEN total
+                                ELSE 0
+                            END
+                        ),
+                        0
+                    ) AS online_revenue,
+                    COALESCE(
+                        SUM(
+                            CASE
+                                WHEN source = 'pos'
+                                THEN total
+                                ELSE 0
+                            END
+                        ),
+                        0
+                    ) AS walkin_revenue
+                FROM orders
+                WHERE status = 'completed'
+                AND created_at >= ?
+                AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
+                `,
+                [startDate, endDate]
+            );
+
+            currentRevenue =
+                Number(rows[0].total_revenue) || 0;
+
+            onlineRevenue =
+                Number(rows[0].online_revenue) || 0;
+
+            walkinRevenue =
+                Number(rows[0].walkin_revenue) || 0;
+
+            const {
+                previousStart,
+                previousEnd,
+            } = getPreviousPeriod(
+                startDate,
+                endDate
+            );
+
+            const [previousRows] = await db.query(
+                `
+                SELECT
+                    COALESCE(SUM(total), 0) AS revenue
+                FROM orders
+                WHERE status = 'completed'
+                AND created_at >= ?
+                AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
+                `,
+                [previousStart, previousEnd]
+            );
+
+            const previousRevenue =
+                Number(previousRows[0].revenue) || 0;
+
+            if (previousRevenue > 0) {
+                growthRate =
+                    (
+                        (
+                            (currentRevenue -
+                                previousRevenue) /
+                            previousRevenue
+                        ) *
+                        100
+                    );
+            }
+        }
+
+        const [[settings]] = await db.query(`
+            SELECT monthly_revenue_target
+            FROM business_settings
+            LIMIT 1
+        `);
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                total_revenue: currentRevenue,
+                online_revenue: onlineRevenue,
+                walkin_revenue: walkinRevenue,
+                monthly_target:
+                    Number(
+                        settings?.monthly_revenue_target
+                    ) || 0,
+                growth_rate: growthRate,
+                is_all_time: isAllTime,
+            },
+        });
+
+    } catch (err) {
+        console.error(
+            "REVENUE REPORT ERROR:",
+            err
+        );
+
+        return res.status(500).json({
+            success: false,
+            error: err.message,
+        });
     }
-
-    const [rows] = await db.query(query, params);
-
-    const [[settings]] = await db.query(`
-      SELECT monthly_revenue_target
-      FROM business_settings
-      LIMIT 1
-    `);
-
-    res.status(200).json({
-      success: true,
-      data: {
-        total_revenue: Number(rows[0].total_revenue),
-        online_revenue: Number(rows[0].online_revenue),
-        walkin_revenue: Number(rows[0].walkin_revenue),
-        monthly_target: Number(
-          settings?.monthly_revenue_target || 0
-        ),
-        growth_rate: 0
-      }
-    });
-
-  } catch (err) {
-    console.error("REVENUE REPORT ERROR:", err);
-
-    res.status(500).json({
-      success: false,
-      error: err.message
-    });
-  }
 };
+
 
 const getOrdersReport = async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
 
-        const [summaryRows] = await db.query(
-            `
-            SELECT
-                COUNT(*) AS total_orders,
+        const isAllTime =
+            !startDate ||
+            !endDate ||
+            startDate === "null" ||
+            endDate === "null";
 
-                SUM(
-                    CASE
-                        WHEN order_type = 'dine-in'
-                        THEN 1
-                        ELSE 0
-                    END
-                ) AS dine_in_orders,
+        let summaryRows;
 
-                SUM(
-                    CASE
-                        WHEN order_type = 'takeout'
-                        THEN 1
-                        ELSE 0
-                    END
-                ) AS takeout_orders,
+        if (isAllTime) {
+            [summaryRows] = await db.query(`
+                SELECT
+                    COUNT(*) AS total_orders,
 
-                SUM(
-                    CASE
-                        WHEN order_type IN ('delivery', 'pickup')
-                        THEN 1
-                        ELSE 0
-                    END
-                ) AS delivery_orders
+                    SUM(
+                        CASE
+                            WHEN order_type = 'dine-in'
+                            THEN 1
+                            ELSE 0
+                        END
+                    ) AS dine_in_orders,
 
-            FROM orders
-            WHERE status = 'completed'
-            AND created_at >= ?
-            AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
-            `,
-            [startDate, endDate]
-        );
+                    SUM(
+                        CASE
+                            WHEN order_type = 'takeout'
+                            THEN 1
+                            ELSE 0
+                        END
+                    ) AS takeout_orders,
 
-        const [peakRows] = await db.query(
-            `
-            SELECT
-                HOUR(created_at) AS hour_bucket,
-                COUNT(*) AS total_orders
-            FROM orders
-            WHERE status = 'completed'
-            AND created_at >= ?
-            AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
-            GROUP BY HOUR(created_at)
-            `,
-            [startDate, endDate]
-        );
+                    SUM(
+                        CASE
+                            WHEN order_type IN ('delivery', 'pickup')
+                            THEN 1
+                            ELSE 0
+                        END
+                    ) AS delivery_orders
 
-        let peakOrderTime = 'N/A';
+                FROM orders
+                WHERE status = 'completed'
+            `);
+        } else {
+            [summaryRows] = await db.query(
+                `
+                SELECT
+                    COUNT(*) AS total_orders,
+
+                    SUM(
+                        CASE
+                            WHEN order_type = 'dine-in'
+                            THEN 1
+                            ELSE 0
+                        END
+                    ) AS dine_in_orders,
+
+                    SUM(
+                        CASE
+                            WHEN order_type = 'takeout'
+                            THEN 1
+                            ELSE 0
+                        END
+                    ) AS takeout_orders,
+
+                    SUM(
+                        CASE
+                            WHEN order_type IN ('delivery', 'pickup')
+                            THEN 1
+                            ELSE 0
+                        END
+                    ) AS delivery_orders
+
+                FROM orders
+                WHERE status = 'completed'
+                AND created_at >= ?
+                AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
+                `,
+                [startDate, endDate]
+            );
+        }
+
+        let orderGrowth = 0;
+
+        if (!isAllTime) {
+            const {
+                previousStart,
+                previousEnd,
+            } = getPreviousPeriod(
+                startDate,
+                endDate
+            );
+
+            const [previousRows] = await db.query(
+                `
+                SELECT
+                    COUNT(*) AS total_orders
+                FROM orders
+                WHERE status = 'completed'
+                AND created_at >= ?
+                AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
+                `,
+                [previousStart, previousEnd]
+            );
+
+            const currentOrders =
+                Number(summaryRows[0].total_orders) || 0;
+
+            const previousOrders =
+                Number(previousRows[0].total_orders) || 0;
+
+            if (previousOrders > 0) {
+                orderGrowth =
+                    (
+                        (
+                            (currentOrders -
+                                previousOrders) /
+                            previousOrders
+                        ) * 100
+                    );
+            }
+        }
+
+        let peakRows;
+
+        if (isAllTime) {
+            [peakRows] = await db.query(`
+                SELECT
+                    HOUR(created_at) AS hour_bucket,
+                    COUNT(*) AS total_orders
+                FROM orders
+                WHERE status = 'completed'
+                GROUP BY HOUR(created_at)
+                ORDER BY total_orders DESC
+                LIMIT 1
+            `);
+        } else {
+            [peakRows] = await db.query(
+                `
+                SELECT
+                    HOUR(created_at) AS hour_bucket,
+                    COUNT(*) AS total_orders
+                FROM orders
+                WHERE status = 'completed'
+                AND created_at >= ?
+                AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
+                GROUP BY HOUR(created_at)
+                ORDER BY total_orders DESC
+                LIMIT 1
+                `,
+                [startDate, endDate]
+            );
+        }
+
+        let peakOrderTime = "N/A";
 
         if (peakRows.length > 0) {
             const hour = peakRows[0].hour_bucket;
 
             const formatHour = (h) => {
-                const period = h >= 12 ? 'PM' : 'AM';
+                const period = h >= 12 ? "PM" : "AM";
                 const display = h % 12 || 12;
                 return `${display}${period}`;
             };
@@ -1124,12 +1340,23 @@ const getOrdersReport = async (req, res) => {
         }
 
         const data = {
-            total_orders: Number(summaryRows[0].total_orders) || 0,
-            dine_in_orders: Number(summaryRows[0].dine_in_orders) || 0,
-            takeout_orders: Number(summaryRows[0].takeout_orders) || 0,
-            delivery_orders: Number(summaryRows[0].delivery_orders) || 0,
-            order_growth: 0,
+            total_orders:
+                Number(summaryRows[0].total_orders) || 0,
+
+            dine_in_orders:
+                Number(summaryRows[0].dine_in_orders) || 0,
+
+            takeout_orders:
+                Number(summaryRows[0].takeout_orders) || 0,
+
+            delivery_orders:
+                Number(summaryRows[0].delivery_orders) || 0,
+
+            order_growth:
+                Number(orderGrowth.toFixed(1)),
+
             peak_order_time: peakOrderTime,
+            is_all_time: isAllTime,
         };
 
         return res.status(200).json({
@@ -1138,7 +1365,7 @@ const getOrdersReport = async (req, res) => {
         });
 
     } catch (err) {
-        console.error(err);
+        console.error("ORDERS REPORT ERROR:", err);
 
         return res.status(500).json({
             success: false,
@@ -1151,39 +1378,76 @@ const getSalesDistributionReport = async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
 
-        const [categoryRows] = await db.query(
-            `
-            SELECT
-                mc.id,
-                mc.name,
-                COALESCE(SUM(oi.subtotal), 0) AS sales
-            FROM menu_categories mc
-            LEFT JOIN menu_items mi
-                ON mc.id = mi.category_id
-            LEFT JOIN order_items oi
-                ON mi.id = oi.menu_item_id
-            LEFT JOIN orders o
-                ON oi.order_id = o.id
+        const isAllTime =
+            !startDate ||
+            !endDate ||
+            startDate === "null" ||
+            endDate === "null";
+
+        let categoryRows;
+        let summaryRows;
+
+        if (isAllTime) {
+            [categoryRows] = await db.query(`
+                SELECT
+                    mc.id,
+                    mc.name,
+                    COALESCE(SUM(oi.subtotal), 0) AS sales
+                FROM menu_categories mc
+                LEFT JOIN menu_items mi
+                    ON mc.id = mi.category_id
+                LEFT JOIN order_items oi
+                    ON mi.id = oi.menu_item_id
+                LEFT JOIN orders o
+                    ON oi.order_id = o.id
+                    AND o.status = 'completed'
+                GROUP BY mc.id, mc.name
+                ORDER BY sales DESC
+            `);
+
+            [summaryRows] = await db.query(`
+                SELECT
+                    COUNT(*) AS total_orders,
+                    COALESCE(SUM(total), 0) AS total_sales
+                FROM orders
+                WHERE status = 'completed'
+            `);
+        } else {
+            [categoryRows] = await db.query(
+                `
+                SELECT
+                    mc.id,
+                    mc.name,
+                    COALESCE(SUM(oi.subtotal),0) AS sales
+                FROM orders o
+                INNER JOIN order_items oi
+                    ON o.id = oi.order_id
+                INNER JOIN menu_items mi
+                    ON oi.menu_item_id = mi.id
+                INNER JOIN menu_categories mc
+                    ON mi.category_id = mc.id
+                WHERE o.status = 'completed'
                 AND o.created_at >= ?
                 AND o.created_at < DATE_ADD(?, INTERVAL 1 DAY)
-            GROUP BY mc.id, mc.name
-            ORDER BY sales DESC
-            `,
-            [startDate, endDate]
-        );
+                GROUP BY mc.id, mc.name
+                ORDER BY sales DESC;
+                `,
+                [startDate, endDate]
+            );
 
-        const [summaryRows] = await db.query(
-            `
-            SELECT
-                COUNT(*) AS total_orders,
-                COALESCE(SUM(total), 0) AS total_sales
-            FROM orders
-            WHERE status = 'completed'
-            AND created_at >= ?
-            AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
-            `,
-            [startDate, endDate]
-        );
+            [summaryRows] = await db.query(
+                `
+                SELECT
+                    COUNT(*) AS total_orders,
+                    COALESCE(SUM(total), 0) AS total_sales
+                FROM orders
+                WHERE status = 'completed'
+                AND created_at >= ?
+                AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
+                `,
+                [startDate, endDate]
+            );
+        }
 
         return res.status(200).json({
             success: true,
@@ -1202,7 +1466,7 @@ const getSalesDistributionReport = async (req, res) => {
         });
 
     } catch (err) {
-        console.error(err);
+        console.error("SALES DISTRIBUTION REPORT ERROR:", err);
 
         return res.status(500).json({
             success: false,
@@ -1210,8 +1474,6 @@ const getSalesDistributionReport = async (req, res) => {
         });
     }
 };
-
-
 const getSalesSummaryReport = async (req, res) => {
     try {
         const { range = "last24hours" } = req.query;
@@ -1312,17 +1574,14 @@ const getSalesSummaryReport = async (req, res) => {
                 break;
 
             case "alltime":
-                query = `
+                 query = `
                     SELECT
-                        DATE_FORMAT(
-                            MIN(created_at),
-                            '%b %Y'
-                        ) AS label,
+                        YEAR(created_at) AS label,
                         SUM(total) AS sales
                     FROM orders
                     WHERE status = 'completed'
-                    GROUP BY YEAR(created_at), MONTH(created_at)
-                    ORDER BY YEAR(created_at), MONTH(created_at)
+                    GROUP BY YEAR(created_at)
+                    ORDER BY YEAR(created_at)
                 `;
                 break;
 

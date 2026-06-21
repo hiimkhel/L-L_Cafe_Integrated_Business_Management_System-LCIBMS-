@@ -7,40 +7,53 @@ import 'package:frontend/config/theme/app_text_styles.dart';
 import 'package:frontend/core/services/pos/order_service.dart';
 import 'package:frontend/core/models/order_request.dart';
 import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
+import 'package:frontend/core/models/receipt_model.dart';
+import 'package:frontend/core/services/pos/print_services.dart';
+import 'package:flutter/services.dart';
+import 'package:frontend/core/services/pos/native_printer_services.dart';
+import 'package:frontend/core/services/pos/print_bridge_service.dart';
+
 
 class CheckoutConfirmationScreen extends StatefulWidget {
   final List<Map<String, dynamic>> orderItems;
   final String orderType;
   final int orderOrderId;
+  
 
   const CheckoutConfirmationScreen({
-    super.key, 
-    required this.orderType, 
-    required this.orderItems, 
-    required this.orderOrderId
+    super.key,
+    required this.orderType,
+    required this.orderItems,
+    required this.orderOrderId,
   });
 
   @override
-  State<CheckoutConfirmationScreen> createState() => _CheckoutConfirmationScreenState();
+  State<CheckoutConfirmationScreen> createState() =>
+      _CheckoutConfirmationScreenState();
 }
 
-class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>{
+class _CheckoutConfirmationScreenState
+    extends State<CheckoutConfirmationScreen> {
   double cashGiven = 0;
 
   double get subtotal => widget.orderItems.fold(
-    0.0,
-    (sum, item) => sum + ((item["price"] as num).toDouble() * (item["qty"] as num).toInt()),
-  );
+        0.0,
+        (sum, item) =>
+            sum +
+            ((item["price"] as num).toDouble() *
+                (item["qty"] as num).toInt()),
+      );
 
   double get total => subtotal;
   double get change => cashGiven - total;
 
   @override
   Widget build(BuildContext context) {
-    final String formattedOrderNumber = "WALK-${widget.orderOrderId.toString().padLeft(5, '0')}";
+    final String formattedOrderNumber =
+        "WALK-${widget.orderOrderId.toString().padLeft(5, '0')}";
 
     return Scaffold(
-      backgroundColor: AppColors.background, 
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -49,11 +62,12 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
               child: LayoutBuilder(
                 builder: (constraintsContext, constraints) {
                   final bool isTablet = constraints.maxWidth >= 900;
-                  
+
                   if (!isTablet) {
                     return SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20.0, vertical: 16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -71,12 +85,13 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
                     );
                   } else {
                     return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32.0, vertical: 24.0),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Expanded(
-                            flex: 4, 
+                            flex: 4,
                             child: OrderSummary(
                               orderItems: widget.orderItems,
                               subtotal: subtotal,
@@ -86,8 +101,9 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
                           ),
                           const SizedBox(width: 32),
                           Expanded(
-                            flex: 6, 
-                            child: _buildPaymentEntry(formattedOrderNumber, false),
+                            flex: 6,
+                            child: _buildPaymentEntry(
+                                formattedOrderNumber, false),
                           ),
                         ],
                       ),
@@ -110,16 +126,15 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
       onCashChanged: (value) => setState(() => cashGiven = value),
       orderItems: widget.orderItems,
       onSubmit: (int selectedMethod) async {
-        
         String paymentMethodStr = "CASH";
         PaymentMethod receiptMethod = PaymentMethod.cash;
-        
+
         if (selectedMethod == 1) {
           paymentMethodStr = "CARD";
           receiptMethod = PaymentMethod.card;
         } else if (selectedMethod == 2) {
           paymentMethodStr = "E-WALLET";
-          receiptMethod = PaymentMethod.gcash; 
+          receiptMethod = PaymentMethod.gcash;
         }
 
         final databaseItems = widget.orderItems.map((item) {
@@ -141,7 +156,7 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
           subtotal: subtotal,
           deliveryFee: 0.0,
           total: total,
-          paymentMethod: paymentMethodStr, 
+          paymentMethod: paymentMethodStr,
           paymentStatus: "PAID",
           customerName: "WALK-IN CUSTOMER",
           customerPhone: "N/A",
@@ -154,33 +169,29 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
         if (!mounted) return;
 
         if (success) {
-          OrderType parsedOrderType = OrderType.walkIn;
-          if (widget.orderType.toLowerCase().contains("dine")) parsedOrderType = OrderType.dineIn;
-          if (widget.orderType.toLowerCase().contains("take")) parsedOrderType = OrderType.takeOut;
-
           final receiptData = ReceiptData(
             orderNumber: formattedOrderNumber,
             clientName: "WALK-IN CUSTOMER",
             dateTime: DateTime.now(),
-            orderType: parsedOrderType,
+            orderType: OrderType.walkIn,
             paymentMethod: receiptMethod,
             items: widget.orderItems.map((item) {
               return OrderItem(
                 name: item["name"],
-                quantity: (item["qty"] as num).toInt(),
-                unitPrice: (item["price"] as num).toDouble(),
+                quantity: item["qty"],
+                unitPrice: item["price"],
               );
             }).toList(),
+            cashReceived: cashGiven,
+            change: change,
           );
+
           _showReceipt(context, receiptData);
+          await NativePrinterService.printTest();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Failed to process payment.', style: TextStyle(fontWeight: FontWeight.w600)), 
-              backgroundColor: Colors.redAccent.shade700,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            )
+            const SnackBar(
+                content: Text("Failed to save order to database")),
           );
         }
       },
@@ -189,54 +200,52 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
 
   Widget _buildHeader(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      width: double.infinity,
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(
-            color: AppColors.primary.withOpacity(0.15), // Subtle, soft border line
-            width: 1.5,
-          ),
+          bottom: BorderSide(color: AppColors.primary, width: 1),
         ),
       ),
       child: Row(
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              color: AppColors.white,
+              shape: BoxShape.circle,
               boxShadow: [
-                BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
-              ]
-            ),
-            child: IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.primary, size: 24),
-              padding: const EdgeInsets.all(14),
-            ),
-          ),
-          const SizedBox(width: 24),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Checkout",
-                  style: AppTextStyles.title.copyWith(
-                    color: AppColors.primary, 
-                    fontSize: 28, 
-                    fontWeight: FontWeight.w900,
-                  )
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "Finalize transaction and payment",
-                  style: AppTextStyles.body.copyWith(color: AppColors.tertiary, fontWeight: FontWeight.w500, fontSize: 13)
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
+            child: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(
+                Icons.arrow_back,
+                color: AppColors.primary,
+                size: 32,
+              ),
+            ),
+          ),
+          const SizedBox(width: 15),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "CHECKOUT CONFIRMATION",
+                style: AppTextStyles.title.copyWith(color: AppColors.secondary),
+              ),
+              Text(
+                "FINAL PHASE OF TRANSACTION",
+                style: AppTextStyles.body.copyWith(color: AppColors.tertiary),
+              ),
+            ],
           ),
         ],
-      )
+      ),
     );
   }
 
@@ -250,17 +259,32 @@ class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>
           insetPadding: const EdgeInsets.all(24),
           child: LLCafeReceipt(
             data: data,
-            onPrint: () {
-              final navigator = Navigator.of(parentContext);
-              Navigator.pop(dialogContext); 
+            onPrint: () async {
+              final navigator = Navigator.of(context);
+
+              try {
+                print("STARTING PRINT");
+
+                navigator.pop();
+
+                await Future.delayed(const Duration(milliseconds: 100));
+
+                await PrintService.printReceipt(data);
+
+                print("PRINT FINISHED");
+              } catch (e) {
+                print("PRINT ERROR: $e");
+              }
+
+              // ALWAYS go to queue screen (even if print fails)
               navigator.pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const OrderQueueScreen()),
-                (route) => false, 
+                MaterialPageRoute(builder: (_) => OrderQueueScreen()),
+                (route) => false,
               );
             },
           ),
         );
-      }
+      },
     );
   }
 }

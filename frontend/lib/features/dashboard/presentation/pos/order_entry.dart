@@ -169,7 +169,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
             children: [
               RichText(
                 text: TextSpan(
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
                   children: [
                     TextSpan(
                       text: "L&L CAFE ",
@@ -182,7 +182,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                     TextSpan(
                       text: "\nMAKING GOOD FOOD FOR PEOPLE'S HAPPINESS",
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 12,
                         //fontWeight: FontWeight.normal,
                         color: Colors.black,
                         letterSpacing: .9,
@@ -445,7 +445,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                   child: Text(
                     label,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 10,
                       fontWeight: FontWeight.bold,
                       color: isSelected ? AppColors.white : AppColors.primary,
                     ),
@@ -496,92 +496,155 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     );
   }
 
-  Widget _itemCard(MenuItem item) {
-    return Container(
-      padding: const EdgeInsets.all(19),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.receiptDark.withOpacity(0.08),
-            offset: Offset(0, 2),
-            blurRadius: 8,
-          ),
-        ],
+Widget _itemCard(MenuItem item) {
+
+  final currentOrderIndex = orderItems.indexWhere((e) => e['id'] == item.id);
+  final currentQty = currentOrderIndex >= 0 ? orderItems[currentOrderIndex]['qty'] as int : 0;
+  final isSelected = currentQty > 0;
+
+  // Formatting utility inside the layout scope
+  String formatMoney(dynamic value) {
+    final v = double.tryParse(value.toString()) ?? 0.0;
+    return '₱${v.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}';
+  }
+
+  return Container(
+    decoration: BoxDecoration(
+      color: AppColors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: isSelected ? AppColors.secondary : Colors.transparent,
+        width: 1.5,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            getCategoryName(item.categoryId).toUpperCase(),
-            style: TextStyle(
-              fontSize: 9,
-              color: AppColors.primary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-
-          Text(
-            item.name,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: AppColors.receiptDark,
-            ),
-          ),
-
-          const Spacer(),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      boxShadow: [
+        BoxShadow(
+          color: AppColors.receiptDark.withOpacity(isSelected ? 0.1 : 0.04),
+          offset: const Offset(0, 4),
+          blurRadius: 12,
+        ),
+      ],
+    ),
+    child: Stack(
+      children: [
+       
+        Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start, 
             children: [
-              Text(
-                "₱${item.price}",
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.secondary,
+              const SizedBox(height: 6),
+            
+              const Spacer(),
+
+              Expanded(
+                flex: 0, // Prevents unexpected vertical text stretching
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.left,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.receiptDark,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      formatMoney(item.price),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? AppColors.secondary : AppColors.receiptDark.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    final index = orderItems.indexWhere(
-                      (e) => e['id'] == item.id,
-                    );
+              const SizedBox(height: 6),
 
-                    if (index >= 0) {
-                      orderItems[index]['qty'] += 1;
-                    } else {
-                      orderItems.add({
-                        'id': item.id,
-                        'name': item.name,
-                        'price': double.parse(item.price.toString()),
-                        'qty': 1,
-                      });
-                    }
-                  });
-                },
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.add, size: 20),
-                ),
+              // ── SECONDARY ACTION BUTTON CONTROLS ──────────────
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                child: !isSelected
+                    ? SizedBox(
+                        key: const ValueKey('add_btn'),
+                        width: double.infinity,
+                        height: 38,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.secondary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: EdgeInsets.zero,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              orderItems.add({
+                                'id': item.id,
+                                'name': item.name,
+                                'price': double.parse(item.price.toString()),
+                                'qty': 1,
+                                'image_url': item.imageUrl,
+                              });
+                            });
+                          },
+                          child: const Text(
+                            "ADD TO CART",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold, 
+                              fontSize: 12, 
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      )
+                    : Container(
+                        key: const ValueKey('added_state'),
+                        width: double.infinity,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary.withOpacity(0.12), // Elegant tint fallback
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.secondary, width: 1),
+                        ),
+                        child: Center(
+                          child: Text(
+                            "ADDED TO CART",
+                            style: TextStyle(
+                              color: AppColors.secondary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
 
+        if (isSelected)
+          Positioned(
+            top: 10,
+            right: 10,
+            child: CircleAvatar(
+              radius: 9,
+              backgroundColor: AppColors.secondary,
+              child: const Icon(Icons.check, color: Colors.white, size: 11),
+            ),
+          ),
+      ],
+    ),
+  );
+}
   //----------------------------------------Finalize Order Section-----------------------------------------------------------
   Widget _finaizeOrderSection() {
 
@@ -622,7 +685,9 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                     fontSize: 18,
                   ),
                 ),
+
                 const Spacer(),
+
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
@@ -645,7 +710,42 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
           const SizedBox(height: 1),
 
           Expanded(
-            child: ListView.builder(
+            child: orderItems.isEmpty 
+            ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(
+                      Icons.shopping_cart_outlined,
+                      size: 48,
+                      color: Colors.grey,
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Start creating an order',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Add items from the menu to begin',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ) 
+          :
+            ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: orderItems.length,
               itemBuilder: (context, index) {

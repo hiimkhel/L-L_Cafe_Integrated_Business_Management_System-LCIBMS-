@@ -22,11 +22,15 @@ class OrdersTab extends StatelessWidget {
     final int deliveryOrders =
         int.tryParse(ordersData['delivery_orders']?.toString() ?? '0') ?? 0;
 
-    final int orderGrowth =
-        int.tryParse(ordersData['order_growth']?.toString() ?? '0') ?? 0;
+    final double orderGrowth =
+      double.tryParse(
+        ordersData['order_growth']?.toString() ?? '0',
+      ) ??
+      0;
 
     final String peakOrderTime =
         ordersData['peak_order_time']?.toString() ?? 'N/A';
+    final bool isAllTime = ordersData['is_all_time'] == true;
    
     return Row(
   
@@ -52,13 +56,37 @@ class OrdersTab extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: 8),
-                  Text(
-                      '${orderGrowth >= 0 ? '+' : ''}$orderGrowth vs previous period',
-                    style: TextStyle(
-                        color: orderGrowth >= 0
+                  if (!isAllTime)
+                    _StatPill(
+                      icon: orderGrowth >= 0
+                          ? Icons.trending_up_rounded
+                          : Icons.trending_down_rounded,
+                      label:
+                          '${orderGrowth >= 0 ? '+' : ''}${orderGrowth.toStringAsFixed(1)}% vs previous period',
+                      color: orderGrowth >= 0
                           ? const Color(0xFF7BC67E)
-                          : Colors.redAccent, fontSize: 11),
-                  ),
+                          : Colors.redAccent,
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        'No comparison available',
+                        style: TextStyle(
+                          fontFamily: 'Urbanist',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white60,
+                        ),
+                      ),
+                    ),
                 ],
               ),
               const Text(
@@ -146,6 +174,38 @@ class OrdersTab extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
+
+
+class _StatPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  const _StatPill({required this.icon, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(label,
+              style: TextStyle(
+                  fontFamily: 'Urbanist',
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: color)),
+        ],
+      ),
+    );
+  }
+}
 
 class _OrderTypeCol extends StatelessWidget {
   final String label, value;

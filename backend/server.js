@@ -10,7 +10,12 @@ const cors = require('cors');
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 const PORT = process.env.SERVER_PORT || 3006;
 
@@ -33,7 +38,28 @@ app.use('/api/admin', require("./routes/adminRoutes.js"));
 
 app.use('/api/reviews', require("./routes/reviewRoutes.js"));
 app.use('/api/menu', require("./routes/menuRoutes.js"));
-app.listen(PORT, () => {
+
+app.post("/print", (req, res) => {
+  console.log("PRINT RECEIVED");
+
+  // MUST respond immediately
+  res.status(200).send("OK");
+
+  // background printing
+  setImmediate(() => {
+    try {
+      console.log(req.body);
+      // send to PT-210 printer here
+    } catch (err) {
+      console.log(err);
+    }
+  });
+});
+
+app.get('/', (req, res) => {
+  res.send("Welcome to LCIBMS Backend URL")
+})
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on ${PORT}`);
 });
 

@@ -225,11 +225,11 @@ class _RevenueMapCardState extends State<RevenueMapCard> {
                                           begin: Alignment.topCenter,
                                           end: Alignment.bottomCenter,
                                           colors: [
-                                            _gold.withOpacity(
-                                              isHovered ? 1.0 : (b.value > 0 ? 0.75 : 0.15),
+                                            _green1.withOpacity(
+                                              isHovered ? 1 : (b.value > 0 ? 0.8 : 0.15),
                                             ),
-                                            _gold.withOpacity(
-                                              isHovered ? 0.7 : (b.value > 0 ? 0.35 : 0.05),
+                                            _green2.withOpacity(
+                                              isHovered ? 0.85 : (b.value > 0 ? 0.5 : 0.05),
                                             ),
                                           ],
                                         ),

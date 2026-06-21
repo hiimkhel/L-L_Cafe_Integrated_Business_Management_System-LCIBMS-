@@ -24,6 +24,7 @@ import 'features/auth/presentation/screens/register_screen.dart';
 import 'features/dashboard/presentation/admin/dashboard_screen.dart';
 import 'features/dashboard/presentation/rider/dashboard_screen.dart';
 import 'features/dashboard/presentation/pos/order_entry.dart';
+import 'package:frontend/core/services/permission_services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -79,6 +80,23 @@ class _LCIBMSAppState extends State<LCIBMSApp> {
           FadeTransition(opacity: anim, child: child),
       transitionDuration: const Duration(milliseconds: 220),
     ));
+  }
+
+  final PermissionService _permissionService = PermissionService();
+
+  @override
+  void initState() {
+    super.initState();
+    _initPermissions();
+  }
+
+  Future<void> _initPermissions() async {
+    await _permissionService.requestBluetoothPermissions();
+
+    debugPrint("✅ Bluetooth permissions requested");
+
+    final hasPerm = await _permissionService.hasPermissions();
+    debugPrint("🔐 Permission status: $hasPerm");
   }
 
   @override
