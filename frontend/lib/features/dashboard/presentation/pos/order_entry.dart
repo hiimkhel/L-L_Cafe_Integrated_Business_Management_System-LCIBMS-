@@ -483,7 +483,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     return GridView.builder(
       padding: const EdgeInsets.all(24),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
+        crossAxisCount: 3,
         crossAxisSpacing: 20,
         mainAxisSpacing: 20,
         childAspectRatio: 1.1,
@@ -497,15 +497,22 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   }
 
 Widget _itemCard(MenuItem item) {
+  final currentOrderIndex =
+      orderItems.indexWhere((e) => e['id'] == item.id);
 
-  final currentOrderIndex = orderItems.indexWhere((e) => e['id'] == item.id);
-  final currentQty = currentOrderIndex >= 0 ? orderItems[currentOrderIndex]['qty'] as int : 0;
+  final currentQty = currentOrderIndex >= 0
+      ? orderItems[currentOrderIndex]['qty'] as int
+      : 0;
+
   final isSelected = currentQty > 0;
 
-  // Formatting utility inside the layout scope
   String formatMoney(dynamic value) {
     final v = double.tryParse(value.toString()) ?? 0.0;
-    return '₱${v.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}';
+    return '₱${v.toStringAsFixed(2)}'
+        .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]},',
+        );
   }
 
   return Container(
@@ -513,62 +520,58 @@ Widget _itemCard(MenuItem item) {
       color: AppColors.white,
       borderRadius: BorderRadius.circular(16),
       border: Border.all(
-        color: isSelected ? AppColors.secondary : Colors.transparent,
+        color: isSelected
+            ? AppColors.secondary
+            : Colors.transparent,
         width: 1.5,
       ),
       boxShadow: [
         BoxShadow(
-          color: AppColors.receiptDark.withOpacity(isSelected ? 0.1 : 0.04),
-          offset: const Offset(0, 4),
-          blurRadius: 12,
+          color: AppColors.receiptDark.withOpacity(
+            isSelected ? 0.10 : 0.04,
+          ),
+          offset: const Offset(0, 3),
+          blurRadius: 10,
         ),
       ],
     ),
     child: Stack(
       children: [
-       
         Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start, 
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 6),
-            
-              const Spacer(),
-
-              Expanded(
-                flex: 0, // Prevents unexpected vertical text stretching
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.left,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.receiptDark,
-                        height: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      formatMoney(item.price),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: isSelected ? AppColors.secondary : AppColors.receiptDark.withOpacity(0.7),
-                      ),
-                    ),
-                  ],
+              // ITEM NAME
+              Text(
+                item.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.receiptDark,
+                  height: 1.25,
                 ),
               ),
 
               const SizedBox(height: 6),
 
-              // ── SECONDARY ACTION BUTTON CONTROLS ──────────────
+              // PRICE
+              Text(
+                formatMoney(item.price),
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected
+                      ? AppColors.secondary
+                      : AppColors.receiptDark.withOpacity(0.7),
+                ),
+              ),
+
+              const Spacer(),
+
+              // BUTTON
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
                 child: !isSelected
@@ -581,25 +584,28 @@ Widget _itemCard(MenuItem item) {
                             backgroundColor: AppColors.secondary,
                             foregroundColor: Colors.white,
                             elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                           onPressed: () {
                             setState(() {
                               orderItems.add({
                                 'id': item.id,
                                 'name': item.name,
-                                'price': double.parse(item.price.toString()),
+                                'price': double.parse(
+                                  item.price.toString(),
+                                ),
                                 'qty': 1,
-                                'image_url': item.imageUrl,
+                                'image_url': null,
                               });
                             });
                           },
                           child: const Text(
                             "ADD TO CART",
                             style: TextStyle(
-                              fontWeight: FontWeight.bold, 
-                              fontSize: 12, 
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -610,13 +616,15 @@ Widget _itemCard(MenuItem item) {
                         width: double.infinity,
                         height: 38,
                         decoration: BoxDecoration(
-                          color: AppColors.secondary.withOpacity(0.12), // Elegant tint fallback
+                          color: AppColors.secondary.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.secondary, width: 1),
+                          border: Border.all(
+                            color: AppColors.secondary,
+                          ),
                         ),
                         child: Center(
                           child: Text(
-                            "ADDED TO CART",
+                            "$currentQty IN CART",
                             style: TextStyle(
                               color: AppColors.secondary,
                               fontWeight: FontWeight.bold,
@@ -631,6 +639,7 @@ Widget _itemCard(MenuItem item) {
           ),
         ),
 
+        // CHECK ICON
         if (isSelected)
           Positioned(
             top: 10,
@@ -638,13 +647,18 @@ Widget _itemCard(MenuItem item) {
             child: CircleAvatar(
               radius: 9,
               backgroundColor: AppColors.secondary,
-              child: const Icon(Icons.check, color: Colors.white, size: 11),
+              child: const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 11,
+              ),
             ),
           ),
       ],
     ),
   );
 }
+
   //----------------------------------------Finalize Order Section-----------------------------------------------------------
   Widget _finaizeOrderSection() {
 
@@ -682,7 +696,7 @@ Widget _itemCard(MenuItem item) {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.receiptDark,
-                    fontSize: 18,
+                    fontSize: 12,
                   ),
                 ),
 
@@ -719,14 +733,13 @@ Widget _itemCard(MenuItem item) {
                   children: const [
                     Icon(
                       Icons.shopping_cart_outlined,
-                      size: 48,
+                      size: 38,
                       color: Colors.grey,
                     ),
-                    SizedBox(height: 10),
                     Text(
                       'Start creating an order',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 10,
                         fontWeight: FontWeight.w700,
                         color: Colors.grey,
                       ),
@@ -982,7 +995,10 @@ Widget _itemCard(MenuItem item) {
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 15,
+        vertical: 12,
+      ),
       decoration: BoxDecoration(
         color: AppColors.background.withOpacity(.5),
         borderRadius: BorderRadius.circular(10),
@@ -994,12 +1010,16 @@ Widget _itemCard(MenuItem item) {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                name,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.receiptDark,
+              Expanded(
+                child: Text(
+                  name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.receiptDark,
+                  ),
                 ),
               ),
               IconButton(
@@ -1014,7 +1034,7 @@ Widget _itemCard(MenuItem item) {
               ),
             ],
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1066,8 +1086,8 @@ Widget _itemCard(MenuItem item) {
                 price,
                 style: TextStyle(
                   color: AppColors.secondary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
@@ -1077,13 +1097,20 @@ Widget _itemCard(MenuItem item) {
     );
   }
 
-  Widget _qtyBtn(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
+  Widget _qtyBtn(
+    IconData icon,
+    VoidCallback onTap,
+  ) {
+    return InkWell(
       onTap: onTap,
       child: SizedBox(
-        width: 28,
-        height: 28,
-        child: Icon(icon, size: 16, color: AppColors.primary),
+        width: 42,
+        height: 42,
+        child: Icon(
+          icon,
+          size: 20,
+          color: AppColors.primary,
+        ),
       ),
     );
   }

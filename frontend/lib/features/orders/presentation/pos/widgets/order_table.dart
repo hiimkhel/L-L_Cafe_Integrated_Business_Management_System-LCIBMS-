@@ -99,8 +99,8 @@ class _OrderTableState extends State<OrderTable> {
                             status: order['status'],
                             time: order['updated_at'], 
                             actionText: order['source'] == 'pos'
-                              ? 'MARK AS COMPLETE'
-                              : 'MARK AS READY',
+                              ? 'COMPLETE'
+                              : 'READY',
                             onActionPressed: () => _updateOrder(order),
                   
                           );
