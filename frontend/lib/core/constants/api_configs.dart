@@ -3,7 +3,7 @@ class ApiConfig {
   static const bool isProduction = false;
 
   static const String localBaseUrl = "http://localhost:3006/api";
-  static const String lanBaseUrl = "http://192.168.56.1:3006/api";
+  static const String lanBaseUrl = "http://192.168.0.226:3006/api";
   static const String productionBaseUrl =
       "https://lcibms-backend.onrender.com/api";
 

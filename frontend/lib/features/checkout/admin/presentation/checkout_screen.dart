@@ -9,7 +9,10 @@ import 'package:frontend/core/models/order_request.dart';
 import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 import 'package:frontend/core/models/receipt_model.dart';
 import 'package:frontend/core/services/pos/print_services.dart';
+import 'package:flutter/services.dart';
 import 'package:frontend/core/services/pos/native_printer_services.dart';
+import 'package:frontend/core/services/pos/print_bridge_service.dart';
+
 
 class CheckoutConfirmationScreen extends StatefulWidget {
   const CheckoutConfirmationScreen({super.key, required this.orderType, required this.orderItems, required this.orderOrderId});
@@ -18,6 +21,7 @@ class CheckoutConfirmationScreen extends StatefulWidget {
   final List<Map<String, dynamic>> orderItems;
   final String orderType;
   final int orderOrderId;
+  
 
   @override
   State<CheckoutConfirmationScreen> createState() => _CheckoutConfirmationScreenState();
@@ -25,7 +29,7 @@ class CheckoutConfirmationScreen extends StatefulWidget {
 }
   class _CheckoutConfirmationScreenState extends State<CheckoutConfirmationScreen>{
 
-  
+
     double cashGiven = 0;
 
     double get subtotal => widget.orderItems.fold(
@@ -200,13 +204,25 @@ class CheckoutConfirmationScreen extends StatefulWidget {
           child: LLCafeReceipt(
             data: data,
             onPrint: () async {
-              await PrintService.printReceipt(data);
+              final navigator = Navigator.of(context);
 
-              Navigator.pop(context);
+              try {
+                print("STARTING PRINT");
 
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => OrderQueueScreen()),
+                navigator.pop();
+
+                await Future.delayed(const Duration(milliseconds: 100));
+
+                await PrintService.printReceipt(data);
+
+                print("PRINT FINISHED");
+              } catch (e) {
+                print("PRINT ERROR: $e");
+              }
+
+              // ALWAYS go to queue screen (even if print fails)
+              navigator.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => OrderQueueScreen()),
                 (route) => false,
               );
             }
