@@ -12,13 +12,18 @@ class ThermalReceiptFormatter {
   }) {
     final buffer = StringBuffer();
 
-    // HEADER
-    buffer.writeln("================================");
-    buffer.writeln(center(storeName));
-    buffer.writeln("================================");
-    buffer.writeln(_dateLine());
-    buffer.writeln("--------------------------------");
+/// HEADER
+buffer.writeln("================================");
+buffer.writeln(center(storeName));
+buffer.writeln(center("Making good food"));
+buffer.writeln(center("for people's happiness"));
 
+buffer.writeln(center("Cabaluna St., Alimodian, Iloilo"));
+buffer.writeln(center("TEL: 09983087848"));
+
+buffer.writeln("================================");
+buffer.writeln(_dateLine());
+buffer.writeln("--------------------------------");
     // COLUMN HEADER
     buffer.writeln(_headerRow());
     buffer.writeln("--------------------------------");
