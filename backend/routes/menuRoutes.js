@@ -6,8 +6,9 @@
 const express = require('express');
 const router = express.Router();
 const db = require("../config/dbConnection.js");
-const {getAllMenuItems} = require("../controllers/menuControllers.js");
+const {getAllMenuItems, getVariantsByMenuItem} = require("../controllers/menuControllers.js");
 
 router.get("/", getAllMenuItems);
+router.get("/:menuItemId/variants", getVariantsByMenuItem);
 
 module.exports = router;
