@@ -559,7 +559,9 @@ Widget _itemCard(MenuItem item) {
 
               // PRICE
               Text(
-                formatMoney(item.price),
+                item.startingPrice != null
+                  ? "Starts at ${formatMoney(item.startingPrice)}"
+                  : formatMoney(item.price),
                 style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.bold,
