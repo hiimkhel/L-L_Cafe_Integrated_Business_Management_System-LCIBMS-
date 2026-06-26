@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:frontend/core/models/menu_item.dart';
 import 'package:frontend/core/models/menu_category.dart';
 import 'package:frontend/core/constants/api_configs.dart';
+import 'package:frontend/core/models/menu_item_variant.dart';
 
 class MenuService {
   static String baseUrl = ApiConfig.baseUrl;
@@ -46,5 +47,26 @@ class MenuService {
       print("Error fetching order number: $e");
       return 1; 
     }
+  }
+
+  static Future<List<MenuItemVariant>> fetchVariants(
+      int menuItemId,
+  ) async {
+
+    final res = await http.get(
+      Uri.parse(
+        "$baseUrl/menu/$menuItemId/variants",
+      ),
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception("Failed to load variants");
+    }
+
+    final List data = jsonDecode(res.body);
+
+    return data
+        .map((e) => MenuItemVariant.fromJson(e))
+        .toList();
   }
 }

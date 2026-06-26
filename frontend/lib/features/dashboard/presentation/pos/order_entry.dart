@@ -10,6 +10,8 @@ import 'package:frontend/features/orders/presentation/pos/screens/order_history_
 import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 import 'package:frontend/core/models/menu_category.dart';
 import 'package:frontend/core/utils/order_num_utils.dart';
+import 'package:frontend/core/models/menu_item_variant.dart';
+import 'package:frontend/core/widgets/variant_dialog.dart';
 import 'package:frontend/core/services/pos/order_service.dart';
 
 class POSOrderScreen extends StatefulWidget {
@@ -45,6 +47,30 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
 
     _countTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       _fetchPendingOnlineCount();
+    });
+  }
+
+  Future<void> _showVariantDialog(MenuItem item) async {
+    final MenuItemVariant? selectedVariant =
+        await showDialog<MenuItemVariant>(
+      context: context,
+      builder: (_) => VariantDialog(item: item),
+    );
+
+    if (selectedVariant == null) {
+      return; // User cancelled
+    }
+
+    setState(() {
+      orderItems.add({
+        'id': item.id,
+        'name': item.name,
+        'variant_id': selectedVariant.id,
+        'variant_name': selectedVariant.variantName,
+        'price': selectedVariant.price,
+        'qty': 1,
+        'image_url': null,
+      });
     });
   }
 
@@ -590,18 +616,20 @@ Widget _itemCard(MenuItem item) {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          onPressed: () {
-                            setState(() {
-                              orderItems.add({
-                                'id': item.id,
-                                'name': item.name,
-                                'price': double.parse(
-                                  item.price.toString(),
-                                ),
-                                'qty': 1,
-                                'image_url': null,
+                          onPressed: () async {
+                            if (item.hasVariants) {
+                              await _showVariantDialog(item);
+                            } else {
+                              setState(() {
+                                orderItems.add({
+                                  'id': item.id,
+                                  'name': item.name,
+                                  'price': double.parse(item.price.toString()),
+                                  'qty': 1,
+                                  'image_url': null,
+                                });
                               });
-                            });
+                            }
                           },
                           child: const Text(
                             "ADD TO CART",

@@ -7,6 +7,7 @@ class MenuItem {
   final String imageUrl;
   final double price;
   final bool isAvailable;
+  final bool hasVariants;
   final double? startingPrice;
 
   MenuItem({
@@ -17,6 +18,7 @@ class MenuItem {
     required this.imageUrl,
     required this.price,
     required this.isAvailable,
+    required this.hasVariants,
     this.startingPrice
   });
 
@@ -29,6 +31,7 @@ class MenuItem {
       imageUrl: resolveImageUrl(json['image_url'] ?? 'temp.png'),
       price: double.parse(json['price'].toString()),
       isAvailable: json['is_available'] == 1,
+      hasVariants: json['has_variants'] == 1,
       startingPrice: json['starting_price'] != null
         ? double.parse(json['starting_price'].toString())
         : null,
