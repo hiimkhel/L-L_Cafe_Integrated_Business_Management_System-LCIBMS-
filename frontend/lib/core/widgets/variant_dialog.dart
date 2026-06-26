@@ -202,21 +202,21 @@ class _VariantDialogState extends State<VariantDialog> {
   }
 
   Widget _buildFlavorSection() {
-
     if (selectedVariant == null) {
       return const SizedBox();
     }
 
+    final requiredFlavors = selectedVariant!.requiredFlavors;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         const Divider(),
 
         const SizedBox(height: 8),
 
         Text(
-          "Select Flavors (${selectedVariant!.requiredFlavors})",
+          "Select Flavors (${selectedFlavors.length}/$requiredFlavors)",
           style: const TextStyle(
             fontWeight: FontWeight.bold,
           ),
@@ -224,16 +224,80 @@ class _VariantDialogState extends State<VariantDialog> {
 
         const SizedBox(height: 8),
 
-        // We'll add the checkbox list here next.
+        ...flavors.map((flavor) {
+          final isSelected =
+              selectedFlavors.any((f) => f.id == flavor.id);
 
+          return CheckboxListTile(
+            value: isSelected,
+            title: Text(flavor.flavorName),
+
+            subtitle: !flavor.isAvailable
+                ? const Text(
+                    "Unavailable",
+                    style: TextStyle(color: Colors.red),
+                  )
+                : null,
+
+            controlAffinity:
+                ListTileControlAffinity.leading,
+
+            contentPadding: EdgeInsets.zero,
+
+            onChanged: !flavor.isAvailable
+                ? null
+                : (checked) {
+
+                    setState(() {
+
+                      if (checked == true) {
+
+                        if (!isSelected) {
+
+                          if (selectedFlavors.length <
+                              requiredFlavors) {
+
+                            selectedFlavors.add(flavor);
+
+                          } else {
+
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "Only $requiredFlavors flavor(s) can be selected.",
+                                ),
+                              ),
+                            );
+
+                          }
+
+                        }
+
+                      } else {
+
+                        selectedFlavors.removeWhere(
+                          (f) => f.id == flavor.id,
+                        );
+
+                      }
+
+                    });
+
+                  },
+          );
+        }),
       ],
     );
   }
 
   List<Widget> _buildActions() {
+    final canAdd =
+        selectedVariant != null &&
+        selectedFlavors.length ==
+            selectedVariant!.requiredFlavors;
 
     return [
-
       TextButton(
         onPressed: () {
           Navigator.pop(context);
@@ -242,11 +306,16 @@ class _VariantDialogState extends State<VariantDialog> {
       ),
 
       ElevatedButton(
-        onPressed: null,
+        onPressed: !canAdd
+            ? null
+            : () {
+                Navigator.pop(context, {
+                  'variant': selectedVariant,
+                  'flavors': selectedFlavors,
+                });
+              },
         child: const Text("Add to Cart"),
       ),
-
     ];
-
   }
 }

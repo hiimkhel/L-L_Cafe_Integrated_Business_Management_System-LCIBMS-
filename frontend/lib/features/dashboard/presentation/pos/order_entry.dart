@@ -13,6 +13,7 @@ import 'package:frontend/core/utils/order_num_utils.dart';
 import 'package:frontend/core/models/menu_item_variant.dart';
 import 'package:frontend/core/widgets/variant_dialog.dart';
 import 'package:frontend/core/services/pos/order_service.dart';
+import 'package:frontend/core/models/flavor_models.dart';
 
 class POSOrderScreen extends StatefulWidget {
   const POSOrderScreen({super.key});
@@ -51,24 +52,31 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   }
 
   Future<void> _showVariantDialog(MenuItem item) async {
-    final MenuItemVariant? selectedVariant =
-        await showDialog<MenuItemVariant>(
+    final result =
+        await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (_) => VariantDialog(item: item),
     );
 
-    if (selectedVariant == null) {
-      return; // User cancelled
-    }
+    if (result == null) return;
+
+    final MenuItemVariant variant = result['variant'];
+    final List<Flavor> flavors = result['flavors'];
 
     setState(() {
       orderItems.add({
         'id': item.id,
         'name': item.name,
-        'variant_id': selectedVariant.id,
-        'variant_name': selectedVariant.variantName,
-        'price': selectedVariant.price,
+
+        'variant_id': variant.id,
+        'variant_name': variant.variantName,
+
+        'price': variant.price,
         'qty': 1,
+
+        // Store the flavor objects for now
+        'flavors': flavors,
+
         'image_url': null,
       });
     });
