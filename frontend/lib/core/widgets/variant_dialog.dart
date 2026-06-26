@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/models/flavor_models.dart';
 import 'package:frontend/core/models/menu_item.dart';
-import 'package:frontend/core/services/menu_service.dart';
 import 'package:frontend/core/models/menu_item_variant.dart';
+import 'package:frontend/core/services/menu_service.dart';
+
 class VariantDialog extends StatefulWidget {
   final MenuItem item;
 
@@ -15,27 +17,65 @@ class VariantDialog extends StatefulWidget {
 }
 
 class _VariantDialogState extends State<VariantDialog> {
-
-  // <-- STEP 2 GOES HERE
-
+  List<Flavor> flavors = [];
   List<MenuItemVariant> variants = [];
 
   MenuItemVariant? selectedVariant;
+  String? selectedCategory;
+
+  List<Flavor> selectedFlavors = [];
 
   bool isLoading = true;
+
+  static const List<String> categoryOrder = [
+    'Ala Carte',
+    'with Rice',
+    'Tray',
+  ];
+
+  List<String> get categories {
+    return categoryOrder
+        .where(
+          (category) =>
+              variants.any((variant) => variant.category == category),
+        )
+        .toList();
+  }
+
+  List<MenuItemVariant> get filteredVariants {
+    if (selectedCategory == null) return [];
+
+    return variants
+        .where((variant) => variant.category == selectedCategory)
+        .toList();
+  }
 
   @override
   void initState() {
     super.initState();
-    loadVariants();
+    loadData();
   }
 
-  Future<void> loadVariants() async {
-    variants = await MenuService.fetchVariants(widget.item.id);
+  Future<void> loadData() async {
+    try {
+      final loadedVariants =
+          await MenuService.fetchVariants(widget.item.id);
 
-    setState(() {
-      isLoading = false;
-    });
+      final loadedFlavors =
+          await MenuService.fetchFlavors();
+
+      setState(() {
+        variants = loadedVariants;
+        flavors = loadedFlavors;
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
@@ -43,73 +83,102 @@ class _VariantDialogState extends State<VariantDialog> {
     return AlertDialog(
       title: Text(widget.item.name),
 
-      content: isLoading
-          ? const CircularProgressIndicator()
-          : Column(
-              mainAxisSize: MainAxisSize.min,
-              children: variants.map((variant) {
+      content: SizedBox(
+        width: 420,
+        child: isLoading
+            ? const Center(
+                child: CircularProgressIndicator(),
+              )
+            : SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
 
-                return RadioListTile<MenuItemVariant>(
+                    const Text(
+                      "Select Category",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
 
-                  value: variant,
+                    const SizedBox(height: 8),
 
-                  groupValue: selectedVariant,
+                    ...categories.map((category) {
+                      return RadioListTile<String>(
+                        value: category,
+                        groupValue: selectedCategory,
+                        title: Text(category),
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedCategory = value;
 
-                  title: Text(
-                      variant.variantName),
+                            selectedVariant = null;
+                            selectedFlavors.clear();
+                          });
+                        },
+                      );
+                    }),
 
-                  subtitle: Text(
-                      "₱${variant.price}"),
+                    if (selectedCategory != null) ...[
+                      const Divider(),
 
-                  onChanged: (value) {
+                      const SizedBox(height: 8),
 
-                    setState(() {
+                      const Text(
+                        "Select Size",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
 
-                      selectedVariant = value;
+                      const SizedBox(height: 8),
 
-                    });
+                      ...filteredVariants.map((variant) {
+                        return RadioListTile<MenuItemVariant>(
+                          value: variant,
+                          groupValue: selectedVariant,
+                          title: Text(variant.variantName),
+                          subtitle: Text(
+                              "₱${variant.price.toStringAsFixed(2)}"),
+                          contentPadding: EdgeInsets.zero,
+                          onChanged: (value) {
+                            setState(() {
+                              selectedVariant = value;
 
-                  },
-
-                );
-
-              }).toList(),
-            ),
+                              selectedFlavors.clear();
+                            });
+                          },
+                        );
+                      }),
+                    ],
+                  ],
+                ),
+              ),
+      ),
 
       actions: [
 
         TextButton(
-
           onPressed: () {
-
             Navigator.pop(context);
-
           },
-
           child: const Text("Cancel"),
-
         ),
 
         ElevatedButton(
-
-          onPressed:
-              selectedVariant == null
-                  ? null
-                  : () {
-
-                      Navigator.pop(
-                        context,
-                        selectedVariant,
-                      );
-
-                    },
-
+          onPressed: selectedVariant == null
+              ? null
+              : () {
+                  Navigator.pop(
+                    context,
+                    selectedVariant,
+                  );
+                },
           child: const Text("Next"),
-
-        )
-
+        ),
       ],
-
     );
   }
 }

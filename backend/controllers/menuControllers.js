@@ -61,4 +61,26 @@ const getVariantsByMenuItem = async (req, res) => {
     }
 };
 
-module.exports = {getAllMenuItems, getVariantsByMenuItem};
+const getAllFlavors = async (req, res) => {
+    try {
+
+        const [rows] = await db.query(`
+            SELECT *
+            FROM flavors
+            ORDER BY flavor_name
+        `);
+
+        res.status(200).json(rows);
+
+    } catch (err) {
+
+        console.error(err);
+
+        res.status(500).json({
+            message: "Failed to fetch flavors"
+        });
+
+    }
+};
+
+module.exports = {getAllMenuItems, getVariantsByMenuItem, getAllFlavors};
