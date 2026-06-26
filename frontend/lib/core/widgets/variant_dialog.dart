@@ -82,7 +82,6 @@ class _VariantDialogState extends State<VariantDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(widget.item.name),
-
       content: SizedBox(
         width: 420,
         child: isLoading
@@ -91,94 +90,163 @@ class _VariantDialogState extends State<VariantDialog> {
               )
             : SingleChildScrollView(
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
 
-                    const Text(
-                      "Select Category",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    _buildCategorySection(),
 
-                    const SizedBox(height: 8),
+                    _buildVariantSection(),
 
-                    ...categories.map((category) {
-                      return RadioListTile<String>(
-                        value: category,
-                        groupValue: selectedCategory,
-                        title: Text(category),
-                        contentPadding: EdgeInsets.zero,
-                        onChanged: (value) {
-                          setState(() {
-                            selectedCategory = value;
+                    _buildFlavorSection(),
 
-                            selectedVariant = null;
-                            selectedFlavors.clear();
-                          });
-                        },
-                      );
-                    }),
-
-                    if (selectedCategory != null) ...[
-                      const Divider(),
-
-                      const SizedBox(height: 8),
-
-                      const Text(
-                        "Select Size",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      ...filteredVariants.map((variant) {
-                        return RadioListTile<MenuItemVariant>(
-                          value: variant,
-                          groupValue: selectedVariant,
-                          title: Text(variant.variantName),
-                          subtitle: Text(
-                              "₱${variant.price.toStringAsFixed(2)}"),
-                          contentPadding: EdgeInsets.zero,
-                          onChanged: (value) {
-                            setState(() {
-                              selectedVariant = value;
-
-                              selectedFlavors.clear();
-                            });
-                          },
-                        );
-                      }),
-                    ],
                   ],
                 ),
               ),
       ),
+      actions: _buildActions(),
+    );
+  }
 
-      actions: [
+  Widget _buildCategorySection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
 
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          child: const Text("Cancel"),
+        const Text(
+          "Select Category",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
         ),
 
-        ElevatedButton(
-          onPressed: selectedVariant == null
-              ? null
-              : () {
-                  Navigator.pop(
-                    context,
-                    selectedVariant,
-                  );
-                },
-          child: const Text("Next"),
-        ),
+        const SizedBox(height: 8),
+
+        ...categories.map((category) {
+
+          return RadioListTile<String>(
+            value: category,
+            groupValue: selectedCategory,
+            title: Text(category),
+            contentPadding: EdgeInsets.zero,
+            onChanged: (value) {
+
+              setState(() {
+
+                selectedCategory = value;
+
+                selectedVariant = null;
+
+                selectedFlavors.clear();
+
+              });
+
+            },
+          );
+
+        }),
+
       ],
     );
+  }
+
+  Widget _buildVariantSection() {
+
+    if (selectedCategory == null) {
+      return const SizedBox();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+
+        const Divider(),
+
+        const SizedBox(height: 8),
+
+        const Text(
+          "Select Size",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        ...filteredVariants.map((variant) {
+
+          return RadioListTile<MenuItemVariant>(
+            value: variant,
+            groupValue: selectedVariant,
+            title: Text(variant.variantName),
+            subtitle: Text(
+              "₱${variant.price.toStringAsFixed(2)}",
+            ),
+            contentPadding: EdgeInsets.zero,
+            onChanged: (value) {
+
+              setState(() {
+
+                selectedVariant = value;
+
+                selectedFlavors.clear();
+
+              });
+
+            },
+          );
+
+        }),
+
+      ],
+    );
+  }
+
+  Widget _buildFlavorSection() {
+
+    if (selectedVariant == null) {
+      return const SizedBox();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+
+        const Divider(),
+
+        const SizedBox(height: 8),
+
+        Text(
+          "Select Flavors (${selectedVariant!.requiredFlavors})",
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // We'll add the checkbox list here next.
+
+      ],
+    );
+  }
+
+  List<Widget> _buildActions() {
+
+    return [
+
+      TextButton(
+        onPressed: () {
+          Navigator.pop(context);
+        },
+        child: const Text("Cancel"),
+      ),
+
+      ElevatedButton(
+        onPressed: null,
+        child: const Text("Add to Cart"),
+      ),
+
+    ];
+
   }
 }
