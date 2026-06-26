@@ -14,6 +14,7 @@ import 'package:frontend/core/models/menu_item_variant.dart';
 import 'package:frontend/core/widgets/variant_dialog.dart';
 import 'package:frontend/core/services/pos/order_service.dart';
 import 'package:frontend/core/models/flavor_models.dart';
+import 'package:uuid/uuid.dart';          
 
 class POSOrderScreen extends StatefulWidget {
   const POSOrderScreen({super.key});
@@ -40,6 +41,8 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   int _pendingOnlineCount = 0;
   bool _loadingCount = false;
 
+  final uuid = Uuid();
+
   @override
   void initState() {
     super.initState();
@@ -51,33 +54,41 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     });
   }
 
-  Future<void> _showVariantDialog(MenuItem item) async {
-    final result =
-        await showDialog<Map<String, dynamic>>(
+   Future<void> _showVariantDialog(MenuItem item) async {
+      print("Opening dialog");
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (_) => VariantDialog(item: item),
     );
 
     if (result == null) return;
 
-    final MenuItemVariant variant = result['variant'];
-    final List<Flavor> flavors = result['flavors'];
+   final MenuItemVariant variant = result['variant'];
+  final List<Flavor> flavors = result['flavors'];
+
+  print("===== VARIANT =====");
+  print("ID: ${variant.id}");
+  print("Category: ${variant.category}");
+  print("Variant: ${variant.variantName}");
+  print("Price: ${variant.price}");
+  print("Required Flavors: ${variant.requiredFlavors}");
+
+  print("===== FLAVORS =====");
+  for (final flavor in flavors) {
+    print("${flavor.id} - ${flavor.flavorName}");
+  }
 
     setState(() {
       orderItems.add({
+        'cart_id': uuid.v4(),
         'id': item.id,
         'name': item.name,
-
         'variant_id': variant.id,
         'variant_name': variant.variantName,
-
+        'variant_category': variant.category,
         'price': variant.price,
         'qty': 1,
-
-        // Store the flavor objects for now
         'flavors': flavors,
-
-        'image_url': null,
       });
     });
   }
@@ -532,13 +543,19 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
 
 Widget _itemCard(MenuItem item) {
   final currentOrderIndex =
-      orderItems.indexWhere((e) => e['id'] == item.id);
+    item.hasVariants == 1
+        ? -1
+        : orderItems.indexWhere(
+            (e) => e['id'] == item.id,
+          );
 
-  final currentQty = currentOrderIndex >= 0
-      ? orderItems[currentOrderIndex]['qty'] as int
-      : 0;
+final currentQty =
+    currentOrderIndex >= 0
+        ? orderItems[currentOrderIndex]['qty'] as int
+        : 0;
 
-  final isSelected = currentQty > 0;
+final isSelected =
+    item.hasVariants == 0 && currentQty > 0;
 
   String formatMoney(dynamic value) {
     final v = double.tryParse(value.toString()) ?? 0.0;
@@ -579,7 +596,6 @@ Widget _itemCard(MenuItem item) {
               // ITEM NAME
               Text(
                 item.name,
-                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 13.5,
@@ -802,12 +818,15 @@ Widget _itemCard(MenuItem item) {
               itemBuilder: (context, index) {
                 final item = orderItems[index];
 
-                return _orderItem(
-                  index: index,
-                  name: item['name'],
-                  price: "₱${item['price'] * item['qty']}",
-                  qty: item['qty'],
-                );
+               return _orderItem(
+                index: index,
+                name: item['name'],
+                variantCategory: item['variant_category'],
+                variantName: item['variant_name'],
+                flavors: item['flavors'],
+                price: "₱${item['price'] * item['qty']}",
+                qty: item['qty'],
+              );
               },
             ),
           ),
@@ -1027,6 +1046,9 @@ Widget _itemCard(MenuItem item) {
 
   Widget _orderItem({
     required String name,
+    String? variantCategory,
+    String? variantName,
+    List<Flavor>? flavors,
     required String price,
     required int qty,
     required int index,
@@ -1049,15 +1071,63 @@ Widget _itemCard(MenuItem item) {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text(
-                  name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.receiptDark,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.receiptDark,
+                      ),
+                    ),
+
+                    if (variantName != null) ...[
+                      const SizedBox(height: 2),
+
+                      Text(
+                        "$variantCategory • $variantName",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
+
+                    if (flavors != null && flavors.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: flavors.map((flavor) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.secondary.withOpacity(.12),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: AppColors.secondary.withOpacity(.4),
+                              ),
+                            ),
+                            child: Text(
+                              flavor.flavorName,
+                              style: TextStyle(
+                                color: AppColors.secondary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               IconButton(
@@ -1211,4 +1281,46 @@ class _NoGlowScrollBehavior extends ScrollBehavior {
   ) {
     return child;
   }
+}
+String buildOrderItemName(Map<String, dynamic> item) {
+  print("========== ORDER ITEM ==========");
+  print(item);
+
+  if (item['variant_name'] == null) {
+    return item['name'];
+  }
+
+  final category = item['variant_category'];
+  final variant = item['variant_name'];
+
+  final rawFlavors = item['flavors'];
+
+  print("Category: $category");
+  print("Variant: $variant");
+  print("Raw flavors type: ${rawFlavors.runtimeType}");
+
+  final List<Flavor> flavors =
+      (rawFlavors as List<Flavor>? ?? []);
+
+  for (final flavor in flavors) {
+    print(
+      "Flavor -> id: ${flavor.id}, "
+      "name: ${flavor.flavorName}, "
+      "available: ${flavor.isAvailable}",
+    );
+  }
+
+  final flavorText =
+      flavors.map((f) => f.flavorName).join(', ');
+
+  print("Flavor Text: $flavorText");
+  print("===============================");
+
+  final displayName = "${item['name']}\n"
+    "$category • $variant\n"
+    "$flavorText";
+
+  print(displayName);
+
+  return displayName;
 }

@@ -14,44 +14,44 @@ class CartNotifier extends ChangeNotifier {
   bool get isEmpty => _items.isEmpty;
  
   void add(CartItem incoming) {
-    final idx = _items.indexWhere((c) => c.id == incoming.id);
+    final idx = _items.indexWhere(
+      (c) => c.isSameConfiguration(incoming),
+    );
+
     if (idx == -1) {
-      _items.add(CartItem(
-        id: incoming.id,
-        name: incoming.name,
-        category: incoming.category,
-        price: incoming.price,
-        originalPrice: incoming.originalPrice,
-        imageUrl: incoming.imageUrl,
-        quantity: 1,
-      ));
+      _items.add(incoming);
     } else {
       _items[idx].quantity++;
     }
+
     notifyListeners();
   }
  
-  void increment(String id) {
-    final idx = _items.indexWhere((c) => c.id == id);
+  void increment(String cartId) {
+    final idx = _items.indexWhere((c) => c.cartId == cartId);
+
     if (idx != -1) {
       _items[idx].quantity++;
       notifyListeners();
     }
   }
- 
-  void decrement(String id) {
-    final idx = _items.indexWhere((c) => c.id == id);
+
+  void decrement(String cartId) {
+    final idx = _items.indexWhere((c) => c.cartId == cartId);
+
     if (idx == -1) return;
+
     if (_items[idx].quantity <= 1) {
       _items.removeAt(idx);
     } else {
       _items[idx].quantity--;
     }
+
     notifyListeners();
   }
- 
-  void remove(String id) {
-    _items.removeWhere((c) => c.id == id);
+
+  void remove(String cartId) {
+    _items.removeWhere((c) => c.cartId == cartId);
     notifyListeners();
   }
  

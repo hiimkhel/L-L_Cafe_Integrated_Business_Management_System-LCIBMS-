@@ -234,7 +234,7 @@ switch (settings.name) {
               )));
 
   case AppRoutes.cart:
-    return _fade(const CartScreen());
+    return _fade(CartScreen());
 
   default:
     return null;

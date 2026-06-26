@@ -6,6 +6,7 @@ import 'package:frontend/core/constants/cart_provider.dart';
 import 'package:frontend/core/widgets/bamboo_breeze_background.dart'; // shared widget
 import 'package:frontend/features/checkout/customer/presentation/cart_checkout_screen.dart';
 import 'package:frontend/core/constants/cart_item.dart' as legacy;
+import 'package:uuid/uuid.dart';
 
 const double _kMobile = 768;
 const double _kDesktopMaxWidth = 1280;
@@ -16,7 +17,8 @@ const Color _primary = Color(0xFF758C6D);
 // ─────────────────────────────────────────────────────────────────────────────
 
 class CartScreen extends StatelessWidget {
-  const CartScreen({super.key});
+  CartScreen({super.key});
+  final uuid = Uuid();
 
   @override
   Widget build(BuildContext context) {
@@ -757,6 +759,7 @@ class _CartSummary extends StatelessWidget {
                                 cart.items
                                     .map(
                                       (c) => legacy.CartItem(
+                                        cartId: c.cartId,
                                         id: c.id,
                                         name: c.name,
                                         category: c.category,
