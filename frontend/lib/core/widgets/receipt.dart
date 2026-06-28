@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
-import 'package:frontend/core/widgets/receipt.dart';
 import 'package:frontend/core/models/receipt_model.dart';
 
 // ─────────────────────────────────────────────
@@ -179,15 +178,79 @@ class LLCafeReceipt extends StatelessWidget {
 
   Widget _buildItemRow(OrderItem item) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 14),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Text(item.displayName, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: _dark)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                Text(
+                  "${item.quantity}X ${item.displayName}",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: _dark,
+                  ),
+                ),
+
+                if (item.variantName != null) ...[
+                  const SizedBox(height: 3),
+
+                  Text(
+                    "${item.variantCategory} • ${item.variantName}",
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+
+                if (item.flavors.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: item.flavors.map((flavor) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _green.withOpacity(.12),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          flavor,
+                          style: const TextStyle(
+                            fontSize: 9,
+                            color: _green,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ],
+            ),
           ),
-          const SizedBox(width: 8),
-          Text(_peso(item.total), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: _green)),
+
+          const SizedBox(width: 10),
+
+          Text(
+            _peso(item.total),
+            style: const TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 13,
+              color: _green,
+            ),
+          ),
         ],
       ),
     );

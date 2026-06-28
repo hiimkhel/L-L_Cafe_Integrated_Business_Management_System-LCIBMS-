@@ -11,8 +11,7 @@ import 'package:frontend/core/models/receipt_model.dart';
 import 'package:frontend/core/services/pos/print_services.dart';
 import 'package:flutter/services.dart';
 import 'package:frontend/core/services/pos/native_printer_services.dart';
-import 'package:frontend/core/services/pos/print_bridge_service.dart';
-
+import 'package:frontend/core/models/flavor_models.dart';
 
 class CheckoutConfirmationScreen extends StatefulWidget {
   final List<Map<String, dynamic>> orderItems;
@@ -179,7 +178,17 @@ class _CheckoutConfirmationScreenState
               return OrderItem(
                 name: item["name"],
                 quantity: item["qty"],
-                unitPrice: item["price"],
+                unitPrice: (item["price"] as num).toDouble(),
+
+                variantCategory: item["variant_category"],
+
+                variantName: item["variant_name"],
+
+                flavors: item["flavors"] != null
+                    ? (item["flavors"] as List<Flavor>)
+                        .map((f) => f.flavorName)
+                        .toList()
+                    : const [],
               );
             }).toList(),
             cashReceived: cashGiven,
