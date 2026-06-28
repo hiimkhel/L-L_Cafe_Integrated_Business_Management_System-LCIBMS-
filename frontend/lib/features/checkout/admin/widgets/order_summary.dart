@@ -52,9 +52,76 @@ class OrderSummary extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(item["name"].toString().toUpperCase(), style: AppTextStyles.subtitle.copyWith(fontWeight: FontWeight.w800, fontSize: 14), maxLines: 2, overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 4),
-                    Text("@ ₱${price.toStringAsFixed(2)}", style: AppTextStyles.body.copyWith(color: AppColors.tertiary, fontSize: 12, fontWeight: FontWeight.w500)),
+
+                    // Item Name
+                    Text(
+                      item["name"].toString().toUpperCase(),
+                      style: AppTextStyles.subtitle.copyWith(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                    ),
+
+                    // Variant
+                    if (item["variant_name"] != null) ...[
+                      const SizedBox(height: 3),
+
+                      Text(
+                        "${item["variant_category"]} • ${item["variant_name"]}",
+                        style: AppTextStyles.body.copyWith(
+                          fontSize: 12,
+                          color: AppColors.tertiary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+
+                    // Flavor Badges
+                    if (item["flavors"] != null &&
+                        (item["flavors"] as List).isNotEmpty) ...[
+                      const SizedBox(height: 8),
+
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: (item["flavors"] as List)
+                            .map((flavor) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.secondary.withOpacity(.12),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: AppColors.secondary.withOpacity(.35),
+                                  ),
+                                ),
+                                child: Text(
+                                  flavor.flavorName,
+                                  style: TextStyle(
+                                    color: AppColors.secondary,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              );
+                            })
+                            .toList(),
+                      ),
+                    ],
+
+                    const SizedBox(height: 5),
+
+                    Text(
+                      "@ ₱${price.toStringAsFixed(2)}",
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.tertiary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
               ),
