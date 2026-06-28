@@ -12,6 +12,8 @@ import 'package:frontend/core/services/pos/print_services.dart';
 import 'package:flutter/services.dart';
 import 'package:frontend/core/services/pos/native_printer_services.dart';
 import 'package:frontend/core/models/flavor_models.dart';
+import 'dart:convert';
+
 
 class CheckoutConfirmationScreen extends StatefulWidget {
   final List<Map<String, dynamic>> orderItems;
@@ -137,16 +139,29 @@ class _CheckoutConfirmationScreenState
         }
 
         final databaseItems = widget.orderItems.map((item) {
-          final price = (item["price"] as num).toDouble();
-          final qty = (item["qty"] as num).toInt();
-          return {
-            "menu_item_id": item["id"],
-            "name": item["name"],
-            "quantity": qty,
-            "unit_price": price,
-            "subtotal": price * qty,
-          };
-        }).toList();
+        final price = (item["price"] as num).toDouble();
+        final qty = (item["qty"] as num).toInt();
+
+        return {
+          "menu_item_id": item["id"],
+          "name": item["name"],
+          "quantity": qty,
+          "unit_price": price,
+          "subtotal": price * qty,
+          "variant_id": item["variant_id"],
+
+          "flavors": item["flavors"] != null
+              ? (item["flavors"] as List<Flavor>)
+                  .map((f) => {
+                        "id": f.id,
+                        "flavorName": f.flavorName,
+                      })
+                  .toList()
+              : [],
+        };
+      }).toList();
+
+      print(const JsonEncoder.withIndent('  ').convert(databaseItems));
 
         final orderRequest = OrderRequest(
           orderNumber: formattedOrderNumber,

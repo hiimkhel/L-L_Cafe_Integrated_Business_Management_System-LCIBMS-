@@ -93,9 +93,7 @@ class _OrderTableState extends State<OrderTable> {
                           return OrderRow(
                             id: "#${order['order_number']}",
                             customer: order['customer_name'] ?? "Guest",
-                            items: (order['items'] as List)
-                                .map((i) => "${i['name']} x${i['qty']}")
-                                .toList(),
+                            items: List<Map<String, dynamic>>.from(order['items']),
                             status: order['status'],
                             time: order['updated_at'], 
                             actionText: order['source'] == 'pos'

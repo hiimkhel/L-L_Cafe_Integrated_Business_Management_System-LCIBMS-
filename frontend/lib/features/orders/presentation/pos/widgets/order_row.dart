@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'action_button.dart';
+import 'package:frontend/core/models/flavor_models.dart';
 
 class OrderRow extends StatefulWidget {
   final String id;
   final String customer;
-  final List<String> items;
+  final List<Map<String, dynamic>> items;
   final String status;
   final String time;
   final String actionText;
@@ -136,10 +137,21 @@ class _OrderRowState extends State<OrderRow> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           ...visibleItems.map((item) {
-  
-            final parts = item.split(' x');
-            final itemName = parts.first;
-            final quantity = parts.length > 1 ? parts.last : null;
+
+            final itemName = item["name"];
+
+            final quantity = item["qty"].toString();
+
+            final variant = item["variant_name"];
+
+            final flavors = (item["flavors"] as List?)
+                ?.map((e) => Flavor.fromJson(Map<String, dynamic>.from(e)))
+                .toList() ??
+            [];
+
+            final flavorNames = flavors
+              .map((f) => f.flavorName)
+              .toList();
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 6),
@@ -157,15 +169,39 @@ class _OrderRowState extends State<OrderRow> {
 
                   // Item name
                   Expanded(
-                    child: Text(
-                      itemName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textDark,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+
+                        Text(
+                          itemName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+
+                        if (variant != null || flavors.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              [
+                                if (variant != null) variant,
+                                if (flavors.isNotEmpty) flavorNames.join(", "),
+                              ].join(" • "),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey.shade600,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
 
