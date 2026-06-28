@@ -99,6 +99,7 @@ class _OrderTableState extends State<OrderTable> {
                             actionText: order['source'] == 'pos'
                               ? 'COMPLETE'
                               : 'READY',
+                            onModifyPressed: () => _showModifyDialog(order),
                             onActionPressed: () => _updateOrder(order),
                   
                           );
@@ -107,6 +108,50 @@ class _OrderTableState extends State<OrderTable> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showModifyDialog(Map<String, dynamic> order) {
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: Text("Modify Order"),
+
+          content: Text(
+            "What would you like to do?"
+          ),
+
+          actions: [
+
+            TextButton(
+              onPressed: () {
+
+                Navigator.pop(context);
+
+                // _editOrder(order);
+
+              },
+              child: const Text("Edit"),
+            ),
+
+            TextButton(
+              onPressed: () {
+
+                Navigator.pop(context);
+
+                // _deleteOrder(order);
+
+              },
+              child: const Text(
+                "Delete",
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+
+          ],
+        );
+      },
     );
   }
 
