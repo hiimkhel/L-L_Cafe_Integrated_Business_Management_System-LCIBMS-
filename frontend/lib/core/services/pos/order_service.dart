@@ -50,7 +50,9 @@ class OrderService {
         headers: {"Content-Type": "application/json"},
         body: json.encode({"status": status}),
       );
-
+      print('$baseUrl/pos/orders/$id/status');
+      print(response.statusCode);
+      print(response.body);
       return response.statusCode == 200;
     } catch (e) {
       print("Update Error: $e");

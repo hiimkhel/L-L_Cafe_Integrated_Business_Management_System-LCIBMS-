@@ -39,9 +39,6 @@ const getOrdersByStatus = async (req, res) => {
 
         const [rows] = await db.query(sql, [status]);
 
-        console.log("Status:", status);
-        console.log("Rows:", rows.length);
-        console.log(rows);
 
         // Group rows by Order ID
         const ordersMap = {};
@@ -60,8 +57,7 @@ const getOrdersByStatus = async (req, res) => {
                     items: [],
                 };
             }
-            console.log(row.selected_flavors);
-            console.log(typeof row.selected_flavors);
+
             // Add item
             if (row.item_name) {
                 let flavors = [];
@@ -98,23 +94,41 @@ const getOrdersByStatus = async (req, res) => {
 };
 
 const updateOrderStatus = async (req, res) => {
-  const {id} = req.params;
-  const { status } = req.body;
+    console.log("PATCH /orders/:id/status");
+    console.log(req.params);
+    console.log(req.body);
+    const { id } = req.params;
+    const { status } = req.body;
 
     try {
-      
-      // Error handling
-      if (!status){
-        req.status(400).json({message: 'Status field is missing!'});
-      }
 
-      await db.query("UPDATE orders SET status = ? WHERE id = ?", [status, id]);
+        if (!status) {
+            return res.status(400).json({
+                message: "Status field is missing!"
+            });
+        }
 
-      res.status(200).json({ message: "Order status updated" });
+        const [result] = await db.query(
+            "UPDATE orders SET status = ?, updated_at = NOW() WHERE id = ?",
+            [status, id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                message: "Order not found"
+            });
+        }
+
+        return res.status(200).json({
+            message: "Order status updated"
+        });
+
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        return res.status(500).json({
+            error: err.message
+        });
     }
-}
+};
 
 
 const getOnlineOrders = async (req, res ) => {

@@ -23,6 +23,27 @@ class _OrderTableState extends State<OrderTable> {
     _fetchOrders();
   }
 
+  Future<void> _cancelOrder(Map<String, dynamic> order) async {
+    final success = await _orderService.updateOrderStatus(
+      order["id"],
+      "cancelled",
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      _fetchOrders(); // refresh queue
+
+      widget.onOrderUpdated?.call();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Order has been cancelled"),
+        ),
+      );
+    }
+  }
+
   
   Future<void> _updateOrder(dynamic order) async {
     final String orderSource = order['source'] ?? '';
@@ -137,14 +158,11 @@ class _OrderTableState extends State<OrderTable> {
 
             TextButton(
               onPressed: () {
-
                 Navigator.pop(context);
-
-                // _deleteOrder(order);
-
+                _confirmCancel(order);
               },
               child: const Text(
-                "Delete",
+                "Cancel Order",
                 style: TextStyle(color: Colors.red),
               ),
             ),
@@ -153,6 +171,35 @@ class _OrderTableState extends State<OrderTable> {
         );
       },
     );
+  }
+
+  Future<void> _confirmCancel(Map<String, dynamic> order) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Cancel Order?"),
+        content: Text(
+          "Are you sure you want to cancel Order #${order['order_number']}?\n\nThe order will be removed from the preparation queue and marked as cancelled."
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Keep Order"),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Yes, Cancel"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _cancelOrder(order);
+    }
   }
 
   Widget _header() {
