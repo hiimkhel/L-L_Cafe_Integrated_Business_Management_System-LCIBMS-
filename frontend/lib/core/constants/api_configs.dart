@@ -20,11 +20,4 @@ class ApiConfig {
     }
     return "http://10.179.3.122:3006/uploads/menu-items";
   }
-
-  static String get imageBaseUrl {
-    if (isProduction) {
-      return "https://lcibms-backend.onrender.com/uploads/menu-items";
-    }
-    return "http://10.179.3.122:3006/uploads/menu-items";
-  }
 }
