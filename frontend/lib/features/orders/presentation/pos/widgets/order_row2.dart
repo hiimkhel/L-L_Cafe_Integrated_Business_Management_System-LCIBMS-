@@ -144,7 +144,7 @@ class OrderRow2 extends StatelessWidget {
                       Icon(Icons.receipt_long_rounded, color: AppColors.primary, size: 18),
                       const SizedBox(width: 8),
                       Text(
-                        "View Receipt",
+                        "View",
                         style: TextStyle(
                           color: AppColors.primary,
                           fontSize: 12,

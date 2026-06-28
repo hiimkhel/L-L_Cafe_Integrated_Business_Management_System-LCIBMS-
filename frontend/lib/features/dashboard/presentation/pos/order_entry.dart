@@ -10,7 +10,11 @@ import 'package:frontend/features/orders/presentation/pos/screens/order_history_
 import 'package:frontend/features/orders/presentation/pos/screens/order_queue_screen.dart';
 import 'package:frontend/core/models/menu_category.dart';
 import 'package:frontend/core/utils/order_num_utils.dart';
+import 'package:frontend/core/models/menu_item_variant.dart';
+import 'package:frontend/core/widgets/variant_dialog.dart';
 import 'package:frontend/core/services/pos/order_service.dart';
+import 'package:frontend/core/models/flavor_models.dart';
+import 'package:uuid/uuid.dart';          
 
 class POSOrderScreen extends StatefulWidget {
   const POSOrderScreen({super.key});
@@ -37,6 +41,8 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   int _pendingOnlineCount = 0;
   bool _loadingCount = false;
 
+  final uuid = Uuid();
+
   @override
   void initState() {
     super.initState();
@@ -45,6 +51,45 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
 
     _countTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       _fetchPendingOnlineCount();
+    });
+  }
+
+   Future<void> _showVariantDialog(MenuItem item) async {
+      print("Opening dialog");
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (_) => VariantDialog(item: item),
+    );
+
+    if (result == null) return;
+
+   final MenuItemVariant variant = result['variant'];
+  final List<Flavor> flavors = result['flavors'];
+
+  print("===== VARIANT =====");
+  print("ID: ${variant.id}");
+  print("Category: ${variant.category}");
+  print("Variant: ${variant.variantName}");
+  print("Price: ${variant.price}");
+  print("Required Flavors: ${variant.requiredFlavors}");
+
+  print("===== FLAVORS =====");
+  for (final flavor in flavors) {
+    print("${flavor.id} - ${flavor.flavorName}");
+  }
+
+    setState(() {
+      orderItems.add({
+        'cart_id': uuid.v4(),
+        'id': item.id,
+        'name': item.name,
+        'variant_id': variant.id,
+        'variant_name': variant.variantName,
+        'variant_category': variant.category,
+        'price': variant.price,
+        'qty': 1,
+        'flavors': flavors,
+      });
     });
   }
 
@@ -483,7 +528,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     return GridView.builder(
       padding: const EdgeInsets.all(24),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
+        crossAxisCount: 3,
         crossAxisSpacing: 20,
         mainAxisSpacing: 20,
         childAspectRatio: 1.1,
@@ -497,15 +542,28 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   }
 
 Widget _itemCard(MenuItem item) {
+  final currentOrderIndex =
+    item.hasVariants == 1
+        ? -1
+        : orderItems.indexWhere(
+            (e) => e['id'] == item.id,
+          );
 
-  final currentOrderIndex = orderItems.indexWhere((e) => e['id'] == item.id);
-  final currentQty = currentOrderIndex >= 0 ? orderItems[currentOrderIndex]['qty'] as int : 0;
-  final isSelected = currentQty > 0;
+final currentQty =
+    currentOrderIndex >= 0
+        ? orderItems[currentOrderIndex]['qty'] as int
+        : 0;
 
-  // Formatting utility inside the layout scope
+final isSelected =
+    item.hasVariants == 0 && currentQty > 0;
+
   String formatMoney(dynamic value) {
     final v = double.tryParse(value.toString()) ?? 0.0;
-    return '₱${v.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}';
+    return '₱${v.toStringAsFixed(2)}'
+        .replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]},',
+        );
   }
 
   return Container(
@@ -513,62 +571,59 @@ Widget _itemCard(MenuItem item) {
       color: AppColors.white,
       borderRadius: BorderRadius.circular(16),
       border: Border.all(
-        color: isSelected ? AppColors.secondary : Colors.transparent,
+        color: isSelected
+            ? AppColors.secondary
+            : Colors.transparent,
         width: 1.5,
       ),
       boxShadow: [
         BoxShadow(
-          color: AppColors.receiptDark.withOpacity(isSelected ? 0.1 : 0.04),
-          offset: const Offset(0, 4),
-          blurRadius: 12,
+          color: AppColors.receiptDark.withOpacity(
+            isSelected ? 0.10 : 0.04,
+          ),
+          offset: const Offset(0, 3),
+          blurRadius: 10,
         ),
       ],
     ),
     child: Stack(
       children: [
-       
         Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start, 
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 6),
-            
-              const Spacer(),
-
-              Expanded(
-                flex: 0, // Prevents unexpected vertical text stretching
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.left,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.receiptDark,
-                        height: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      formatMoney(item.price),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: isSelected ? AppColors.secondary : AppColors.receiptDark.withOpacity(0.7),
-                      ),
-                    ),
-                  ],
+              // ITEM NAME
+              Text(
+                item.name,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.receiptDark,
+                  height: 1.25,
                 ),
               ),
 
               const SizedBox(height: 6),
 
-              // ── SECONDARY ACTION BUTTON CONTROLS ──────────────
+              // PRICE
+              Text(
+                item.startingPrice != null
+                  ? "Starts at ${formatMoney(item.startingPrice)}"
+                  : formatMoney(item.price),
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected
+                      ? AppColors.secondary
+                      : AppColors.receiptDark.withOpacity(0.7),
+                ),
+              ),
+
+              const Spacer(),
+
+              // BUTTON
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
                 child: !isSelected
@@ -581,25 +636,30 @@ Widget _itemCard(MenuItem item) {
                             backgroundColor: AppColors.secondary,
                             foregroundColor: Colors.white,
                             elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
-                          onPressed: () {
-                            setState(() {
-                              orderItems.add({
-                                'id': item.id,
-                                'name': item.name,
-                                'price': double.parse(item.price.toString()),
-                                'qty': 1,
-                                'image_url': item.imageUrl,
+                          onPressed: () async {
+                            if (item.hasVariants) {
+                              await _showVariantDialog(item);
+                            } else {
+                              setState(() {
+                                orderItems.add({
+                                  'id': item.id,
+                                  'name': item.name,
+                                  'price': double.parse(item.price.toString()),
+                                  'qty': 1,
+                                  'image_url': null,
+                                });
                               });
-                            });
+                            }
                           },
                           child: const Text(
                             "ADD TO CART",
                             style: TextStyle(
-                              fontWeight: FontWeight.bold, 
-                              fontSize: 12, 
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -610,13 +670,15 @@ Widget _itemCard(MenuItem item) {
                         width: double.infinity,
                         height: 38,
                         decoration: BoxDecoration(
-                          color: AppColors.secondary.withOpacity(0.12), // Elegant tint fallback
+                          color: AppColors.secondary.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.secondary, width: 1),
+                          border: Border.all(
+                            color: AppColors.secondary,
+                          ),
                         ),
                         child: Center(
                           child: Text(
-                            "ADDED TO CART",
+                            "$currentQty IN CART",
                             style: TextStyle(
                               color: AppColors.secondary,
                               fontWeight: FontWeight.bold,
@@ -631,6 +693,7 @@ Widget _itemCard(MenuItem item) {
           ),
         ),
 
+        // CHECK ICON
         if (isSelected)
           Positioned(
             top: 10,
@@ -638,13 +701,18 @@ Widget _itemCard(MenuItem item) {
             child: CircleAvatar(
               radius: 9,
               backgroundColor: AppColors.secondary,
-              child: const Icon(Icons.check, color: Colors.white, size: 11),
+              child: const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 11,
+              ),
             ),
           ),
       ],
     ),
   );
 }
+
   //----------------------------------------Finalize Order Section-----------------------------------------------------------
   Widget _finaizeOrderSection() {
 
@@ -682,7 +750,7 @@ Widget _itemCard(MenuItem item) {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.receiptDark,
-                    fontSize: 18,
+                    fontSize: 12,
                   ),
                 ),
 
@@ -719,14 +787,13 @@ Widget _itemCard(MenuItem item) {
                   children: const [
                     Icon(
                       Icons.shopping_cart_outlined,
-                      size: 48,
+                      size: 38,
                       color: Colors.grey,
                     ),
-                    SizedBox(height: 10),
                     Text(
                       'Start creating an order',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 10,
                         fontWeight: FontWeight.w700,
                         color: Colors.grey,
                       ),
@@ -751,12 +818,15 @@ Widget _itemCard(MenuItem item) {
               itemBuilder: (context, index) {
                 final item = orderItems[index];
 
-                return _orderItem(
-                  index: index,
-                  name: item['name'],
-                  price: "₱${item['price'] * item['qty']}",
-                  qty: item['qty'],
-                );
+               return _orderItem(
+                index: index,
+                name: item['name'],
+                variantCategory: item['variant_category'],
+                variantName: item['variant_name'],
+                flavors: item['flavors'],
+                price: "₱${item['price'] * item['qty']}",
+                qty: item['qty'],
+              );
               },
             ),
           ),
@@ -976,13 +1046,19 @@ Widget _itemCard(MenuItem item) {
 
   Widget _orderItem({
     required String name,
+    String? variantCategory,
+    String? variantName,
+    List<Flavor>? flavors,
     required String price,
     required int qty,
     required int index,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 15,
+        vertical: 12,
+      ),
       decoration: BoxDecoration(
         color: AppColors.background.withOpacity(.5),
         borderRadius: BorderRadius.circular(10),
@@ -994,12 +1070,64 @@ Widget _itemCard(MenuItem item) {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                name,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.receiptDark,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.receiptDark,
+                      ),
+                    ),
+
+                    if (variantName != null) ...[
+                      const SizedBox(height: 2),
+
+                      Text(
+                        "$variantCategory • $variantName",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
+
+                    if (flavors != null && flavors.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: flavors.map((flavor) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.secondary.withOpacity(.12),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: AppColors.secondary.withOpacity(.4),
+                              ),
+                            ),
+                            child: Text(
+                              flavor.flavorName,
+                              style: TextStyle(
+                                color: AppColors.secondary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               IconButton(
@@ -1014,7 +1142,7 @@ Widget _itemCard(MenuItem item) {
               ),
             ],
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1066,8 +1194,8 @@ Widget _itemCard(MenuItem item) {
                 price,
                 style: TextStyle(
                   color: AppColors.secondary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
@@ -1077,13 +1205,20 @@ Widget _itemCard(MenuItem item) {
     );
   }
 
-  Widget _qtyBtn(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
+  Widget _qtyBtn(
+    IconData icon,
+    VoidCallback onTap,
+  ) {
+    return InkWell(
       onTap: onTap,
       child: SizedBox(
-        width: 28,
-        height: 28,
-        child: Icon(icon, size: 16, color: AppColors.primary),
+        width: 42,
+        height: 42,
+        child: Icon(
+          icon,
+          size: 20,
+          color: AppColors.primary,
+        ),
       ),
     );
   }
@@ -1146,4 +1281,46 @@ class _NoGlowScrollBehavior extends ScrollBehavior {
   ) {
     return child;
   }
+}
+String buildOrderItemName(Map<String, dynamic> item) {
+  print("========== ORDER ITEM ==========");
+  print(item);
+
+  if (item['variant_name'] == null) {
+    return item['name'];
+  }
+
+  final category = item['variant_category'];
+  final variant = item['variant_name'];
+
+  final rawFlavors = item['flavors'];
+
+  print("Category: $category");
+  print("Variant: $variant");
+  print("Raw flavors type: ${rawFlavors.runtimeType}");
+
+  final List<Flavor> flavors =
+      (rawFlavors as List<Flavor>? ?? []);
+
+  for (final flavor in flavors) {
+    print(
+      "Flavor -> id: ${flavor.id}, "
+      "name: ${flavor.flavorName}, "
+      "available: ${flavor.isAvailable}",
+    );
+  }
+
+  final flavorText =
+      flavors.map((f) => f.flavorName).join(', ');
+
+  print("Flavor Text: $flavorText");
+  print("===============================");
+
+  final displayName = "${item['name']}\n"
+    "$category • $variant\n"
+    "$flavorText";
+
+  print(displayName);
+
+  return displayName;
 }

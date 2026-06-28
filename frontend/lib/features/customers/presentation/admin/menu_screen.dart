@@ -12,6 +12,7 @@ import 'package:frontend/core/widgets/bamboo_background.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:frontend/core/constants/cart_item.dart';
+import 'package:uuid/uuid.dart';
 
 const double _kMobile = 900;
 const double _kDesktopMaxWidth = 1400;
@@ -51,6 +52,8 @@ class _MenuScreenState extends State<MenuScreen> {
 
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+
+  final uuid = Uuid();
 
   @override
   void initState() {
@@ -135,6 +138,7 @@ class _MenuScreenState extends State<MenuScreen> {
     }
 
     CartProvider.of(context).add(CartItem(
+      cartId: uuid  .v4(),
       id: menuItem.id.toString(),
       name: menuItem.name,
       category: 'Menu Item',

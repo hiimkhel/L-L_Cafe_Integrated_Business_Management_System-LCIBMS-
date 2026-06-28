@@ -60,15 +60,22 @@ const createOrder = async (req, res) => {
     for (const item of items) {
       await conn.query(
         `INSERT INTO order_items 
-        (order_id, menu_item_id, item_name, quantity, unit_price, subtotal)
-        VALUES (?, ?, ?, ?, ?, ?)`,
+        (order_id, menu_item_id, item_name, quantity, unit_price, subtotal, variant_id, selected_flavors)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           orderId,
           item.menu_item_id,
           item.name,
           item.quantity,
           item.unit_price,
-          item.subtotal
+          item.subtotal,
+          item.variant_id ?? null,
+          JSON.stringify(
+          (item.flavors ?? []).map(f => ({
+            id: f.id,
+            flavor_name: f.flavorName,
+          }))
+          )
         ]
       );
     }

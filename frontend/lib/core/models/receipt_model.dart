@@ -33,17 +33,33 @@ class ReceiptData {
 
 class OrderItem {
   final String name;
+
   final int quantity;
+
   final double unitPrice;
+
+  // Optional (for customizable items)
+  final String? variantCategory;
+
+  final String? variantName;
+
+  final List<String> flavors;
 
   const OrderItem({
     required this.name,
     required this.quantity,
     required this.unitPrice,
+    this.variantCategory,
+    this.variantName,
+    this.flavors = const [],
   });
 
   double get total => unitPrice * quantity;
-  String get displayName => '${name.toUpperCase()} X$quantity';
+
+  String get displayName => name.toUpperCase();
+
+  bool get hasCustomization =>
+      variantName != null || flavors.isNotEmpty;
 }
 
 enum OrderType { walkIn, dineIn, takeOut }

@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:frontend/core/constants/api_configs.dart';
 
 class MenuService {
-  static const String baseUrl = "http://localhost:3006/api";
-  static const String imageUrl = "http://localhost:3006/uploads/menu-items";
+  static String baseUrl = ApiConfig.baseUrl;
+  static String imageUrl = ApiConfig.imageBaseUrl;
   static String? token;
   
   // ---------------- CATEGORIES ----------------
