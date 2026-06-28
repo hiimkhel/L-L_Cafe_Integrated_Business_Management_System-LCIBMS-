@@ -22,8 +22,8 @@ class AppColors {
 
   // Delivery Order Status Badges
   static const Color preparingColor = Color(0xFFFFBF00);
-  static const Color deliveringColor = Color(0xFFF155DFC);
-  static const Color deliveredColor = Color(0xFFF00A63E);
+  static const Color deliveringColor = Color(0xfff155dfc);
+  static const Color deliveredColor = Color(0xfff00a63e);
 
    static const Color border = Color(0xFFA98258);
 }

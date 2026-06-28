@@ -5,19 +5,48 @@ const getOrdersByStatus = async (req, res) => {
 
     try {
         const sql = `
-            SELECT 
-                o.id, o.source, o.order_number, o.customer_name, o.status, o.total, o.created_at, o.updated_at,
-                oi.item_name, oi.quantity, oi.unit_price
-            FROM orders o 
-            LEFT JOIN order_items oi ON o.id = oi.order_id
+            SELECT
+                o.id,
+                o.source,
+                o.order_number,
+                o.customer_name,
+                o.status,
+                o.total,
+                o.created_at,
+                o.updated_at,
+
+                oi.item_name,
+                oi.quantity,
+                oi.unit_price,
+                oi.selected_flavors,
+
+                oi.variant_id,
+                mv.variant_name,
+                mv.category AS variant_category,
+                oi.selected_flavors
+
+            FROM orders o
+
+            LEFT JOIN order_items oi
+                ON o.id = oi.order_id
+
+            LEFT JOIN menu_items_variants mv
+                ON oi.variant_id = mv.id
+
             WHERE o.status = ?
+
             ORDER BY o.created_at ASC`;
 
         const [rows] = await db.query(sql, [status]);
 
+        console.log("Status:", status);
+        console.log("Rows:", rows.length);
+        console.log(rows);
+
         // Group rows by Order ID
         const ordersMap = {};
-        rows.forEach(row => {
+        rows.forEach((row) => {
+            // Create order only once
             if (!ordersMap[row.id]) {
                 ordersMap[row.id] = {
                     id: row.id,
@@ -28,14 +57,36 @@ const getOrdersByStatus = async (req, res) => {
                     total: row.total,
                     created_at: row.created_at,
                     updated_at: row.updated_at,
-                    items: []
+                    items: [],
                 };
             }
+            console.log(row.selected_flavors);
+            console.log(typeof row.selected_flavors);
+            // Add item
             if (row.item_name) {
+                let flavors = [];
+
+                if (row.selected_flavors) {
+                    if (typeof row.selected_flavors === "string") {
+                        try {
+                            flavors = JSON.parse(row.selected_flavors);
+                        } catch (e) {
+                            console.error("Invalid JSON:", row.selected_flavors);
+                            flavors = [];
+                        }
+                    } else {
+                        // mysql2 already returned a JS array/object
+                        flavors = row.selected_flavors;
+                    }
+                }
+
                 ordersMap[row.id].items.push({
                     name: row.item_name,
                     qty: row.quantity,
-                    price: row.unit_price
+                    price: row.unit_price,
+                    variant_name: row.variant_name,
+                    variant_category: row.variant_category,
+                    flavors,
                 });
             }
         });

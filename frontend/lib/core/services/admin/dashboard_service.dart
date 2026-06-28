@@ -5,14 +5,15 @@ import 'package:http/http.dart' as http;
 
 import 'package:frontend/core/models/dashboard_models.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:frontend/core/constants/api_configs.dart';
 
 class DashboardService {
 
- static const baseUrl = "http://localhost:3006/api/admin";
+ static String baseUrl = ApiConfig.baseUrl;
  
   Future<RevenueSummary> getRevenueSummary() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/reports/revenue'),
+      Uri.parse('$baseUrl/admin/reports/revenue'),
     );
 
     if (response.statusCode != 200) {
@@ -29,7 +30,7 @@ class DashboardService {
       final token = await FirebaseAuth.instance.currentUser?.getIdToken();
 
       final response = await http.put(
-        Uri.parse('$baseUrl/dashboard/daily-target'),
+        Uri.parse('$baseUrl/admin/dashboard/daily-target'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -53,7 +54,7 @@ class DashboardService {
 
   Future<DashboardSummary> getDashboardSummary() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/dashboard/summary'),
+      Uri.parse('$baseUrl/admin/dashboard/summary'),
     );
 
     if (response.statusCode != 200) {
@@ -69,7 +70,7 @@ class DashboardService {
 
   Future<List<TopMenuItem>> getTopMenus() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/dashboard/top-menus'),
+      Uri.parse('$baseUrl/admin/dashboard/top-menus'),
     );
 
     if (response.statusCode != 200) {
@@ -85,7 +86,7 @@ class DashboardService {
 
   Future<List<DashboardOrderRow>> getRecentOrders() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/dashboard/recent-orders'),
+      Uri.parse('$baseUrl/admin/dashboard/recent-orders'),
     );
 
     if (response.statusCode != 200) {
@@ -101,7 +102,7 @@ class DashboardService {
 
   Future<List<RevenueBarData>> getRevenueTrend() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/dashboard/revenue-trend'),
+      Uri.parse('$baseUrl/admin/dashboard/revenue-trend'),
     );
 
     if (response.statusCode != 200) {

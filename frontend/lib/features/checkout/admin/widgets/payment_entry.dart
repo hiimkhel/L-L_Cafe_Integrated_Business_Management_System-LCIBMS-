@@ -9,9 +9,9 @@ class PaymentEntry extends StatefulWidget {
   final double total;
   final double change;
   final Function(double) onCashChanged;
-  final VoidCallback onSubmit;
-
+  final Function(int) onSubmit; 
   final List<Map<String, dynamic>> orderItems;
+  final bool isStacked;
 
   const PaymentEntry({
     super.key,
@@ -20,6 +20,7 @@ class PaymentEntry extends StatefulWidget {
     required this.onCashChanged,
     required this.orderItems,
     required this.onSubmit,
+    this.isStacked = false, 
   });
 
   @override
@@ -27,336 +28,278 @@ class PaymentEntry extends StatefulWidget {
 }
 
 class _PaymentEntryState extends State<PaymentEntry> {
-  
   double cashGiven = 0;
   int selectedMethod = 0; // 0 = Cash, 1 = Card, 2 = E-Wallet
+  
+  // 1. Added a controller to manually control the text inside the TextField
+  final TextEditingController _cashController = TextEditingController();
 
-  double get change => cashGiven - widget.total;
-
-  PaymentMethod _getPaymentMethod() {
-    switch (selectedMethod) {
-      case 0:
-        return PaymentMethod.cash;
-      case 1:
-        return PaymentMethod.card;
-      case 2:
-        return PaymentMethod.gcash; // or maya if you want
-      default:
-        return PaymentMethod.cash;
-    }
+  @override
+  void dispose() {
+    _cashController.dispose(); // Always dispose controllers to prevent memory leaks
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 42.00, horizontal: 20.00),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(40),
-            bottomLeft: Radius.circular(40),
-            // right corners stay sharp
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    final bool isCashless = selectedMethod != 0;
+    final bool canSubmit = isCashless || widget.change >= 0;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: widget.isStacked ? MainAxisSize.min : MainAxisSize.max,
+        children: [
+          // Clean Header
+          Padding(
+            padding: const EdgeInsets.all(28.0),
+            child: Row(
               children: [
                 Container(
-                  width: 60,
-                  height: 60,
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(14),
+                    color: AppColors.primary.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
-                    Icons.wallet_membership,
-                    size: 30,
-                    color: AppColors.primary,
+                  child: const Icon(Icons.point_of_sale_rounded, size: 24, color: AppColors.primary),
+                ),
+                const SizedBox(width: 16),
+                Text("Payment Details", style: AppTextStyles.title.copyWith(fontSize: 18, color: AppColors.primary)),
+              ],
+            ),
+          ),
+          
+          // Payment Method Selector
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 28.0),
+            child: Row(
+              children: [
+                Expanded(child: _paymentCard("Cash", Icons.payments_rounded, 0)),
+                const SizedBox(width: 12),
+                Expanded(child: _paymentCard("Card", Icons.credit_card_rounded, 1)),
+                const SizedBox(width: 12),
+                Expanded(child: _paymentCard("E-Wallet", Icons.qr_code_scanner_rounded, 2)),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+
+          // Dynamic Content Area
+          widget.isStacked 
+            ? _buildDynamicContent(isCashless)
+            : Expanded(child: _buildDynamicContent(isCashless)),
+
+          // Bottom Action Area
+          Container(
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: AppColors.background.withOpacity(0.3),
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        isCashless ? "NO CHANGE DUE" : (canSubmit ? "CHANGE DUE" : "INSUFFICIENT AMOUNT"), 
+                        style: TextStyle(fontSize: 11, color: canSubmit ? AppColors.tertiary : Colors.redAccent, fontWeight: FontWeight.w800, letterSpacing: 1.0)
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "₱${(isCashless ? 0.0 : (widget.change < 0 ? 0 : widget.change)).toStringAsFixed(2)}", 
+                        style: AppTextStyles.title.copyWith(color: canSubmit ? AppColors.primary : Colors.redAccent, fontSize: 28, height: 1)
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(width: 8),
-                Text(
-                  "PAYMENT ENTRY",
-                  style: AppTextStyles.title
+                const SizedBox(width: 16),
+                SizedBox(
+                  height: 56,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: canSubmit ? AppColors.secondary : AppColors.tertiary.withOpacity(0.1),
+                      foregroundColor: canSubmit ? Colors.white : AppColors.tertiary,
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: canSubmit ? 4 : 0,
+                      shadowColor: AppColors.secondary.withOpacity(0.4),
+                    ),
+                    onPressed: canSubmit ? () => widget.onSubmit(selectedMethod) : null,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text("FINALIZE", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 1.0, color: canSubmit ? Colors.white : AppColors.tertiary)),
+                        const SizedBox(width: 8),
+                        Icon(Icons.check_circle_rounded, size: 20, color: canSubmit ? Colors.white : AppColors.tertiary),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 15),
-
-
-            // ====== Main Section for Payment Entry ========
-            // ===== Main Section =====
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return Container(
-                    width: constraints.maxWidth, // takes the full width available
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 80),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(40),
-                        bottomLeft: Radius.circular(40),
-                      ),
-                    ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Payment Methods Row
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              Expanded(child: _paymentMethodCard("Cash", Icons.payments, selectedMethod == 0, 0),),
-                              const SizedBox(width: 8),
-                              Expanded(child: _paymentMethodCard("Card", Icons.credit_card, selectedMethod == 1, 1),),
-                              const SizedBox(width: 8),
-                              Expanded(child: _paymentMethodCard("E-Wallet", Icons.account_balance_wallet, selectedMethod == 2, 2),),
-                            ],
-                          ),
-                          const SizedBox(height: 15),
-
-                          TextField(
-                            keyboardType: TextInputType.number,
-                            style: AppTextStyles.subtitle, // text inside input
-                            decoration: InputDecoration(
-                              labelText: "Amount Received",
-                              prefixText: "₱ ",
-                              
-                              // Border styles
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppColors.tertiary.withOpacity(0.3)),
-                              ),
-
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: AppColors.primary, width: 2),
-                              ),
-
-                              // Fill color
-                              filled: true,
-                              fillColor: AppColors.background.withOpacity(0.05),
-
-                              // Label style
-                              labelStyle: TextStyle(
-                                color: AppColors.tertiary,
-                              ),
-
-                              // Padding inside input
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 14,
-                              ),
-                            ),
-                            onChanged: (value) {
-                              setState(() {
-                                cashGiven = double.tryParse(value) ?? 0;
-                                widget.onCashChanged(cashGiven);
-                              });
-                            },
-                          ),
-
-                          const SizedBox(height: 10),
-                          Row(
-                          children: [100, 200, 500, 1000].map((amount) {
-                            return Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 4),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      cashGiven = amount.toDouble();
-                                      widget.onCashChanged(cashGiven);
-                                    });
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.background.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: AppColors.tertiary,
-                                        width: 1
-                                      )
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        "₱$amount",
-                                        style: AppTextStyles.subtitle.copyWith(
-                                          color: AppColors.tertiary
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-
-
-                          const SizedBox(height: 10),
-                          Container(
-                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: change >= 0 
-                                  ? AppColors.secondary 
-                                  : AppColors.alertColor,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      "CHANGE DUE",
-                                      style: TextStyle(
-                                        fontFamily: 'Urbanist',
-                                        fontSize: 8,
-                                        color: AppColors.white.withOpacity(0.8),
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    const Icon(
-                                      Icons.payments, 
-                                      color: AppColors.white,
-                                    ),
-                                  ],
-                                ),
-
-                                Text(
-                                  "₱${change.toStringAsFixed(2)}",
-                                  style: AppTextStyles.title.copyWith(
-                                    color: AppColors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 10,),
-
-                          Container(
-                              height: 50,
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: AppColors.secondary.withOpacity(0.1),
-                                border: change > 0 ? null : Border.all(
-                                  color: AppColors.secondary,
-                                  width: 1.5,
-                                ),
-                                // UI dynamic change
-                                boxShadow: change >= 0 ? [
-                                  BoxShadow(
-                                    color: AppColors.receiptDark,
-                                    offset: Offset(3, 4),
-                                  ),
-                                ] : [],
-                              ),
-                              child: SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed: change < 0 ? null : widget.onSubmit,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.secondary,
-                                    elevation: 4,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(0), 
-                                    ),
-                                  ),
-                                  child: Text("CONFIRM PAYMENT", style: TextStyle(
-                                      color: change > 0 ? AppColors.white : AppColors.secondary,
-                                      fontWeight: FontWeight.bold,)),
-                                ),
-                              ),
-                          ),
-                        ],
-                      ),
-                    )
-                    
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _paymentMethodCard(String label, IconData icon, bool selected, int index) {
+  Widget _buildDynamicContent(bool isCashless) {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 16.0),
+      child: isCashless 
+          ? _buildQRPlaceholder(selectedMethod == 1 ? "Card Terminal" : "E-Wallet Scan")
+          : _buildCashInput(),
+    );
+  }
+
+  Widget _buildQRPlaceholder(String methodLabel) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+      decoration: BoxDecoration(
+        color: AppColors.background.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.qr_code_2_rounded, size: 80, color: AppColors.primary.withOpacity(0.8)),
+          const SizedBox(height: 24),
+          Text(
+            methodLabel,
+            style: AppTextStyles.subtitle.copyWith(color: AppColors.primary, fontWeight: FontWeight.w800, fontSize: 16),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Awaiting terminal sync for\n₱${widget.total.toStringAsFixed(2)}",
+            style: AppTextStyles.body.copyWith(color: AppColors.tertiary, fontSize: 13, height: 1.5),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCashInput() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Amount Received", style: AppTextStyles.body.copyWith(fontSize: 13, color: AppColors.tertiary, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.background.withOpacity(0.6),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: TextField(
+            controller: _cashController, // 2. Attached the controller here
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: AppTextStyles.title.copyWith(fontSize: 28, color: AppColors.primary),
+            decoration: InputDecoration(
+              prefixText: "₱ ",
+              prefixStyle: AppTextStyles.title.copyWith(fontSize: 28, color: AppColors.tertiary.withOpacity(0.5)),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
+            ),
+            onChanged: (value) {
+              setState(() => cashGiven = double.tryParse(value) ?? 0);
+              widget.onCashChanged(cashGiven);
+            },
+          ),
+        ),
+        const SizedBox(height: 20),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [100, 200, 500, 1000].map((amount) {
+            return InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                setState(() {
+                  cashGiven = amount.toDouble();
+                  // 3. Update the text field visually when a button is pressed
+                  _cashController.text = amount.toString(); 
+                });
+                widget.onCashChanged(cashGiven);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
+                  ]
+                ),
+                child: Text("+ ₱$amount", style: AppTextStyles.subtitle.copyWith(color: AppColors.primary, fontWeight: FontWeight.w800)),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _paymentCard(String label, IconData icon, int index) {
+    final bool selected = selectedMethod == index;
     return GestureDetector(
       onTap: () {
         setState(() {
           selectedMethod = index;
+          if (index != 0) {
+            cashGiven = widget.total;
+            // 4. Optionally clear the text box when shifting away from cash
+            _cashController.clear(); 
+            widget.onCashChanged(cashGiven);
+          } else {
+            cashGiven = 0; 
+            _cashController.clear(); // Reset text when coming back to cash
+            widget.onCashChanged(cashGiven);
+          }
         });
       },
-      child: Container(
-        height: 90,
-        padding: const EdgeInsets.symmetric(vertical: 12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: 100,
         decoration: BoxDecoration(
-          color: selected ? AppColors.secondary : AppColors.background.withOpacity(0.4),
-          borderRadius: BorderRadius.circular(21),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 32, color: selected ? AppColors.white : AppColors.primary),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: selected ? AppColors.white : AppColors.primary,
-              ),
-            ),
+          color: selected ? AppColors.secondary : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: selected ? AppColors.secondary.withOpacity(0.3) : AppColors.primary.withOpacity(0.04), 
+              blurRadius: 12, 
+              offset: const Offset(0, 6)
+            )
           ],
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 28, color: selected ? Colors.white : AppColors.primary),
+              const SizedBox(height: 10),
+              Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: selected ? Colors.white : AppColors.primary)),
+            ],
+          ),
         ),
       ),
     );
   }
-
-  void _showReceipt(BuildContext context, ReceiptData data) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(16),
-          child: LLCafeReceipt(
-            data: data,
-            onPrint: () {
-              Navigator.pop(context);
-
-
-                Navigator.pushAndRemoveUntil(
-              context,
-                MaterialPageRoute(
-                  builder: (context) => OrderQueueScreen(),
-                ),
-                (route) => false, 
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  
 }

@@ -35,4 +35,52 @@ const getAllMenuItems = async (req, res) => {
     }
 };
 
-module.exports = {getAllMenuItems};
+const getVariantsByMenuItem = async (req, res) => {
+    try {
+        const { menuItemId } = req.params;
+
+        const [rows] = await db.query(
+            `
+            SELECT *
+            FROM menu_items_variants
+            WHERE menu_item_id = ?
+              AND is_available = 1
+            ORDER BY
+                FIELD(category, 'Ala Carte', 'with Rice', 'Tray'),
+                pieces ASC
+            `,
+            [menuItemId]
+        );
+
+        res.status(200).json(rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({
+            message: "Failed to fetch menu variants"
+        });
+    }
+};
+
+const getAllFlavors = async (req, res) => {
+    try {
+
+        const [rows] = await db.query(`
+            SELECT *
+            FROM flavors
+            ORDER BY flavor_name
+        `);
+
+        res.status(200).json(rows);
+
+    } catch (err) {
+
+        console.error(err);
+
+        res.status(500).json({
+            message: "Failed to fetch flavors"
+        });
+
+    }
+};
+
+module.exports = {getAllMenuItems, getVariantsByMenuItem, getAllFlavors};

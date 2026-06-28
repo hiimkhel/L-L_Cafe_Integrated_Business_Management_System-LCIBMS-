@@ -31,7 +31,7 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await FacebookAuth.instance.webAndDesktopInitialize(
-    appId: "1462606645593730",
+    appId: '1462606645593730',
     cookie: true,
     xfbml: true,
     version: "v13.0",
@@ -234,7 +234,7 @@ switch (settings.name) {
               )));
 
   case AppRoutes.cart:
-    return _fade(const CartScreen());
+    return _fade(CartScreen());
 
   default:
     return null;
