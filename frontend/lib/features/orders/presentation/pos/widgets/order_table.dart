@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/features/orders/presentation/pos/widgets/order_row.dart';
 import 'package:frontend/core/services/pos/order_service.dart';
+import 'package:frontend/features/dashboard/presentation/pos/order_entry.dart';
+import 'package:frontend/core/constants/cart_provider.dart';
 
 class OrderTable extends StatefulWidget {
   final VoidCallback? onOrderUpdated;
@@ -21,6 +23,20 @@ class _OrderTableState extends State<OrderTable> {
   void initState() {
     super.initState();
     _fetchOrders();
+  }
+
+  Future<void> _editOrder(Map<String, dynamic> order) async {
+    print("============== THIS IS THE ORDER ===================");
+    print(order);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => POSOrderScreen(
+          editingOrder: order,
+        ),
+      ),
+    );
   }
 
   Future<void> _cancelOrder(Map<String, dynamic> order) async {
@@ -150,7 +166,7 @@ class _OrderTableState extends State<OrderTable> {
 
                 Navigator.pop(context);
 
-                // _editOrder(order);
+                _editOrder(order);
 
               },
               child: const Text("Edit"),

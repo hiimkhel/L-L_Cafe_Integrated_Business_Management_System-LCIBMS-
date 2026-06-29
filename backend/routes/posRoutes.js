@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const {getOrdersByStatus, updateOrderStatus, getOnlineOrders, acceptOrder, rejectOrder, fetchPreparingOrders, fetchPendingOrdersCount, getOrderHistory} = require("../controllers/posControllers.js");
+const {getOrdersByStatus, updateOrderStatus, getOnlineOrders, acceptOrder, rejectOrder, fetchPreparingOrders, fetchPendingOrdersCount, getOrderHistory, modifyOrder} = require("../controllers/posControllers.js");
 
 router.get("/orders", getOrdersByStatus);
 router.patch("/orders/:id/status", updateOrderStatus);
+router.put("/orders/:id", modifyOrder);
 
 // Order Queue
 router.get("/orders/preparing-count", fetchPreparingOrders);

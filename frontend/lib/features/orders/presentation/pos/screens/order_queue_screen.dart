@@ -3,6 +3,7 @@ import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/features/orders/presentation/pos/widgets/header_bar.dart';
 import 'package:frontend/features/orders/presentation/pos/widgets/order_table.dart';
 import 'package:frontend/core/services/pos/order_service.dart';
+import 'package:frontend/core/constants/cart_provider.dart';
 
 class OrderQueueScreen extends StatefulWidget {
   const OrderQueueScreen({super.key});
