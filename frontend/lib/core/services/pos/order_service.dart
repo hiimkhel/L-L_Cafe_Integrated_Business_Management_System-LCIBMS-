@@ -3,6 +3,7 @@ import 'package:frontend/core/models/order_request.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:frontend/core/constants/api_configs.dart';
+import 'package:frontend/core/models/flavor_models.dart';
 
 class OrderService {
   final String baseUrl = ApiConfig.baseUrl;
@@ -50,7 +51,9 @@ class OrderService {
         headers: {"Content-Type": "application/json"},
         body: json.encode({"status": status}),
       );
-
+      print('$baseUrl/pos/orders/$id/status');
+      print(response.statusCode);
+      print(response.body);
       return response.statusCode == 200;
     } catch (e) {
       print("Update Error: $e");
@@ -71,6 +74,58 @@ class OrderService {
     return List<Map<String, dynamic>>.from(
       data['data'],
     ).map((o) => _mapOrder(o)).toList();
+  }
+
+  Future<bool> modifyOrder({
+    required int orderId,
+    required List<Map<String, dynamic>> items,
+    required double total,
+  }) async {
+    try {
+      final payload = items.map((item) {
+        return {
+          "menu_item_id": item["menu_item_id"],
+          "name": item["name"],
+          "quantity": item["quantity"],
+          "unit_price": item["unit_price"],
+          "variant_id": item["variant_id"],
+          "subtotal": item["subtotal"],
+          "flavors": (item["flavors"] as List)
+              .map((f) {
+                if (f is Flavor) {
+                  return {
+                    "id": f.id,
+                    "flavor_name": f.flavorName,
+                  };
+                }
+
+                return f;
+              })
+              .toList(),
+        };
+      }).toList();
+      
+      final response = await http.put(
+        Uri.parse('$baseUrl/pos/orders/$orderId'),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "total": total,
+          "items": payload,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      }
+
+      print("Modify Order Error: ${response.body}");
+      return false;
+    } catch (e) {
+      print("Modify Order Exception: $e");
+      return false;
+    }
   }
 
   Map<String, dynamic> _mapOrder(Map<String, dynamic> o) {

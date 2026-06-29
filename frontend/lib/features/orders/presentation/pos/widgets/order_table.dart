@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:frontend/config/theme/app_colors.dart';
 import 'package:frontend/features/orders/presentation/pos/widgets/order_row.dart';
 import 'package:frontend/core/services/pos/order_service.dart';
+import 'package:frontend/features/dashboard/presentation/pos/order_entry.dart';
+import 'package:frontend/core/constants/cart_provider.dart';
 
 class OrderTable extends StatefulWidget {
   final VoidCallback? onOrderUpdated;
@@ -21,6 +23,41 @@ class _OrderTableState extends State<OrderTable> {
   void initState() {
     super.initState();
     _fetchOrders();
+  }
+
+  Future<void> _editOrder(Map<String, dynamic> order) async {
+    print("============== THIS IS THE ORDER ===================");
+    print(order);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => POSOrderScreen(
+          editingOrder: order,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _cancelOrder(Map<String, dynamic> order) async {
+    final success = await _orderService.updateOrderStatus(
+      order["id"],
+      "cancelled",
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      _fetchOrders(); // refresh queue
+
+      widget.onOrderUpdated?.call();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Order has been cancelled"),
+        ),
+      );
+    }
   }
 
   
@@ -99,6 +136,7 @@ class _OrderTableState extends State<OrderTable> {
                             actionText: order['source'] == 'pos'
                               ? 'COMPLETE'
                               : 'READY',
+                            onModifyPressed: () => _showModifyDialog(order),
                             onActionPressed: () => _updateOrder(order),
                   
                           );
@@ -108,6 +146,76 @@ class _OrderTableState extends State<OrderTable> {
         ],
       ),
     );
+  }
+
+  void _showModifyDialog(Map<String, dynamic> order) {
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: Text("Modify Order"),
+
+          content: Text(
+            "What would you like to do?"
+          ),
+
+          actions: [
+
+            TextButton(
+              onPressed: () {
+
+                Navigator.pop(context);
+
+                _editOrder(order);
+
+              },
+              child: const Text("Edit"),
+            ),
+
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _confirmCancel(order);
+              },
+              child: const Text(
+                "Cancel Order",
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmCancel(Map<String, dynamic> order) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Cancel Order?"),
+        content: Text(
+          "Are you sure you want to cancel Order #${order['order_number']}?\n\nThe order will be removed from the preparation queue and marked as cancelled."
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Keep Order"),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Yes, Cancel"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _cancelOrder(order);
+    }
   }
 
   Widget _header() {

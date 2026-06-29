@@ -14,10 +14,13 @@ import 'package:frontend/core/models/menu_item_variant.dart';
 import 'package:frontend/core/widgets/variant_dialog.dart';
 import 'package:frontend/core/services/pos/order_service.dart';
 import 'package:frontend/core/models/flavor_models.dart';
+import 'package:frontend/core/constants/cart_provider.dart';
 import 'package:uuid/uuid.dart';          
 
 class POSOrderScreen extends StatefulWidget {
-  const POSOrderScreen({super.key});
+  final Map<String, dynamic>? editingOrder;
+
+  const POSOrderScreen({super.key, this.editingOrder});
 
   @override
   State<POSOrderScreen> createState() => _POSOrderScreenState();
@@ -28,6 +31,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   List<MenuCategory> categories = [];
   int _nextOrderId = 1;
   Timer? _countTimer;
+  int? editingOrderId;
 
   // Cart State Handler
   List<Map<String, dynamic>> orderItems = [];
@@ -46,11 +50,46 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   @override
   void initState() {
     super.initState();
+
     loadMenu();
     _fetchPendingOnlineCount();
 
-    _countTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      _fetchPendingOnlineCount();
+    if (widget.editingOrder != null) {
+      loadOrderForEditing(widget.editingOrder!);
+    }
+
+    _countTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => _fetchPendingOnlineCount(),
+    );
+  }
+
+  void loadOrderForEditing(Map<String, dynamic> order) {
+    editingOrderId = order["id"];
+
+    setState(() {
+      orderItems.clear();
+
+      for (final item in order["items"]) {
+        orderItems.add({
+          "cart_id": UniqueKey().toString(),
+
+          "id": item["menu_item_id"],
+          "name": item["name"],
+          "category": item["category"],
+
+          "price": double.parse(item["price"].toString()),
+          "qty": item["qty"],
+
+          "variant_id": item["variant"]?["id"],
+          "variant_name": item["variant"]?["variant_name"],
+          "variant_category": item["variant"]?["category"],
+
+         "flavors": (item["flavors"] as List)
+          .map((f) => Flavor.fromJson(f))
+          .toList(),
+        });
+      }
     });
   }
 
@@ -136,7 +175,55 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
         setState(() => _loadingCount = false);
       }
     }
-  
+  Future<void> _updateEditedOrder() async {
+    if (editingOrderId == null) return;
+
+    final items = orderItems.map((item) {
+      final price = (item["price"] as num).toDouble();
+      final qty = item["qty"] as int;
+
+      return {
+        "menu_item_id": item["id"],
+        "name": item["name"],
+        "quantity": qty,
+        "unit_price": price,
+        "subtotal": price * qty,
+        "variant_id": item["variant_id"],
+        "flavors": item["flavors"],
+      };
+    }).toList();
+
+    final total = items.fold<double>(
+      0,
+      (sum, item) => sum + item["subtotal"],
+    );
+
+    final success = await OrderService().modifyOrder(
+      orderId: editingOrderId!,
+      items: items,
+      total: total,
+    );
+
+    if (!mounted) return;
+
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Order updated successfully."),
+        ),
+        
+      );
+        Navigator.pop(context, true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar( 
+          content: Text("Failed to update order."),
+        ),
+      );
+    }
+  }
+
   String getCategoryName(int id) {
     return categories
         .firstWhere(
@@ -717,7 +804,6 @@ final isSelected =
   Widget _finaizeOrderSection() {
 
     String formattedOrderNum = OrderNumberUtils.formatOrderNumber(_nextOrderId, _orderType);
-
     return Container(
       margin: const EdgeInsets.fromLTRB(5, 14, 14, 14),
       decoration: BoxDecoration(
@@ -942,7 +1028,117 @@ final isSelected =
               ],
             ),
           ),
-          Padding(
+          editingOrderId == null ?
+          _buildFinalizeButtons() : _buildEditButtons(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEditButtons() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Row(
+        children: [
+          // Cancel Edit
+          GestureDetector(
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (_) => AlertDialog(
+                  title: const Text("Cancel Editing"),
+                  content: const Text(
+                    "Discard your changes and exit edit mode?",
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("Continue Editing"),
+                    ),
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+
+                        setState(() {
+                          editingOrderId = null;
+                          orderItems.clear();
+                        });
+
+                        Navigator.pop(context); // Back to Order Queue
+                      },
+                      child: const Text("Discard"),
+                    ),
+                  ],
+                ),
+              );
+            },
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.close,
+                color: Colors.white,
+                size: 22,
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 10),
+
+          // Update Order
+          Expanded(
+            child: GestureDetector(
+              onTap: () async {
+                await _updateEditedOrder();
+              },
+              child: Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  color: AppColors.secondary,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.receiptDark,
+                      offset: const Offset(3, 4),
+                      blurRadius: 5,
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.save,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      "UPDATE ORDER",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFinalizeButtons(){
+    return Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Row(
               children: [
@@ -1023,9 +1219,10 @@ final isSelected =
                             size: 20,
                           ),
                           const SizedBox(width: 8),
+                
                           Text(
-                            'FINALIZE ORDER',
-                            style: TextStyle(
+                            "FINALIZE ORDER",
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
@@ -1038,10 +1235,7 @@ final isSelected =
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
+          );
   }
 
   Widget _orderItem({

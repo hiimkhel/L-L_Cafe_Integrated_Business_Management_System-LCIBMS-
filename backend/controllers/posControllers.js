@@ -16,19 +16,33 @@ const getOrdersByStatus = async (req, res) => {
                 o.updated_at,
 
                 oi.item_name,
+                oi.menu_item_id,
                 oi.quantity,
                 oi.unit_price,
                 oi.selected_flavors,
-
                 oi.variant_id,
-                mv.variant_name,
+
+                mc.name AS menu_category,
+
+                mv.id AS variant_id,
+                mv.menu_item_id AS variant_menu_item_id,
                 mv.category AS variant_category,
-                oi.selected_flavors
+                mv.variant_name,
+                mv.pieces,
+                mv.required_flavors,
+                mv.price,
+                mv.is_available
 
             FROM orders o
 
             LEFT JOIN order_items oi
                 ON o.id = oi.order_id
+
+            LEFT JOIN menu_items mi
+                ON oi.menu_item_id = mi.id
+
+            LEFT JOIN menu_categories mc
+                ON mi.category_id = mc.id
 
             LEFT JOIN menu_items_variants mv
                 ON oi.variant_id = mv.id
@@ -39,9 +53,6 @@ const getOrdersByStatus = async (req, res) => {
 
         const [rows] = await db.query(sql, [status]);
 
-        console.log("Status:", status);
-        console.log("Rows:", rows.length);
-        console.log(rows);
 
         // Group rows by Order ID
         const ordersMap = {};
@@ -60,8 +71,7 @@ const getOrdersByStatus = async (req, res) => {
                     items: [],
                 };
             }
-            console.log(row.selected_flavors);
-            console.log(typeof row.selected_flavors);
+
             // Add item
             if (row.item_name) {
                 let flavors = [];
@@ -81,11 +91,23 @@ const getOrdersByStatus = async (req, res) => {
                 }
 
                 ordersMap[row.id].items.push({
+                    menu_item_id: row.menu_item_id,
                     name: row.item_name,
+                    category: row.menu_category,
                     qty: row.quantity,
                     price: row.unit_price,
-                    variant_name: row.variant_name,
-                    variant_category: row.variant_category,
+                    variant: row.variant_id == null
+                        ? null
+                        : {
+                            id: row.variant_id,
+                            menu_item_id: row.menu_item_id,
+                            category: row.variant_category,
+                            variant_name: row.variant_name,
+                            pieces: row.pieces,
+                            required_flavors: row.required_flavors,
+                            price: row.price,
+                            is_available: row.is_available,
+                        },
                     flavors,
                 });
             }
@@ -98,23 +120,134 @@ const getOrdersByStatus = async (req, res) => {
 };
 
 const updateOrderStatus = async (req, res) => {
-  const {id} = req.params;
-  const { status } = req.body;
+    console.log("PATCH /orders/:id/status");
+    console.log(req.params);
+    console.log(req.body);
+    const { id } = req.params;
+    const { status } = req.body;
 
     try {
-      
-      // Error handling
-      if (!status){
-        req.status(400).json({message: 'Status field is missing!'});
-      }
 
-      await db.query("UPDATE orders SET status = ? WHERE id = ?", [status, id]);
+        if (!status) {
+            return res.status(400).json({
+                message: "Status field is missing!"
+            });
+        }
 
-      res.status(200).json({ message: "Order status updated" });
+        const [result] = await db.query(
+            "UPDATE orders SET status = ?, updated_at = NOW() WHERE id = ?",
+            [status, id]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                message: "Order not found"
+            });
+        }
+
+        return res.status(200).json({
+            message: "Order status updated"
+        });
+
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        return res.status(500).json({
+            error: err.message
+        });
     }
-}
+};
+
+const modifyOrder = async (req, res) => {
+    const { id } = req.params;
+    const { items, total } = req.body;
+
+    const conn = await db.getConnection();
+
+    try {
+        await conn.beginTransaction();
+
+        // Check if order exists
+        const [existing] = await conn.query(
+            "SELECT id FROM orders WHERE id = ?",
+            [id]
+        );
+
+        if (existing.length === 0) {
+            await conn.rollback();
+            return res.status(404).json({
+                message: "Order not found",
+            });
+        }
+
+        // Update order total
+        await conn.query(
+            `
+            UPDATE orders
+            SET
+                total = ?,
+                updated_at = NOW()
+            WHERE id = ?
+            `,
+            [total, id]
+        );
+
+        // Remove existing items
+        await conn.query(
+            "DELETE FROM order_items WHERE order_id = ?",
+            [id]
+        );
+
+        // Insert updated items
+        for (const item of items) {
+            await conn.query(
+                `
+                INSERT INTO order_items
+                (
+                    order_id,
+                    menu_item_id,
+                    item_name,
+                    quantity,
+                    unit_price,
+                    subtotal,
+                    variant_id,
+                    selected_flavors
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                `,
+                [
+                    id,
+                    item.menu_item_id,
+                    item.name,
+                    item.quantity,
+                    item.unit_price,
+                    item.subtotal,
+                    item.variant_id ?? null,
+                    JSON.stringify(
+                        (item.flavors ?? []).map((f) => ({
+                            id: f.id,
+                            flavor_name: f.flavor_name ?? f.flavorName,
+                        }))
+                    ),
+                ]
+            );
+        }
+
+        await conn.commit();
+
+        res.status(200).json({
+            message: "Order updated successfully",
+        });
+    } catch (err) {
+        await conn.rollback();
+
+        console.error(err);
+
+        res.status(500).json({
+            error: err.message,
+        });
+    } finally {
+        conn.release();
+    }
+};
 
 
 const getOnlineOrders = async (req, res ) => {
@@ -194,6 +327,8 @@ const getOnlineOrders = async (req, res ) => {
         });
     }
 }
+
+
 
 const acceptOrder = async (req, res) => {
     
@@ -435,4 +570,4 @@ const getOrderHistory = async (req, res) => {
   }
 };
 
-module.exports = {getOrdersByStatus, updateOrderStatus, getOnlineOrders, acceptOrder, rejectOrder, fetchPreparingOrders, fetchPendingOrdersCount, getOrderHistory}
+module.exports = {getOrdersByStatus, updateOrderStatus, modifyOrder, getOnlineOrders, acceptOrder, rejectOrder, fetchPreparingOrders, fetchPendingOrdersCount, getOrderHistory}

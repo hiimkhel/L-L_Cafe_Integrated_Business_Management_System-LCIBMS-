@@ -10,6 +10,7 @@ class OrderRow extends StatefulWidget {
   final String status;
   final String time;
   final String actionText;
+  final VoidCallback onModifyPressed;
   final VoidCallback onActionPressed;
 
   const OrderRow({
@@ -19,7 +20,9 @@ class OrderRow extends StatefulWidget {
     required this.items,
     required this.status,
     required this.time,
-    required this.onActionPressed, required  this.actionText,
+    required this.onActionPressed, 
+    required this.onModifyPressed,
+    required this.actionText,
   });
 
   @override
@@ -274,86 +277,112 @@ class _OrderRowState extends State<OrderRow> {
     );
   }
 
-  Widget _time() {
-    final elapsed = getTimeAgo(widget.time);
+    Widget _time() {
+      final elapsed = getTimeAgo(widget.time);
 
-    return Row(
-      children: [
-        const Icon(Icons.schedule, size: 16, color: AppColors.primary),
-        const SizedBox(width: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            elapsed,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textDark,
+      return Row(
+        children: [
+          const Icon(Icons.schedule, size: 16, color: AppColors.primary),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              elapsed,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textDark,
+              ),
             ),
           ),
-        ),
-      ],
-    );
-  }
+        ],
+      );
+    }
 
     Widget _actions() {
     if (widget.status == "ready") {
       return ActionButton(
         label: "HAND OVER",
         isPrimary: true,
-        onPressed: () {
-          print("Handing over...");
-        },
+        onPressed: () {},
       );
     }
 
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: SizedBox(
-        height: 40,
-        child: ElevatedButton(
-          onPressed: widget.onActionPressed,
-          style: ElevatedButton.styleFrom(
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            elevation: 4,
-            shadowColor: AppColors.secondary.withOpacity(0.35),
-            backgroundColor: AppColors.secondary,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 0,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.check_circle,
-                size: 15,
-                color: Colors.white,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // MODIFY
+        SizedBox(
+          height: 40,
+          width: 40,
+          child: OutlinedButton(
+            onPressed: widget.onModifyPressed,
+            style: OutlinedButton.styleFrom(
+              padding: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
-              const SizedBox(width: 5),
-              Text(
-                widget.actionText,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.4,
-                  color: Colors.white,
-                ),
-              ),
-            ],
+            ),
+            child: const Icon(
+              Icons.edit,
+              size: 18,
+            ),
           ),
         ),
-      ),
+
+        const SizedBox(width: 8),
+
+        // COMPLETE
+        Flexible(
+          child: SizedBox(
+            height: 40,
+            child: ElevatedButton(
+              onPressed: widget.onActionPressed,
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                elevation: 4,
+                shadowColor: AppColors.secondary.withOpacity(0.35),
+                backgroundColor: AppColors.secondary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.check_circle,
+                    size: 15,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      widget.actionText,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.4,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
