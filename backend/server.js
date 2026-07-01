@@ -5,6 +5,7 @@
 const dotenv = require('dotenv');
 const express = require('express');
 const cors = require('cors');
+const db = require("./config/dbConnection.js");
 
 //  Load dotenv 
 dotenv.config();
@@ -56,9 +57,19 @@ app.post("/print", (req, res) => {
   });
 });
 
+app.get("/db-test", async (req, res) => {
+    try {
+        const [rows] = await db.query("SELECT NOW() AS time");
+        res.json(rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json(err);
+    }
+});
+
 app.get('/', (req, res) => {
   res.send("Welcome to LCIBMS Backend URL")
-})
+});
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on ${PORT}`);
 });
