@@ -1,6 +1,6 @@
 class ApiConfig {
 
-  static const bool isProduction = false;
+  static const bool isProduction = true;
 
   static const String localBaseUrl = "http://localhost:3006/api";
   static const String lanBaseUrl = "http://10.179.3.122:3006/api";

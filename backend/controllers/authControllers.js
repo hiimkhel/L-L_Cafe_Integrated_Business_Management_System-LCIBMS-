@@ -129,10 +129,15 @@ const authSync = async (req, res) => {
       profile_picture: user.profile_picture,
     });
 
-  } catch (error) {
-    console.error("Auth error:", error);
+    } catch (error) {
+    console.error("========== AUTH ERROR ==========");
+    console.error(error);
+    console.error(error.code);
+    console.error(error.message);
+    console.error("===============================");
+
     return res.status(401).json({
-      message: "Invalid or expired token",
+      message: error.message,
     });
   }
 }
