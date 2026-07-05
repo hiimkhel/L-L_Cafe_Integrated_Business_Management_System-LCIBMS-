@@ -283,27 +283,182 @@ class _OrderTableState extends State<OrderTable> {
   }
 
   Future<void> _confirmCancel(Map<String, dynamic> order) async {
+    final String orderId = order['id']?.toString() ?? order['order_number']?.toString() ?? '---';
+    final String customerName = order['customer_name']?.toString() ?? 'Walk-in Customer';
+    const Color _dark = Color(0xFF1A1C1E);
+    const Color _muted = Color(0xFF74777F);
+    const Color _accent = Color(0xFF0061A4);
+
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Cancel Order?"),
-        content: Text(
-          "Are you sure you want to cancel Order #${order['order_number']}?\n\nThe order will be removed from the preparation queue and marked as cancelled."
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Keep Order"),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
+      barrierDismissible: false, // Prevents accidental closing by tapping outside
+      builder: (_) {
+        return Center(
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.40, // Slightly tighter than the modify dialog
+            child: Material(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              elevation: 16,
+              shadowColor: Colors.black.withOpacity(0.2),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // HEADER WITH WARNING ICON
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.warning_amber_rounded,
+                            color: Colors.red.shade700,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          "Cancel Order?",
+                          style: TextStyle(
+                            fontFamily: 'Urbanist',
+                            fontWeight: FontWeight.w800,
+                            fontSize: 20,
+                            color: _dark,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // SEPARATED ORDER ID BLOCK (Visual Safety Check)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade200, width: 1),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "TARGET TRANSACTION",
+                            style: TextStyle(
+                              fontFamily: 'Urbanist',
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: _muted,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Order ID: #$orderId",
+                                style: const TextStyle(
+                                  fontFamily: 'Urbanist',
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 15,
+                                  color: _dark,
+                                ),
+                              ),
+                              Text(
+                                customerName,
+                                style: const TextStyle(
+                                  fontFamily: 'Urbanist',
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                  color: _muted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // CORE WARNING TEXT
+                    Text(
+                      "Are you absolutely sure you want to cancel this order? This action will permanently remove it from the active preparation queue and log it as a cancelled transaction.",
+                      style: TextStyle(
+                        fontFamily: 'Urbanist',
+                        fontWeight: FontWeight.w500,
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                        height: 1.4,
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ACTION BUTTONS ROW
+                    Row(
+                      children: [
+                        // ABORT ACTION (SAFE)
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              side: BorderSide(color: Colors.grey.shade300),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              foregroundColor: _dark,
+                              textStyle: const TextStyle(
+                                fontFamily: 'Urbanist',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                            ),
+                            child: const Text("Keep Order"),
+                          ),
+                        ),
+
+                        const SizedBox(width: 12),
+
+                        // CONFIRM DESTRUCTIVE ACTION (DANGER)
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Colors.red.shade600,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              textStyle: const TextStyle(
+                                fontFamily: 'Urbanist',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                            ),
+                            child: const Text("Yes, Cancel"),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Yes, Cancel"),
           ),
-        ],
-      ),
+        );
+      },
     );
 
     if (confirm == true) {
