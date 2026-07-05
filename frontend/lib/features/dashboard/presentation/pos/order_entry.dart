@@ -314,7 +314,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                     TextSpan(
                       text: "\nMAKING GOOD FOOD FOR PEOPLE'S HAPPINESS",
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 8,
                         //fontWeight: FontWeight.normal,
                         color: Colors.black,
                         letterSpacing: .9,
@@ -519,7 +519,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                 });
               },
               decoration: InputDecoration(
-                hintText: 'SEARCH ORDERS',
+                hintText: 'Search item',
                 hintStyle: TextStyle(
                   color: AppColors.receiptDark.withOpacity(.7),
                   fontSize: 13,
@@ -543,10 +543,10 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
         behavior: const _NoGlowScrollBehavior(),
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 28),
+          padding: const EdgeInsets.symmetric(horizontal: 6),
           physics: const BouncingScrollPhysics(),
           itemCount: categories.length + 1,
-          separatorBuilder: (_, __) => const SizedBox(width: 14),
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
           itemBuilder: (context, i) {
             final isAll = i == 0;
 
