@@ -76,7 +76,7 @@ class _OrderRowState extends State<OrderRow> {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             fontWeight: FontWeight.w700,
             color: AppColors.textDark,
           ),
@@ -111,7 +111,7 @@ class _OrderRowState extends State<OrderRow> {
             Text(
               widget.id,
               style: const TextStyle(
-                fontSize: 13,
+                fontSize: 09,
                 fontWeight: FontWeight.w700,
                 color: AppColors.primary,
               ),
@@ -181,7 +181,7 @@ class _OrderRowState extends State<OrderRow> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: 9,
                             fontWeight: FontWeight.w500,
                             color: AppColors.textDark,
                           ),
@@ -230,7 +230,7 @@ class _OrderRowState extends State<OrderRow> {
                       child: Text(
                         "x$quantity",
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: 8.5,
                           fontWeight: FontWeight.w700,
                           color: AppColors.primary,
                         ),
@@ -293,7 +293,7 @@ class _OrderRowState extends State<OrderRow> {
             child: Text(
               elapsed,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 9,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textDark,
               ),
@@ -337,48 +337,25 @@ class _OrderRowState extends State<OrderRow> {
         const SizedBox(width: 8),
 
         // COMPLETE
-        Flexible(
-          child: SizedBox(
-            height: 40,
-            child: ElevatedButton(
-              onPressed: widget.onActionPressed,
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                elevation: 4,
-                shadowColor: AppColors.secondary.withOpacity(0.35),
-                backgroundColor: AppColors.secondary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+        SizedBox(
+          height: 40,
+          width: 40,
+          child: ElevatedButton(
+            onPressed: widget.onActionPressed,
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.zero,
+              elevation: 4,
+              shadowColor: AppColors.secondary.withOpacity(0.35),
+              backgroundColor: AppColors.secondary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.check_circle,
-                    size: 15,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      widget.actionText,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.4,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            ),
+            child: const Icon(
+              Icons.check,
+              size: 20,
+              color: Colors.white,
             ),
           ),
         ),
