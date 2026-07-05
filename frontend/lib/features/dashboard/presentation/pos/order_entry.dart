@@ -314,7 +314,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                     TextSpan(
                       text: "\nMAKING GOOD FOOD FOR PEOPLE'S HAPPINESS",
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 8,
                         //fontWeight: FontWeight.normal,
                         color: Colors.black,
                         letterSpacing: .9,
@@ -519,7 +519,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
                 });
               },
               decoration: InputDecoration(
-                hintText: 'SEARCH ORDERS',
+                hintText: 'Search item',
                 hintStyle: TextStyle(
                   color: AppColors.receiptDark.withOpacity(.7),
                   fontSize: 13,
@@ -543,10 +543,10 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
         behavior: const _NoGlowScrollBehavior(),
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 28),
+          padding: const EdgeInsets.symmetric(horizontal: 6),
           physics: const BouncingScrollPhysics(),
           itemCount: categories.length + 1,
-          separatorBuilder: (_, __) => const SizedBox(width: 14),
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
           itemBuilder: (context, i) {
             final isAll = i == 0;
 
@@ -910,7 +910,8 @@ final isSelected =
                 variantCategory: item['variant_category'],
                 variantName: item['variant_name'],
                 flavors: item['flavors'],
-                price: "₱${item['price'] * item['qty']}",
+                price: ((item['price'] as num).toDouble()) *
+                  ((item['qty'] as num).toInt()),
                 qty: item['qty'],
               );
               },
@@ -1243,7 +1244,7 @@ final isSelected =
     String? variantCategory,
     String? variantName,
     List<Flavor>? flavors,
-    required String price,
+    required double price,
     required int qty,
     required int index,
   }) {
@@ -1385,10 +1386,10 @@ final isSelected =
                 ),
               ),
               Text(
-                price,
-                style: TextStyle(
+                "₱${price.toStringAsFixed(2)}",
+                style: const TextStyle(
                   color: AppColors.secondary,
-                  fontSize: 15,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -1406,8 +1407,8 @@ final isSelected =
     return InkWell(
       onTap: onTap,
       child: SizedBox(
-        width: 42,
-        height: 42,
+        width: 35,
+        height: 35,
         child: Icon(
           icon,
           size: 20,

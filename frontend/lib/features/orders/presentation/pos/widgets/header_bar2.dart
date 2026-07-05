@@ -61,8 +61,6 @@ class _HeaderBar2State extends State<HeaderBar2> {
               _titleSection(),
               const Spacer(),
               _searchField(),
-              const SizedBox(width: 16),
-              _exportButton(),
             ],
           ),
         ),
@@ -149,7 +147,7 @@ class _HeaderBar2State extends State<HeaderBar2> {
           }
         },
         style: const TextStyle(
-          fontSize: 12, 
+          fontSize: 8, 
           fontWeight: FontWeight.w700, 
           color: AppColors.secondary,
         ),
@@ -227,12 +225,6 @@ class _HeaderBar2State extends State<HeaderBar2> {
     ),
   );
 
-  Widget _exportButton() => SizedBox(height: 48, child: ElevatedButton.icon(
-    onPressed: widget.onExport,
-    icon: const Icon(Icons.file_download_outlined, size: 20, color: Colors.white,), 
-    label: const Text("EXPORT CSV"),
-    style: ElevatedButton.styleFrom(backgroundColor: AppColors.secondary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-  ));
 
   Widget _backButton(BuildContext context) => InkWell(
     onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => POSOrderScreen())),

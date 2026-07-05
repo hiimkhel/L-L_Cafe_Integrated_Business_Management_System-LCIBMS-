@@ -41,7 +41,7 @@ class OrderRow2 extends StatelessWidget {
               flex: 2,
               child: Text(
                 _formatDateTime(time),
-                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w500),
+                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w500, fontSize: 8),
               ),
             ),
 
@@ -53,7 +53,7 @@ class OrderRow2 extends StatelessWidget {
                 style: TextStyle(
                   color: AppColors.textDark,
                   fontWeight: FontWeight.bold,
-                  fontSize: 15,
+                  fontSize: 9,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -74,7 +74,7 @@ class OrderRow2 extends StatelessWidget {
                     orderId,
                     style: TextStyle(
                       color: AppColors.primary,
-                      fontSize: 12,
+                      fontSize: 9,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -87,7 +87,7 @@ class OrderRow2 extends StatelessWidget {
               flex: 2,
               child: Text(
                 "$itemCount item${itemCount == 1 ? '' : 's'}",
-                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w500),
+                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w500, fontSize: 9),
               ),
             ),
 
@@ -106,7 +106,7 @@ class OrderRow2 extends StatelessWidget {
                     paymentType.toUpperCase(),
                     style: TextStyle(
                       color: AppColors.secondary,
-                      fontSize: 11,
+                      fontSize: 9,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -121,7 +121,7 @@ class OrderRow2 extends StatelessWidget {
                 "₱${total.toStringAsFixed(2)}",
                 style: TextStyle(
                   color: AppColors.primary,
-                  fontSize: 15,
+                  fontSize: 9,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -147,7 +147,7 @@ class OrderRow2 extends StatelessWidget {
                         "View",
                         style: TextStyle(
                           color: AppColors.primary,
-                          fontSize: 12,
+                          fontSize: 9,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
