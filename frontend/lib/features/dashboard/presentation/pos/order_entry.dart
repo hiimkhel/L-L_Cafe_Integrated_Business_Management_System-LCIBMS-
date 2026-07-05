@@ -629,6 +629,8 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
   }
 
 Widget _itemCard(MenuItem item) {
+  final isAvailable = item.isAvailable;
+  
   final currentOrderIndex =
     item.hasVariants == 1
         ? -1
@@ -713,7 +715,28 @@ final isSelected =
               // BUTTON
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
-                child: !isSelected
+                child: !isAvailable
+                  ? Container(
+                      key: const ValueKey('unavailable'),
+                      width: double.infinity,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          "UNAVAILABLE",
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            letterSpacing: .5,
+                          ),
+                        ),
+                      ),
+                    )
+                  : !isSelected
                     ? SizedBox(
                         key: const ValueKey('add_btn'),
                         width: double.infinity,
