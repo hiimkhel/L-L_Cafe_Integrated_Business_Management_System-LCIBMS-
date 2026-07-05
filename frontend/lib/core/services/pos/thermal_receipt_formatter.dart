@@ -17,16 +17,16 @@ buffer.writeln("================================");
 buffer.writeln(center(storeName));
 buffer.writeln(center("Making good food"));
 buffer.writeln(center("for people's happiness"));
-
+buffer.writeln("");
 buffer.writeln(center("Cabaluna St., Alimodian, Iloilo"));
-buffer.writeln(center("TEL: 09983087848"));
+buffer.writeln(center("Tel: 09983087848"));
 
 buffer.writeln("================================");
 buffer.writeln(_dateLine());
 buffer.writeln("--------------------------------");
     // COLUMN HEADER
-    buffer.writeln(_headerRow());
-    buffer.writeln("--------------------------------");
+buffer.writeln(_headerRow());
+buffer.writeln("--------------------------------");
 
     // ITEMS
     for (final item in items) {
@@ -35,12 +35,14 @@ buffer.writeln("--------------------------------");
       }
     }
 
+
+
     buffer.writeln("--------------------------------");
 
     // SUMMARY (IMPORTANT: TOTAL FIRST)
     buffer.writeln(_boldRow("TOTAL", "P${total.toStringAsFixed(2)}"));
-    buffer.writeln(rightAlign("CASH", "P${cashReceived.toStringAsFixed(2)}"));
-    buffer.writeln(rightAlign("CHANGE", "P${change.toStringAsFixed(2)}"));
+    buffer.writeln(_boldRow("CASH", "P${cashReceived.toStringAsFixed(2)}"));
+    buffer.writeln(_boldRow("CHANGE", "P${change.toStringAsFixed(2)}"));
 
     buffer.writeln("--------------------------------");
 
@@ -70,35 +72,55 @@ buffer.writeln("--------------------------------");
 
     final amtStr = "P${amt.toStringAsFixed(2)}";
 
-    // wrap name if too long
+    // Wrap item name (18 chars reserved for name)
     final words = name.split(" ");
-    List<String> lines = [];
 
-    String currentLine = "";
+    List<String> lines = [];
+    String current = "";
 
     for (final word in words) {
-      if ((currentLine + word).length > 18) {
-        lines.add(currentLine.trim());
-        currentLine = word + " ";
+      if ((current + word).length > 18) {
+        lines.add(current.trim());
+        current = "$word ";
       } else {
-        currentLine += "$word ";
+        current += "$word ";
       }
     }
-    if (currentLine.isNotEmpty) {
-      lines.add(currentLine.trim());
+
+    if (current.isNotEmpty) {
+      lines.add(current.trim());
     }
 
-    List<String> result = [];
+    final result = <String>[];
 
-    for (int i = 0; i < lines.length; i++) {
-      if (i == 0) {
-        result.add(
-          "${qty.padRight(4)}${lines[i].padRight(18)}${amtStr.padLeft(10)}",
-        );
-      } else {
-        result.add(
-          "     ${lines[i]}",
-        );
+    // First line contains qty + amount
+    result.add(
+      "${qty.padRight(4)}${lines.first.padRight(18)}${amtStr.padLeft(10)}",
+    );
+
+    // Remaining wrapped lines
+    for (int i = 1; i < lines.length; i++) {
+      result.add("     ${lines[i]}");
+    }
+
+    // Variant
+    final variantCategory = item["variant_category"];
+    final variantName = item["variant_name"];
+
+    if (variantCategory != null &&
+        variantName != null &&
+        variantName.toString().isNotEmpty) {
+      result.add("     $variantCategory: $variantName");
+    }
+
+    // Flavors
+    final flavors = item["flavors"];
+
+    if (flavors is List && flavors.isNotEmpty) {
+      result.add("     Flavors:");
+
+      for (final flavor in flavors) {
+        result.add("      > $flavor");
       }
     }
 
