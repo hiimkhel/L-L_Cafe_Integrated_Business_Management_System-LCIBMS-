@@ -151,39 +151,132 @@ class _OrderTableState extends State<OrderTable> {
   void _showModifyDialog(Map<String, dynamic> order) {
     showDialog(
       context: context,
+      barrierDismissible: true,
       builder: (_) {
-        return AlertDialog(
-          title: Text("Modify Order"),
-
-          content: Text(
-            "What would you like to do?"
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
-
-          actions: [
-
-            TextButton(
-              onPressed: () {
-
-                Navigator.pop(context);
-
-                _editOrder(order);
-
-              },
-              child: const Text("Edit"),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 480,
             ),
+            child: Padding(
+              padding: const EdgeInsets.all(28),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary.withOpacity(.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.edit_note_rounded,
+                      color: AppColors.secondary,
+                      size: 36,
+                    ),
+                  ),
 
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _confirmCancel(order);
-              },
-              child: const Text(
-                "Cancel Order",
-                style: TextStyle(color: Colors.red),
+                  const SizedBox(height: 20),
+
+                  const Text(
+                    "Modify Order",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.receiptDark,
+                    ),
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  Text(
+                    "Choose what you'd like to do with this order.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.grey.shade700,
+                      height: 1.5,
+                    ),
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.edit_outlined, color: Colors.white),
+                      label: const Text(
+                        "Edit Order",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.secondary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _editOrder(order);
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.cancel_outlined, color: Colors.red),
+                      label: const Text(
+                        "Cancel Order",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(
+                          color: Colors.red,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _confirmCancel(order);
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text(
+                      "Close",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-
-          ],
+          ),
         );
       },
     );
