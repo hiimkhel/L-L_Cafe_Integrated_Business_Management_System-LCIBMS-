@@ -543,7 +543,7 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
         behavior: const _NoGlowScrollBehavior(),
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           physics: const BouncingScrollPhysics(),
           itemCount: categories.length + 1,
           separatorBuilder: (_, __) => const SizedBox(width: 8),

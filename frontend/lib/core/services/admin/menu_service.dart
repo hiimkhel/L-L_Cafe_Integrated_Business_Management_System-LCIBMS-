@@ -117,15 +117,20 @@ class MenuService {
   }
 
   // In your menu_service.dart, add this method:
-static Future<void> deleteCategory(int id) async {
-  final response = await http.delete(
-    Uri.parse('$baseUrl/admin/categories/$id'),
-    headers: {'Content-Type': 'application/json'},
-  );
-  if (response.statusCode != 200) {
-    throw Exception('Failed to delete category');
+  static Future<void> deleteCategory(int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/admin/menu/category/$id'),
+      headers: {'Content-Type': 'application/json'},
+    );
+    
+    print("DELETE URL: $baseUrl/admin/menu/category/$id");
+    print("STATUS: ${response.statusCode}");
+    print("BODY: ${response.body}");
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete category');
+    }
   }
-}
 
   static Future<int?> uploadImage(Uint8List bytes, String s) async {}
 }

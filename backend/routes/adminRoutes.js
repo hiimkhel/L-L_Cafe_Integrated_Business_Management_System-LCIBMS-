@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { getDashboardSummary, getRevenueTrend, getTopMenus, getRecentOrders, updateDailyTarget, fetchAllCustomer, fetchMenuItems, fetchMenuCategories,
-    addMenuCategory, addMenuItem, deleteMenuItem, getItemById, updateMenuItem, getCustomerReviews, publishReview, archiveReview, deleteReview, republishReview,
+    addMenuCategory, deleteMenuCategory, addMenuItem, deleteMenuItem, getItemById, updateMenuItem, getCustomerReviews, publishReview, archiveReview, deleteReview, republishReview,
     getTopCustomer, getMenuSales, getRevenueReport, getOrdersReport, getSalesDistributionReport, getSalesSummaryReport, getOrders
  } = require("../controllers/adminControllers.js");
 const {verifyFirebaseToken} = require("../middleware/authMiddleware.js");
@@ -34,6 +34,7 @@ router.delete("/menu-items/:id", deleteMenuItem);
 // // Menu Items Categories
 router.get("/menu/category", fetchMenuCategories );
 router.post("/menu/category", addMenuCategory);
+router.delete("/menu/category/:id", deleteMenuCategory)
 
 // Sales & Report Screen
 router.get("/reports/revenue", getRevenueReport);

@@ -156,7 +156,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   }
 
   void _onSelectItem(dynamic item) async {
-    // ✅ Guard unsaved changes before switching item
+
     if (_isDirty) {
       final confirmed = await _confirmDiscard();
       if (!confirmed) return;
@@ -191,7 +191,7 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     finally { setState(() => isLoadingItem = false); }
   }
 
-  // ✅ Save — uploads image first if one was picked, then patches the item
+
   Future<void> _saveItem() async {
     if (selectedItem == null) return;
     setState(() { isSaving = true; });
@@ -258,25 +258,33 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     } catch (_) { _showError('Delete failed'); }
   }
 
-  Future<void> _deleteCategory(dynamic cat) async {
-    if (cat == null) return;
+  Future<void> _deleteCategory(Map<String, dynamic> category) async {
     try {
-      await MenuService.deleteCategory(cat['id']);
-      setState(() {
-        categories.removeWhere((c) => c['id'] == cat['id']);
-        if (selectedCategoryId == cat['id']) {
-          selectedItem = null; selectedItemName = null;
-          items = []; _filteredItems = []; _isDirty = false;
-          if (categories.isNotEmpty) {
-            selectedCategoryId = categories[0]['id'];
-            _loadItems(selectedCategoryId!);
-          } else {
-            selectedCategoryId = null;
-          }
+      await MenuService.deleteCategory(category['id']);
+
+      categories.removeWhere((c) => c['id'] == category['id']);
+
+      if (selectedCategoryId == category['id']) {
+        selectedItem = null;
+        selectedItemName = null;
+        items.clear();
+        _filteredItems.clear();
+        _isDirty = false;
+
+        if (categories.isNotEmpty) {
+          selectedCategoryId = categories.first['id'];
+          await _loadItems(selectedCategoryId!);
+        } else {
+          selectedCategoryId = null;
         }
-      });
-      _showSuccess('Category deleted');
-    } catch (_) { _showError('Failed to delete category'); }
+      }
+
+      setState(() {});
+
+      _showSuccess("Category deleted successfully.");
+    } catch (e) {
+      _showError(e.toString().replaceFirst("Exception: ", ""));
+    }
   }
 
   // ── File picker ───────────────────────────────────────────────────────────
@@ -924,21 +932,6 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
                       onTap: _saveItem,
                     ),
               const SizedBox(width: 10),
-              _OutlineBtn(
-                label: 'Delete Item',
-                icon: Icons.delete_outline_rounded,
-                onTap: () => _confirmDelete(selectedItem),
-                danger: true,
-              ),
-              if (_isDirty) ...[
-                const SizedBox(width: 10),
-                // Discard button — quick way to revert
-                _OutlineBtn(
-                  label: 'Discard',
-                  icon: Icons.undo_rounded,
-                  onTap: () => _onSelectItem(selectedItem),
-                ),
-              ],
             ]),
           ]),
         ),
