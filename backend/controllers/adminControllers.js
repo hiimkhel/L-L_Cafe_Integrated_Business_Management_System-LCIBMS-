@@ -502,6 +502,45 @@ const addMenuCategory = async (req, res) => {
     }
 }
 
+const deleteMenuCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [items] = await db.execute(
+      "SELECT COUNT(*) AS total FROM menu_items WHERE category_id = ?",
+      [id]
+    );
+
+    if (items[0].total > 0) {
+      return res.status(400).json({
+        message: "Cannot delete category because it still contains menu items.",
+      });
+    }
+
+    const [result] = await db.execute(
+      "DELETE FROM menu_categories WHERE id = ?",
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Category not found",
+      });
+    }
+
+    res.json({
+      message: "Category deleted successfully",
+    });
+
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      message: "Failed to delete category",
+    });
+  }
+};
+
 const getItemById = async (req, res) => {
     try{
         // Retrieve id value from request parameter
@@ -600,7 +639,7 @@ const deleteMenuItem = async (req, res) => {
             message: "Menu item deleted successfully",
         });
     }catch(err){
-        console.error("Delete Menu Item Error:", error);
+        console.error("Delete Menu Item Error:", err);
         return res.status(500).json({
         message: "Server error",
         });
@@ -1619,6 +1658,7 @@ module.exports = {
     fetchMenuItems,
     fetchMenuCategories,
     addMenuCategory,
+    deleteMenuCategory,
     addMenuItem,
     deleteMenuItem,
     getItemById,
