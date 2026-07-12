@@ -103,6 +103,10 @@ class _CustomizeItemDialogState extends State<CustomizeItemDialog> {
       setState(() {
         variants = loadedVariants;
         flavors = loadedFlavors;
+        if (categories.length == 1) {
+          selectedCategory = categories.first;
+        }
+
         isLoading = false;
       });
     } catch (e) {
@@ -132,11 +136,14 @@ class _CustomizeItemDialogState extends State<CustomizeItemDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
 
-                    if (requiresVariant) ...[
+                   if (requiresVariant) ...[
+                    if (categories.length > 1) ...[
                       _buildCategorySection(),
                       const SizedBox(height: 16),
-                      _buildVariantSection(),
                     ],
+
+                    _buildVariantSection(),
+                  ],
 
                     if (requiresFlavor) ...[
                       if (requiresVariant)
