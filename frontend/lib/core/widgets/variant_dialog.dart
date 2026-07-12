@@ -62,7 +62,7 @@ class _VariantDialogState extends State<VariantDialog> {
           await MenuService.fetchVariants(widget.item.id);
 
       final loadedFlavors =
-          await MenuService.fetchFlavors();
+          await MenuService.fetchFlavors(widget.item.id);
 
       setState(() {
         variants = loadedVariants;

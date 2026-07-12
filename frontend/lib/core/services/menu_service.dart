@@ -64,6 +64,7 @@ class MenuService {
       throw Exception("Failed to load variants");
     }
 
+    print("$baseUrl/menu/$menuItemId/variants");
     final List data = jsonDecode(res.body);
 
     return data
@@ -71,15 +72,17 @@ class MenuService {
         .toList();
   }
 
-  static Future<List <Flavor>> fetchFlavors() async{
+  static Future<List<Flavor>> fetchFlavors(int menuItemId) async {
     final res = await http.get(
       Uri.parse(
-        "$baseUrl/menu/flavors",
+        "$baseUrl/menu/$menuItemId/flavors",
       ),
     );
 
-    if(res.statusCode != 200){
-      throw Exception("Failed to load variants!");
+    print("$baseUrl/menu/$menuItemId/flavors");
+
+    if (res.statusCode != 200) {
+      throw Exception("Failed to load flavors!");
     }
 
     final List data = jsonDecode(res.body);
