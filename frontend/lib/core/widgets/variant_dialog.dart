@@ -174,29 +174,23 @@ class _CustomizeItemDialogState extends State<CustomizeItemDialog> {
 
           const SizedBox(height: 8),
 
-          ...categories.map((category) {
-
-            return RadioListTile<String>(
-              value: category,
-              groupValue: selectedCategory,
-              title: Text(category),
-              contentPadding: EdgeInsets.zero,
-              onChanged: (value) {
-
+         Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: categories.map((category) {
+            return ChoiceChip(
+              label: Text(category),
+              selected: selectedCategory == category,
+              onSelected: (_) {
                 setState(() {
-
-                  selectedCategory = value;
-
+                  selectedCategory = category;
                   selectedVariant = null;
-
                   selectedFlavors.clear();
-
                 });
-
               },
             );
-
-          }),
+          }).toList(),
+        ),
 
         ],
       );
@@ -210,45 +204,48 @@ class _CustomizeItemDialogState extends State<CustomizeItemDialog> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           const Divider(),
-
           const SizedBox(height: 8),
 
           const Text(
-            "Select Size",
+            "Select Option",
             style: TextStyle(
               fontWeight: FontWeight.bold,
             ),
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
 
-          ...filteredVariants.map((variant) {
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: filteredVariants.map((variant) {
+              final isSelected = selectedVariant?.id == variant.id;
 
-            return RadioListTile<MenuItemVariant>(
-              value: variant,
-              groupValue: selectedVariant,
-              title: Text(variant.variantName),
-              subtitle: Text(
-                "₱${variant.price.toStringAsFixed(2)}",
-              ),
-              contentPadding: EdgeInsets.zero,
-              onChanged: (value) {
-
-                setState(() {
-
-                  selectedVariant = value;
-
-                  selectedFlavors.clear();
-
-                });
-
-              },
-            );
-
-          }),
-
+              return ChoiceChip(
+                label: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      variant.variantName,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      "₱${variant.price.toStringAsFixed(2)}",
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
+                selected: isSelected,
+                onSelected: (_) {
+                  setState(() {
+                    selectedVariant = variant;
+                    selectedFlavors.clear();
+                  });
+                },
+              );
+            }).toList(),
+          ),
         ],
       );
     }
@@ -267,11 +264,32 @@ class _CustomizeItemDialogState extends State<CustomizeItemDialog> {
 
           const SizedBox(height: 8),
 
-          Text(
-            "Select Flavors (${selectedFlavors.length}/$requiredFlavors)",
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "Select Flavors",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade100,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  "${selectedFlavors.length}/$requiredFlavors",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
 
           const SizedBox(height: 8),
