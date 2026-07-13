@@ -9,6 +9,7 @@ class MenuItem {
   final bool isAvailable;
   final bool hasVariants;
   final double? startingPrice;
+  final bool hasFlavors;
 
   MenuItem({
     required this.id,
@@ -19,7 +20,8 @@ class MenuItem {
     required this.price,
     required this.isAvailable,
     required this.hasVariants,
-    this.startingPrice
+    this.startingPrice,
+    required this.hasFlavors
   });
 
   factory MenuItem.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,7 @@ class MenuItem {
       startingPrice: json['starting_price'] != null
         ? double.parse(json['starting_price'].toString())
         : null,
+      hasFlavors: json['has_flavors'] == 1,
     );
   }
 }

@@ -93,44 +93,42 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
     });
   }
 
-   Future<void> _showVariantDialog(MenuItem item) async {
-      print("Opening dialog");
-    final result = await showDialog<Map<String, dynamic>>(
-      context: context,
-      builder: (_) => VariantDialog(item: item),
-    );
+ Future<void> _showCustomizeDialog(MenuItem item) async {
+  final result = await showDialog<Map<String, dynamic>>(
+    context: context,
+    builder: (_) => CustomizeItemDialog(item: item),
+  );
 
-    if (result == null) return;
+  if (result == null) return;
 
-   final MenuItemVariant variant = result['variant'];
-  final List<Flavor> flavors = result['flavors'];
+  final MenuItemVariant? variant =
+      result['variant'] as MenuItemVariant?;
 
-  print("===== VARIANT =====");
-  print("ID: ${variant.id}");
-  print("Category: ${variant.category}");
-  print("Variant: ${variant.variantName}");
-  print("Price: ${variant.price}");
-  print("Required Flavors: ${variant.requiredFlavors}");
+  final List<Flavor> flavors =
+      (result['flavors'] as List<Flavor>?) ?? [];
 
-  print("===== FLAVORS =====");
-  for (final flavor in flavors) {
-    print("${flavor.id} - ${flavor.flavorName}");
-  }
+  setState(() {
+    orderItems.add({
+      'cart_id': uuid.v4(),
 
-    setState(() {
-      orderItems.add({
-        'cart_id': uuid.v4(),
-        'id': item.id,
-        'name': item.name,
-        'variant_id': variant.id,
-        'variant_name': variant.variantName,
-        'variant_category': variant.category,
-        'price': variant.price,
-        'qty': 1,
-        'flavors': flavors,
-      });
+      'id': item.id,
+      'name': item.name,
+
+      // Base price for items without variants
+      'price': variant?.price ?? item.price,
+
+      // Variant information
+      'variant_id': variant?.id,
+      'variant_name': variant?.variantName,
+      'variant_category': variant?.category,
+
+      // Flavor information
+      'flavors': flavors,
+
+      'qty': 1,
     });
-  }
+  });
+}
 
   Future<void> loadMenu() async {
     try {
@@ -751,8 +749,8 @@ final isSelected =
                             ),
                           ),
                           onPressed: () async {
-                            if (item.hasVariants) {
-                              await _showVariantDialog(item);
+                            if (item.hasVariants || item.hasFlavors) {
+                              await _showCustomizeDialog(item);
                             } else {
                               setState(() {
                                 orderItems.add({
