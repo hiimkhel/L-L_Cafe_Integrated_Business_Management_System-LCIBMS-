@@ -276,69 +276,44 @@ class _CustomizeItemDialogState extends State<CustomizeItemDialog> {
 
           const SizedBox(height: 8),
 
-          ...flavors.map((flavor) {
+          Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: flavors.map((flavor) {
             final isSelected =
                 selectedFlavors.any((f) => f.id == flavor.id);
 
-            return CheckboxListTile(
-              value: isSelected,
-              title: Text(flavor.flavorName),
+            return FilterChip(
+              label: Text(flavor.flavorName),
 
-              subtitle: !flavor.isAvailable
-                  ? const Text(
-                      "Unavailable",
-                      style: TextStyle(color: Colors.red),
-                    )
-                  : null,
+              selected: isSelected,
 
-              controlAffinity:
-                  ListTileControlAffinity.leading,
-
-              contentPadding: EdgeInsets.zero,
-
-              onChanged: !flavor.isAvailable
+              onSelected: !flavor.isAvailable
                   ? null
-                  : (checked) {
-
+                  : (selected) {
                       setState(() {
-
-                        if (checked == true) {
-
-                          if (!isSelected) {
-
-                            if (selectedFlavors.length <
-                                requiredFlavors) {
-
-                              selectedFlavors.add(flavor);
-
-                            } else {
-
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    "Only $requiredFlavors flavor(s) can be selected.",
-                                  ),
+                        if (selected) {
+                          if (selectedFlavors.length < requiredFlavors) {
+                            selectedFlavors.add(flavor);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "Only $requiredFlavors flavor(s) can be selected.",
                                 ),
-                              );
-
-                            }
-
+                              ),
+                            );
                           }
-
                         } else {
-
                           selectedFlavors.removeWhere(
                             (f) => f.id == flavor.id,
                           );
-
                         }
-
                       });
-
                     },
             );
-          }),
+          }).toList(),
+        ),
         ],
       );
     }

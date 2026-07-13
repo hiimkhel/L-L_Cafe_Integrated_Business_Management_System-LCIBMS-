@@ -63,8 +63,7 @@ class MenuService {
     if (res.statusCode != 200) {
       throw Exception("Failed to load variants");
     }
-
-    print("$baseUrl/menu/$menuItemId/variants");
+    
     final List data = jsonDecode(res.body);
 
     return data
