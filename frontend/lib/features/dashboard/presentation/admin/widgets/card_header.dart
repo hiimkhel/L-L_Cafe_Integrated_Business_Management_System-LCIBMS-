@@ -27,7 +27,7 @@ class CardHeader extends StatelessWidget {
       Text(title,
           style: const TextStyle(
               fontFamily: 'Urbanist',
-              fontSize: 18,
+              fontSize: 12,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.3,
               color: _green1)),

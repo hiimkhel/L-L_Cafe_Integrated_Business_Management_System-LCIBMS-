@@ -46,7 +46,7 @@ class SummaryCard extends StatelessWidget {
                       style: const TextStyle(
                           fontFamily: 'Urbanist',
                           fontWeight: FontWeight.w900,
-                          fontSize: 24,
+                          fontSize: 18,
                           color: _green1)),
                 ),
                 const SizedBox(width: 5),
@@ -65,7 +65,7 @@ class SummaryCard extends StatelessWidget {
                     Text(data.delta,
                         style: TextStyle(
                             fontFamily: 'Urbanist',
-                            fontSize: 14,
+                            fontSize: 9,
                             fontWeight: FontWeight.w700,
                             color: data.deltaPositive
                                 ? const Color(0xFF4CAF50)
@@ -76,7 +76,7 @@ class SummaryCard extends StatelessWidget {
               Text(data.label,
                   style: TextStyle(
                       fontFamily: 'Urbanist',
-                      fontSize: 12,
+                      fontSize: 8,
                       letterSpacing: 0.8,
                       fontWeight: FontWeight.w600,
                       color: _green1.withOpacity(0.55))),
