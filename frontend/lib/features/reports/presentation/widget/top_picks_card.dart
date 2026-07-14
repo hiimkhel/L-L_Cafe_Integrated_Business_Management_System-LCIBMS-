@@ -52,21 +52,38 @@ class TopPicksCard extends StatelessWidget {
     return BaseCard(
       title: 'TOP PICKS',
       trailing: _pill('${displayItems.length} ITEMS', _gold),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const BouncingScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 5, // 5 items per row
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          // Adjusted aspect ratio to give vertical height for the stacked text metrics
-          childAspectRatio: 1.5, 
-        ),
-        itemCount: displayItems.length,
-        itemBuilder: (_, i) => _PickTile(
-          item: displayItems[i],
-          rank: i + 1,
-        ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+
+          int columns;
+          
+
+          if (constraints.maxWidth >= 1400) {
+            columns = 5;
+          } else if (constraints.maxWidth >= 1100) {
+            columns = 4;
+          } else if (constraints.maxWidth >= 800) {
+            columns = 3;
+          } else {
+            columns = 2;
+          }
+
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columns,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 1.45,
+            ),
+            itemCount: displayItems.length,
+            itemBuilder: (_, i) => _PickTile(
+              item: displayItems[i],
+              rank: i + 1,
+            ),
+          );
+        },
       ),
     );
   }
@@ -90,181 +107,200 @@ class _PickTile extends StatelessWidget {
     return 'http://localhost:3006/uploads/menu-items/$imageName';
   }
 
-@override
+  @override
   Widget build(BuildContext context) {
     final String name = item['name']?.toString() ?? 'Unknown Item';
-    final double price = double.tryParse(item['price'].toString()) ?? 0.0;
-    final int sold = int.tryParse(item['total_sold'].toString()) ?? 0;
-    
+    final double price =
+        double.tryParse(item['price'].toString()) ?? 0.0;
+    final int sold =
+        int.tryParse(item['total_sold'].toString()) ?? 0;
+
     final String imageUrl = getMenuImageUrl(
       item['image_url']?.toString(),
     );
 
-    final double totalRevenue = price * sold;
+    final double revenue = price * sold;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.75),
-        borderRadius: BorderRadius.circular(16), // Softer corners for modern UI
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center, // Centered alignment strategy
-        children: [
-          // 1. HEADER: Image & Rank Badge Overlay Stack
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: SizedBox(
-                  width: 46,
-                  height: 46,
-                  child: imageUrl.isNotEmpty
-                      ? Image.network(
-                          imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _buildPlaceholderIcon(),
-                        )
-                      : _buildPlaceholderIcon(),
-                ),
-              ),
-              // Floating Rank Badge over the image
-              Positioned(
-                top: -4,
-                right: -4,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: _accent,
-                    borderRadius: BorderRadius.circular(6),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _accent.withOpacity(0.3),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    '#$rank',
-                    style: const TextStyle(
-                      fontFamily: 'Urbanist',
-                      fontWeight: FontWeight.w900,
-                      fontSize: 9,
-                      color: Colors.white, // Crisp white contrast against accent theme
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tileWidth = constraints.maxWidth;
 
-          const SizedBox(height: 8),
+        final imageSize = tileWidth * .38;
+        final titleSize = tileWidth * .10;
+        final statLabelSize = tileWidth * .055;
+        final statValueSize = tileWidth * .085;
+        final badgeSize = tileWidth * .065;
 
-          // 2. MIDDLE: Centered Item Typography
-          Expanded(
-            child: Align(
-              alignment: Alignment.center,
-              child: Text(
-                name,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontFamily: 'Urbanist',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 11,
-                  color: _dark,
-                  height: 1.15,
-                ),
-              ),
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.black.withOpacity(.05),
             ),
-          ),
-
-          const SizedBox(height: 4),
-          const Divider(height: 1, color: Colors.black12), // Subtle separator 
-          const SizedBox(height: 6),
-
-          // 3. BOTTOM: Balanced Centered Metrics Box
-          Row(
-            children: [
-              // Sold Counter
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'SOLD',
-                      style: TextStyle(
-                        fontFamily: 'Urbanist',
-                        fontSize: 8,
-                        fontWeight: FontWeight.w600,
-                        color: _muted,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      sold.toString(),
-                      style: const TextStyle(
-                        fontFamily: 'Urbanist',
-                        fontWeight: FontWeight.w800,
-                        fontSize: 11,
-                        color: _dark,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              // Vertical Divider line between stats
-              Container(width: 1, height: 16, color: Colors.black12),
-
-              // Revenue Counter
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'REVENUE',
-                      style: TextStyle(
-                        fontFamily: 'Urbanist',
-                        fontSize: 8,
-                        fontWeight: FontWeight.w600,
-                        color: _muted,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      '₱${totalRevenue.toStringAsFixed(0)}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: 'Urbanist',
-                        fontWeight: FontWeight.w800,
-                        fontSize: 11,
-                        color: _dark,
-                      ),
-                    ),
-                  ],
-                ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(.03),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
-        ],
-      ),
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            children: [
+
+              //---------------- IMAGE ----------------//
+
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: imageSize,
+                      height: imageSize,
+                      child: imageUrl.isNotEmpty
+                          ? Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  _buildPlaceholderIcon(),
+                            )
+                          : _buildPlaceholderIcon(),
+                    ),
+                  ),
+
+                  Positioned(
+                    top: -4,
+                    right: -4,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: badgeSize * .6,
+                        vertical: badgeSize * .25,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _accent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        "#$rank",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: badgeSize,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              SizedBox(height: tileWidth * .08),
+
+              //---------------- TITLE ----------------//
+
+              Expanded(
+                child: Center(
+                  child: Text(
+                    name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Urbanist',
+                      fontWeight: FontWeight.w800,
+                      fontSize: titleSize.clamp(10, 14),
+                      color: _dark,
+                      height: 1.15,
+                    ),
+                  ),
+                ),
+              ),
+
+              const Divider(height: 16),
+
+              //---------------- STATS ----------------//
+
+              Row(
+                children: [
+
+                  Expanded(
+                    child: Column(
+                      children: [
+
+                        Text(
+                          "SOLD",
+                          style: TextStyle(
+                            fontSize:
+                                statLabelSize.clamp(7, 10),
+                            color: _muted,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: .5,
+                          ),
+                        ),
+
+                        const SizedBox(height: 2),
+
+                        Text(
+                          sold.toString(),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize:
+                                statValueSize.clamp(10, 15),
+                            color: _dark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  Container(
+                    width: 1,
+                    height: 20,
+                    color: Colors.black12,
+                  ),
+
+                  Expanded(
+                    child: Column(
+                      children: [
+
+                        Text(
+                          "REVENUE",
+                          style: TextStyle(
+                            fontSize:
+                                statLabelSize.clamp(7, 10),
+                            color: _muted,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: .5,
+                          ),
+                        ),
+
+                        const SizedBox(height: 2),
+
+                        Text(
+                          "₱${revenue.toStringAsFixed(0)}",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize:
+                                statValueSize.clamp(10, 15),
+                            color: _accent,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
-
   // Extracted Helper Method for Clean Fallbacks
   Widget _buildPlaceholderIcon() {
     return Container(
