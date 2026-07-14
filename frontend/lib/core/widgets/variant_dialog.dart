@@ -32,6 +32,7 @@ class _CustomizeItemDialogState extends State<CustomizeItemDialog> {
     'Ala Carte',
     'with Rice',
     'Tray',
+    'Drink'
   ];
 
   List<String> get categories {
@@ -125,6 +126,8 @@ class _CustomizeItemDialogState extends State<CustomizeItemDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      elevation: 20,
+      shadowColor: Colors.black26,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
       ),
@@ -144,12 +147,20 @@ class _CustomizeItemDialogState extends State<CustomizeItemDialog> {
                   // Header
                   _buildHeader(),
 
-                  const Divider(height: 1),
+                  Container(
+                    height: 1,
+                    color: Colors.grey.shade200,
+                  ),
 
                   // Body
                   Flexible(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.fromLTRB(
+                        20,
+                        24,
+                        20,
+                        24,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -171,20 +182,29 @@ class _CustomizeItemDialogState extends State<CustomizeItemDialog> {
 
                  const Divider(height: 1),
 
-                  Padding(
+                  Container(
                     padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(18),
+                      ),
+                      border: Border(
+                        top: BorderSide(
+                          color: Colors.grey.shade200,
+                        ),
+                      ),
+                    ),
                     child: Column(
                       children: [
-
                         _buildSelectionSummary(),
-
+                        const SizedBox(height: 16),
                         Row(
                           children: _buildActions(),
                         ),
-
                       ],
                     ),
-                  ),
+                  )
                 ],
               ),
             
@@ -193,46 +213,49 @@ class _CustomizeItemDialogState extends State<CustomizeItemDialog> {
   }
 
   Widget _buildHeader() {
-    return Padding(
+    return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 20,
-        vertical: 18,
+        vertical: 16,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.secondary,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(18),
+        ),
       ),
       child: Row(
         children: [
 
+          const CircleAvatar(
+            radius: 18,
+            backgroundColor: Colors.white24,
+            child: Icon(
+              Icons.restaurant_menu,
+              color: Colors.white,
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-
-                Text(
-                  widget.item.name,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 4),
-
-                Text(
-                  "Customize your order",
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
+            child: Text(
+              widget.item.name,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
 
           IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(
+              Icons.close,
+              color: Colors.white,
+            ),
           ),
-
         ],
       ),
     );

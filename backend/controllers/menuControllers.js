@@ -46,7 +46,7 @@ const getVariantsByMenuItem = async (req, res) => {
             WHERE menu_item_id = ?
               AND is_available = 1
             ORDER BY
-                FIELD(category, 'Ala Carte', 'with Rice', 'Tray'),
+                FIELD(category, 'Ala Carte', 'with Rice', 'Tray', 'Drink'),
                 pieces ASC
             `,
             [menuItemId]
