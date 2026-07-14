@@ -52,7 +52,7 @@ class OrdersCard extends StatelessWidget {
                 'TOP 5',
                 style: TextStyle(
                   fontFamily: 'Urbanist',
-                  fontSize: 9,
+                  fontSize: 10,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
                   color: _green2,
@@ -76,7 +76,7 @@ class OrdersCard extends StatelessWidget {
                       style: TextStyle(
                         fontFamily: 'Urbanist',
                         fontWeight: FontWeight.w800,
-                        fontSize: 11,
+                        fontSize: 10,
                         color: _white,
                       ),
                     ),
@@ -145,7 +145,7 @@ class _OrderTableHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = TextStyle(
         fontFamily: 'Urbanist',
-        fontSize: 10,
+        fontSize: 9,
         fontWeight: FontWeight.w800,
         letterSpacing: 0.7,
         color: _green1.withOpacity(0.55));
@@ -285,7 +285,7 @@ class _OrderTableRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final base = TextStyle(
         fontFamily: 'Urbanist',
-        fontSize: 11,
+        fontSize: 9,
         color: _green1.withOpacity(0.8));
 
     return Container(
@@ -338,7 +338,7 @@ class _OrderTableRow extends StatelessWidget {
                   Text(
                     order.payment.toUpperCase(),
                     style: base.copyWith(
-                      fontSize: 10,
+                      fontSize: 8,
                       fontWeight: FontWeight.w800,
                       color: _paymentColor,
                     ),
@@ -373,7 +373,7 @@ class _OrderTableRow extends StatelessWidget {
                     Text(
                       order.status.toUpperCase(),
                       style: base.copyWith(
-                        fontSize: 10,
+                        fontSize: 8,
                         fontWeight: FontWeight.w800,
                         color: _statusColor,
                       ),

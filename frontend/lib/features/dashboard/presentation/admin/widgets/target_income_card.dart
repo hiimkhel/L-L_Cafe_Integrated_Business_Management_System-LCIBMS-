@@ -50,7 +50,7 @@ class TargetRevenueCard extends StatelessWidget {
                   Text('DAILY TARGET REVENUE',
                       style: TextStyle(
                           fontFamily: 'Urbanist',
-                          fontSize: 18,
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1.0,
                           color: _beige.withOpacity(0.85))),
@@ -60,7 +60,7 @@ class TargetRevenueCard extends StatelessWidget {
                     style: const TextStyle(
                         fontFamily: 'Urbanist',
                         fontWeight: FontWeight.w900,
-                        fontSize: 30,
+                        fontSize: 24,
                         color: _white)),
                 const SizedBox(height: 6),
                 Row(children: [
