@@ -161,6 +161,7 @@ const modifyOrder = async (req, res) => {
     const { items, total } = req.body;
 
     const conn = await db.getConnection();
+    await conn.query("SET time_zone = '+08:00'");
 
     try {
         await conn.beginTransaction();

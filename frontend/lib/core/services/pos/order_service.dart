@@ -83,44 +83,46 @@ class OrderService {
   }) async {
     try {
       final payload = items.map((item) {
-        return {
-          "menu_item_id": item["menu_item_id"],
-          "name": item["name"],
-          "quantity": item["quantity"],
-          "unit_price": item["unit_price"],
-          "variant_id": item["variant_id"],
-          "subtotal": item["subtotal"],
-          "flavors": (item["flavors"] as List)
-              .map((f) {
-                if (f is Flavor) {
-                  return {
-                    "id": f.id,
-                    "flavor_name": f.flavorName,
-                  };
-                }
+      final flavors = (item["flavors"] as List?) ?? [];
 
-                return f;
-              })
-              .toList(),
-        };
-      }).toList();
+      return {
+        "menu_item_id": item["menu_item_id"],
+        "name": item["name"] ?? "",
+        "quantity": item["quantity"] ?? 1,
+        "unit_price": item["unit_price"] ?? 0,
+        "subtotal": item["subtotal"] ?? 0,
+        "variant_id": item["variant_id"],
+        "flavors": flavors.map((f) {
+          if (f is Flavor) {
+            return {
+              "id": f.id,
+              "flavor_name": f.flavorName,
+            };
+          }
+          return f;
+        }).toList(),
+      };
+    }).toList();
       
+      final body = {
+        "total": total,
+        "items": payload,
+      };
+
       final response = await http.put(
         Uri.parse('$baseUrl/pos/orders/$orderId'),
         headers: {
           "Content-Type": "application/json",
         },
-        body: jsonEncode({
-          "total": total,
-          "items": payload,
-        }),
+        body: jsonEncode(body),
       );
+
+
 
       if (response.statusCode == 200) {
         return true;
       }
 
-      print("Modify Order Error: ${response.body}");
       return false;
     } catch (e) {
       print("Modify Order Exception: $e");

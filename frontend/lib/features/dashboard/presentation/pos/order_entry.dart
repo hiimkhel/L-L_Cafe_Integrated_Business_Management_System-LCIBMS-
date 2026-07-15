@@ -173,54 +173,54 @@ class _POSOrderScreenState extends State<POSOrderScreen> {
         setState(() => _loadingCount = false);
       }
     }
-  Future<void> _updateEditedOrder() async {
-    if (editingOrderId == null) return;
+    Future<void> _updateEditedOrder() async {
+      if (editingOrderId == null) return;
 
-    final items = orderItems.map((item) {
-      final price = (item["price"] as num).toDouble();
-      final qty = item["qty"] as int;
+      final items = orderItems.map((item) {
+        final price = (item["price"] as num).toDouble();
+        final qty = item["qty"] as int;
 
-      return {
-        "menu_item_id": item["id"],
-        "name": item["name"],
-        "quantity": qty,
-        "unit_price": price,
-        "subtotal": price * qty,
-        "variant_id": item["variant_id"],
-        "flavors": item["flavors"],
-      };
-    }).toList();
+        return {
+          "menu_item_id": item["id"],
+          "name": item["name"],
+          "quantity": qty,
+          "unit_price": price,
+          "subtotal": price * qty,
+          "variant_id": item["variant_id"],
+          "flavors": item["flavors"],
+        };
+      }).toList();
 
-    final total = items.fold<double>(
-      0,
-      (sum, item) => sum + item["subtotal"],
-    );
-
-    final success = await OrderService().modifyOrder(
-      orderId: editingOrderId!,
-      items: items,
-      total: total,
-    );
-
-    if (!mounted) return;
-
-
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Order updated successfully."),
-        ),
-        
+      final total = items.fold<double>(
+        0,
+        (sum, item) => sum + item["subtotal"],
       );
-        Navigator.pop(context, true);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar( 
-          content: Text("Failed to update order."),
-        ),
+
+      final success = await OrderService().modifyOrder(
+        orderId: editingOrderId!,
+        items: items,
+        total: total,
       );
+
+      if (!mounted) return;
+
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Order updated successfully."),
+          ),
+          
+        );
+          Navigator.pop(context, true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar( 
+            content: Text("Failed to update order."),
+          ),
+        );
+      }
     }
-  }
 
   String getCategoryName(int id) {
     return categories
