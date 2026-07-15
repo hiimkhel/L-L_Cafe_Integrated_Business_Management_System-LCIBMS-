@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const {createOrder, fetchCurrentOrderNumber} = require("../controllers/orderControllers.js");
+const {getOrderById, createOrder, fetchCurrentOrderNumber} = require("../controllers/orderControllers.js");
 
+router.get('/:id', getOrderById);
 router.post('/', createOrder);
 router.get("/current-order-num", fetchCurrentOrderNumber);
 
