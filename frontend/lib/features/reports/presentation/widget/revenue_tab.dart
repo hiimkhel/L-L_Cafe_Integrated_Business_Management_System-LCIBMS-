@@ -30,175 +30,184 @@ class RevenueTab extends StatelessWidget {
         monthlyTarget > 0 ? (totalRevenue / monthlyTarget).clamp(0.0, 1.0) : 0;
     final bool isAllTime = revenueData['is_all_time'] == true;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          flex: 4,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                '₱${totalRevenue.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  letterSpacing: -1,
-                ),
-              ),
-              const SizedBox(height: 4),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Fallback to vertical stack if the available width is extremely small
+        final bool useVerticalLayout = constraints.maxWidth < 340;
 
-              const Text(
-                'Total Revenue',
-                style: TextStyle(
-                  color: Colors.white60,
-                  fontSize: 13,
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              Row(
-                children: [
-                  if (!isAllTime)
-                    _StatPill(
-                      icon: growthRate >= 0
-                          ? Icons.trending_up_rounded
-                          : Icons.trending_down_rounded,
-                      label:
-                          '${growthRate >= 0 ? '+' : ''}${growthRate.toStringAsFixed(1)}% vs previous period',
-                      color: growthRate >= 0
-                          ? const Color(0xFF7BC67E)
-                          : Colors.redAccent,
-                    )
-                  else
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Text(
-                        'No comparison available',
-                        style: TextStyle(
-                          fontFamily: 'Urbanist',
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white60,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              _BreakdownRow(
-                label: 'Online Orders',
-                value: '₱${onlineRevenue.toStringAsFixed(2)}',
-                ratio: totalRevenue > 0
-                    ? onlineRevenue / totalRevenue
-                    : 0,
-              ),
-
-              const SizedBox(height: 8),
-
-              _BreakdownRow(
-                label: 'Walk-in',
-                value: '₱${walkinRevenue.toStringAsFixed(2)}',
-                ratio: totalRevenue > 0
-                    ? walkinRevenue / totalRevenue
-                    : 0,
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(width: 20),
-
-        Expanded(
-          flex: 3,
-          child: LayoutBuilder(
-            builder: (_, c) {
-              final size =
-                  c.maxWidth.clamp(80.0, 200.0);
-
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: size,
-                    height: size / 2 + 16,
-                    child: CustomPaint(
-                      painter: GaugePainter(
-                        progress: progress,
-                      ),
-                    ),
-                  ),
-
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 4),
-                        Text(
-                          '₱${monthlyTarget.toStringAsFixed(0)}',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontFamily: 'Urbanist',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  Text(
-                    '${(progress * 100).toStringAsFixed(0)}%',
+        final content = [
+          // Left Column / Top Section: Stats & Breakdown
+          Expanded(
+            flex: useVerticalLayout ? 0 : 4,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '₱${totalRevenue.toStringAsFixed(2)}',
                     style: const TextStyle(
-                      fontFamily: 'Urbanist',
-                      fontSize: 28,
+                      fontSize: 36,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
-                      height: 1,
+                      letterSpacing: -1,
                     ),
                   ),
-
-                  const SizedBox(height: 4),
-
-                  const Text(
-                    'Monthly Target Progress',
-                    style: TextStyle(
-                      fontFamily: 'Urbanist',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white60,
-                      letterSpacing: 0.2,
-                    ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Total Revenue',
+                  style: TextStyle(
+                    color: Colors.white60,
+                    fontSize: 13,
                   ),
-
-                  const SizedBox(height: 12),
-                ],
-              );
-            },
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    if (!isAllTime)
+                      Flexible(
+                        child: _StatPill(
+                          icon: growthRate >= 0
+                              ? Icons.trending_up_rounded
+                              : Icons.trending_down_rounded,
+                          label:
+                              '${growthRate >= 0 ? '+' : ''}${growthRate.toStringAsFixed(1)}% vs previous period',
+                          color: growthRate >= 0
+                              ? const Color(0xFF7BC67E)
+                              : Colors.redAccent,
+                        ),
+                      )
+                    else
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            'No comparison available',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'Urbanist',
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white60,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _BreakdownRow(
+                  label: 'Online Orders',
+                  value: '₱${onlineRevenue.toStringAsFixed(2)}',
+                  ratio: totalRevenue > 0 ? onlineRevenue / totalRevenue : 0,
+                ),
+                const SizedBox(height: 8),
+                _BreakdownRow(
+                  label: 'Walk-in',
+                  value: '₱${walkinRevenue.toStringAsFixed(2)}',
+                  ratio: totalRevenue > 0 ? walkinRevenue / totalRevenue : 0,
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+          if (useVerticalLayout) const SizedBox(height: 24),
+          // Right Column / Bottom Section: Gauge Progress
+          Expanded(
+            flex: useVerticalLayout ? 0 : 3,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LayoutBuilder(
+                  builder: (_, c) {
+                    final size = c.maxWidth.clamp(80.0, 160.0);
+                    return SizedBox(
+                      width: size,
+                      height: (size / 2) + 12,
+                      child: CustomPaint(
+                        painter: GaugePainter(
+                          progress: progress,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '₱${monthlyTarget.toStringAsFixed(0)}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'Urbanist',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${(progress * 100).toStringAsFixed(0)}%',
+                  style: const TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Monthly Target Progress',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Urbanist',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white60,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ];
+
+        return SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: useVerticalLayout
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: content,
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: content,
+                ),
+        );
+      },
     );
   }
 }
@@ -226,12 +235,18 @@ class _StatPill extends StatelessWidget {
         children: [
           Icon(icon, size: 12, color: color),
           const SizedBox(width: 4),
-          Text(label,
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                  fontFamily: 'Urbanist',
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: color)),
+                fontFamily: 'Urbanist',
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -241,8 +256,7 @@ class _StatPill extends StatelessWidget {
 class _BreakdownRow extends StatelessWidget {
   final String label, value;
   final double ratio;
-  const _BreakdownRow(
-      {required this.label, required this.value, required this.ratio});
+  const _BreakdownRow({required this.label, required this.value, required this.ratio});
 
   @override
   Widget build(BuildContext context) {
@@ -252,36 +266,46 @@ class _BreakdownRow extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label,
-                style:
-                    const TextStyle(color: Colors.white60, fontSize: 10)),
-            Text(value,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700)),
+            Expanded(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white60, fontSize: 10),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 4),
         LayoutBuilder(builder: (_, c) {
-          return Stack(children: [
-            Container(
-              height: 3,
-              width: c.maxWidth,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
+          return Stack(
+            children: [
+              Container(
+                height: 3,
+                width: c.maxWidth,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-            ),
-            Container(
-              height: 3,
-              width: c.maxWidth * ratio,
-              decoration: BoxDecoration(
-                color: const Color(0xFFD4C89A),
-                borderRadius: BorderRadius.circular(10),
+              Container(
+                height: 3,
+                width: c.maxWidth * ratio,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD4C89A),
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-            ),
-          ]);
+            ],
+          );
         }),
       ],
     );
@@ -299,18 +323,18 @@ class GaugePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final cx     = size.width / 2;
-    final cy     = size.height - 10;
-    final radius = size.width / 2 - 12;
+    final cy     = size.height - 4; // Tighter padding control
+    final radius = size.width / 2 - 8;
 
     final trackPaint = Paint()
       ..color = Colors.white.withOpacity(0.15)
-      ..strokeWidth = 14
+      ..strokeWidth = 12 // Scaled down slightly to fit smaller targets safely
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
     final fillPaint = Paint()
       ..color = const Color(0xFFD4C89A)
-      ..strokeWidth = 14
+      ..strokeWidth = 12
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 

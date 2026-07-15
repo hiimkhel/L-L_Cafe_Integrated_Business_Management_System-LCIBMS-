@@ -259,65 +259,24 @@ void _handleExport() async {
                 AdminHeader(
                     title: 'SALES & REPORTS', onLogout: widget.onLogout),
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Top bar (fixed height — shrinks to content)
-                        _buildTopBar(),
-                        const SizedBox(height: 16),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
 
-                        // ── Row 1: Business Performance + Sales Summary ────
-                        Expanded(
-                          flex: 52,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(
-                                child: BusinessPerformanceCard(
-                                  revenueData: revenueData,
-                                  ordersData: ordersData,
-                                  salesData: salesData,
-                                )
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: SalesSummaryCard(
-                                  salesSummaryData: salesSummaryData,
-                                  rangeLabel: _selectedRange,
-                                ),
-                              ),
-                            ],
-                          ),
+                      final bool isCompact =
+                          constraints.maxWidth < 1200;
+
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          24,
+                          20,
+                          24,
+                          20,
                         ),
-
-                        const SizedBox(height: 16),
-
-                        // ── Row 2: Top Picks + Top Customers ──────────────
-                        Expanded(
-                          flex: 44,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(flex: 3, child: TopPicksCard( menuItems: topMenuItems)),
-                              const SizedBox(width: 16),
-                              Expanded(flex: 1, child: TopCustomersCard( customers: topCustomers, 
-                              onViewAll: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => CustomersScreen(
-                                        onLogout: widget.onLogout,
-                                      ),
-                                    ),
-                                  );
-                                },)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                        child: isCompact
+                            ? _buildTabletLayout()
+                            : _buildDesktopLayout(),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -327,6 +286,145 @@ void _handleExport() async {
       ),
     );
   }
+
+  Widget _buildDesktopLayout() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+
+      _buildTopBar(),
+
+      const SizedBox(height: 16),
+
+      Expanded(
+        flex: 52,
+        child: Row(
+          children: [
+
+            Expanded(
+              child: BusinessPerformanceCard(
+                revenueData: revenueData,
+                ordersData: ordersData,
+                salesData: salesData,
+              ),
+            ),
+
+            const SizedBox(width: 16),
+
+            Expanded(
+              child: SalesSummaryCard(
+                salesSummaryData: salesSummaryData,
+                rangeLabel: _selectedRange,
+              ),
+            ),
+          ],
+        ),
+      ),
+
+      const SizedBox(height: 16),
+
+      Expanded(
+        flex: 44,
+        child: Row(
+          children: [
+
+            Expanded(
+              flex: 3,
+              child: TopPicksCard(
+                menuItems: topMenuItems,
+              ),
+            ),
+
+            const SizedBox(width: 16),
+
+            Expanded(
+              child: TopCustomersCard(
+                customers: topCustomers,
+                onViewAll: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CustomersScreen(
+                        onLogout: widget.onLogout,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _buildTabletLayout() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+
+      _buildTopBar(),
+
+      const SizedBox(height: 16),
+
+      Expanded(
+        flex: 45,
+        child: Row(
+          children: [
+
+            Expanded(
+              child: BusinessPerformanceCard(
+                revenueData: revenueData,
+                ordersData: ordersData,
+                salesData: salesData,
+              ),
+            ),
+
+            const SizedBox(width: 16),
+
+            Expanded(
+              child: SalesSummaryCard(
+                salesSummaryData: salesSummaryData,
+                rangeLabel: _selectedRange,
+              ),
+            ),
+
+          ],
+        ),
+      ),
+
+      const SizedBox(height: 16),
+
+      Expanded(
+        flex: 35,
+        child: TopPicksCard(
+          menuItems: topMenuItems,
+        ),
+      ),
+
+      const SizedBox(height: 16),
+
+      Expanded(
+        flex: 20,
+        child: TopCustomersCard(
+          customers: topCustomers,
+          onViewAll: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => CustomersScreen(
+                  onLogout: widget.onLogout,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    ],
+  );
+}
 
   Widget _buildTopBar() {
     return Row(
