@@ -3,7 +3,10 @@ import '../../../../core/widgets/admin_header.dart';
 import '../../../../core/widgets/admin_sidebar.dart';
 import '../../../../config/theme/app_colors.dart';
 import 'package:frontend/core/models/admin_order.dart';
+import 'package:frontend/core/models/receipt_model.dart';
+import 'package:frontend/core/widgets/receipt.dart';
 import 'package:frontend/core/services/admin/order_service.dart';
+
 
 
 final _now = DateTime.now();
@@ -832,8 +835,54 @@ class _OrderScreenState extends State<OrderScreen> {
     )));
   }
 
-  void _viewReceipt(AdminOrder order) {
-    showDialog(context: context, builder: (_) => _ReceiptDialog(order: order));
+  Future<void> _viewReceipt(AdminOrder order) async {
+    showDialog(
+      context: context,
+      builder: (_) => FutureBuilder<Map<String, dynamic>?>(
+        future: OrderService().getOrderById(order.databaseId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data == null) {
+            return const AlertDialog(
+              title: Text("Unable to load receipt"),
+            );
+          }
+
+          final order = snapshot.data!;
+
+          final receipt = ReceiptData(
+            orderNumber: order["order_number"],
+            clientName: order["customer_name"] ?? "Walk-in",
+            dateTime: DateTime.parse(order["created_at"]).toLocal(),
+            orderType: _mapOrderType(order["order_type"]),
+            paymentMethod: _mapPaymentMethod(order["payment_method"]),
+            cashReceived: _toDouble(order["cash_received"]),
+            change: _toDouble(order["change"]),
+            items: (order["items"] as List)
+                .map(
+                  (e) => OrderItem(
+                    name: e["name"],
+                    quantity: e["qty"],
+                    unitPrice: _toDouble(e["price"]),
+                    variantCategory: e["variant_category"],
+                    variantName: e["variant_name"],
+                    flavors: List<String>.from(
+                      (e["flavors"] ?? []).map((f) => f["flavor_name"]),
+                    ),
+                  ),
+                )
+                .toList(),
+          );
+
+          return LLCafeReceipt(
+            data: receipt
+          );
+        },
+      ),
+    );
   }
 }
 
@@ -1136,5 +1185,33 @@ class _StatusBadge extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+double _toDouble(dynamic value) =>
+    double.tryParse(value.toString()) ?? 0;
+
+OrderType _mapOrderType(dynamic value) {
+  switch (value?.toString().toLowerCase()) {
+    case 'dine-in':
+      return OrderType.dineIn;
+    case 'takeout':
+    case 'pickup':
+      return OrderType.takeOut;
+    default:
+      return OrderType.walkIn;
+  }
+}
+
+PaymentMethod _mapPaymentMethod(dynamic value) {
+  switch (value?.toString().toLowerCase()) {
+    case 'card':
+      return PaymentMethod.card;
+    case 'gcash':
+      return PaymentMethod.gcash;
+    case 'maya':
+      return PaymentMethod.maya;
+    default:
+      return PaymentMethod.cash;
   }
 }
