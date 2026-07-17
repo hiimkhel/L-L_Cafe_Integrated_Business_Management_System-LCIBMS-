@@ -2,6 +2,7 @@ const db = require("../config/dbConnection.js");
 
 const getOrderById = async (req, res) => {
     const { id } = req.params;
+    
 
     try {
       let flavors = [];
@@ -98,6 +99,7 @@ const getOrderById = async (req, res) => {
 const createOrder = async (req, res) => {
   const conn = await db.getConnection();
 
+  await conn.query("SET time_zone = '+08:00'");
   try {
     await conn.beginTransaction();
 

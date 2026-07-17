@@ -1,10 +1,13 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:frontend/core/models/admin_order.dart';
+import 'package:frontend/core/constants/api_configs.dart';
 
 class OrderService {
-  static const String baseUrl =
-      "http://localhost:3006/api/admin/orders";
+
+  final String baseUrl = ApiConfig.baseUrl;
+
 
   Future<List<AdminOrder>> getOrders({
     String? startDate,
@@ -30,7 +33,7 @@ class OrderService {
     }
 
     if (queryParams.isNotEmpty) {
-      url += '?${Uri(queryParameters: queryParams).query}';
+      url += '/admin/orders?${Uri(queryParameters: queryParams).query}';
     }
 
     final response = await http.get(Uri.parse(url));
@@ -40,5 +43,32 @@ class OrderService {
     return (data['data'] as List)
         .map((e) => AdminOrder.fromJson(e))
         .toList();
+  }
+
+
+   Future<Map<String, dynamic>?> getOrderById(int orderId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/orders/$orderId'),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        debugPrint("GET ORDER RESPONSE:");
+        debugPrint(data.toString());
+
+        return Map<String, dynamic>.from(data["order"]);
+      }
+
+      debugPrint("Get Order Error: ${response.body}");
+      return null;
+    } catch (e) {
+      debugPrint("Get Order Exception: $e");
+      return null;
+    }
   }
 }

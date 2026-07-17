@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AdminOrder {
+  final int databaseId;
   final String id;
   final DateTime datetime;
   final String customer;
@@ -13,6 +14,7 @@ class AdminOrder {
   final String? note;
 
   const AdminOrder({
+    required this.databaseId,
     required this.id,
     required this.datetime,
     required this.customer,
@@ -27,6 +29,7 @@ class AdminOrder {
 
 factory AdminOrder.fromJson(Map<String, dynamic> json) {
   return AdminOrder(
+    databaseId: json['id'],
     id: json['id'].toString(),
 
     datetime: DateTime.parse(json['created_at']),
@@ -53,6 +56,7 @@ factory AdminOrder.fromJson(Map<String, dynamic> json) {
 
 
   AdminOrder copyWith({OrderStatus? status}) => AdminOrder(
+        databaseId: databaseId,
         id: id, datetime: datetime, customer: customer,
         customerPhone: customerPhone, itemCount: itemCount,
         entryType: entryType, total: total, items: items,
