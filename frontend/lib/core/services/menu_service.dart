@@ -41,8 +41,11 @@ class MenuService {
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print(data['nextId']);
         return data['nextId'] as int;
+        
       }
+      print(response);
       return 1; // Fallback to 1
     } catch (e) {
       print("Error fetching order number: $e");

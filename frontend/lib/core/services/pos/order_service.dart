@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:frontend/core/constants/api_configs.dart';
 import 'package:frontend/core/models/flavor_models.dart';
+import 'package:flutter/material.dart';
 
 class OrderService {
   final String baseUrl = ApiConfig.baseUrl;
@@ -74,6 +75,32 @@ class OrderService {
     return List<Map<String, dynamic>>.from(
       data['data'],
     ).map((o) => _mapOrder(o)).toList();
+  }
+
+  Future<Map<String, dynamic>?> getOrderById(int orderId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/orders/$orderId'),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        debugPrint("GET ORDER RESPONSE:");
+        debugPrint(data.toString());
+
+        return Map<String, dynamic>.from(data["order"]);
+      }
+
+      debugPrint("Get Order Error: ${response.body}");
+      return null;
+    } catch (e) {
+      debugPrint("Get Order Exception: $e");
+      return null;
+    }
   }
 
   Future<bool> modifyOrder({
@@ -283,46 +310,20 @@ class OrderService {
 
   // Maps backend response to UI-friendly structure
   Map<String, dynamic> _mapOrderHistory(Map<String, dynamic> o) {
-    String rawDate = o['created_at'] ?? '';
-   String formattedTime = 'N/A';
+  return {
+    // Preserve backend fields
+    'id': (o['id'] as num).toInt(),
+    'order_number': o['order_number'] ?? '',
+    'customer_name': o['customer_name'] ?? 'Walk-in Customer',
+    'payment_method': o['payment_method'] ?? '',
+    'created_at': o['created_at'] ?? '',
+    'item_count': int.tryParse(o['item_count'].toString()) ?? 0,
+    'total': double.tryParse(o['total'].toString()) ?? 0.0,
 
-
-   if (rawDate.isNotEmpty) {
-      try {
-        // 2. Parse the UTC string and convert to local time
-        DateTime dateTime = DateTime.parse(rawDate).toLocal();
-        
-        // 3. Format it: "MMM dd, hh:mm a" -> "May 11, 03:33 PM"
-        formattedTime = DateFormat('MMM dd, hh:mm a').format(dateTime);
-      } catch (e) {
-        formattedTime = rawDate; // Fallback to raw string if parsing fails
-      }
-    }
-    return {
-      // Time column
-      'time': formattedTime,
-
-      // Customer Name column
-      'customer_name': o['customer_name'] ?? 'Walk-in Customer',
-
-      // Order ID column
-      'order_id': o['order_number'] ?? 'N/A',
-
-      // Item Count column
-      'item_count': int.tryParse(o['item_count'].toString()) ?? 0,
-
-      // Payment Type column
-      'payment_type':
-          (o['payment_method'] ?? 'N/A').toString().toUpperCase(),
-
-      // Total Value column
-      'total':
-          double.tryParse(o['total'].toString()) ?? 0.0,
-
-      // Full order data for "View Receipt"
-      'full_order_data': _decodeFullOrderData(o['full_order_data']),
-    };
-  }
+    // Receipt dialog
+    'full_order_data': _decodeFullOrderData(o['full_order_data']),
+  };
+}
 
   // Decode JSON_OBJECT result from MySQL
   Map<String, dynamic> _decodeFullOrderData(dynamic fullOrderData) {

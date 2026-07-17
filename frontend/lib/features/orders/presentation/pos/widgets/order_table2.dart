@@ -100,14 +100,15 @@ class OrderTable2State extends State<OrderTable2> {
                           ),
                           itemBuilder: (context, index) {
                             final order = _orders[index];
+                            print(order);
                             return OrderRow2(
-                              orderId: order['order_id'] ?? '',
-                              customerName: order['customer_name'] ?? 'Walk-in',
-                              itemCount: order['item_count'] ?? 0,
-                              paymentType: order['payment_type'] ?? 'N/A',
-                              total: (order['total'] as num?)?.toDouble() ?? 0.0,
-                              time: order['time'] ?? '',
-                              fullOrderData: order['full_order_data'] ?? {},
+                              orderDbId: order['id'],
+                              orderId: order['order_number'],
+                              customerName: order['customer_name'],
+                              itemCount: order['item_count'],
+                              paymentType: order['payment_method'],
+                              total: order['total'],
+                              time: order['created_at'],
                             );
                           },
                         ),

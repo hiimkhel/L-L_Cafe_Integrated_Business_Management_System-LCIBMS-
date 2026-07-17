@@ -1,25 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:frontend/config/theme/app_colors.dart';
+import 'package:frontend/core/services/pos/order_service.dart';
 
 class OrderRow2 extends StatelessWidget {
+  final int orderDbId;
+
   final String orderId;
   final String customerName;
   final int itemCount;
   final String paymentType;
   final double total;
   final String time;
-  final Map<String, dynamic> fullOrderData;
 
   const OrderRow2({
     super.key,
+    required this.orderDbId,
     required this.orderId,
     required this.customerName,
     required this.itemCount,
     required this.paymentType,
     required this.total,
     required this.time,
-    required this.fullOrderData,
   });
 
   @override
@@ -172,96 +174,573 @@ class OrderRow2 extends StatelessWidget {
     }
   }
 
-  void _showReceiptDialog(BuildContext context) {
-    final order = fullOrderData;
-
+  Future<void> _showReceiptDialog(BuildContext context) async {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(
-            children: [
-              Icon(Icons.receipt_rounded, color: AppColors.primary),
-              const SizedBox(width: 10),
-              Text(
-                "Receipt Details",
-                style: TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          content: SizedBox(
-            width: 400,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      _receiptRow("Order #", order['order_number'] ?? orderId),
-                      _receiptRow("Customer", order['customer_name'] ?? 'Walk-in'),
-                      _receiptRow("Type", (order['order_type'] ?? 'N/A').toString().toUpperCase()),
-                      _receiptRow("Method", (order['payment_method'] ?? 'N/A').toString().toUpperCase()),
-                      const Divider(height: 24),
-                      _receiptRow("Subtotal", "₱${_toDouble(order['subtotal']).toStringAsFixed(2)}"),
-                      _receiptRow("Delivery", "₱${_toDouble(order['delivery_fee']).toStringAsFixed(2)}"),
-                      const SizedBox(height: 8),
-                      _receiptRow(
-                        "Total Amount",
-                        "₱${_toDouble(order['total']).toStringAsFixed(2)}",
-                        isBold: true,
-                        color: AppColors.primary,
-                      ),
-                    ],
+      builder: (_) {
+        return FutureBuilder<Map<String, dynamic>?>(
+          future: OrderService().getOrderById(orderDbId),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const SizedBox(
+                  width: 420,
+                  height: 250,
+                  child: Center(
+                    child: CircularProgressIndicator(),
                   ),
                 ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("Close", style: TextStyle(color: AppColors.secondary)),
-            ),
-            ElevatedButton(
-              onPressed: () {}, // Future Print Logic
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text("Print Receipt"),
-            ),
-          ],
+              );
+            }
+
+            if (snapshot.hasError ||
+                !snapshot.hasData ||
+                snapshot.data == null) {
+              return AlertDialog(
+                title: const Text("Unable to load receipt"),
+                content: const Text(
+                  "An error occurred while loading the order details.",
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Close"),
+                  )
+                ],
+              );
+            }
+
+            final order = snapshot.data!;
+            print("========== RECEIPT ==========");
+            print(order);
+            print(order["items"]);
+
+            final List items =
+                List<Map<String, dynamic>>.from(order["items"] ?? []);
+
+            return _buildReceiptDialog(
+              context,
+              order,
+              items,
+            );
+          },
         );
       },
     );
   }
 
-  Widget _receiptRow(String label, String value, {bool isBold = false, Color? color}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+  Widget _buildReceiptDialog(
+    BuildContext context,
+    Map<String, dynamic> order,
+    List items,
+  ) {
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: SizedBox(
+        width: 520,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+
+            _buildReceiptHeader(),
+
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+
+                    _buildReceiptInfo(order),
+
+                    const SizedBox(height: 20),
+
+                    _buildItemsSection(items),
+
+                    const Divider(),
+
+                    _buildTotals(order),
+
+                  ],
+                ),
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("Close"),
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.print),
+                      label: const Text("Print"),
+                      onPressed: () {},
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReceiptHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 24,
+        vertical: 18,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.secondary,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(20),
+        ),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.w500)),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-              fontSize: isBold ? 16 : 14,
-              color: color ?? AppColors.textDark,
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.receipt_long_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
+
+          const SizedBox(width: 14),
+
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                Text(
+                  "Receipt Details",
+                  style: TextStyle(
+                    fontFamily: "Urbanist",
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                  ),
+                ),
+
+                SizedBox(height: 2),
+
+                Text(
+                  "Complete order information",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildReceiptInfo(Map<String, dynamic> order) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.grey.shade300,
+        ),
+      ),
+      child: Column(
+        children: [
+
+          _receiptInfoRow(
+            Icons.confirmation_number_outlined,
+            "Order #",
+            order["order_number"] ?? "-",
+          ),
+
+          const SizedBox(height: 12),
+
+          _receiptInfoRow(
+            Icons.person_outline,
+            "Customer",
+            order["customer_name"] ?? "Walk-in",
+          ),
+
+          const SizedBox(height: 12),
+
+          _receiptInfoRow(
+            Icons.payments_outlined,
+            "Payment",
+            (order["payment_method"] ?? "-")
+                .toString()
+                .toUpperCase(),
+          ),
+
+          const SizedBox(height: 12),
+
+          _receiptInfoRow(
+            Icons.schedule,
+            "Date",
+            _formatDateTime(order["created_at"] ?? ""),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _receiptInfoRow(
+    IconData icon,
+    String label,
+    String value,
+  ) {
+    return Row(
+      children: [
+
+        Icon(
+          icon,
+          size: 18,
+          color: AppColors.primary,
+        ),
+
+        const SizedBox(width: 12),
+
+        SizedBox(
+          width: 90,
+          child: Text(
+            label,
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              value,
+              style: TextStyle(
+                color: AppColors.textDark,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildItemsSection(List items) {
+    if (items.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Center(
+          child: Text(
+            "No items found.",
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+
+        Row(
+          children: [
+
+            Icon(
+              Icons.restaurant_menu_rounded,
+              color: AppColors.primary,
+            ),
+
+            const SizedBox(width: 8),
+
+            const Text(
+              "Ordered Items",
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                fontFamily: "Urbanist",
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 14),
+
+        ...items.map((item) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildReceiptItemCard(item),
+            )),
+      ],
+    );
+  }
+
+  Widget _buildReceiptItemCard(Map<String, dynamic> item) {
+
+    final List flavors =
+        List<Map<String, dynamic>>.from(item["flavors"] ?? []);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.grey.shade300,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          Row(
+            children: [
+
+              Expanded(
+                child: Text(
+                  item["name"] ?? "",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: "Urbanist",
+                  ),
+                ),
+              ),
+
+              Text(
+                "x${item["qty"]}",
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+
+          if ((item["variant_name"] ?? "").toString().isNotEmpty) ...[
+
+            const SizedBox(height: 10),
+
+            _buildVariantChip(item["variant_name"]),
+
+          ],
+
+          if (flavors.isNotEmpty) ...[
+
+            const SizedBox(height: 12),
+
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: flavors.map<Widget>((flavor) {
+
+                return Chip(
+                  label: Text(
+                    flavor["flavor_name"] ?? "",
+                  ),
+                  backgroundColor:
+                      AppColors.secondary.withOpacity(0.15),
+                  side: BorderSide.none,
+                  labelStyle: TextStyle(
+                    color: AppColors.secondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                );
+
+              }).toList(),
+            ),
+          ],
+
+          const SizedBox(height: 14),
+
+          const Divider(),
+
+          const SizedBox(height: 10),
+
+          Row(
+            mainAxisAlignment:
+                MainAxisAlignment.spaceBetween,
+            children: [
+
+              Text(
+                "₱${_toDouble(item["price"]).toStringAsFixed(2)} × ${item["qty"]}",
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                ),
+              ),
+
+              Text(
+                "₱${_toDouble(item["subtotal"]).toStringAsFixed(2)}",
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVariantChip(String variant) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 6,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+
+          Icon(
+            Icons.sell_outlined,
+            size: 16,
+            color: AppColors.primary,
+          ),
+
+          const SizedBox(width: 6),
+
+          Text(
+            variant,
+            style: TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTotals(Map<String, dynamic> order) {
+  final double total = double.tryParse((order['total'] ?? order['total_amount'] ?? '0').toString()) ?? 0.0;
+  final double subtotal = double.tryParse((order['subtotal'] ?? '0').toString()) ?? total; 
+  final double delivery = double.tryParse((order['delivery_fee'] ?? '0').toString()) ?? 0.0;
+
+  return Container(
+    margin: const EdgeInsets.only(top: 12),
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: AppColors.card,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: Colors.grey.shade300,
+      ),
+    ),
+    child: Column(
+      children: [
+
+        if (delivery > 0) ...[
+          const SizedBox(height: 10),
+
+          _buildTotalRow(
+            "Delivery Fee",
+            delivery,
+          ),
+        ],
+
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 14),
+          child: Divider(height: 1),
+        ),
+
+        Row(
+          children: [
+
+            const Expanded(
+              child: Text(
+                "TOTAL",
+                style: TextStyle(
+                  fontFamily: "Urbanist",
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+
+            Text(
+              "₱${total.toStringAsFixed(2)}",
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w900,
+                fontSize: 22,
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildTotalRow(
+  String label,
+  double amount,
+) {
+  return Row(
+    children: [
+
+      Expanded(
+        child: Text(
+          label,
+          style: TextStyle(
+            color: Colors.grey.shade700,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+
+      Text(
+        "₱${amount.toStringAsFixed(2)}",
+        style: const TextStyle(
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    ],
+  );
+}
 
   double _toDouble(dynamic value) => double.tryParse(value.toString()) ?? 0.0;
 }
