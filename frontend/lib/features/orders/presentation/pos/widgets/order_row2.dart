@@ -308,7 +308,7 @@ class OrderRow2 extends StatelessWidget {
         vertical: 18,
       ),
       decoration: BoxDecoration(
-        color: AppColors.primary,
+        color: AppColors.secondary,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(20),
         ),
@@ -543,7 +543,7 @@ class OrderRow2 extends StatelessWidget {
               ),
 
               Text(
-                "x${item["quantity"]}",
+                "x${item["qty"]}",
                 style: TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.bold,
@@ -599,7 +599,7 @@ class OrderRow2 extends StatelessWidget {
             children: [
 
               Text(
-                "₱${_toDouble(item["unit_price"]).toStringAsFixed(2)} × ${item["quantity"]}",
+                "₱${_toDouble(item["price"]).toStringAsFixed(2)} × ${item["qty"]}",
                 style: TextStyle(
                   color: Colors.grey.shade700,
                 ),
@@ -671,11 +671,6 @@ class OrderRow2 extends StatelessWidget {
     ),
     child: Column(
       children: [
-
-        _buildTotalRow(
-          "Subtotal",
-          subtotal,
-        ),
 
         if (delivery > 0) ...[
           const SizedBox(height: 10),
